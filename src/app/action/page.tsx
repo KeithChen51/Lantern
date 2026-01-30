@@ -14,6 +14,37 @@ export default function ActionPage() {
                     <p className="text-ink/40">—— Action (笃行) ，即将启程</p>
                 </div>
             </div>
+
+            <section className="pl-4">
+                <div className="mb-6">
+                    <h2 className="text-2xl md:text-3xl font-serif text-ink flex items-baseline gap-3">
+                        功能预览
+                        <span className="text-amber italic text-lg md:text-xl font-serif opacity-80">Preview</span>
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <figure className="rounded-2xl bg-white/40 border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden backdrop-blur-sm">
+                        <img
+                            src="/v3_03_action_case_card.png"
+                            alt="内部行动案例"
+                            className="w-full h-auto object-cover"
+                        />
+                        <figcaption className="px-5 py-4 text-ink/70 text-sm font-serif">
+                            内部行动案例
+                        </figcaption>
+                    </figure>
+                    <figure className="rounded-2xl bg-white/40 border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden backdrop-blur-sm">
+                        <img
+                            src="/v3_04_action_path_graphic.png"
+                            alt="行动路径"
+                            className="w-full h-auto object-cover"
+                        />
+                        <figcaption className="px-5 py-4 text-ink/70 text-sm font-serif">
+                            行动路径
+                        </figcaption>
+                    </figure>
+                </div>
+            </section>
         </div>
     );
 }

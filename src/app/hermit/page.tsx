@@ -14,6 +14,37 @@ export default function HermitPage() {
                     <p className="text-ink/40">—— Hermit (路引) ，在此守候</p>
                 </div>
             </div>
+
+            <section className="pl-4">
+                <div className="mb-6">
+                    <h2 className="text-2xl md:text-3xl font-serif text-ink flex items-baseline gap-3">
+                        功能预览
+                        <span className="text-amber italic text-lg md:text-xl font-serif opacity-80">Preview</span>
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <figure className="rounded-2xl bg-white/40 border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden backdrop-blur-sm">
+                        <img
+                            src="/v3_05_hermit_dialogue_ui.png"
+                            alt="Agent对话"
+                            className="w-full h-auto object-cover"
+                        />
+                        <figcaption className="px-5 py-4 text-ink/70 text-sm font-serif">
+                            Agent对话
+                        </figcaption>
+                    </figure>
+                    <figure className="rounded-2xl bg-white/40 border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden backdrop-blur-sm">
+                        <img
+                            src="/v3_06_hermit_simulation_view.png"
+                            alt="决策模拟"
+                            className="w-full h-auto object-cover"
+                        />
+                        <figcaption className="px-5 py-4 text-ink/70 text-sm font-serif">
+                            决策模拟
+                        </figcaption>
+                    </figure>
+                </div>
+            </section>
         </div>
     );
 }
