@@ -2,19 +2,22 @@
 
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
 import { FeatureCard } from "@/components/ui/FeatureCard";
+import Link from "next/link";
 
 const SAMPLE_CARDS = [
   {
     title: "云游胖东来",
     description: "深入胖东来的商业哲学，探索其如何在零售业中践行人文关怀与卓越治理。",
     date: "JAN 2026",
-    imageUrl: "/pang-dong-lai.jpg"
+    imageUrl: "/pang-dong-lai.jpg",
+    href: "/mirror/pang-dong-lai"
   },
   {
     title: "其他案例待点亮",
     description: "更多深具文化基因与人文精神的企业案例即将来集。我们将一同在别人的灯火里，看见前行的方向。",
     date: "COMING SOON",
-    imageUrl: ""
+    imageUrl: "",
+    href: null
   },
 ];
 
@@ -33,14 +36,26 @@ export default function Home() {
 
       <MasonryGrid>
         {SAMPLE_CARDS.map((card, i) => (
-          <FeatureCard
-            key={i}
-            title={card.title}
-            description={card.description}
-            date={card.date}
-            imageUrl={card.imageUrl}
-            className="mb-6"
-          />
+          card.href ? (
+            <Link key={i} href={card.href} className="block h-full">
+              <FeatureCard
+                title={card.title}
+                description={card.description}
+                date={card.date}
+                imageUrl={card.imageUrl}
+                className="mb-6 h-full"
+              />
+            </Link>
+          ) : (
+            <FeatureCard
+              key={i}
+              title={card.title}
+              description={card.description}
+              date={card.date}
+              imageUrl={card.imageUrl}
+              className="mb-6 h-full"
+            />
+          )
         ))}
       </MasonryGrid>
     </div>
