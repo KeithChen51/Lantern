@@ -24,7 +24,7 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "Lantern",
+  title: "Lighthouse",
   description: "A humanistic interface for thought.",
 };
 

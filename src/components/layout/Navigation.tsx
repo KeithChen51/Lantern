@@ -53,13 +53,13 @@ export function Navigation({ isPinned, onTogglePin }: NavigationProps) {
                             !isExpanded && "w-12 h-12"
                         )} />
                         <Icon
-                            icon="game-icons:old-lantern"
+                            icon="game-icons:lighthouse"
                             className="w-6 h-6 text-amber drop-shadow-[0_0_5px_rgba(217,119,6,0.3)] group-hover/logo:drop-shadow-[0_0_8px_rgba(217,119,6,0.6)] transition-all z-10"
                         />
                     </div>
                     {isExpanded && (
                         <span className="ml-3 font-serif text-2xl font-bold tracking-tight text-amber transition-colors duration-300">
-                            Lantern
+                            Lighthouse
                         </span>
                     )}
                 </Link>

@@ -5,7 +5,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
 
-const SIDEBAR_STORAGE_KEY = "lantern-sidebar-pinned";
+const SIDEBAR_STORAGE_KEY = "lighthouse-sidebar-pinned";
 
 interface AppShellProps {
   children: React.ReactNode;
