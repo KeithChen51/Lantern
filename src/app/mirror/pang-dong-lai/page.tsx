@@ -2,10 +2,8 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Clock, User, Quote, TrendingUp, Heart, ShoppingBag, MapPin, Users, Lightbulb, Hash } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowLeft, Clock, User, Quote, Heart, ShoppingBag, MapPin } from "lucide-react";
 
 export default function PangDongLaiPage() {
   return (
@@ -42,7 +40,7 @@ export default function PangDongLaiPage() {
             <div className="p-4 bg-amber/5 rounded-lg border border-amber/10">
               <div className="text-xs text-amber/80 font-serif italic mb-2">Quote of the day</div>
               <p className="text-xs text-ink/60 leading-relaxed">
-                "让更多人看到美好的样子，让生命变得更加美好。"
+                “让更多人看到美好的样子，让生命变得更加美好。”
               </p>
             </div>
           </div>

@@ -37,13 +37,12 @@ export default function Home() {
       <MasonryGrid>
         {SAMPLE_CARDS.map((card, i) => (
           card.href ? (
-            <Link key={i} href={card.href} className="block h-full">
+            <Link key={i} href={card.href} className="block">
               <FeatureCard
                 title={card.title}
                 description={card.description}
                 date={card.date}
                 imageUrl={card.imageUrl}
-                className="mb-6 h-full"
               />
             </Link>
           ) : (
@@ -53,7 +52,6 @@ export default function Home() {
               description={card.description}
               date={card.date}
               imageUrl={card.imageUrl}
-              className="mb-6 h-full"
             />
           )
         ))}

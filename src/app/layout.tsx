@@ -24,8 +24,8 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "Lighthouse",
-  description: "A humanistic interface for thought.",
+  title: "Lantern | Lighthouse",
+  description: "服务品牌升级内部展示平台：镜鉴、本心、笃行、路引。",
 };
 
 export default function RootLayout({
@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerifSC.variable} antialiased`}
         suppressHydrationWarning
@@ -44,4 +44,3 @@ export default function RootLayout({
     </html>
   );
 }
-

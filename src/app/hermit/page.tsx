@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function HermitPage() {
     return (
         <div className="max-w-7xl mx-auto">
@@ -24,9 +26,12 @@ export default function HermitPage() {
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <figure className="rounded-2xl bg-white/40 border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden backdrop-blur-sm">
-                        <img
-                            src="/v3_05_hermit_dialogue_ui.png"
+                        <Image
+                            src="/v3_05_hermit_dialogue_ui.webp"
                             alt="Agent对话"
+                            width={1600}
+                            height={900}
+                            sizes="(max-width: 1024px) 100vw, 50vw"
                             className="w-full h-auto object-cover"
                         />
                         <figcaption className="px-5 py-4 text-ink/70 text-sm font-serif">
@@ -34,9 +39,12 @@ export default function HermitPage() {
                         </figcaption>
                     </figure>
                     <figure className="rounded-2xl bg-white/40 border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden backdrop-blur-sm">
-                        <img
-                            src="/v3_06_hermit_simulation_view.png"
+                        <Image
+                            src="/v3_06_hermit_simulation_view.webp"
                             alt="决策模拟"
+                            width={1600}
+                            height={900}
+                            sizes="(max-width: 1024px) 100vw, 50vw"
                             className="w-full h-auto object-cover"
                         />
                         <figcaption className="px-5 py-4 text-ink/70 text-sm font-serif">

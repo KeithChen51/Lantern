@@ -30,8 +30,8 @@ export function FeatureCard({
                         src={imageUrl}
                         alt={title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 60vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-700"
-                        unoptimized
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-ink/10">
