@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Hermit knowledge base vectors (generated)
+knowledge-vectors.json
