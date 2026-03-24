@@ -18,8 +18,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 
-// Load .env.local
-dotenv.config({ path: path.join(process.cwd(), ".env.local") });
+// Load .env.local (optional – Netlify injects env vars natively)
+const envPath = path.join(process.cwd(), ".env.local");
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
 
 const KNOWLEDGE_DIR = path.join(
   process.cwd(),

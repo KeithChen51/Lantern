@@ -1,5 +1,12 @@
-import fs from "fs";
-import path from "path";
+/**
+ * Hermit RAG Module
+ *
+ * Loads pre-built knowledge vectors and performs cosine-similarity search
+ * to retrieve relevant context for the LLM.
+ *
+ * Uses static JSON import instead of fs.readFileSync for compatibility
+ * with serverless environments (Netlify, Vercel, etc.).
+ */
 
 /* ── types ── */
 
@@ -72,21 +79,18 @@ export async function embedText(text: string): Promise<number[]> {
 
 /* ── knowledge base ── */
 
-const VECTORS_PATH = path.join(
-  process.cwd(),
-  "src/lib/hermit/knowledge/knowledge-vectors.json"
-);
-
 let knowledgeBase: KnowledgeIndex | null = null;
 
 /**
  * Load the pre-built knowledge vectors into memory.
+ * Uses dynamic import so the JSON is bundled by Next.js and available
+ * in serverless environments without filesystem access.
  */
-export function loadKnowledgeBase(): KnowledgeIndex | null {
+export async function loadKnowledgeBase(): Promise<KnowledgeIndex | null> {
   if (knowledgeBase) return knowledgeBase;
   try {
-    const raw = fs.readFileSync(VECTORS_PATH, "utf-8");
-    knowledgeBase = JSON.parse(raw) as KnowledgeIndex;
+    const data = await import("./knowledge/knowledge-vectors.json");
+    knowledgeBase = data.default as unknown as KnowledgeIndex;
     return knowledgeBase;
   } catch {
     console.warn(
@@ -104,7 +108,7 @@ export async function searchKnowledge(
   query: string,
   topK: number = 3
 ): Promise<string> {
-  const kb = loadKnowledgeBase();
+  const kb = await loadKnowledgeBase();
   if (!kb || kb.chunks.length === 0) return "";
 
   const queryVec = await embedText(query);
