@@ -1,31 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-});
-const notoSerifSC = Noto_Serif_SC({
-  variable: "--font-noto-serif-sc",
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
-});
-
 export const metadata: Metadata = {
   title: "Lantern | Lighthouse",
-  description: "服务品牌升级内部展示平台：镜鉴、本心、笃行、路引。",
+  description: "服务品牌升级内部展示平台：本心、镜鉴、笃行、共创、路引。",
 };
 
 export default function RootLayout({
@@ -35,10 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerifSC.variable} antialiased`}
-        suppressHydrationWarning
-      >
+      <body className="antialiased" suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
     </html>

@@ -9,12 +9,13 @@ const SEARCH_TARGETS = [
   { href: "/", label: "镜鉴 Mirror", keywords: ["mirror", "镜鉴", "首页", "案例"] },
   { href: "/heart", label: "本心 Heart", keywords: ["heart", "本心", "价值观", "文化"] },
   { href: "/action", label: "笃行 Action", keywords: ["action", "笃行", "行动", "实践"] },
+  { href: "/workshop", label: "共创 Workshop", keywords: ["workshop", "共创", "do", "dont", "指南", "提交"] },
   { href: "/hermit", label: "路引 Hermit", keywords: ["hermit", "路引", "决策", "对话"] },
 ];
 
 const NOTIFICATIONS = [
   "诊断项已接入：代码质量、性能、移动端适配。",
-  "当前可搜索页面：镜鉴、本心、笃行、路引。",
+  "当前可搜索页面：镜鉴、本心、笃行、共创、路引。",
   "下一步建议：将大图压缩为 WebP 进一步提速。",
 ];
 
@@ -39,7 +40,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
     event.preventDefault();
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) {
-      setSearchFeedback("请输入关键词，如：镜鉴、本心、笃行、路引。");
+      setSearchFeedback("请输入关键词，如：镜鉴、本心、笃行、共创、路引。");
       return;
     }
 
@@ -51,7 +52,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
     );
 
     if (!matchedTarget) {
-      setSearchFeedback("未找到匹配页面，可尝试：镜鉴 / 本心 / 笃行 / 路引。");
+      setSearchFeedback("未找到匹配页面，可尝试：镜鉴 / 本心 / 笃行 / 共创 / 路引。");
       return;
     }
 
@@ -85,7 +86,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               type="text"
-              placeholder="搜索页面（如：镜鉴、路引）"
+              placeholder="搜索页面（如：镜鉴、共创、路引）"
               className="w-full rounded-full border border-transparent bg-ink/5 py-2.5 pl-10 pr-4 text-sm text-ink shadow-sm outline-none transition-all duration-300 placeholder:text-ink/30 hover:bg-ink/10 focus:border-ink/10 focus:bg-white/50"
             />
           </div>

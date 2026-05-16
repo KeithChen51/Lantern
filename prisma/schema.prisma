@@ -1,0 +1,520 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RecordStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+
+  @@map("record_status")
+}
+
+enum UserType {
+  INTERNAL_EMPLOYEE @map("internal_employee")
+  DEALER_USER       @map("dealer_user")
+
+  @@map("user_type")
+}
+
+enum AppRole {
+  NORMAL_USER   @map("normal_user")
+  HIGHEST_ADMIN @map("highest_admin")
+
+  @@map("app_role")
+}
+
+enum ScopeType {
+  GLOBAL @map("global")
+  BRAND  @map("brand")
+  REGION @map("region")
+  DEALER @map("dealer")
+  STORE  @map("store")
+
+  @@map("scope_type")
+}
+
+enum ContentType {
+  HEART          @map("heart")
+  MIRROR_CASE    @map("mirror_case")
+  ACTION_CASE    @map("action_case")
+  NORM_FILE      @map("norm_file")
+  WORKSHOP_GUIDE @map("workshop_guide")
+  TRAINING       @map("training")
+
+  @@map("content_type")
+}
+
+enum ContentStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+  ARCHIVED  @map("archived")
+
+  @@map("content_status")
+}
+
+enum VisibilityScope {
+  GLOBAL @map("global")
+  BRAND  @map("brand")
+  REGION @map("region")
+  DEALER @map("dealer")
+  STORE  @map("store")
+
+  @@map("visibility_scope")
+}
+
+enum ContentSourceType {
+  MANUAL           @map("manual")
+  IMPORT           @map("import")
+  WORKSHOP_PUBLISH @map("workshop_publish")
+
+  @@map("content_source_type")
+}
+
+enum WorkshopSubmissionStatus {
+  DRAFT                @map("draft")
+  SUBMITTED            @map("submitted")
+  AI_REJECTED          @map("ai_rejected")
+  PENDING_ADMIN_REVIEW @map("pending_admin_review")
+  ADMIN_REJECTED       @map("admin_rejected")
+  PUBLISHED            @map("published")
+  WITHDRAWN            @map("withdrawn")
+
+  @@map("workshop_submission_status")
+}
+
+enum WorkshopReviewEventType {
+  SUBMIT        @map("submit")
+  AI_PASS       @map("ai_pass")
+  AI_REJECT     @map("ai_reject")
+  ADMIN_REJECT  @map("admin_reject")
+  ADMIN_EDIT    @map("admin_edit")
+  ADMIN_PUBLISH @map("admin_publish")
+  WITHDRAW      @map("withdraw")
+
+  @@map("workshop_review_event_type")
+}
+
+enum KnowledgeSourceType {
+  CONTENT_ITEM    @map("content_item")
+  FILE            @map("file")
+  PUBLISHED_GUIDE @map("published_guide")
+  MANUAL          @map("manual")
+
+  @@map("knowledge_source_type")
+}
+
+enum KnowledgeStatus {
+  ACTIVE   @map("active")
+  ARCHIVED @map("archived")
+
+  @@map("knowledge_status")
+}
+
+enum VectorProvider {
+  BAILIAN         @map("bailian")
+  INTERNAL_VECTOR @map("internal_vector")
+  QDRANT          @map("qdrant")
+  PGVECTOR        @map("pgvector")
+  KEYWORD         @map("keyword")
+
+  @@map("vector_provider")
+}
+
+model Brand {
+  id        String       @id @default(cuid())
+  code      String       @unique
+  name      String
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  regions             Region[]
+  dealers             Dealer[]
+  stores              Store[]
+  primaryUsers        User[]               @relation("UserPrimaryBrand")
+  orgMemberships      UserOrgMembership[]
+  contentItems        ContentItem[]
+  workshopSubmissions WorkshopSubmission[]
+  publishedGuides     PublishedGuide[]
+  contributionStats   ContributionStat[]
+  knowledgeDocuments  KnowledgeDocument[]
+
+  @@map("brands")
+}
+
+model Region {
+  id        String       @id @default(cuid())
+  brandId   String       @map("brand_id")
+  code      String
+  name      String
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  brand               Brand                @relation(fields: [brandId], references: [id])
+  dealers             Dealer[]
+  stores              Store[]
+  primaryUsers        User[]               @relation("UserPrimaryRegion")
+  orgMemberships      UserOrgMembership[]
+  contentItems        ContentItem[]
+  workshopSubmissions WorkshopSubmission[]
+  publishedGuides     PublishedGuide[]
+  contributionStats   ContributionStat[]
+  knowledgeDocuments  KnowledgeDocument[]
+
+  @@unique([brandId, code])
+  @@map("regions")
+}
+
+model Dealer {
+  id        String       @id @default(cuid())
+  brandId   String       @map("brand_id")
+  regionId  String?      @map("region_id")
+  code      String
+  name      String
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  brand               Brand                @relation(fields: [brandId], references: [id])
+  region              Region?              @relation(fields: [regionId], references: [id])
+  stores              Store[]
+  primaryUsers        User[]               @relation("UserPrimaryDealer")
+  orgMemberships      UserOrgMembership[]
+  contentItems        ContentItem[]
+  workshopSubmissions WorkshopSubmission[]
+  publishedGuides     PublishedGuide[]
+  contributionStats   ContributionStat[]
+  knowledgeDocuments  KnowledgeDocument[]
+
+  @@unique([brandId, code])
+  @@index([regionId])
+  @@map("dealers")
+}
+
+model Store {
+  id        String       @id @default(cuid())
+  brandId   String       @map("brand_id")
+  regionId  String?      @map("region_id")
+  dealerId  String?      @map("dealer_id")
+  code      String
+  name      String
+  city      String?
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  brand               Brand                @relation(fields: [brandId], references: [id])
+  region              Region?              @relation(fields: [regionId], references: [id])
+  dealer              Dealer?              @relation(fields: [dealerId], references: [id])
+  primaryUsers        User[]               @relation("UserPrimaryStore")
+  orgMemberships      UserOrgMembership[]
+  contentItems        ContentItem[]
+  workshopSubmissions WorkshopSubmission[]
+  publishedGuides     PublishedGuide[]
+  contributionStats   ContributionStat[]
+  knowledgeDocuments  KnowledgeDocument[]
+
+  @@unique([brandId, code])
+  @@index([brandId, regionId, dealerId])
+  @@map("stores")
+}
+
+model User {
+  id              String       @id @default(cuid())
+  displayName     String       @map("display_name")
+  mobile          String?
+  email           String?
+  employeeNo      String?      @map("employee_no")
+  userType        UserType     @map("user_type")
+  primaryBrandId  String?      @map("primary_brand_id")
+  primaryRegionId String?      @map("primary_region_id")
+  primaryDealerId String?      @map("primary_dealer_id")
+  primaryStoreId  String?      @map("primary_store_id")
+  primaryRoleName String?      @map("primary_role_name")
+  status          RecordStatus @default(ACTIVE)
+  lastLoginAt     DateTime?    @map("last_login_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  primaryBrand         Brand?                @relation("UserPrimaryBrand", fields: [primaryBrandId], references: [id])
+  primaryRegion        Region?               @relation("UserPrimaryRegion", fields: [primaryRegionId], references: [id])
+  primaryDealer        Dealer?               @relation("UserPrimaryDealer", fields: [primaryDealerId], references: [id])
+  primaryStore         Store?                @relation("UserPrimaryStore", fields: [primaryStoreId], references: [id])
+  identityAccounts     IdentityAccount[]
+  orgMemberships       UserOrgMembership[]
+  roles                UserRole[]
+  workshopSubmissions  WorkshopSubmission[]  @relation("WorkshopSubmitter")
+  workshopReviewEvents WorkshopReviewEvent[] @relation("WorkshopReviewActor")
+  publishedGuides      PublishedGuide[]      @relation("PublishedGuidePublisher")
+  contributionStats    ContributionStat[]
+
+  @@index([primaryStoreId])
+  @@map("users")
+}
+
+model IdentityAccount {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  provider        String
+  providerUserId  String   @map("provider_user_id")
+  providerUnionId String?  @map("provider_union_id")
+  rawProfileJson  Json?    @map("raw_profile_json")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("identity_accounts")
+}
+
+model UserOrgMembership {
+  id        String       @id @default(cuid())
+  userId    String       @map("user_id")
+  brandId   String?      @map("brand_id")
+  regionId  String?      @map("region_id")
+  dealerId  String?      @map("dealer_id")
+  storeId   String?      @map("store_id")
+  roleName  String       @map("role_name")
+  isPrimary Boolean      @default(false) @map("is_primary")
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id])
+  brand  Brand?  @relation(fields: [brandId], references: [id])
+  region Region? @relation(fields: [regionId], references: [id])
+  dealer Dealer? @relation(fields: [dealerId], references: [id])
+  store  Store?  @relation(fields: [storeId], references: [id])
+
+  @@index([userId])
+  @@index([brandId, regionId, dealerId, storeId])
+  @@map("user_org_memberships")
+}
+
+model UserRole {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  role      AppRole
+  scopeType ScopeType @map("scope_type")
+  scopeId   String?   @map("scope_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([role, scopeType, scopeId])
+  @@map("user_roles")
+}
+
+model ContentItem {
+  id               String            @id @default(cuid())
+  contentType      ContentType       @map("content_type")
+  title            String
+  summary          String?           @db.Text
+  status           ContentStatus     @default(DRAFT)
+  visibilityScope  VisibilityScope   @default(GLOBAL) @map("visibility_scope")
+  brandId          String?           @map("brand_id")
+  regionId         String?           @map("region_id")
+  dealerId         String?           @map("dealer_id")
+  storeId          String?           @map("store_id")
+  sourceType       ContentSourceType @default(MANUAL) @map("source_type")
+  currentVersionId String?           @map("current_version_id")
+  publishedAt      DateTime?         @map("published_at")
+  createdById      String?           @map("created_by")
+  updatedById      String?           @map("updated_by")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  brand          Brand?           @relation(fields: [brandId], references: [id])
+  region         Region?          @relation(fields: [regionId], references: [id])
+  dealer         Dealer?          @relation(fields: [dealerId], references: [id])
+  store          Store?           @relation(fields: [storeId], references: [id])
+  versions       ContentVersion[] @relation("ContentItemVersions")
+  currentVersion ContentVersion?  @relation("CurrentContentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+  publishedGuide PublishedGuide?
+
+  @@index([contentType, status, visibilityScope])
+  @@index([brandId, regionId, dealerId, storeId])
+  @@map("content_items")
+}
+
+model ContentVersion {
+  id            String   @id @default(cuid())
+  contentItemId String   @map("content_item_id")
+  versionNo     Int      @map("version_no")
+  title         String
+  bodyMarkdown  String   @map("body_markdown") @db.LongText
+  bodyJson      Json?    @map("body_json")
+  changeNote    String?  @map("change_note") @db.Text
+  createdById   String?  @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  contentItem       ContentItem   @relation("ContentItemVersions", fields: [contentItemId], references: [id])
+  currentForContent ContentItem[] @relation("CurrentContentVersion")
+
+  @@unique([contentItemId, versionNo])
+  @@map("content_versions")
+}
+
+model WorkshopSubmission {
+  id                 String                   @id @default(cuid())
+  submitterId        String                   @map("submitter_id")
+  brandId            String?                  @map("brand_id")
+  regionId           String?                  @map("region_id")
+  dealerId           String?                  @map("dealer_id")
+  storeId            String?                  @map("store_id")
+  roleName           String                   @map("role_name")
+  serviceScenario    String?                  @map("service_scenario")
+  principleRef       String?                  @map("principle_ref")
+  title              String
+  doText             String                   @map("do_text") @db.Text
+  howText            String?                  @map("how_text") @db.Text
+  dontText           String                   @map("dont_text") @db.Text
+  status             WorkshopSubmissionStatus @default(DRAFT)
+  aiReviewResultJson Json?                    @map("ai_review_result_json")
+  submittedAt        DateTime?                @map("submitted_at")
+  lastReviewedAt     DateTime?                @map("last_reviewed_at")
+  publishedGuideId   String?                  @map("published_guide_id")
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
+
+  submitter      User                  @relation("WorkshopSubmitter", fields: [submitterId], references: [id])
+  brand          Brand?                @relation(fields: [brandId], references: [id])
+  region         Region?               @relation(fields: [regionId], references: [id])
+  dealer         Dealer?               @relation(fields: [dealerId], references: [id])
+  store          Store?                @relation(fields: [storeId], references: [id])
+  reviewEvents   WorkshopReviewEvent[]
+  publishedGuide PublishedGuide?
+
+  @@index([status, submittedAt])
+  @@index([brandId, regionId, dealerId, storeId])
+  @@index([submitterId])
+  @@map("workshop_submissions")
+}
+
+model WorkshopReviewEvent {
+  id           String                    @id @default(cuid())
+  submissionId String                    @map("submission_id")
+  actorId      String?                   @map("actor_id")
+  eventType    WorkshopReviewEventType   @map("event_type")
+  fromStatus   WorkshopSubmissionStatus? @map("from_status")
+  toStatus     WorkshopSubmissionStatus? @map("to_status")
+  comment      String?                   @db.Text
+  snapshotJson Json?                     @map("snapshot_json")
+  createdAt    DateTime                  @default(now()) @map("created_at")
+
+  submission WorkshopSubmission @relation(fields: [submissionId], references: [id])
+  actor      User?              @relation("WorkshopReviewActor", fields: [actorId], references: [id])
+
+  @@index([submissionId, createdAt])
+  @@index([actorId])
+  @@map("workshop_review_events")
+}
+
+model PublishedGuide {
+  id                 String   @id @default(cuid())
+  sourceSubmissionId String   @unique @map("source_submission_id")
+  contentItemId      String?  @unique @map("content_item_id")
+  brandId            String?  @map("brand_id")
+  regionId           String?  @map("region_id")
+  dealerId           String?  @map("dealer_id")
+  storeId            String?  @map("store_id")
+  roleName           String   @map("role_name")
+  serviceScenario    String?  @map("service_scenario")
+  principleRef       String?  @map("principle_ref")
+  title              String
+  doText             String   @map("do_text") @db.Text
+  howText            String?  @map("how_text") @db.Text
+  dontText           String   @map("dont_text") @db.Text
+  publishedById      String?  @map("published_by")
+  publishedAt        DateTime @default(now()) @map("published_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  sourceSubmission WorkshopSubmission @relation(fields: [sourceSubmissionId], references: [id])
+  contentItem      ContentItem?       @relation(fields: [contentItemId], references: [id])
+  brand            Brand?             @relation(fields: [brandId], references: [id])
+  region           Region?            @relation(fields: [regionId], references: [id])
+  dealer           Dealer?            @relation(fields: [dealerId], references: [id])
+  store            Store?             @relation(fields: [storeId], references: [id])
+  publishedBy      User?              @relation("PublishedGuidePublisher", fields: [publishedById], references: [id])
+
+  @@index([roleName, serviceScenario])
+  @@index([brandId, regionId, dealerId, storeId])
+  @@map("published_guides")
+}
+
+model ContributionStat {
+  id                String    @id @default(cuid())
+  brandId           String?   @map("brand_id")
+  regionId          String?   @map("region_id")
+  dealerId          String?   @map("dealer_id")
+  storeId           String?   @map("store_id")
+  userId            String    @map("user_id")
+  publishedCount    Int       @default(0) @map("published_count")
+  submittedCount    Int       @default(0) @map("submitted_count")
+  latestPublishedAt DateTime? @map("latest_published_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  brand  Brand?  @relation(fields: [brandId], references: [id])
+  region Region? @relation(fields: [regionId], references: [id])
+  dealer Dealer? @relation(fields: [dealerId], references: [id])
+  store  Store?  @relation(fields: [storeId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+
+  @@index([brandId, regionId, dealerId, storeId, publishedCount])
+  @@index([userId])
+  @@map("contribution_stats")
+}
+
+model KnowledgeDocument {
+  id              String              @id @default(cuid())
+  sourceType      KnowledgeSourceType @map("source_type")
+  sourceId        String?             @map("source_id")
+  title           String
+  visibilityScope VisibilityScope     @default(GLOBAL) @map("visibility_scope")
+  brandId         String?             @map("brand_id")
+  regionId        String?             @map("region_id")
+  dealerId        String?             @map("dealer_id")
+  storeId         String?             @map("store_id")
+  status          KnowledgeStatus     @default(ACTIVE)
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  brand  Brand?           @relation(fields: [brandId], references: [id])
+  region Region?          @relation(fields: [regionId], references: [id])
+  dealer Dealer?          @relation(fields: [dealerId], references: [id])
+  store  Store?           @relation(fields: [storeId], references: [id])
+  chunks KnowledgeChunk[]
+
+  @@index([sourceType, sourceId])
+  @@index([brandId, regionId, dealerId, storeId])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id                  String          @id @default(cuid())
+  knowledgeDocumentId String          @map("knowledge_document_id")
+  chunkNo             Int             @map("chunk_no")
+  heading             String?
+  contentText         String          @map("content_text") @db.LongText
+  vectorProvider      VectorProvider? @map("vector_provider")
+  externalVectorId    String?         @map("external_vector_id")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  knowledgeDocument KnowledgeDocument @relation(fields: [knowledgeDocumentId], references: [id])
+
+  @@unique([knowledgeDocumentId, chunkNo])
+  @@index([externalVectorId])
+  @@map("knowledge_chunks")
+}

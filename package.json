@@ -2,17 +2,29 @@
   "name": "lantern-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build:knowledge": "tsx scripts/build-knowledge.ts",
     "build": "npm run build:knowledge && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.47",
     "@ai-sdk/react": "^3.0.137",
     "@iconify/react": "^6.0.2",
+    "@prisma/client": "^6.19.3",
     "ai": "^6.0.135",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
@@ -30,8 +42,10 @@
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
