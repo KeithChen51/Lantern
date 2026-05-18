@@ -61,13 +61,10 @@ describe("auth service", () => {
     });
   });
 
-  it("resolves the demo highest admin", async () => {
+  it("requires an explicit highest-admin identity for admin access", async () => {
     const service = createAuthService(createRepository());
 
-    await expect(service.getCurrentAdmin()).resolves.toMatchObject({
-      id: "admin-demo",
-      roles: ["highest_admin"],
-    });
+    await expect(service.getCurrentAdmin()).rejects.toThrow(/highest-admin role/i);
   });
 
   it("maps a provider identity to the internal user", async () => {
@@ -77,5 +74,36 @@ describe("auth service", () => {
       id: "user-demo",
       displayName: "李明",
     });
+  });
+  it("resolves the preview identity cookie as the current user", async () => {
+    const service = createAuthService(createRepository());
+
+    await expect(
+      service.getCurrentUser({
+        headers: { cookie: "lighthouse_preview_user_id=admin-demo" },
+      }),
+    ).resolves.toMatchObject({
+      id: "admin-demo",
+      roles: ["highest_admin"],
+    });
+  });
+
+  it("uses the preview identity cookie when checking highest-admin access", async () => {
+    const service = createAuthService(createRepository());
+
+    await expect(
+      service.getCurrentAdmin({
+        headers: { cookie: "lighthouse_preview_user_id=admin-demo" },
+      }),
+    ).resolves.toMatchObject({
+      id: "admin-demo",
+      roles: ["highest_admin"],
+    });
+
+    await expect(
+      service.getCurrentAdmin({
+        headers: { cookie: "lighthouse_preview_user_id=user-demo" },
+      }),
+    ).rejects.toThrow(/highest-admin role/i);
   });
 });

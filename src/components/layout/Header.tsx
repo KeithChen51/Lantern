@@ -4,12 +4,14 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, Menu, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PreviewIdentitySwitcher } from "@/components/layout/PreviewIdentitySwitcher";
 
 const SEARCH_TARGETS = [
-  { href: "/", label: "镜鉴 Mirror", keywords: ["mirror", "镜鉴", "首页", "案例"] },
-  { href: "/heart", label: "本心 Heart", keywords: ["heart", "本心", "价值观", "文化"] },
+  { href: "/", label: "本心 Heart", keywords: ["heart", "本心", "首页", "价值观", "文化"] },
+  { href: "/mirror", label: "镜鉴 Mirror", keywords: ["mirror", "镜鉴", "案例"] },
   { href: "/action", label: "笃行 Action", keywords: ["action", "笃行", "行动", "实践"] },
   { href: "/workshop", label: "共创 Workshop", keywords: ["workshop", "共创", "do", "dont", "指南", "提交"] },
+  { href: "/workshop?section=review", label: "共创审核", keywords: ["admin", "审核", "管理", "发布"] },
   { href: "/hermit", label: "路引 Hermit", keywords: ["hermit", "路引", "决策", "对话"] },
 ];
 
@@ -52,7 +54,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
     );
 
     if (!matchedTarget) {
-      setSearchFeedback("未找到匹配页面，可尝试：镜鉴 / 本心 / 笃行 / 共创 / 路引。");
+      setSearchFeedback("未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 共创 / 审核 / 路引。");
       return;
     }
 
@@ -67,17 +69,17 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
         isSidebarPinned ? "md:pl-[260px]" : "md:pl-[100px]",
       )}
     >
-      <div className="pointer-events-auto mx-auto flex h-full w-full max-w-7xl items-center justify-end gap-4 md:gap-6">
+      <div className="pointer-events-auto mx-auto flex h-full w-full max-w-7xl min-w-0 items-center justify-end gap-2 md:gap-4">
         <button
           type="button"
           onClick={onOpenMobileNav}
           aria-label="打开导航菜单"
-          className="mr-auto rounded-full p-2 text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink md:hidden"
+          className="shrink-0 rounded-full p-2 text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink md:hidden"
         >
           <Menu className="h-5 w-5" />
         </button>
 
-        <form onSubmit={handleSearchSubmit} className="w-full max-w-md">
+        <form onSubmit={handleSearchSubmit} className="min-w-0 flex-1 max-w-md">
           <div className="group relative">
             <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
               <Search className="h-4 w-4 text-ink/40 transition-colors group-focus-within:text-ink" />
@@ -95,11 +97,15 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
           )}
         </form>
 
+        <div className="hidden lg:block">
+          <PreviewIdentitySwitcher />
+        </div>
+
         <div className="relative">
           <button
             type="button"
             onClick={() => setIsNotificationOpen((prev) => !prev)}
-            className="relative rounded-full p-2 text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink"
+            className="relative shrink-0 rounded-full p-2 text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink"
             aria-label="通知"
           >
             <Bell className="h-5 w-5" />

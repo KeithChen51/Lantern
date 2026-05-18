@@ -5,14 +5,7 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { Pin, PinOff, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const NAV_ITEMS = [
-  { label: "Heart", subLabel: "本心", icon: "solar:heart-bold", href: "/heart", isDev: true },
-  { label: "Mirror", subLabel: "镜鉴", icon: "solar:book-2-bold", href: "/", isDev: false },
-  { label: "Action", subLabel: "笃行", icon: "solar:bolt-bold", href: "/action", isDev: true },
-  { label: "Workshop", subLabel: "共创", icon: "solar:clipboard-check-bold", href: "/workshop", isDev: false },
-  { label: "Hermit", subLabel: "路引", icon: "solar:magic-stick-3-bold", href: "/hermit", isDev: true },
-];
+import { getVisibleNavItems } from "./navigation-model";
 
 interface NavigationProps {
   isPinned: boolean;
@@ -67,7 +60,7 @@ function NavLinks({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  return NAV_ITEMS.map((item) => {
+  return getVisibleNavItems().map((item) => {
     const isActive = isItemActive(pathname, item.href);
 
     return (

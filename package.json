@@ -8,12 +8,16 @@
   "scripts": {
     "dev": "next dev",
     "build:knowledge": "tsx scripts/build-knowledge.ts",
-    "build": "npm run build:knowledge && next build",
-    "start": "next start",
+    "prepare:standalone": "tsx scripts/prepare-standalone.ts",
+    "build": "npm run build:knowledge && next build && npm run prepare:standalone",
+    "start": "node .next/standalone/server.js",
     "lint": "eslint",
     "test": "vitest run",
+    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:setup": "npm run db:deploy && npm run db:seed",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed"
   },

@@ -190,6 +190,38 @@ describe("workshop service", () => {
     expect(duplicateReviewed.aiReviewResult?.reason).toContain("duplicate");
   });
 
+  it("lets the submitter revise an AI-rejected submission before resubmitting", async () => {
+    const service = createWorkshopService(new MemoryWorkshopRepository());
+    const incomplete = await service.createDraft(
+      {
+        ...validDraft,
+        doText: "short",
+        howText: null,
+        dontText: "short",
+      },
+      normalUser,
+    );
+    const rejected = await service.runInitialReview((await service.submitForReview(incomplete.id, normalUser)).id);
+
+    const revised = await service.reviseSubmission(rejected.id, normalUser, {
+      doText: validDraft.doText,
+      dontText: validDraft.dontText,
+    });
+
+    expect(revised.status).toBe("draft");
+    expect(revised.aiReviewResult).toBeNull();
+    expect(revised.doText).toBe(validDraft.doText);
+  });
+
+  it("blocks non-owners from revising a personal submission", async () => {
+    const service = createWorkshopService(new MemoryWorkshopRepository());
+    const draft = await service.createDraft(validDraft, normalUser);
+
+    await expect(service.reviseSubmission(draft.id, adminUser, { title: "Should not change" })).rejects.toMatchObject({
+      code: "forbidden",
+    });
+  });
+
   it("allows the highest admin to reject a pending submission", async () => {
     const service = createWorkshopService(new MemoryWorkshopRepository());
     const draft = await service.createDraft(validDraft, normalUser);

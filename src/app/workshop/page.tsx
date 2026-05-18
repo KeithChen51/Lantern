@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { WorkshopClient } from "./WorkshopClient";
 
 export default function WorkshopPage() {
-  return <WorkshopClient />;
+  return (
+    <Suspense fallback={null}>
+      <WorkshopClient />
+    </Suspense>
+  );
 }

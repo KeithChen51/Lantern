@@ -75,15 +75,23 @@ export async function readDraftInput(request: Request, user: WorkshopUser): Prom
 
 export async function readEditableContent(request: Request): Promise<EditableWorkshopContent> {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const readRequiredPatchString = (fieldName: string) => {
+    if (!(fieldName in body)) return undefined;
+    return typeof body[fieldName] === "string" ? body[fieldName].trim() : "";
+  };
+  const readOptionalPatchString = (fieldName: string) => {
+    if (!(fieldName in body)) return undefined;
+    return optionalString(body[fieldName]);
+  };
 
   return {
-    title: optionalString(body.title) ?? undefined,
-    roleName: optionalString(body.roleName) ?? undefined,
-    serviceScenario: optionalString(body.serviceScenario) ?? undefined,
-    principleRef: optionalString(body.principleRef) ?? undefined,
-    doText: optionalString(body.doText) ?? undefined,
-    howText: optionalString(body.howText) ?? undefined,
-    dontText: optionalString(body.dontText) ?? undefined,
+    title: readRequiredPatchString("title"),
+    roleName: readRequiredPatchString("roleName"),
+    serviceScenario: readOptionalPatchString("serviceScenario"),
+    principleRef: readOptionalPatchString("principleRef"),
+    doText: readRequiredPatchString("doText"),
+    howText: readOptionalPatchString("howText"),
+    dontText: readRequiredPatchString("dontText"),
   };
 }
 

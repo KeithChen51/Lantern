@@ -22,6 +22,10 @@ type EditableSubmission = Pick<
   "title" | "roleName" | "serviceScenario" | "principleRef" | "doText" | "howText" | "dontText"
 >;
 
+type AdminWorkshopClientProps = {
+  embedded?: boolean;
+};
+
 async function fetchData<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
@@ -55,7 +59,7 @@ function toEditable(submission: Submission): EditableSubmission {
   };
 }
 
-export function AdminWorkshopClient() {
+export function AdminWorkshopClient({ embedded = false }: AdminWorkshopClientProps) {
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
   const [edits, setEdits] = React.useState<Record<string, EditableSubmission>>({});
   const [rejectComments, setRejectComments] = React.useState<Record<string, string>>({});
@@ -129,13 +133,26 @@ export function AdminWorkshopClient() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-8 flex flex-col gap-4 pl-1 md:flex-row md:items-end md:justify-between md:pl-4">
+    <div className={embedded ? "" : "mx-auto max-w-7xl"}>
+      <div
+        className={
+          embedded
+            ? "mb-6 flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm md:flex-row md:items-end md:justify-between"
+            : "mb-8 flex flex-col gap-4 pl-1 md:flex-row md:items-end md:justify-between md:pl-4"
+        }
+      >
         <div>
           <span className="rounded-full border border-amber/25 bg-amber/10 px-4 py-2 text-sm font-medium text-amber">
             品牌方最高管理员
           </span>
-          <h1 className="mt-5 font-serif text-4xl text-ink md:text-5xl">Workshop 审核</h1>
+          {embedded ? (
+            <>
+              <h2 className="mt-4 font-serif text-3xl text-ink">审核队列</h2>
+              <p className="mt-2 text-sm text-ink/55">对 AI 初审后的 Do & Don&apos;t 做最后编辑和发布。</p>
+            </>
+          ) : (
+            <h1 className="mt-5 font-serif text-4xl text-ink md:text-5xl">Workshop 审核</h1>
+          )}
         </div>
         <button
           type="button"
@@ -148,15 +165,15 @@ export function AdminWorkshopClient() {
       </div>
 
       {message && (
-        <div className="mb-5 mx-1 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 md:mx-4">
+        <div className={embedded ? "mb-5 break-words rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800" : "mx-1 mb-5 break-words rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 md:mx-4"}>
           {message}
         </div>
       )}
       {error && (
-        <div className="mb-5 mx-1 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 md:mx-4">{error}</div>
+        <div className={embedded ? "mb-5 break-words rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" : "mx-1 mb-5 break-words rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 md:mx-4"}>{error}</div>
       )}
 
-      <section className="px-1 md:px-4">
+      <section className={embedded ? "" : "px-1 md:px-4"}>
         {loading ? (
           <div className="flex items-center gap-2 rounded-2xl bg-white/35 p-8 text-sm text-ink/45">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -174,7 +191,7 @@ export function AdminWorkshopClient() {
               return (
                 <article
                   key={submission.id}
-                  className="grid gap-5 rounded-2xl border border-white/60 bg-white/45 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-sm xl:grid-cols-[1fr_320px]"
+                  className="grid gap-5 rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm xl:grid-cols-[minmax(0,1fr)_320px]"
                 >
                   <div className="space-y-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">

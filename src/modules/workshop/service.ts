@@ -94,6 +94,35 @@ export class WorkshopService {
     return next;
   }
 
+  async reviseSubmission(id: string, user: WorkshopUser, content: EditableWorkshopContent) {
+    const submission = await this.requireSubmission(id);
+    ensureOwner(submission, user);
+    ensureTransition(submission, ["draft", "ai_rejected", "admin_rejected"]);
+
+    const nextContent = {
+      title: content.title ?? submission.title,
+      roleName: content.roleName ?? submission.roleName,
+      brandId: submission.brandId,
+      regionId: submission.regionId,
+      dealerId: submission.dealerId,
+      storeId: submission.storeId,
+      storeName: submission.storeName,
+      serviceScenario: content.serviceScenario === undefined ? submission.serviceScenario : content.serviceScenario,
+      principleRef: content.principleRef === undefined ? submission.principleRef : content.principleRef,
+      doText: content.doText ?? submission.doText,
+      howText: content.howText === undefined ? submission.howText : content.howText,
+      dontText: content.dontText ?? submission.dontText,
+    };
+
+    validateDraftInput(nextContent);
+
+    return this.repository.updateSubmission(id, {
+      ...nextContent,
+      status: "draft",
+      aiReviewResult: null,
+    });
+  }
+
   async runInitialReview(id: string) {
     const submission = await this.requireSubmission(id);
     ensureTransition(submission, ["submitted"]);
@@ -166,6 +195,23 @@ export class WorkshopService {
 
     let publishable = submission;
     if (editedContent && Object.keys(editedContent).length > 0) {
+      const nextContent = {
+        title: editedContent.title ?? submission.title,
+        roleName: editedContent.roleName ?? submission.roleName,
+        brandId: submission.brandId,
+        regionId: submission.regionId,
+        dealerId: submission.dealerId,
+        storeId: submission.storeId,
+        storeName: submission.storeName,
+        serviceScenario:
+          editedContent.serviceScenario === undefined ? submission.serviceScenario : editedContent.serviceScenario,
+        principleRef: editedContent.principleRef === undefined ? submission.principleRef : editedContent.principleRef,
+        doText: editedContent.doText ?? submission.doText,
+        howText: editedContent.howText === undefined ? submission.howText : editedContent.howText,
+        dontText: editedContent.dontText ?? submission.dontText,
+      };
+
+      validateDraftInput(nextContent);
       publishable = await this.repository.updateSubmission(id, editedContent);
       await this.repository.addReviewEvent({
         submissionId: id,

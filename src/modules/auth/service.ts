@@ -1,4 +1,5 @@
 import { AppError } from "@/shared/errors";
+import { PREVIEW_USER_COOKIE } from "./preview";
 import type { AuthRepository, AuthRequestContext, AuthUserRecord } from "./types";
 
 function readHeader(context: AuthRequestContext | undefined, name: string) {
@@ -12,11 +13,26 @@ function readHeader(context: AuthRequestContext | undefined, name: string) {
   return headers[name] ?? headers[name.toLowerCase()] ?? null;
 }
 
+function readCookie(context: AuthRequestContext | undefined, name: string) {
+  const rawCookie = readHeader(context, "cookie");
+  if (!rawCookie) return null;
+
+  for (const part of rawCookie.split(";")) {
+    const [rawName, ...rawValue] = part.trim().split("=");
+    if (rawName !== name) continue;
+    const value = rawValue.join("=");
+    return value ? decodeURIComponent(value) : null;
+  }
+
+  return null;
+}
+
 export class AuthService {
   constructor(private readonly repository: AuthRepository) {}
 
   async getCurrentUser(context?: AuthRequestContext): Promise<AuthUserRecord> {
-    const requestedUserId = context?.userId ?? readHeader(context, "x-lighthouse-user-id");
+    const requestedUserId =
+      context?.userId ?? readHeader(context, "x-lighthouse-user-id") ?? readCookie(context, PREVIEW_USER_COOKIE);
     if (requestedUserId) {
       const user = await this.repository.findUserById(requestedUserId);
       if (!user) {
@@ -34,7 +50,8 @@ export class AuthService {
   }
 
   async getCurrentAdmin(context?: AuthRequestContext): Promise<AuthUserRecord> {
-    const requestedUserId = context?.userId ?? readHeader(context, "x-lighthouse-admin-id");
+    const requestedUserId =
+      context?.userId ?? readHeader(context, "x-lighthouse-admin-id") ?? readCookie(context, PREVIEW_USER_COOKIE);
     if (requestedUserId) {
       const user = await this.repository.findUserById(requestedUserId);
       if (!user?.roles.includes("highest_admin")) {
@@ -43,12 +60,7 @@ export class AuthService {
       return user;
     }
 
-    const demoAdmin = await this.repository.findDemoHighestAdmin();
-    if (!demoAdmin) {
-      throw new AppError("unauthorized", "Demo highest admin is not seeded.", 401);
-    }
-
-    return demoAdmin;
+    throw new AppError("forbidden", "Highest-admin role is required.", 403);
   }
 
   async resolveIdentityAccount(provider: string, providerUserId: string): Promise<AuthUserRecord> {
