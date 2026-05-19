@@ -5,6 +5,7 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
+  LhPageHero,
   LhPanel,
   LhSectionHeader,
   LhStatusBadge,
@@ -113,26 +114,23 @@ export default function PangDongLaiPage() {
         </aside>
 
         <main className="min-w-0 space-y-8">
-          <LhPanel elevated className="p-5 md:p-6">
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <LhChip tone="primary">
-                <Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />
-                镜鉴案例
-              </LhChip>
-              <LhStatusBadge tone="success">可阅读</LhStatusBadge>
-            </div>
-            <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
-              云游胖东来
-            </h1>
-            <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
-              深入一家区域零售企业的商业哲学与人文关怀，观察它如何把“自由、爱、人本经营”落到组织制度和服务现场。
-            </p>
-            <div className="mt-6 grid gap-3 text-sm font-bold text-muted sm:grid-cols-3">
-              <span>来源：公开报道整理</span>
-              <span>更新时间：2026-01</span>
-              <span>用途：服务文化镜鉴</span>
-            </div>
-          </LhPanel>
+          <LhPageHero
+            icon={<Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />}
+            eyebrow="镜鉴案例"
+            meta={<LhStatusBadge tone="success">可阅读</LhStatusBadge>}
+            title="云游胖东来"
+            description={
+              <p>
+                深入一家区域零售企业的商业哲学与人文关怀，观察它如何把“自由、爱、人本经营”落到组织制度和服务现场。
+              </p>
+            }
+            asideTitle="案例信息"
+            asideItems={[
+              { title: "来源", description: "公开报道整理" },
+              { title: "更新时间", description: "2026-01" },
+              { title: "用途", description: "服务文化镜鉴" },
+            ]}
+          />
 
           <ContentSection id="overview" eyebrow="概览" title="企业概况">
             <p className="max-w-4xl text-base leading-8 text-ink-soft">

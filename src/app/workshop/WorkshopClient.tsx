@@ -8,6 +8,7 @@ import {
   LhButton,
   LhCard,
   LhChip,
+  LhPageHero,
   LhPanel,
   LhSearchBox,
   LhSectionHeader,
@@ -251,53 +252,37 @@ function SectionTabs({
 
 function WorkshopHero({ onCreate }: { onCreate: () => void }) {
   return (
-    <LhPanel className="mb-6 overflow-hidden">
-      <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-6">
-        <div className="min-w-0">
-          <div className="mb-4 flex flex-wrap gap-2">
-            <LhChip tone="primary">
-              <Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />
-              共创
-            </LhChip>
-            <LhChip tone="neutral">长期开放提交</LhChip>
-          </div>
-          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
-            把服务经验，沉淀成可审核、可复用的岗位应做与避免。
-          </h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
-            共创不扩成论坛。它只处理三件事：一线提交具体动作，系统保留来源和状态，品牌管理员把合格内容发布为公共指南。
-          </p>
+    <LhPageHero
+      className="mb-6"
+      icon={<Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />}
+      eyebrow="共创"
+      meta={<LhChip tone="neutral">长期开放提交</LhChip>}
+      title="把服务经验，沉淀成可审核、可复用的岗位应做与避免。"
+      description={
+        <p>
+          共创不扩成论坛。它只处理三件事：一线提交具体动作，系统保留来源和状态，品牌管理员把合格内容发布为公共指南。
+        </p>
+      }
+      asideTitle="发布流程"
+      asideItems={[
+        { title: "提交", description: "角色、场景、应做、方法、避免" },
+        { title: "初审", description: "检查可执行性与重复内容" },
+        { title: "发布", description: "最高管理员编辑后进入公开区" },
+      ]}
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-bold text-muted">公开区、提交区、个人区固定保留；管理员只多一个审核区。</p>
+          <LhButton
+            type="button"
+            variant="primary"
+            icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
+            onClick={onCreate}
+          >
+            新建共创
+          </LhButton>
         </div>
-        <div className="grid gap-3 rounded-sm border border-line bg-surface-quiet p-4">
-          {[
-            ["1", "提交", "角色、场景、应做、方法、避免"],
-            ["2", "初审", "检查可执行性与重复内容"],
-            ["3", "发布", "最高管理员编辑后进入公开区"],
-          ].map(([step, title, text]) => (
-            <div key={step} className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-panel text-sm font-extrabold text-primary">
-                {step}
-              </span>
-              <span>
-                <strong className="block text-sm font-extrabold text-ink">{title}</strong>
-                <span className="text-sm leading-6 text-muted">{text}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col gap-3 border-t border-line bg-surface-quiet px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
-        <p className="text-sm font-bold text-muted">公开区、提交区、个人区固定保留；管理员只多一个审核区。</p>
-        <LhButton
-          type="button"
-          variant="primary"
-          icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
-          onClick={onCreate}
-        >
-          新建共创
-        </LhButton>
-      </div>
-    </LhPanel>
+      }
+    />
   );
 }
 

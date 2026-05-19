@@ -66,20 +66,22 @@ function NavLinks({
           "group relative grid min-h-12 items-center rounded-sm border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
-            ? "border-primary/35 bg-surface-quiet text-primary-deep"
-            : "border-transparent text-ink-soft hover:border-line hover:bg-surface-quiet hover:text-ink",
+            ? "border-primary-deep bg-primary-deep text-panel shadow-lh-md"
+            : "border-transparent text-ink-soft hover:border-line hover:bg-panel hover:text-ink",
         )}
         title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
       >
-        {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-primary" />}
+        {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-signal" />}
         <Icon
           icon={item.icon}
-          className={cn("h-5 w-5", isActive ? "text-primary-deep" : "text-muted group-hover:text-primary")}
+          className={cn("h-5 w-5", isActive ? "text-panel" : "text-muted group-hover:text-primary")}
         />
         {isExpanded && (
           <span className="min-w-0">
             <span className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
-            <span className="block truncate text-xs font-bold leading-tight text-muted">{item.label}</span>
+            <span className={cn("block truncate text-xs font-bold leading-tight", isActive ? "text-panel/70" : "text-muted")}>
+              {item.label}
+            </span>
           </span>
         )}
       </Link>

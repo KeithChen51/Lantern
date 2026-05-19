@@ -6,6 +6,7 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
+  LhPageHero,
   LhPanel,
   LhSectionHeader,
   LhStatusBadge,
@@ -36,35 +37,28 @@ export default function SubstituteVehiclePolicyPage() {
         </Link>
       </div>
 
-      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_340px] md:p-6">
-        <div>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <LhChip tone="primary">
-              <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
-              {metadata.kicker}
-            </LhChip>
-            <LhStatusBadge tone="warning">{metadata.status === "published" ? "已发布" : "草稿"}</LhStatusBadge>
-          </div>
-          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">{metadata.title}</h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">{brief.oneLine}</p>
-        </div>
-
-        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例信息</p>
-          <dl className="mt-4 grid gap-4 text-sm">
-            <MetaItem label="受众" value={metadata.audience.join("、")} />
-            <MetaItem label="版本" value={metadata.version} />
-            <MetaItem label="负责人" value={metadata.owner} />
-          </dl>
-          <div className="mt-5 flex flex-wrap gap-2">
+      <LhPageHero
+        icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
+        eyebrow={metadata.kicker}
+        meta={<LhStatusBadge tone="warning">{metadata.status === "published" ? "已发布" : "草稿"}</LhStatusBadge>}
+        title={metadata.title}
+        description={<p>{brief.oneLine}</p>}
+        asideTitle="案例信息"
+        asideItems={[
+          { title: "受众", description: metadata.audience.join("、") },
+          { title: "版本", description: metadata.version },
+          { title: "负责人", description: metadata.owner },
+        ]}
+        footer={
+          <div className="flex flex-wrap gap-2">
             {metadata.tags.map((tag) => (
               <LhChip key={tag} tone="neutral">
                 {tag}
               </LhChip>
             ))}
           </div>
-        </aside>
-      </LhPanel>
+        }
+      />
 
       <section className="grid gap-5 md:grid-cols-2">
         <LhCard className="p-5">
@@ -263,15 +257,6 @@ export default function SubstituteVehiclePolicyPage() {
         <LhChip tone="neutral">转入共创与路引</LhChip>
       </LhPanel>
     </article>
-  );
-}
-
-function MetaItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted">{label}</dt>
-      <dd className="mt-1 leading-6 text-ink-soft">{value}</dd>
-    </div>
   );
 }
 

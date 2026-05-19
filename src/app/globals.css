@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --lh-ink: #102b3b;
-  --lh-ink-soft: #2c4f5f;
-  --lh-muted: #667c86;
+  --lh-ink: #0b2233;
+  --lh-ink-soft: #24485a;
+  --lh-muted: #607984;
   --lh-faint: #9aabb1;
-  --lh-page: #f5f8f7;
-  --lh-panel: #ffffff;
-  --lh-surface: #fbfcfb;
-  --lh-surface-quiet: #f3f7f6;
-  --lh-fog: #e6eeee;
-  --lh-line: #d1dde0;
-  --lh-line-strong: #9fb6bd;
-  --lh-primary: #255f70;
-  --lh-primary-deep: #164658;
-  --lh-primary-soft: #e7f0f2;
+  --lh-page: #f2f6f5;
+  --lh-panel: #fffefd;
+  --lh-surface: #f9fbfa;
+  --lh-surface-quiet: #edf4f3;
+  --lh-fog: #dfe9e9;
+  --lh-line: #c8d8dc;
+  --lh-line-strong: #86a3ad;
+  --lh-primary: #1c5668;
+  --lh-primary-deep: #0b3446;
+  --lh-primary-soft: #dfecef;
   --lh-signal: #3d94a8;
   --lh-signal-deep: #256f82;
   --lh-signal-soft: #e9f5f6;
@@ -55,9 +55,9 @@
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --shadow-sm: 0 1px 2px rgba(16, 43, 59, 0.055), 0 6px 14px rgba(16, 43, 59, 0.035);
-  --shadow-md: 0 1px 2px rgba(16, 43, 59, 0.07), 0 14px 30px rgba(16, 43, 59, 0.065);
-  --shadow-focus: 0 0 0 3px rgba(37, 95, 112, 0.2);
+  --shadow-sm: 0 1px 2px rgba(11, 34, 51, 0.07), 0 5px 12px rgba(11, 34, 51, 0.04);
+  --shadow-md: 0 1px 2px rgba(11, 34, 51, 0.08), 0 18px 40px rgba(11, 34, 51, 0.075);
+  --shadow-focus: 0 0 0 3px rgba(28, 86, 104, 0.22);
 
   --font-sans-stack: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
   --font-mono-stack: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -118,7 +118,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(180deg, #fbfcfb 0%, var(--color-page) 64%, #f2f6f5 100%);
+    linear-gradient(180deg, #fbfcfb 0%, var(--color-page) 58%, #eef4f3 100%);
   background-size: auto;
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
@@ -136,8 +136,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.82), transparent 38%),
-    linear-gradient(90deg, rgba(37, 95, 112, 0.028), transparent 46%, rgba(37, 95, 112, 0.022));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
+    linear-gradient(90deg, rgba(11, 52, 70, 0.055), transparent 38%, rgba(11, 52, 70, 0.018));
 }
 
 ::selection {

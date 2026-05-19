@@ -4,7 +4,7 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
-  LhPanel,
+  LhPageHero,
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
@@ -101,55 +101,40 @@ const readingPath = [
 export default function HeartPage() {
   return (
     <div className="space-y-8 pb-12">
-      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_340px] md:p-6">
-        <div className="min-w-0">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <LhChip tone="primary">
-              <Icon icon={lighthouseIcons.heart} className="h-4 w-4" />
-              本心
-            </LhChip>
-            <LhChip tone="signal">清晰优先</LhChip>
-          </div>
-          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
-            于此，回答“精诚服务”到底相信什么。
-          </h1>
-          <div className="mt-5 max-w-3xl space-y-3 text-base leading-7 text-ink-soft">
+      <LhPageHero
+        icon={<Icon icon={lighthouseIcons.heart} className="h-4 w-4" />}
+        eyebrow="本心"
+        meta={<LhChip tone="signal">清晰优先</LhChip>}
+        title="于此，回答“精诚服务”到底相信什么。"
+        description={
+          <>
             <p>
               客户把车交给我们，交出的不只是一次维修或保养需求，也是一份信任。员工站在一线，面对的也不只是流程、指标和投诉，而是真实的人、真实的压力，以及每天必须作出的判断。
             </p>
             <p>
               “本心”讨论的正是这些判断背后的标准。我们用真、善、美、爱来理解“精诚服务”：它既是对客户的承诺，也是经销商对员工、组织对一线的要求。
             </p>
-          </div>
-        </div>
-
-        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">阅读路径</p>
-          <ol className="mt-4 grid gap-3">
-            {readingPath.map((item, index) => (
-              <li key={item} className="grid grid-cols-[32px_minmax(0,1fr)] items-start gap-3 text-sm leading-6 text-ink-soft">
-                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line bg-panel text-xs font-extrabold text-primary-deep">
-                  {index + 1}
-                </span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-5 flex flex-wrap gap-2">
+          </>
+        }
+        asideTitle="阅读路径"
+        asideItems={readingPath.map((item) => ({ title: item }))}
+        footer={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-2 text-sm font-extrabold text-muted">四个判断维度</span>
             {valueSections.map((value) => (
               <LhChip key={value.title} tone="signal">
                 {value.title}
               </LhChip>
             ))}
           </div>
-        </aside>
-      </LhPanel>
+        }
+      />
 
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-        <LhCard className="p-6">
-          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">核心</p>
-          <h2 className="mt-3 text-2xl font-extrabold text-ink">精诚服务的核心</h2>
-          <p className="mt-4 text-base leading-8 text-ink-soft">
+        <LhCard className="border-primary-deep bg-primary-deep p-6 text-panel shadow-lh-md">
+          <p className="text-xs font-extrabold tracking-[0.14em] text-panel/65">核心</p>
+          <h2 className="mt-3 text-2xl font-extrabold text-panel">精诚服务的核心</h2>
+          <p className="mt-4 text-base leading-8 text-panel/80">
             本心，是灯塔的起点。先把我们共同相信的价值讲清楚，再去看案例、做实践、共创规范、提出问题，后面的内容才有共同的出发点。
           </p>
         </LhCard>

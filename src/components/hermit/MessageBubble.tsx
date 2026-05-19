@@ -46,8 +46,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     return (
       <article className="grid grid-cols-[minmax(0,1fr)_36px] gap-3">
         <div className="flex justify-end">
-          <div className="max-w-[min(720px,92%)] rounded-sm border border-primary/25 bg-primary-soft px-4 py-3 text-sm font-bold leading-7 text-primary-deep shadow-lh-sm">
-            <div className="mb-1 text-xs font-extrabold text-primary-deep/80">你</div>
+          <div className="max-w-[min(720px,92%)] rounded-sm border border-primary-deep bg-primary-deep px-4 py-3 text-sm font-bold leading-7 text-panel shadow-lh-sm">
+            <div className="mb-1 text-xs font-extrabold text-panel/70">你</div>
             <p className="whitespace-pre-wrap">{text}</p>
           </div>
         </div>
@@ -61,10 +61,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <article className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
       <AssistantAvatar />
-      <div className="min-w-0 rounded-sm border border-line bg-panel p-5 text-ink shadow-lh-sm">
+      <div className="min-w-0 rounded-sm border border-line-strong border-l-4 border-l-primary bg-surface p-5 text-ink shadow-lh-sm">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <strong className="text-sm font-extrabold text-ink">路引</strong>
-          <LhChip tone="primary">路引回答</LhChip>
+          <LhChip tone="primary">结构化回答</LhChip>
           <LhStatusBadge tone={needsEvidence ? "warning" : "success"}>
             {needsEvidence ? "证据不足" : "可继续判断"}
           </LhStatusBadge>

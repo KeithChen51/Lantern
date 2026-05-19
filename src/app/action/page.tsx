@@ -4,7 +4,7 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
-  LhPanel,
+  LhPageHero,
   LhSectionHeader,
   LhStatusBadge,
 } from "@/components/ui/lighthouse-primitives";
@@ -20,37 +20,19 @@ const trainingSteps = [
 export default function ActionPage() {
   return (
     <div className="space-y-8 pb-12">
-      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_320px] md:p-6">
-        <div>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <LhChip tone="primary">
-              <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
-              笃行
-            </LhChip>
-            <LhStatusBadge tone="warning">判断训练</LhStatusBadge>
-          </div>
-          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
-            把真实服务实践，拆成可以复盘的判断训练。
-          </h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
+      <LhPageHero
+        icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
+        eyebrow="笃行"
+        meta={<LhStatusBadge tone="warning">判断训练</LhStatusBadge>}
+        title="把真实服务实践，拆成可以复盘的判断训练。"
+        description={
+          <p>
             笃行记录内部已经发生的服务实践。重点不是把案例讲完，而是回到真实政策、真实门店和真实客户场景里，看客户体验是否被守住，门店是否具备执行条件，政策指标是否真的服务于客户价值。
           </p>
-        </div>
-
-        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">训练流程</p>
-          <ol className="mt-4 grid gap-3">
-            {trainingSteps.map((step, index) => (
-              <li key={step} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-sm leading-6 text-ink-soft">
-                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line bg-panel text-xs font-extrabold text-primary-deep">
-                  {index + 1}
-                </span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      </LhPanel>
+        }
+        asideTitle="训练流程"
+        asideItems={trainingSteps.map((step) => ({ title: step }))}
+      />
 
       <section className="space-y-6">
         <LhSectionHeader

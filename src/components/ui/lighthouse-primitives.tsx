@@ -102,7 +102,7 @@ export const LhPanel = React.forwardRef<HTMLDivElement, LhPanelProps>(
       ref={ref}
       className={cn(
         "rounded-sm border border-line bg-surface text-ink",
-        elevated ? "shadow-lh-md" : "shadow-lh-sm",
+        elevated ? "border-line-strong bg-panel shadow-lh-md" : "shadow-lh-sm",
         className,
       )}
       {...props}
@@ -258,14 +258,83 @@ export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivE
 
 export function LhSectionHeader({ className, eyebrow, title, description, action, ...props }: LhSectionHeaderProps) {
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
+    <div className={cn("grid gap-4 border-t border-line-strong pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
       <div className="min-w-0">
-        {eyebrow && <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-primary-deep">{eyebrow}</p>}
-        <h2 className="text-xl font-extrabold leading-tight text-ink md:text-2xl">{title}</h2>
+        {eyebrow && (
+          <p className="mb-3 inline-flex min-h-6 items-center rounded-sm border border-primary/20 bg-primary-soft px-2.5 text-xs font-extrabold uppercase tracking-[0.12em] text-primary-deep">
+            {eyebrow}
+          </p>
+        )}
+        <h2 className="text-2xl font-extrabold leading-tight text-ink md:text-3xl">{title}</h2>
         {description && <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">{description}</p>}
       </div>
       {action}
     </div>
+  );
+}
+
+export interface LhPageHeroAsideItem {
+  title: React.ReactNode;
+  description?: React.ReactNode;
+}
+
+export interface LhPageHeroProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+  icon: React.ReactNode;
+  eyebrow: React.ReactNode;
+  meta?: React.ReactNode;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  asideTitle: React.ReactNode;
+  asideItems: LhPageHeroAsideItem[];
+  footer?: React.ReactNode;
+}
+
+export function LhPageHero({
+  className,
+  icon,
+  eyebrow,
+  meta,
+  title,
+  description,
+  asideTitle,
+  asideItems,
+  footer,
+  ...props
+}: LhPageHeroProps) {
+  return (
+    <LhPanel elevated className={cn("overflow-hidden", className)} {...props}>
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 p-6 md:p-8">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <span className="inline-flex min-h-9 items-center gap-2 rounded-sm bg-primary-deep px-3 text-sm font-extrabold text-panel">
+              {icon}
+              {eyebrow}
+            </span>
+            {meta}
+          </div>
+          <h1 className="max-w-4xl text-3xl font-extrabold leading-tight text-ink md:text-4xl">{title}</h1>
+          {description && <div className="mt-5 max-w-4xl space-y-3 text-base leading-8 text-ink-soft">{description}</div>}
+        </div>
+
+        <aside className="border-t border-primary/30 bg-primary-deep p-5 text-panel lg:border-l lg:border-t-0 md:p-6">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-panel/65">{asideTitle}</p>
+          <ol className="mt-5 grid gap-4">
+            {asideItems.map((item, index) => (
+              <li key={index} className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-panel/20 bg-panel/10 text-sm font-extrabold text-panel">
+                  {index + 1}
+                </span>
+                <span className="min-w-0">
+                  <strong className="block text-sm font-extrabold leading-6 text-panel">{item.title}</strong>
+                  {item.description && <span className="mt-1 block text-sm leading-6 text-panel/70">{item.description}</span>}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </div>
+      {footer && <div className="border-t border-line-strong bg-surface-quiet px-6 py-4 md:px-8">{footer}</div>}
+    </LhPanel>
   );
 }
 

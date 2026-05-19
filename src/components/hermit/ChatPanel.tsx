@@ -58,15 +58,15 @@ export function ChatPanel() {
   }
 
   return (
-    <LhPanel elevated className="overflow-hidden lg:grid lg:h-[calc(100vh-112px)] lg:min-h-[560px] lg:grid-rows-[auto_minmax(0,1fr)]">
-      <div className="grid border-b border-line bg-surface-quiet px-4 py-2.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5">
+    <LhPanel elevated className="overflow-hidden border-line-strong lg:grid lg:h-[calc(100vh-104px)] lg:min-h-[560px] lg:grid-rows-[auto_minmax(0,1fr)]">
+      <div className="grid border-b border-line-strong bg-panel px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-line bg-panel text-primary-deep">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary-deep text-panel">
             <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-extrabold leading-tight text-ink md:text-2xl">路引 AI 对话助手</h1>
+              <h1 className="whitespace-nowrap text-xl font-extrabold leading-tight text-ink md:text-2xl">路引 AI 对话助手</h1>
               <LhStatusBadge tone="success">知识已接入</LhStatusBadge>
             </div>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-muted md:text-sm">
@@ -82,20 +82,20 @@ export function ChatPanel() {
         </div>
       </div>
 
-      <div className="grid lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="grid min-h-[640px] grid-rows-[auto_minmax(0,1fr)_auto] border-line lg:min-h-0 lg:border-r">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-panel px-4 py-2.5 md:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/30 bg-primary-deep px-4 py-2.5 text-panel md:px-5">
             <div className="flex flex-wrap gap-2">
-              <LhChip tone="primary">对话流</LhChip>
-              <LhChip tone="neutral">回车发送</LhChip>
-              <LhChip tone="neutral">Shift + 回车换行</LhChip>
+              <span className="rounded-sm border border-panel/20 bg-panel/10 px-2.5 py-1 text-xs font-extrabold">对话流</span>
+              <span className="rounded-sm border border-panel/20 bg-panel/10 px-2.5 py-1 text-xs font-bold text-panel/75">回车发送</span>
+              <span className="rounded-sm border border-panel/20 bg-panel/10 px-2.5 py-1 text-xs font-bold text-panel/75">Shift + 回车换行</span>
             </div>
-            <p className="text-xs font-bold leading-5 text-muted">建议先讲具体场景，再问判断分歧。</p>
+            <p className="text-xs font-bold leading-5 text-panel/75">建议先讲具体场景，再问判断分歧。</p>
           </div>
 
           <div
             ref={scrollRef}
-            className="min-h-0 overflow-y-auto bg-[linear-gradient(180deg,rgba(231,240,242,0.34),transparent_150px)] px-4 py-4 md:px-5"
+            className="min-h-0 overflow-y-auto bg-panel px-4 py-4 md:px-5"
           >
             <div className="mx-auto grid max-w-5xl gap-4">
               <AssistantIntro />
@@ -107,7 +107,7 @@ export function ChatPanel() {
             </div>
           </div>
 
-          <div className="border-t border-line bg-surface-quiet p-3 md:p-4">
+          <div className="border-t border-line-strong bg-surface-quiet p-3 md:p-4">
             <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold leading-5 text-muted">
               <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
@@ -116,8 +116,8 @@ export function ChatPanel() {
           </div>
         </section>
 
-        <aside className="grid content-start gap-4 border-t border-line bg-surface p-4 lg:min-h-0 lg:overflow-y-auto lg:border-t-0">
-          <section className="rounded-sm border border-line bg-panel p-3 shadow-lh-sm">
+        <aside className="grid content-start gap-4 border-t border-line-strong bg-surface p-4 lg:min-h-0 lg:overflow-y-auto lg:border-t-0">
+          <section className="rounded-sm border border-line-strong bg-panel p-3 shadow-lh-sm">
             <h2 className="flex items-center gap-2 text-lg font-extrabold text-ink">
               <Icon icon={lighthouseIcons.status} className="h-5 w-5 text-primary" />
               回答约定
@@ -125,7 +125,7 @@ export function ChatPanel() {
             <div className="mt-3 grid gap-2">
               {answerContract.map(([title, text], index) => (
                 <div key={title} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-sm border border-line bg-surface-quiet p-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line bg-primary-soft text-sm font-extrabold text-primary-deep">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary-deep text-sm font-extrabold text-panel">
                     {index + 1}
                   </span>
                   <span>
@@ -152,7 +152,7 @@ export function ChatPanel() {
             </div>
           </section>
 
-          <section className="rounded-sm border border-line bg-surface-quiet p-3 text-primary-deep shadow-lh-sm">
+          <section className="rounded-sm border border-line-strong bg-surface-quiet p-3 text-primary-deep shadow-lh-sm">
             <h2 className="flex items-center gap-2 text-sm font-extrabold">
               <Icon icon={lighthouseIcons.info} className="h-4 w-4" />
               适合这样提问
@@ -173,7 +173,7 @@ function AssistantIntro() {
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-line-strong bg-primary text-panel">
         <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
       </span>
-      <div className="min-w-0 rounded-sm border border-line bg-panel p-4 shadow-lh-sm">
+      <div className="min-w-0 rounded-sm border border-line-strong border-l-4 border-l-primary bg-surface p-4 shadow-lh-sm">
         <div className="flex flex-wrap items-center gap-2">
           <strong className="text-sm font-extrabold text-ink">路引</strong>
           <LhStatusBadge tone="success" withDot={false}>
@@ -198,12 +198,12 @@ function StarterGrid({ onSelect, disabled }: { onSelect: (question: string) => v
           onClick={() => onSelect(question)}
           disabled={disabled}
           className={cn(
-            "group grid min-h-20 gap-2 rounded-sm border border-line bg-surface px-4 py-3 text-left shadow-lh-sm transition-[background,border-color,box-shadow] duration-150",
-            "hover:border-line-strong hover:bg-panel hover:shadow-lh-md disabled:cursor-not-allowed disabled:opacity-55",
+            "group grid min-h-20 gap-2 rounded-sm border border-line bg-surface-quiet px-4 py-3 text-left shadow-lh-sm transition-[background,border-color,box-shadow] duration-150",
+            "hover:border-primary hover:bg-panel hover:shadow-lh-md disabled:cursor-not-allowed disabled:opacity-55",
           )}
         >
           <span className="flex items-center justify-between gap-3">
-            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-sm border border-line bg-primary-soft text-xs font-extrabold text-primary-deep">
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-sm bg-primary-deep text-xs font-extrabold text-panel">
               {index + 1}
             </span>
             <Icon icon={lighthouseIcons.send} className="h-4 w-4 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />

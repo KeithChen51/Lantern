@@ -38,7 +38,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-sm border border-line-strong bg-panel p-3 shadow-lh-sm transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[var(--shadow-focus)]">
+    <form onSubmit={handleSubmit} className="rounded-sm border border-line-strong bg-panel p-3 shadow-lh-md transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[var(--shadow-focus)]">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
         <label className="min-w-0">
           <span className="sr-only">向路引提问</span>
@@ -68,7 +68,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2 text-xs font-bold leading-5 text-muted">
-        <span className="rounded-sm bg-primary-soft px-2.5 py-1 text-primary-deep">先讲场景</span>
+        <span className="rounded-sm bg-primary-deep px-2.5 py-1 text-panel">先讲场景</span>
         <span>再问“该怎么判断”或“下一步怎么说”。</span>
       </div>
     </form>
