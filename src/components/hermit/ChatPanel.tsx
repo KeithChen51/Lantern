@@ -45,7 +45,7 @@ export function ChatPanel() {
   }
 
   return (
-    <LhPanel elevated className="mx-auto grid w-full max-w-6xl overflow-hidden border-line-strong bg-panel lg:h-[calc(100vh-104px)] lg:min-h-[620px] lg:grid-rows-[auto_minmax(0,1fr)_auto]">
+    <LhPanel elevated className="grid w-full overflow-hidden border-line-strong bg-panel lg:h-[calc(100vh-104px)] lg:min-h-[620px] lg:grid-rows-[auto_minmax(0,1fr)_auto]">
       <header className="border-b border-line bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface-quiet))] px-5 py-4 md:px-6">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
