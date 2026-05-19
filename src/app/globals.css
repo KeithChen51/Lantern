@@ -1,53 +1,171 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F3EFE0;
-  --foreground: #2C2C2C;
-  --color-ink: #2C2C2C;
-  --color-paper: #F3EFE0;
-  --color-amber: #D97706;
-  /* Amber Gold 琥珀金 */
+  --lh-ink: #0f2d44;
+  --lh-ink-soft: #28516a;
+  --lh-muted: #5f7b8b;
+  --lh-faint: #8da4ad;
+  --lh-page: #f2f8f8;
+  --lh-panel: #fefffb;
+  --lh-surface: #fbfefd;
+  --lh-surface-quiet: #f6fbf9;
+  --lh-fog: #ddeff1;
+  --lh-line: #bfd8de;
+  --lh-line-strong: #8db2bc;
+  --lh-primary: #176e8b;
+  --lh-primary-deep: #0f5268;
+  --lh-primary-soft: #d7ecef;
+  --lh-signal: #28b8c7;
+  --lh-signal-deep: #137b89;
+  --lh-signal-soft: #d8f5f7;
+  --lh-success: #2d8560;
+  --lh-success-soft: #dcf2e8;
+  --lh-warning: #a86420;
+  --lh-warning-soft: #f6eadb;
+  --lh-danger: #aa443f;
+  --lh-danger-soft: #f5dfdd;
+  --lh-info: #3e89a8;
+  --lh-info-soft: #deedf3;
+
+  --color-page: var(--lh-page);
+  --color-panel: var(--lh-panel);
+  --color-surface: var(--lh-surface);
+  --color-surface-quiet: var(--lh-surface-quiet);
+  --color-ink: var(--lh-ink);
+  --color-ink-soft: var(--lh-ink-soft);
+  --color-muted: var(--lh-muted);
+  --color-faint: var(--lh-faint);
+  --color-primary: var(--lh-primary);
+  --color-primary-deep: var(--lh-primary-deep);
+  --color-primary-soft: var(--lh-primary-soft);
+  --color-signal: var(--lh-signal);
+  --color-signal-deep: var(--lh-signal-deep);
+  --color-signal-soft: var(--lh-signal-soft);
+  --color-line: var(--lh-line);
+  --color-line-strong: var(--lh-line-strong);
+  --color-danger: var(--lh-danger);
+  --color-danger-soft: var(--lh-danger-soft);
+  --color-warning: var(--lh-warning);
+  --color-warning-soft: var(--lh-warning-soft);
+  --color-success: var(--lh-success);
+  --color-success-soft: var(--lh-success-soft);
+  --color-info: var(--lh-info);
+  --color-info-soft: var(--lh-info-soft);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
+  --shadow-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
+  --shadow-focus: 0 0 0 3px rgba(40, 184, 199, 0.24);
+
+  --font-sans-stack: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
+  --font-serif-stack: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --font-mono-stack: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --background: var(--color-page);
+  --foreground: var(--color-ink);
+  --color-paper: var(--color-page);
+  --color-amber: var(--color-primary);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-ink: var(--color-ink);
-  --color-paper: var(--color-paper);
-  --color-amber: var(--color-amber);
-  --font-sans: "Inter", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-serif: "Playfair Display", "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
-  --font-noto: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --color-background: var(--color-page);
+  --color-foreground: var(--color-ink);
+  --color-page: var(--lh-page);
+  --color-panel: var(--lh-panel);
+  --color-surface: var(--lh-surface);
+  --color-surface-quiet: var(--lh-surface-quiet);
+  --color-ink: var(--lh-ink);
+  --color-ink-soft: var(--lh-ink-soft);
+  --color-muted: var(--lh-muted);
+  --color-faint: var(--lh-faint);
+  --color-primary: var(--lh-primary);
+  --color-primary-deep: var(--lh-primary-deep);
+  --color-primary-soft: var(--lh-primary-soft);
+  --color-signal: var(--lh-signal);
+  --color-signal-deep: var(--lh-signal-deep);
+  --color-signal-soft: var(--lh-signal-soft);
+  --color-line: var(--lh-line);
+  --color-line-strong: var(--lh-line-strong);
+  --color-danger: var(--lh-danger);
+  --color-danger-soft: var(--lh-danger-soft);
+  --color-warning: var(--lh-warning);
+  --color-warning-soft: var(--lh-warning-soft);
+  --color-success: var(--lh-success);
+  --color-success-soft: var(--lh-success-soft);
+  --color-info: var(--lh-info);
+  --color-info-soft: var(--lh-info-soft);
+  --color-paper: var(--lh-page);
+  --color-amber: var(--lh-primary);
+  --font-sans: var(--font-sans-stack);
+  --font-mono: var(--font-mono-stack);
+  --font-serif: var(--font-serif-stack);
+  --font-noto: var(--font-sans-stack);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --shadow-lh-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
+  --shadow-lh-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-page);
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  position: relative;
   min-height: 100vh;
+  margin: 0;
+  background:
+    linear-gradient(rgba(141, 178, 188, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(141, 178, 188, 0.1) 1px, transparent 1px),
+    linear-gradient(120deg, rgba(215, 236, 239, 0.72), transparent 34%),
+    linear-gradient(180deg, #f8fbfa 0%, var(--color-page) 58%, #eef6f3 100%);
+  background-size: 34px 34px, 34px 34px, auto, auto;
+  color: var(--color-ink);
+  font-family: var(--font-sans-stack);
+  font-kerning: normal;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  overflow-x: clip;
+  position: relative;
 }
 
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+  inset: 0;
   z-index: -1;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-  opacity: 0.6;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 34%),
+    linear-gradient(90deg, rgba(40, 184, 199, 0.1), transparent 38%, rgba(23, 110, 139, 0.08));
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-serif);
+::selection {
+  background: var(--color-signal-soft);
   color: var(--color-ink);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
 }
