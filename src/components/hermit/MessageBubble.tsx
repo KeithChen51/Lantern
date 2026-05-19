@@ -3,98 +3,95 @@
 import { Icon } from "@iconify/react";
 import ReactMarkdown from "react-markdown";
 import type { UIMessage } from "ai";
+import { LhChip, LhStatusBadge } from "@/components/ui/lighthouse-primitives";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { cn } from "@/lib/utils";
 
 interface MessageBubbleProps {
   message: UIMessage;
 }
 
-/**
- * Extract the text content from a UIMessage's parts array.
- */
 function getTextContent(message: UIMessage): string {
   return message.parts
-    .filter((p): p is { type: "text"; text: string } => p.type === "text")
-    .map((p) => p.text)
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
     .join("");
+}
+
+function isEvidenceInsufficient(text: string) {
+  return /证据不足|缺少|无法判断|还需要|还缺少|不能直接下结论/.test(text);
+}
+
+function AssistantAvatar() {
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+      <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
+    </span>
+  );
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
 
-  return (
-    <div
-      className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"} items-start`}
-    >
-      {/* Avatar */}
-      {!isUser && (
-        <div className="flex-shrink-0 mt-1">
-          <div className="w-8 h-8 rounded-lg bg-amber/10 flex items-center justify-center">
-            <Icon
-              icon="game-icons:lighthouse"
-              className="w-4.5 h-4.5 text-amber drop-shadow-[0_0_4px_rgba(217,119,6,0.4)]"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Bubble */}
-      <div
-        className={`
-          max-w-[80%] rounded-2xl px-5 py-3.5 leading-relaxed
-          ${isUser
-            ? "bg-ink/8 text-ink font-sans text-sm"
-            : "bg-amber/5 border border-amber/10 text-ink/85 font-serif text-[0.95rem]"
-          }
-        `}
-      >
-        {isUser ? (
+  if (isUser) {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[min(720px,92%)] rounded-md border border-line bg-primary-soft px-4 py-3 text-sm font-bold leading-7 text-primary-deep shadow-lh-sm">
           <p className="whitespace-pre-wrap">{text}</p>
-        ) : (
-          <div className="hermit-prose">
-            <ReactMarkdown
-              components={{
-                p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
-                strong: ({ children }) => <strong className="font-bold text-ink">{children}</strong>,
-                ul: ({ children }) => <ul className="list-disc list-outside pl-4 mb-3 last:mb-0 space-y-1">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal list-outside pl-4 mb-3 last:mb-0 space-y-1">{children}</ol>,
-                li: ({ children }) => <li className="text-ink/80">{children}</li>,
-                h3: ({ children }) => <h3 className="font-bold text-ink text-base mt-4 mb-2 font-noto">{children}</h3>,
-                h4: ({ children }) => <h4 className="font-bold text-ink text-sm mt-3 mb-1.5 font-noto">{children}</h4>,
-                blockquote: ({ children }) => <blockquote className="border-l-2 border-amber/30 pl-3 my-3 text-ink/60 italic">{children}</blockquote>,
-                hr: () => <hr className="border-ink/10 my-4" />,
-              }}
-            >
-              {text}
-            </ReactMarkdown>
-          </div>
-        )}
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  const needsEvidence = isEvidenceInsufficient(text);
+
+  return (
+    <article className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
+      <AssistantAvatar />
+      <div className="min-w-0 rounded-md border border-line bg-panel p-5 text-ink shadow-lh-sm">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <LhChip tone="primary">路引回答</LhChip>
+          <LhStatusBadge tone={needsEvidence ? "warning" : "success"}>
+            {needsEvidence ? "证据不足" : "可继续判断"}
+          </LhStatusBadge>
+        </div>
+        <div className="hermit-prose text-sm leading-7 text-ink-soft md:text-base md:leading-8">
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+              strong: ({ children }) => <strong className="font-extrabold text-ink">{children}</strong>,
+              ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
+              ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
+              li: ({ children }) => <li className="text-ink-soft">{children}</li>,
+              h3: ({ children }) => <h3 className="mb-2 mt-5 text-base font-extrabold text-ink">{children}</h3>,
+              h4: ({ children }) => <h4 className="mb-2 mt-4 text-sm font-extrabold text-ink">{children}</h4>,
+              blockquote: ({ children }) => (
+                <blockquote className="my-4 rounded-sm border-l-4 border-primary bg-surface-quiet px-4 py-3 text-muted">
+                  {children}
+                </blockquote>
+              ),
+              hr: () => <hr className="my-5 border-line" />,
+            }}
+          >
+            {text}
+          </ReactMarkdown>
+        </div>
+      </div>
+    </article>
   );
 }
 
-/**
- * Typing indicator shown while the agent is generating a response.
- */
 export function TypingIndicator() {
   return (
-    <div className="flex gap-3 items-start">
-      <div className="flex-shrink-0 mt-1">
-        <div className="w-8 h-8 rounded-lg bg-amber/10 flex items-center justify-center">
-          <Icon
-            icon="game-icons:lighthouse"
-            className="w-4.5 h-4.5 text-amber drop-shadow-[0_0_4px_rgba(217,119,6,0.4)] animate-pulse"
-          />
-        </div>
+    <article className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
+      <AssistantAvatar />
+      <div className="w-fit rounded-md border border-line bg-panel px-4 py-3 text-sm font-bold leading-6 text-muted shadow-lh-sm">
+        <span className="inline-flex items-center gap-2">
+          <Icon icon={lighthouseIcons.refresh} className={cn("h-4 w-4 animate-spin text-primary")} />
+          路引正在整理事实和依据
+        </span>
       </div>
-      <div className="bg-amber/5 border border-amber/10 rounded-2xl px-5 py-3.5">
-        <div className="flex gap-1.5 items-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber/40 animate-bounce [animation-delay:0ms]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-amber/40 animate-bounce [animation-delay:150ms]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-amber/40 animate-bounce [animation-delay:300ms]" />
-        </div>
-      </div>
-    </div>
+    </article>
   );
 }

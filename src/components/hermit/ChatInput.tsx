@@ -1,6 +1,9 @@
 "use client";
 
-import { useRef, useState, useEffect, type FormEvent, type KeyboardEvent } from "react";
+import { Icon } from "@iconify/react";
+import { useEffect, useRef, type FormEvent, type KeyboardEvent } from "react";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   value: string;
@@ -11,87 +14,57 @@ interface ChatInputProps {
 
 export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isFocused, setIsFocused] = useState(false);
 
-  // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 156)}px`;
     }
   }, [value]);
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
     if (!value.trim() || isLoading) return;
     onSubmit();
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       if (!value.trim() || isLoading) return;
       onSubmit();
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <div
-        className={`
-          flex items-end gap-3 rounded-2xl border backdrop-blur-md
-          bg-white/40 shadow-[0_-4px_30px_rgba(0,0,0,0.04)]
-          transition-all duration-300
-          ${isFocused
-            ? "border-amber/40 shadow-[0_0_20px_rgba(217,119,6,0.08)]"
-            : "border-white/60"
-          }
-          px-4 py-3
-        `}
-      >
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          placeholder="在此提问，与路引对话…"
-          disabled={isLoading}
-          rows={1}
-          className="
-            flex-1 resize-none bg-transparent outline-none
-            text-ink placeholder:text-ink/30
-            font-serif text-base leading-relaxed
-            max-h-40 py-1
-            disabled:opacity-50
-          "
-        />
+    <form onSubmit={handleSubmit} className="rounded-md border border-line bg-panel p-3 shadow-lh-sm">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+        <label className="min-w-0">
+          <span className="sr-only">向路引提问</span>
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="描述服务场景、客户状态、门店限制和你想判断的分歧..."
+            disabled={isLoading}
+            rows={1}
+            className="max-h-40 min-h-12 w-full resize-none bg-transparent px-2 py-2 text-base leading-7 text-ink outline-none placeholder:text-muted disabled:opacity-55"
+          />
+        </label>
         <button
           type="submit"
           disabled={!value.trim() || isLoading}
-          className="
-            flex-shrink-0 flex items-center justify-center
-            w-10 h-10 rounded-xl
-            bg-amber text-white
-            transition-all duration-300
-            hover:bg-amber/90 hover:shadow-[0_0_15px_rgba(217,119,6,0.3)]
-            disabled:opacity-30 disabled:hover:bg-amber disabled:hover:shadow-none
-            active:scale-95
-          "
-        >
-          {isLoading ? (
-            <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
+          aria-label={isLoading ? "正在生成" : "发送"}
+          title={isLoading ? "正在生成" : "发送"}
+          className={cn(
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,transform,color] duration-150",
+            "border-primary bg-primary text-panel shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_16px_rgba(15,82,104,0.18)]",
+            "hover:-translate-y-0.5 hover:bg-primary-deep disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-55",
           )}
+        >
+          <Icon icon={isLoading ? lighthouseIcons.refresh : lighthouseIcons.send} className={cn("h-5 w-5", isLoading && "animate-spin")} />
         </button>
       </div>
     </form>
