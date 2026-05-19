@@ -77,16 +77,9 @@ function NavLinks({
           className={cn("h-5 w-5", isActive ? "text-primary-deep" : "text-muted group-hover:text-primary")}
         />
         {isExpanded && (
-          <span className="flex min-w-0 items-center justify-between gap-3">
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
-              <span className="block truncate text-xs font-bold leading-tight text-muted">{item.label}</span>
-            </span>
-            {item.isDev && (
-              <span className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] font-extrabold text-muted">
-                预览
-              </span>
-            )}
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
+            <span className="block truncate text-xs font-bold leading-tight text-muted">{item.label}</span>
           </span>
         )}
       </Link>
