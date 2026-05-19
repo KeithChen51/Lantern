@@ -1,8 +1,18 @@
 import Link from "next/link";
+import { Icon } from "@iconify/react";
+import {
+  LhCard,
+  LhChip,
+  LhDataTableShell,
+  LhPanel,
+  LhSectionHeader,
+} from "@/components/ui/lighthouse-primitives";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 
 const valueSections = [
   {
     title: "真",
+    focus: "尊重事实",
     summary: "真，是尊重事实、尊重规律、尊重真实处境。",
     customer:
       "面对客户，真意味着如实说明车况、费用、进度、风险和不确定性。不夸大问题，不隐瞒失误，不用信息差诱导消费。",
@@ -11,6 +21,7 @@ const valueSections = [
   },
   {
     title: "善",
+    focus: "选择有益",
     summary: "善，是在规则、成本和效率之间选择更有益于人的做法。",
     customer:
       "面对客户，善不是一味迁就，而是在灰色地带里先问一句：这样做是否真正为客户创造价值？能不能多解释一步、多帮一步，同时守住合理边界？",
@@ -19,6 +30,7 @@ const valueSections = [
   },
   {
     title: "美",
+    focus: "形成秩序",
     summary: "美，是让服务变得清楚、体面、有秩序。",
     customer:
       "面对客户，美体现在清楚的流程、整洁的环境、克制的表达和稳定的交付中。客户不需要反复解释同一个问题，也不该在混乱等待中消耗耐心。",
@@ -27,6 +39,7 @@ const valueSections = [
   },
   {
     title: "爱",
+    focus: "看见处境",
     summary: "爱，是看见人的处境，而不只看见流程、指标和结果。",
     customer:
       "面对客户，爱体现在对处境的体察。遇到特殊困难、紧急场景、长期关系和安全问题时，服务不能只剩下条款和流程。",
@@ -50,185 +63,207 @@ const dimensionNotes = [
 
 const guideSections = [
   {
-    title: "本心",
-    label: "Heart",
-    href: "/",
-    description: "理解我们相信什么：精诚服务的价值底座，以及真、善、美、爱如何同时适用于客户关系和员工关系。",
-  },
-  {
     title: "镜鉴",
     label: "Mirror",
     href: "/mirror",
+    icon: lighthouseIcons.mirror,
     description: "看外部有什么可参考：行业观察、标杆企业和服务案例，帮助大家打开服务想象力，而不是简单照搬。",
   },
   {
     title: "笃行",
     label: "Action",
     href: "/action",
+    icon: lighthouseIcons.action,
     description: "看我们已经做出了什么：沉淀内部真实实践，让一线的好做法被看见，也让可复用的方法留在组织里。",
   },
   {
     title: "共创",
     label: "Workshop",
     href: "/workshop",
+    icon: lighthouseIcons.workshop,
     description: "把理念变成动作：围绕不同岗位和服务场景，共创鼓励与禁止事项，让价值观进入日常工作。",
   },
   {
     title: "路引",
     label: "Hermit",
     href: "/hermit",
+    icon: lighthouseIcons.hermit,
     description: "遇到问题时去提问：把具体场景带回来，辨析主维度与关联维度，获得理念依据、相关案例和下一步建议。",
   },
 ];
 
+const readingPath = [
+  "先理解“精诚服务”回答什么问题",
+  "再用真、善、美、爱分析客户与员工关系",
+  "最后进入案例、共创和路引，把原则转成动作",
+];
+
 export default function HeartPage() {
   return (
-    <div className="mx-auto max-w-xs sm:max-w-7xl">
-      <div className="mb-12 px-4">
-        <h1 className="mb-4 flex items-baseline gap-3 text-4xl font-bold md:text-5xl">
-            <span className="font-noto text-ink">本心</span>
-          <span className="font-serif text-3xl italic text-amber opacity-90 md:text-4xl">
-              Heart
-            </span>
+    <div className="space-y-10 pb-16">
+      <LhPanel elevated className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_340px] md:p-8">
+        <div className="min-w-0">
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <LhChip tone="primary">
+              <Icon icon={lighthouseIcons.heart} className="h-4 w-4" />
+              Heart / 本心
+            </LhChip>
+            <LhChip tone="signal">Readability First</LhChip>
+          </div>
+          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
+            于此，回答“精诚服务”到底相信什么。
           </h1>
-        <div className="max-w-3xl space-y-4 font-serif text-lg leading-relaxed text-ink/60">
-          <p className="text-2xl leading-snug text-ink md:text-3xl">
-              于此，回答“精诚服务”到底相信什么。
-            </p>
+          <div className="mt-6 max-w-4xl space-y-4 text-base leading-8 text-ink-soft md:text-lg">
             <p>
               客户把车交给我们，交出的不只是一次维修或保养需求，也是一份信任。员工站在一线，面对的也不只是流程、指标和投诉，而是真实的人、真实的压力，以及每天必须作出的判断。
             </p>
             <p>
-              “本心”要讨论的，正是这些判断背后的标准。我们用真、善、美、爱来理解“精诚服务”：它既是对客户的承诺，也是经销商对员工、组织对一线的要求。
-            </p>
-            <p>
-              本心，是灯塔的起点。先把我们共同相信的价值讲清楚，再去看案例、做实践、共创规范、提出问题，后面的内容才有共同的出发点。
+              “本心”讨论的正是这些判断背后的标准。我们用真、善、美、爱来理解“精诚服务”：它既是对客户的承诺，也是经销商对员工、组织对一线的要求。
             </p>
           </div>
-        <div className="mt-6 flex flex-wrap gap-3">
+        </div>
+
+        <aside className="rounded-md border border-line bg-surface-quiet p-5">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Reading Path</p>
+          <ol className="mt-4 grid gap-3">
+            {readingPath.map((item, index) => (
+              <li key={item} className="grid grid-cols-[32px_minmax(0,1fr)] items-start gap-3 text-sm leading-6 text-ink-soft">
+                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line bg-panel text-xs font-extrabold text-primary-deep">
+                  {index + 1}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-5 flex flex-wrap gap-2">
             {valueSections.map((value) => (
-            <span
-                key={value.title}
-              className="rounded-full border border-amber/30 bg-amber/10 px-4 py-2 font-noto text-sm text-amber md:text-base"
-              >
-              {value.title}
-            </span>
+              <LhChip key={value.title} tone="signal">
+                {value.title}
+              </LhChip>
             ))}
           </div>
-      </div>
+        </aside>
+      </LhPanel>
 
-      <section className="px-4">
-        <div className="mb-6">
-          <h2 className="flex items-baseline gap-3 font-serif text-2xl text-ink md:text-3xl">
-            精诚服务的核心
-            <span className="font-serif text-lg italic text-amber opacity-80 md:text-xl">
-              Philosophy
-            </span>
-          </h2>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <article className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-            <h3 className="mb-4 font-noto text-2xl text-ink">精</h3>
-            <p className="leading-8 text-ink/70">
+      <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+        <LhCard className="p-6">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Core</p>
+          <h2 className="mt-3 text-3xl font-extrabold text-ink">精诚服务的核心</h2>
+          <p className="mt-4 text-base leading-8 text-ink-soft">
+            本心，是灯塔的起点。先把我们共同相信的价值讲清楚，再去看案例、做实践、共创规范、提出问题，后面的内容才有共同的出发点。
+          </p>
+        </LhCard>
+        <div className="grid gap-5 md:grid-cols-2">
+          <LhCard className="p-6">
+            <h3 className="text-2xl font-extrabold text-ink">精</h3>
+            <p className="mt-4 text-sm leading-7 text-ink-soft">
               精，是把事情做好。它要求专业、认真、持续改善，也要求我们尊重服务行业的基本规律，不用粗糙的方式处理人的问题。
             </p>
-          </article>
-          <article className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-            <h3 className="mb-4 font-noto text-2xl text-ink">诚</h3>
-            <p className="leading-8 text-ink/70">
+          </LhCard>
+          <LhCard className="p-6">
+            <h3 className="text-2xl font-extrabold text-ink">诚</h3>
+            <p className="mt-4 text-sm leading-7 text-ink-soft">
               诚，是我们对人的态度。它体现在真、善、美、爱之中。真善美爱不是新的口号，而是判断服务和管理是否站得住的四个维度。
             </p>
-          </article>
+          </LhCard>
         </div>
       </section>
 
-      <section className="mt-12 px-4">
-        <div className="mb-6 max-w-3xl">
-          <h2 className="mb-4 flex items-baseline gap-3 font-serif text-2xl text-ink md:text-3xl">
-            真、善、美、爱
-            <span className="font-serif text-lg italic text-amber opacity-80 md:text-xl">
-              Values
-            </span>
-          </h2>
-          <p className="text-sm leading-relaxed text-ink/70 md:text-base">
-            它既适用于客户，也适用于员工。经销商怎样对待员工，最终会影响员工怎样对待客户。一个不真实、不善待、不体面、不关心人的内部环境，很难长期提供有温度的服务。
-          </p>
-        </div>
+      <section className="space-y-6">
+        <LhSectionHeader
+          eyebrow="Values"
+          title="真、善、美、爱"
+          description="它既适用于客户，也适用于员工。经销商怎样对待员工，最终会影响员工怎样对待客户。"
+        />
 
-        <div className="mb-6 grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {dimensionNotes.map((note) => (
-            <article
-              key={note.title}
-              className="rounded-2xl border border-amber/20 bg-amber/10 p-5"
-            >
-              <h3 className="mb-3 font-noto text-lg text-ink">{note.title}</h3>
-              <p className="text-sm leading-7 text-ink/68">
-                {note.description}
-              </p>
-            </article>
+            <LhCard key={note.title} className="p-5">
+              <h3 className="text-lg font-extrabold text-ink">{note.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-ink-soft">{note.description}</p>
+            </LhCard>
           ))}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-5">
           {valueSections.map((value) => (
-            <article
-              key={value.title}
-              className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm"
-            >
-              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:gap-4">
-                <h3 className="font-noto text-4xl text-ink">{value.title}</h3>
-                <p className="min-w-0 font-serif text-base leading-7 text-ink/70">
-                  {value.summary}
-                </p>
+            <LhCard key={value.title} className="grid gap-5 p-5 lg:grid-cols-[180px_minmax(0,1fr)]">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-md border border-signal/25 bg-signal-soft text-3xl font-extrabold text-signal-deep">
+                    {value.title}
+                  </span>
+                  <div>
+                    <p className="text-sm font-extrabold text-primary-deep">{value.focus}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted">{value.summary}</p>
+                  </div>
+                </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="border-t border-amber/25 pt-4">
-                  <p className="mb-2 text-sm font-semibold text-amber">面对客户</p>
-                  <p className="text-sm leading-7 text-ink/68">{value.customer}</p>
+                <div className="rounded-sm border border-line bg-surface-quiet p-4">
+                  <p className="text-sm font-extrabold text-primary-deep">面对客户</p>
+                  <p className="mt-2 text-sm leading-7 text-ink-soft">{value.customer}</p>
                 </div>
-                <div className="border-t border-ink/12 pt-4">
-                  <p className="mb-2 text-sm font-semibold text-ink/70">面对员工</p>
-                  <p className="text-sm leading-7 text-ink/68">{value.employee}</p>
+                <div className="rounded-sm border border-line bg-surface-quiet p-4">
+                  <p className="text-sm font-extrabold text-primary-deep">面对员工</p>
+                  <p className="mt-2 text-sm leading-7 text-ink-soft">{value.employee}</p>
                 </div>
               </div>
-            </article>
+            </LhCard>
           ))}
         </div>
       </section>
 
-      <section className="mt-12 px-4">
-        <div className="mb-6 max-w-3xl">
-          <h2 className="mb-4 flex items-baseline gap-3 font-serif text-2xl text-ink md:text-3xl">
-            接下来去哪里
-            <span className="font-serif text-lg italic text-amber opacity-80 md:text-xl">
-              Guide
-            </span>
-          </h2>
-          <p className="text-sm leading-relaxed text-ink/70 md:text-base">
-            本心不是资料库的终点，而是进入灯塔的起点。先理解我们相信什么，再去镜鉴看他人的经验，去笃行看自己的实践，去共创把原则写成动作，最后在路引中把问题带回具体场景。
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="space-y-6">
+        <LhSectionHeader
+          eyebrow="Guide"
+          title="接下来去哪里"
+          description="本心不是资料库的终点，而是进入灯塔的起点。先理解我们相信什么，再进入不同工作区。"
+        />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {guideSections.map((section) => (
-            <Link
-              key={section.title}
-              href={section.href}
-              className="group flex min-h-56 flex-col justify-between rounded-2xl border border-white/60 bg-white/40 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:bg-white/55 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
-            >
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/30 transition-colors group-hover:text-amber/80">
-                {section.label}
-              </span>
-              <div>
-                <h3 className="mb-3 font-serif text-2xl text-ink transition-colors group-hover:text-amber">
-                  {section.title}
-                </h3>
-                <p className="text-sm leading-7 text-ink/65">{section.description}</p>
-              </div>
+            <Link key={section.title} href={section.href} className="group block">
+              <LhCard className="grid min-h-56 grid-rows-[auto_1fr_auto] gap-4 p-5 transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:border-line-strong group-hover:shadow-lh-md">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+                    <Icon icon={section.icon} className="h-5 w-5" />
+                  </span>
+                  <LhChip tone="neutral">{section.label}</LhChip>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-extrabold text-ink">{section.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-ink-soft">{section.description}</p>
+                </div>
+                <span className="text-sm font-extrabold text-primary-deep">进入页面</span>
+              </LhCard>
             </Link>
           ))}
         </div>
       </section>
+
+      <LhDataTableShell>
+        <table>
+          <thead>
+            <tr>
+              <th>阅读材料</th>
+              <th>本页用途</th>
+              <th>后续承接</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>真、善、美、爱</td>
+              <td>作为判断服务和管理是否站得住的四个维度。</td>
+              <td>用于 Hermit 问答与 Workshop Do and Don&apos;t 共创。</td>
+            </tr>
+            <tr>
+              <td>客户与员工双视角</td>
+              <td>避免把服务价值只理解成客户侧口号。</td>
+              <td>用于 Action 案例复盘中的权衡判断。</td>
+            </tr>
+          </tbody>
+        </table>
+      </LhDataTableShell>
     </div>
   );
 }
