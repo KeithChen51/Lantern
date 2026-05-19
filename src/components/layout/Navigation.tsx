@@ -38,7 +38,7 @@ function Logo({ isExpanded }: { isExpanded: boolean }) {
       {isExpanded && (
         <span className="min-w-0">
           <span className="block text-lg font-extrabold leading-tight text-ink">Lighthouse</span>
-          <span className="block text-xs font-bold leading-tight text-muted">Harbor Signal</span>
+          <span className="block text-xs font-bold leading-tight text-muted">服务文化平台</span>
         </span>
       )}
     </Link>
@@ -107,7 +107,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
         <div className="mt-6 grid gap-3">
           {isExpanded && (
             <LhStatusBadge tone="info" className="justify-center">
-              UI Kit Mapping
+              组件映射
             </LhStatusBadge>
           )}
           <button

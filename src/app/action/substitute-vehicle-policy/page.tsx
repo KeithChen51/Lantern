@@ -50,7 +50,7 @@ export default function SubstituteVehiclePolicyPage() {
         </div>
 
         <aside className="rounded-md border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Case Meta</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例信息</p>
           <dl className="mt-4 grid gap-4 text-sm">
             <MetaItem label="受众" value={metadata.audience.join("、")} />
             <MetaItem label="版本" value={metadata.version} />
@@ -68,16 +68,16 @@ export default function SubstituteVehiclePolicyPage() {
 
       <section className="grid gap-5 md:grid-cols-2">
         <LhCard className="p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Learning Goal</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">学习目标</p>
           <p className="mt-3 text-base leading-8 text-ink-soft">{brief.learningGoal}</p>
         </LhCard>
         <LhCard className="p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Case Question</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例问题</p>
           <p className="mt-3 text-base leading-8 text-ink-soft">{brief.caseQuestion}</p>
         </LhCard>
       </section>
 
-      <ContentSection eyebrow="Trigger Context" title="背景与触发">
+      <ContentSection eyebrow="背景触发" title="背景与触发">
         <div className="grid gap-5 md:grid-cols-2">
           <LhCard className="p-5">
             <h3 className="text-lg font-extrabold text-ink">业务背景</h3>
@@ -91,7 +91,7 @@ export default function SubstituteVehiclePolicyPage() {
       </ContentSection>
 
       <ContentSection
-        eyebrow="Cognitive Frames"
+        eyebrow="认知视角"
         title="先拆认知视角"
         description="这个案例不是门店和总部之间的简单冲突，而是不同角色对“什么才算照顾好客户”的判断差异。"
       >
@@ -107,7 +107,7 @@ export default function SubstituteVehiclePolicyPage() {
       </ContentSection>
 
       <ContentSection
-        eyebrow="Decision Nodes"
+        eyebrow="关键节点"
         title="关键权衡"
         description="每个节点都同时看客户体验、门店实际能力和政策执行风险。"
       >
@@ -116,7 +116,7 @@ export default function SubstituteVehiclePolicyPage() {
             <LhPanel key={decision.title} className="p-5 md:p-6">
               <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 <div>
-                  <LhChip tone="primary">Node {index + 1}</LhChip>
+                  <LhChip tone="primary">节点 {index + 1}</LhChip>
                   <h3 className="mt-3 text-2xl font-extrabold leading-tight text-ink">{decision.title}</h3>
                   <p className="mt-3 text-sm leading-7 text-ink-soft">{decision.trigger}</p>
                 </div>
@@ -189,7 +189,7 @@ export default function SubstituteVehiclePolicyPage() {
         </div>
       </ContentSection>
 
-      <ContentSection eyebrow="Final Practice" title="最终做法">
+      <ContentSection eyebrow="最终做法" title="最终做法">
         <ol className="grid gap-4 md:grid-cols-2">
           {actionCase.finalPractice.map((item, index) => (
             <li key={item} className="rounded-md border border-line bg-panel p-5 shadow-lh-sm">
@@ -202,7 +202,7 @@ export default function SubstituteVehiclePolicyPage() {
         </ol>
       </ContentSection>
 
-      <ContentSection eyebrow="Store Takeaways" title="门店启示">
+      <ContentSection eyebrow="门店启示" title="门店启示">
         <div className="grid gap-4 md:grid-cols-2">
           {actionCase.storeTakeaways.map((takeaway) => (
             <LhCard key={takeaway.title} className="p-5">
@@ -213,7 +213,7 @@ export default function SubstituteVehiclePolicyPage() {
         </div>
       </ContentSection>
 
-      <ContentSection eyebrow="Reusable Principles" title="可复用原则">
+      <ContentSection eyebrow="可复用原则" title="可复用原则">
         <div className="grid gap-3">
           {actionCase.reusablePrinciples.map((principle) => (
             <div key={principle} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-md border border-line bg-surface-quiet p-4 text-sm leading-7 text-ink-soft">
@@ -225,7 +225,7 @@ export default function SubstituteVehiclePolicyPage() {
       </ContentSection>
 
       <ContentSection
-        eyebrow="Source Material"
+        eyebrow="来源材料"
         title="来源材料"
         description="原始正文和访谈材料保留为维护信息，前台只呈现结构化案例。"
       >
@@ -255,12 +255,12 @@ export default function SubstituteVehiclePolicyPage() {
 
       <LhPanel className="grid gap-5 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Next Use</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">后续用途</p>
           <p className="mt-2 text-sm leading-7 text-ink-soft">
-            这个案例后续可以拆成 Workshop 的岗位 Do and Don&apos;t，也可以作为 Hermit 回答代用车、等待焦虑、政策弹性问题时的引用材料。
+            这个案例后续可以拆成共创里的岗位应做/避免，也可以作为路引回答代用车、等待焦虑、政策弹性问题时的引用材料。
           </p>
         </div>
-        <LhChip tone="signal">Action to Workshop / Hermit</LhChip>
+        <LhChip tone="signal">转入共创与路引</LhChip>
       </LhPanel>
     </article>
   );

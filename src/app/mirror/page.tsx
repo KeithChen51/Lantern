@@ -32,7 +32,7 @@ const caseCards = [
 const compareRows = [
   ["案例来源", "外部企业公开材料、行业观察、媒体报道", "帮助团队形成可讨论的参考对象"],
   ["阅读目标", "提取服务文化、组织管理和动作设计", "避免简单赞美或机械照搬"],
-  ["迁移方式", "先识别原则，再看本地服务场景是否成立", "连接 Action、Workshop 与 Hermit"],
+  ["迁移方式", "先识别原则，再看本地服务场景是否成立", "连接笃行、共创与路引"],
 ];
 
 export default function MirrorPage() {
@@ -43,9 +43,9 @@ export default function MirrorPage() {
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />
-              Mirror / 镜鉴
+              镜鉴
             </LhChip>
-            <LhStatusBadge tone="info">Benchmark Library</LhStatusBadge>
+            <LhStatusBadge tone="info">标杆知识库</LhStatusBadge>
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
             在别人的灯火里，看见服务文化可以怎样成立。
@@ -56,7 +56,7 @@ export default function MirrorPage() {
         </div>
 
         <aside className="rounded-md border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Case Rules</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例筛选规则</p>
           <ul className="mt-4 grid gap-3 text-sm leading-6 text-ink-soft">
             <li>先看事实与来源，不先下结论。</li>
             <li>拆成原则、条件、动作三层。</li>
@@ -67,9 +67,9 @@ export default function MirrorPage() {
 
       <section className="space-y-6">
         <LhSectionHeader
-          eyebrow="Case Index"
+          eyebrow="案例目录"
           title="标杆案例"
-          description="每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入 Action 或 Workshop。"
+          description="每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或共创。"
         />
 
         <div className="grid gap-5 lg:grid-cols-2">
@@ -94,7 +94,7 @@ export default function MirrorPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-t border-line pt-4">
-                  <span className="text-sm font-bold text-muted">Mirror ContentCard</span>
+                  <span className="text-sm font-bold text-muted">镜鉴内容卡</span>
                   {card.href ? (
                     <span className="inline-flex min-h-9 items-center justify-center rounded-sm border border-line-strong bg-panel px-3 text-xs font-bold text-primary-deep shadow-lh-sm">
                       阅读案例

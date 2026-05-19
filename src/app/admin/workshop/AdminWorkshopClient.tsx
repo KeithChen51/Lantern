@@ -48,9 +48,9 @@ const metaFields: Array<[keyof EditableSubmission, string, string]> = [
 ];
 
 const contentFields: Array<[keyof EditableSubmission, string, string, number]> = [
-  ["doText", "Do", "应该鼓励的一线动作。", 5],
-  ["howText", "How", "补充步骤、话术或检查点。", 5],
-  ["dontText", "Don't", "明确禁止或应避免的动作。", 5],
+  ["doText", "应做", "应该鼓励的一线动作。", 5],
+  ["howText", "方法", "补充步骤、话术或检查点。", 5],
+  ["dontText", "避免", "明确禁止或应避免的动作。", 5],
 ];
 
 async function fetchData<T>(url: string, init?: RequestInit): Promise<T> {
@@ -68,7 +68,7 @@ async function fetchData<T>(url: string, init?: RequestInit): Promise<T> {
   };
 
   if (!response.ok) {
-    throw new Error(payload.error?.message ?? `Request failed: ${response.status}`);
+    throw new Error(payload.error?.message ?? `请求失败：${response.status}`);
   }
 
   return payload.data as T;
@@ -126,9 +126,9 @@ function AdminHeader({
   return (
     <LhPanel className={cn("mb-6 p-5", !embedded && "mx-1 md:mx-4")}>
       <LhSectionHeader
-        eyebrow="Admin Review"
-        title={embedded ? "审核队列" : "Workshop 审核"}
-        description="品牌方最高管理员在这里做最后编辑、发布或退回。队列只处理 AI 初审通过后的 Do and Don't。"
+        eyebrow="审核管理"
+        title={embedded ? "审核队列" : "共创审核"}
+        description="品牌方最高管理员在这里做最后编辑、发布或退回。队列只处理 AI 初审通过后的应做/避免内容。"
         action={
           <LhButton
             type="button"
@@ -357,7 +357,7 @@ function ReviewCard({
           <div className="min-w-0">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />
-              Workshop Contribution
+              共创提交
             </LhChip>
             <ReviewField
               label="标题"

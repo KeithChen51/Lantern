@@ -20,7 +20,7 @@ function assertDatabaseConfigured() {
   if (!process.env.DATABASE_URL) {
     throw new AppError(
       "bad_request",
-      "DATABASE_URL is required for Workshop Phase 1 APIs. Configure MySQL and run Prisma migration/seed first.",
+      "共创功能需要先配置 DATABASE_URL，并完成 MySQL 的 Prisma 迁移和种子数据。",
       503,
     );
   }

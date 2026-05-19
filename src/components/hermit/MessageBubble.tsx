@@ -30,17 +30,29 @@ function AssistantAvatar() {
   );
 }
 
+function UserAvatar() {
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-line-strong bg-panel text-primary-deep shadow-lh-sm">
+      <Icon icon={lighthouseIcons.user} className="h-5 w-5" />
+    </span>
+  );
+}
+
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
 
   if (isUser) {
     return (
-      <div className="flex justify-end">
-        <div className="max-w-[min(720px,92%)] rounded-md border border-line bg-primary-soft px-4 py-3 text-sm font-bold leading-7 text-primary-deep shadow-lh-sm">
-          <p className="whitespace-pre-wrap">{text}</p>
+      <article className="grid grid-cols-[minmax(0,1fr)_36px] gap-3">
+        <div className="flex justify-end">
+          <div className="max-w-[min(720px,92%)] rounded-md border border-primary/25 bg-primary-soft px-4 py-3 text-sm font-bold leading-7 text-primary-deep shadow-lh-sm">
+            <div className="mb-1 text-xs font-extrabold text-primary-deep/80">你</div>
+            <p className="whitespace-pre-wrap">{text}</p>
+          </div>
         </div>
-      </div>
+        <UserAvatar />
+      </article>
     );
   }
 
@@ -51,6 +63,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       <AssistantAvatar />
       <div className="min-w-0 rounded-md border border-line bg-panel p-5 text-ink shadow-lh-sm">
         <div className="mb-4 flex flex-wrap items-center gap-2">
+          <strong className="text-sm font-extrabold text-ink">路引</strong>
           <LhChip tone="primary">路引回答</LhChip>
           <LhStatusBadge tone={needsEvidence ? "warning" : "success"}>
             {needsEvidence ? "证据不足" : "可继续判断"}

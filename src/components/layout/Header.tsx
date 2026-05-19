@@ -9,12 +9,12 @@ import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
 
 const SEARCH_TARGETS = [
-  { href: "/", label: "本心 Heart", keywords: ["heart", "本心", "首页", "价值观", "文化"] },
-  { href: "/mirror", label: "镜鉴 Mirror", keywords: ["mirror", "镜鉴", "案例"] },
-  { href: "/action", label: "笃行 Action", keywords: ["action", "笃行", "行动", "实践"] },
-  { href: "/workshop", label: "共创 Workshop", keywords: ["workshop", "共创", "do", "dont", "指南", "提交"] },
+  { href: "/", label: "本心", keywords: ["heart", "本心", "首页", "价值观", "文化"] },
+  { href: "/mirror", label: "镜鉴", keywords: ["mirror", "镜鉴", "案例"] },
+  { href: "/action", label: "笃行", keywords: ["action", "笃行", "行动", "实践"] },
+  { href: "/workshop", label: "共创", keywords: ["workshop", "共创", "do", "dont", "指南", "提交"] },
   { href: "/admin/workshop", label: "共创审核", keywords: ["admin", "审核", "管理", "发布"] },
-  { href: "/hermit", label: "路引 Hermit", keywords: ["hermit", "路引", "决策", "对话"] },
+  { href: "/hermit", label: "路引", keywords: ["hermit", "路引", "决策", "对话"] },
 ];
 
 const NOTIFICATIONS = [

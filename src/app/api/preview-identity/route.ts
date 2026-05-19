@@ -26,7 +26,7 @@ function toPreviewIdentity(user: Awaited<ReturnType<typeof authRepository.findUs
     displayName: user.displayName,
     role,
     label: role === "highest_admin" ? "品牌管理员" : "一线用户",
-    description: role === "highest_admin" ? "审核、编辑并发布共创指南" : "提交 Do & Don't 共创内容",
+    description: role === "highest_admin" ? "审核、编辑并发布共创指南" : "提交应做/避免共创内容",
   };
 }
 
@@ -56,13 +56,13 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as { userId?: unknown };
     const userId = typeof body.userId === "string" ? body.userId : "";
     if (!isPreviewIdentityId(userId)) {
-      throw new AppError("bad_request", "Unsupported preview identity.", 400);
+      throw new AppError("bad_request", "不支持该体验身份。", 400);
     }
 
     const identities = await getPreviewIdentities();
     const selected = currentIdentity(identities, userId);
     if (!selected) {
-      throw new AppError("not_found", "Preview identity is not seeded.", 404);
+      throw new AppError("not_found", "体验身份尚未初始化。", 404);
     }
 
     const response = NextResponse.json({ data: { current: selected, identities } });

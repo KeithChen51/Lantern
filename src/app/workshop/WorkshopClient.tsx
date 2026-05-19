@@ -100,12 +100,12 @@ const initialForm: FormState = {
 const sectionCopy: Record<WorkshopSectionId, { title: string; description: string; icon: string }> = {
   public: {
     title: "公开区",
-    description: "只展示已审核发布的岗位 Do and Don't，便于一线按角色、场景检索和复用。",
+    description: "只展示已审核发布的岗位应做/避免，便于一线按角色、场景检索和复用。",
     icon: lighthouseIcons.document,
   },
   submit: {
     title: "提交区",
-    description: "把服务经验写成角色、场景、Do、How、Don't，先进入 AI 初审，再进入管理员审核。",
+    description: "把服务经验写成角色、场景、应做、方法、避免，先进入 AI 初审，再进入管理员审核。",
     icon: lighthouseIcons.add,
   },
   personal: {
@@ -115,7 +115,7 @@ const sectionCopy: Record<WorkshopSectionId, { title: string; description: strin
   },
   review: {
     title: "审核区",
-    description: "品牌方最高管理员在 Workshop 内完成最后编辑、发布或退回。",
+    description: "品牌方最高管理员在共创内完成最后编辑、发布或退回。",
     icon: lighthouseIcons.admin,
   },
 };
@@ -132,7 +132,7 @@ const statusMeta: Record<string, { label: string; tone: BadgeTone; description: 
 
 const formFields: Array<[keyof FormState, string, string]> = [
   ["title", "标题", "标题要帮助审核人快速判断内容类型。"],
-  ["roleName", "适用岗位", "用于后续按角色筛选 Do and Don't。"],
+  ["roleName", "适用岗位", "用于后续按角色筛选应做/避免。"],
   ["storeName", "门店", "保留来源，便于追溯。"],
   ["serviceScenario", "服务场景", "例如维修等待、交车解释、客户投诉。"],
   ["principleRef", "理念依据", "连接本心原则或已有案例。"],
@@ -170,7 +170,7 @@ async function fetchData<T>(url: string, init?: RequestInit): Promise<T> {
   };
 
   if (!response.ok) {
-    throw new Error(payload.error?.message ?? `Request failed: ${response.status}`);
+    throw new Error(payload.error?.message ?? `请求失败：${response.status}`);
   }
 
   return payload.data as T;
@@ -257,12 +257,12 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
           <div className="mb-5 flex flex-wrap gap-2">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />
-              Workshop / 共创
+              共创
             </LhChip>
-            <LhChip tone="signal">Long-term Open Submission</LhChip>
+            <LhChip tone="signal">长期开放提交</LhChip>
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-5xl">
-            把服务经验，沉淀成可审核、可复用的岗位 Do and Don&apos;t。
+            把服务经验，沉淀成可审核、可复用的岗位应做与避免。
           </h1>
           <p className="mt-5 max-w-4xl text-base leading-8 text-ink-soft md:text-lg">
             共创不扩成论坛。它只处理三件事：一线提交具体动作，系统保留来源和状态，品牌管理员把合格内容发布为公共指南。
@@ -270,7 +270,7 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
         </div>
         <div className="grid gap-3 rounded-md border border-line bg-surface-quiet p-4">
           {[
-            ["1", "提交", "角色、场景、Do、How、Don't"],
+            ["1", "提交", "角色、场景、应做、方法、避免"],
             ["2", "初审", "检查可执行性与重复内容"],
             ["3", "发布", "最高管理员编辑后进入公开区"],
           ].map(([step, title, text]) => (
@@ -345,9 +345,9 @@ function GuideSnippet({ label, text, tone }: { label: string; text: string; tone
 
 function GuideCard({ guide }: { guide: PublishedGuide }) {
   const snippets = [
-    { label: "Do", tone: "success" as BadgeTone, text: guide.doText },
-    { label: "How", tone: "info" as BadgeTone, text: guide.howText ?? "待管理员补充执行说明。" },
-    { label: "Don't", tone: "danger" as BadgeTone, text: guide.dontText },
+    { label: "应做", tone: "success" as BadgeTone, text: guide.doText },
+    { label: "方法", tone: "info" as BadgeTone, text: guide.howText ?? "待管理员补充执行说明。" },
+    { label: "避免", tone: "danger" as BadgeTone, text: guide.dontText },
   ].filter((snippet) => snippet.text.trim().length > 0);
 
   return (
@@ -381,7 +381,7 @@ function GuideCard({ guide }: { guide: PublishedGuide }) {
           {guide.submitterName}
         </span>
         <span className="inline-flex items-center gap-2 text-primary-deep">
-          可作为 Hermit 引用素材
+          可作为路引引用素材
           <Icon icon="solar:arrow-right-up-bold" className="h-4 w-4" />
         </span>
       </div>
@@ -433,12 +433,12 @@ function PublicSection({
       <div className="min-w-0 space-y-5">
         <LhPanel className="p-5">
           <LhSectionHeader
-            eyebrow="Published Guides"
+            eyebrow="已发布指南"
             title="已发布指南"
-            description="来自管理员审核发布的 Do and Don't 内容。先筛选角色和场景，再进入可执行动作。"
+            description="来自管理员审核发布的应做/避免内容。先筛选角色和场景，再进入可执行动作。"
             action={
               <LhButton type="button" variant="primary" icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />} onClick={onCreate}>
-                提交新的 Do and Don&apos;t
+                提交新的应做/避免
               </LhButton>
             }
           />
@@ -472,7 +472,7 @@ function PublicSection({
         {loading ? (
           <StateNotice tone="info">
             <Icon icon={lighthouseIcons.refresh} className="mr-2 inline h-4 w-4 animate-spin" />
-            正在加载 Workshop 数据
+            正在加载共创数据
           </StateNotice>
         ) : guides.length > 0 ? (
           guides.map((guide) => <GuideCard key={guide.id} guide={guide} />)
@@ -507,12 +507,12 @@ function SubmissionForm({
   return (
     <form onSubmit={onSubmit} className="rounded-md border border-line bg-surface p-5 text-ink shadow-lh-sm">
       <LhSectionHeader
-        eyebrow="Submission"
-        title={editingSubmissionId ? "修改 Do and Don't" : "提交 Do and Don't"}
+        eyebrow="提交内容"
+        title={editingSubmissionId ? "修改应做/避免" : "提交应做/避免"}
         description={
           editingSubmissionId
             ? "当前修改的是已退回内容，提交后会重新进入 AI 初审。"
-            : "至少填写 Do 或 Don't 一项。How 用于补充具体执行方式。"
+            : "至少填写应做或避免一项。方法用于补充具体执行方式。"
         }
         action={
           editingSubmissionId ? (
@@ -540,21 +540,21 @@ function SubmissionForm({
       </div>
       <div className="mt-4 grid gap-4">
         <LhTextArea
-          label="Do：应该做什么"
+          label="应做：应该做什么"
           helperText="写成一线可直接执行的动作。"
           value={form.doText}
           onChange={(event) => onUpdate("doText", event.target.value)}
           rows={3}
         />
         <LhTextArea
-          label="How：具体怎么做"
+          label="方法：具体怎么做"
           helperText="用于补充步骤、话术或检查点。"
           value={form.howText}
           onChange={(event) => onUpdate("howText", event.target.value)}
           rows={3}
         />
         <LhTextArea
-          label="Don't：不要做什么"
+          label="避免：不要做什么"
           helperText="明确禁止或应避免的动作。"
           value={form.dontText}
           onChange={(event) => onUpdate("dontText", event.target.value)}
@@ -593,7 +593,7 @@ function ReviewRules() {
         </div>
       </div>
       <div className="grid gap-3">
-        {["至少填写 Do 或 Don't 一项", "未与已发布指南重复", "可执行动作明确"].map((item) => (
+        {["至少填写应做或避免一项", "未与已发布指南重复", "可执行动作明确"].map((item) => (
           <div key={item} className="grid grid-cols-[24px_minmax(0,1fr)] gap-3 rounded-sm border border-line bg-panel p-3">
             <Icon icon={lighthouseIcons.status} className="mt-0.5 h-5 w-5 text-success" />
             <span className="text-sm font-bold leading-6 text-ink-soft">{item}</span>
@@ -716,13 +716,13 @@ function PersonalSection({
       </LhPanel>
 
       <LhPanel className="p-5">
-        <LhSectionHeader eyebrow="Personal Queue" title="提交记录" description="草稿、待审核、已发布、需修改都在这里回看。" />
+        <LhSectionHeader eyebrow="个人记录" title="提交记录" description="草稿、待审核、已发布、需修改都在这里回看。" />
         <div className="mt-5 grid gap-4">
           {submissions.length > 0 ? (
             submissions.map((item) => <SubmissionRecord key={item.id} item={item} onEdit={onEdit} />)
           ) : (
             <p className="rounded-sm border border-dashed border-line bg-surface-quiet p-5 text-sm leading-6 text-muted">
-              还没有提交记录。先从提交区创建一条岗位 Do and Don&apos;t。
+              还没有提交记录。先从提交区创建一条岗位应做/避免。
             </p>
           )}
         </div>
@@ -912,7 +912,7 @@ export function WorkshopClient() {
       <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="rounded-md border border-line bg-surface-quiet p-4 text-sm font-bold leading-6 text-muted">
           <Icon icon={lighthouseIcons.workshop} className="mr-2 inline h-4 w-4 text-primary" />
-          当前页面通过 Phase 1 Workshop API 读取指南、榜单和个人提交。
+          当前页面通过共创接口读取指南、榜单和个人提交。
         </div>
         <StatusReference />
       </div>

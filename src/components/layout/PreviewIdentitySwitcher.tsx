@@ -31,7 +31,7 @@ async function fetchPreviewIdentity(init?: RequestInit) {
     data?: PreviewIdentityPayload;
   };
   if (!response.ok || !payload.data) {
-    throw new Error("Preview identity is unavailable.");
+    throw new Error("体验身份暂不可用。");
   }
   return payload.data;
 }

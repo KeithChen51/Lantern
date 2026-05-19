@@ -88,7 +88,7 @@ export default function PangDongLaiPage() {
         <aside className="hidden lg:block">
           <div className="sticky top-28 space-y-5">
             <LhCard className="p-4">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Contents</p>
+              <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">目录</p>
               <nav className="mt-4 grid gap-2" aria-label="案例目录">
                 {toc.map(([href, label], index) => (
                   <a
@@ -104,7 +104,7 @@ export default function PangDongLaiPage() {
             </LhCard>
 
             <LhCard className="p-4">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Mirror Note</p>
+              <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">镜鉴说明</p>
               <p className="mt-3 text-sm leading-7 text-ink-soft">
                 这个案例的重点不是“赞美胖东来”，而是拆解它如何把员工体验、服务体验和组织制度放在同一条链路里。
               </p>
@@ -117,7 +117,7 @@ export default function PangDongLaiPage() {
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <LhChip tone="primary">
                 <Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />
-                Mirror Case
+                镜鉴案例
               </LhChip>
               <LhStatusBadge tone="success">可阅读</LhStatusBadge>
             </div>
@@ -134,7 +134,7 @@ export default function PangDongLaiPage() {
             </div>
           </LhPanel>
 
-          <ContentSection id="overview" eyebrow="Overview" title="企业概况">
+          <ContentSection id="overview" eyebrow="概览" title="企业概况">
             <p className="max-w-4xl text-base leading-8 text-ink-soft">
               胖东来由创始人于东来先生于 1995 年在河南许昌创立，从一家街边小店起步，发展至今已成为在许昌、新乡两地拥有 13 家门店的大型商贸集团。
             </p>
@@ -154,7 +154,7 @@ export default function PangDongLaiPage() {
             </div>
           </ContentSection>
 
-          <ContentSection id="model" eyebrow="Business Model" title="商业模式不是单纯卖货">
+          <ContentSection id="model" eyebrow="商业模式" title="商业模式不是单纯卖货">
             <p className="max-w-4xl text-base leading-8 text-ink-soft">
               与传统零售企业不同，胖东来的商业模式并非单纯依赖商品销售，而是一种“超市业态引流 + 商业地产变现 + 服务信任复利”的复合模式。
             </p>
@@ -164,7 +164,7 @@ export default function PangDongLaiPage() {
                   <tr>
                     <th>层级</th>
                     <th>做法</th>
-                    <th>对 Lighthouse 的启发</th>
+                    <th>对本项目的启发</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -180,7 +180,7 @@ export default function PangDongLaiPage() {
             </LhDataTableShell>
           </ContentSection>
 
-          <ContentSection id="culture" eyebrow="Culture" title="自由与爱如何进入制度">
+          <ContentSection id="culture" eyebrow="文化制度" title="自由与爱如何进入制度">
             <LhPanel className="border-signal/30 bg-signal-soft p-6">
               <blockquote className="text-lg font-bold leading-8 text-ink md:text-xl md:leading-9">
                 “有的人说胖东来是神话，其实就是真诚了一点、善良了一点，如果这样都被说是神话，那我们过得多悲哀啊！”
@@ -197,7 +197,7 @@ export default function PangDongLaiPage() {
             </div>
           </ContentSection>
 
-          <ContentSection id="impact" eyebrow="Market Impact" title="从服务标杆到行业影响">
+          <ContentSection id="impact" eyebrow="行业影响" title="从服务标杆到行业影响">
             <div className="grid gap-5 md:grid-cols-2">
               {impactCards.map((card) => (
                 <LhCard key={card.title} className="grid min-h-56 grid-rows-[auto_1fr_auto] gap-4 p-5">
@@ -215,7 +215,7 @@ export default function PangDongLaiPage() {
             </div>
           </ContentSection>
 
-          <ContentSection id="future" eyebrow="Risks" title="未来挑战">
+          <ContentSection id="future" eyebrow="未来挑战" title="未来挑战">
             <div className="grid gap-4">
               {challengeCards.map(([title, description]) => (
                 <LhCard key={title} className="grid gap-3 p-5 md:grid-cols-[180px_minmax(0,1fr)]">
@@ -229,13 +229,13 @@ export default function PangDongLaiPage() {
           <ContentSection id="conclusion" eyebrow="Conclusion" title="镜鉴结论">
             <LhPanel className="p-6">
               <p className="max-w-4xl text-lg leading-9 text-ink">
-                胖东来证明了商业成功可以建立在对人的真诚与关爱之上。但对 Lighthouse 来说，更重要的是它提示我们：服务文化不是一段好听的话，而是一套能保护员工、稳定现场、兑现客户信任的组织安排。
+                胖东来证明了商业成功可以建立在对人的真诚与关爱之上。但对本项目来说，更重要的是它提示我们：服务文化不是一段好听的话，而是一套能保护员工、稳定现场、兑现客户信任的组织安排。
               </p>
             </LhPanel>
           </ContentSection>
 
           <footer className="rounded-md border border-line bg-surface-quiet p-5">
-            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">References</p>
+            <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">参考来源</p>
             <ul className="mt-4 grid gap-2 text-xs leading-6 text-muted">
               {references.map((item) => (
                 <li key={item}>{item}</li>

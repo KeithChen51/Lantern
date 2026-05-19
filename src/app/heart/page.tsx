@@ -64,28 +64,28 @@ const dimensionNotes = [
 const guideSections = [
   {
     title: "镜鉴",
-    label: "Mirror",
+    label: "镜鉴",
     href: "/mirror",
     icon: lighthouseIcons.mirror,
     description: "看外部有什么可参考：行业观察、标杆企业和服务案例，帮助大家打开服务想象力，而不是简单照搬。",
   },
   {
     title: "笃行",
-    label: "Action",
+    label: "笃行",
     href: "/action",
     icon: lighthouseIcons.action,
     description: "看我们已经做出了什么：沉淀内部真实实践，让一线的好做法被看见，也让可复用的方法留在组织里。",
   },
   {
     title: "共创",
-    label: "Workshop",
+    label: "共创",
     href: "/workshop",
     icon: lighthouseIcons.workshop,
     description: "把理念变成动作：围绕不同岗位和服务场景，共创鼓励与禁止事项，让价值观进入日常工作。",
   },
   {
     title: "路引",
-    label: "Hermit",
+    label: "路引",
     href: "/hermit",
     icon: lighthouseIcons.hermit,
     description: "遇到问题时去提问：把具体场景带回来，辨析主维度与关联维度，获得理念依据、相关案例和下一步建议。",
@@ -106,9 +106,9 @@ export default function HeartPage() {
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.heart} className="h-4 w-4" />
-              Heart / 本心
+              本心
             </LhChip>
-            <LhChip tone="signal">Readability First</LhChip>
+            <LhChip tone="signal">清晰优先</LhChip>
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
             于此，回答“精诚服务”到底相信什么。
@@ -124,7 +124,7 @@ export default function HeartPage() {
         </div>
 
         <aside className="rounded-md border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Reading Path</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">阅读路径</p>
           <ol className="mt-4 grid gap-3">
             {readingPath.map((item, index) => (
               <li key={item} className="grid grid-cols-[32px_minmax(0,1fr)] items-start gap-3 text-sm leading-6 text-ink-soft">
@@ -147,7 +147,7 @@ export default function HeartPage() {
 
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
         <LhCard className="p-6">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Core</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">核心</p>
           <h2 className="mt-3 text-3xl font-extrabold text-ink">精诚服务的核心</h2>
           <p className="mt-4 text-base leading-8 text-ink-soft">
             本心，是灯塔的起点。先把我们共同相信的价值讲清楚，再去看案例、做实践、共创规范、提出问题，后面的内容才有共同的出发点。
@@ -171,7 +171,7 @@ export default function HeartPage() {
 
       <section className="space-y-6">
         <LhSectionHeader
-          eyebrow="Values"
+          eyebrow="价值维度"
           title="真、善、美、爱"
           description="它既适用于客户，也适用于员工。经销商怎样对待员工，最终会影响员工怎样对待客户。"
         />
@@ -216,7 +216,7 @@ export default function HeartPage() {
 
       <section className="space-y-6">
         <LhSectionHeader
-          eyebrow="Guide"
+          eyebrow="后续入口"
           title="接下来去哪里"
           description="本心不是资料库的终点，而是进入灯塔的起点。先理解我们相信什么，再进入不同工作区。"
         />
@@ -254,12 +254,12 @@ export default function HeartPage() {
             <tr>
               <td>真、善、美、爱</td>
               <td>作为判断服务和管理是否站得住的四个维度。</td>
-              <td>用于 Hermit 问答与 Workshop Do and Don&apos;t 共创。</td>
+              <td>用于路引问答与岗位应做/避免共创。</td>
             </tr>
             <tr>
               <td>客户与员工双视角</td>
               <td>避免把服务价值只理解成客户侧口号。</td>
-              <td>用于 Action 案例复盘中的权衡判断。</td>
+              <td>用于笃行案例复盘中的权衡判断。</td>
             </tr>
           </tbody>
         </table>

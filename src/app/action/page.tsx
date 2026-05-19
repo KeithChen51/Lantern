@@ -25,9 +25,9 @@ export default function ActionPage() {
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
-              Action / 笃行
+              笃行
             </LhChip>
-            <LhStatusBadge tone="warning">Judgment Training</LhStatusBadge>
+            <LhStatusBadge tone="warning">判断训练</LhStatusBadge>
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
             把真实服务实践，拆成可以复盘的判断训练。
@@ -38,7 +38,7 @@ export default function ActionPage() {
         </div>
 
         <aside className="rounded-md border border-line bg-surface-quiet p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Training Flow</p>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">训练流程</p>
           <ol className="mt-4 grid gap-3">
             {trainingSteps.map((step, index) => (
               <li key={step} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-sm leading-6 text-ink-soft">
@@ -54,7 +54,7 @@ export default function ActionPage() {
 
       <section className="space-y-6">
         <LhSectionHeader
-          eyebrow="Internal Cases"
+          eyebrow="内部实践"
           title="内部实践案例"
           description="案例卡片固定呈现场景、问题、决策节点和进入动作。后续新增案例也按同一结构沉淀。"
         />
@@ -82,13 +82,13 @@ export default function ActionPage() {
                     </h2>
                     <p className="mt-5 max-w-3xl text-base leading-8 text-ink-soft">{actionCase.brief.oneLine}</p>
                     <div className="mt-5 rounded-sm border border-line bg-surface-quiet p-4">
-                      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Case Question</p>
+                      <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例问题</p>
                       <p className="mt-2 text-sm leading-7 text-ink-soft">{actionCase.brief.caseQuestion}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between border-t border-line pt-4">
-                    <span className="text-sm font-bold text-muted">Action learning surface</span>
+                    <span className="text-sm font-bold text-muted">笃行学习卡</span>
                     <span className="inline-flex min-h-9 items-center gap-2 rounded-sm border border-line-strong bg-panel px-3 text-xs font-bold text-primary-deep shadow-lh-sm">
                       <Icon icon={lighthouseIcons.document} className="h-4 w-4" />
                       查看复盘
@@ -97,7 +97,7 @@ export default function ActionPage() {
                 </div>
 
                 <aside className="rounded-md border border-line bg-surface-quiet p-5">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Decision Nodes</p>
+                  <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">关键节点</p>
                   <ol className="mt-4 grid gap-3">
                     {actionCase.decisionNodes.map((decision, index) => (
                       <li key={decision.title} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-sm leading-6 text-ink-soft">
@@ -118,7 +118,7 @@ export default function ActionPage() {
 
           <LhCard className="grid gap-4 border-dashed p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <div>
-              <LhChip tone="neutral">Coming Soon</LhChip>
+              <LhChip tone="neutral">待补充</LhChip>
               <h2 className="mt-4 text-2xl font-extrabold text-ink">更多内部实践待沉淀</h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-ink-soft">
                 后续可继续接入交付、索赔、客户关怀、门店协同等真实案例，让一线经验留在组织里。
@@ -152,7 +152,7 @@ export default function ActionPage() {
             <tr>
               <td>后续承接</td>
               <td>详情页连接最终做法、门店启示和可复用原则。</td>
-              <td>把案例沉淀成 Action 与 Workshop 可复用材料。</td>
+              <td>把案例沉淀成笃行与共创可复用材料。</td>
             </tr>
           </tbody>
         </table>
