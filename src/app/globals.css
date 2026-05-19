@@ -1,36 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  --lh-ink: #0b2233;
-  --lh-ink-soft: #24485a;
-  --lh-muted: #607984;
-  --lh-faint: #9aabb1;
-  --lh-page: #f2f6f5;
-  --lh-panel: #fffefd;
-  --lh-surface: #f9fbfa;
-  --lh-surface-quiet: #edf4f3;
-  --lh-fog: #dfe9e9;
-  --lh-line: #c8d8dc;
-  --lh-line-strong: #86a3ad;
-  --lh-primary: #1c5668;
-  --lh-primary-deep: #0b3446;
-  --lh-primary-soft: #dfecef;
-  --lh-signal: #3d94a8;
-  --lh-signal-deep: #256f82;
-  --lh-signal-soft: #e9f5f6;
-  --lh-success: #36745b;
-  --lh-success-soft: #e8f3ed;
-  --lh-warning: #9c6a34;
-  --lh-warning-soft: #f5eddf;
-  --lh-danger: #9a4d49;
-  --lh-danger-soft: #f3e6e4;
-  --lh-info: #4f7f94;
-  --lh-info-soft: #eaf1f4;
+  --lh-ink: #0f2d44;
+  --lh-ink-soft: #28516a;
+  --lh-muted: #5f7b8b;
+  --lh-faint: #8da4ad;
+  --lh-page: #f2f8f8;
+  --lh-panel: #fefffb;
+  --lh-raised: #ffffff;
+  --lh-surface: #fbfefd;
+  --lh-surface-quiet: #f6fbf9;
+  --lh-fog: #ddeff1;
+  --lh-line: #bfd8de;
+  --lh-line-strong: #8db2bc;
+  --lh-hairline: rgba(141, 178, 188, 0.58);
+  --lh-hairline-soft: rgba(191, 216, 222, 0.6);
+  --lh-primary: #176e8b;
+  --lh-primary-deep: #0f5268;
+  --lh-primary-soft: #d7ecef;
+  --lh-signal: #28b8c7;
+  --lh-signal-deep: #137b89;
+  --lh-signal-soft: #d8f5f7;
+  --lh-deck: #0e334b;
+  --lh-deck-soft: #174b63;
+  --lh-success: #2d8560;
+  --lh-success-soft: #dcf2e8;
+  --lh-warning: #a86420;
+  --lh-warning-soft: #f6eadb;
+  --lh-danger: #aa443f;
+  --lh-danger-soft: #f5dfdd;
+  --lh-info: #3e89a8;
+  --lh-info-soft: #deedf3;
 
   --color-page: var(--lh-page);
   --color-panel: var(--lh-panel);
+  --color-raised: var(--lh-raised);
   --color-surface: var(--lh-surface);
   --color-surface-quiet: var(--lh-surface-quiet);
+  --color-deck: var(--lh-deck);
+  --color-deck-soft: var(--lh-deck-soft);
   --color-ink: var(--lh-ink);
   --color-ink-soft: var(--lh-ink-soft);
   --color-muted: var(--lh-muted);
@@ -55,9 +63,10 @@
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --shadow-sm: 0 1px 2px rgba(11, 34, 51, 0.07), 0 5px 12px rgba(11, 34, 51, 0.04);
-  --shadow-md: 0 1px 2px rgba(11, 34, 51, 0.08), 0 18px 40px rgba(11, 34, 51, 0.075);
-  --shadow-focus: 0 0 0 3px rgba(28, 86, 104, 0.22);
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
+  --shadow-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
+  --shadow-deck: 0 30px 68px rgba(14, 51, 75, 0.24);
+  --shadow-focus: 0 0 0 3px rgba(40, 184, 199, 0.24);
 
   --font-sans-stack: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
   --font-mono-stack: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -72,8 +81,11 @@
   --color-foreground: var(--color-ink);
   --color-page: var(--lh-page);
   --color-panel: var(--lh-panel);
+  --color-raised: var(--lh-raised);
   --color-surface: var(--lh-surface);
   --color-surface-quiet: var(--lh-surface-quiet);
+  --color-deck: var(--lh-deck);
+  --color-deck-soft: var(--lh-deck-soft);
   --color-ink: var(--lh-ink);
   --color-ink-soft: var(--lh-ink-soft);
   --color-muted: var(--lh-muted);
@@ -101,8 +113,9 @@
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --shadow-lh-sm: 0 1px 2px rgba(16, 43, 59, 0.055), 0 6px 14px rgba(16, 43, 59, 0.035);
-  --shadow-lh-md: 0 1px 2px rgba(16, 43, 59, 0.07), 0 14px 30px rgba(16, 43, 59, 0.065);
+  --shadow-lh-sm: var(--shadow-sm);
+  --shadow-lh-md: var(--shadow-md);
+  --shadow-lh-deck: var(--shadow-deck);
 }
 
 * {
@@ -118,7 +131,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(180deg, #fbfcfb 0%, var(--color-page) 58%, #eef4f3 100%);
+    linear-gradient(180deg, #f8fbfa 0%, var(--color-page) 58%, #eef6f3 100%);
   background-size: auto;
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
@@ -136,8 +149,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
-    linear-gradient(90deg, rgba(11, 52, 70, 0.055), transparent 38%, rgba(11, 52, 70, 0.018));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), transparent 300px),
+    linear-gradient(118deg, transparent 0 18%, rgba(40, 184, 199, 0.055) 18% 23%, transparent 23% 100%);
 }
 
 ::selection {
@@ -154,8 +167,15 @@ select {
 }
 
 a {
-  color: inherit;
   text-decoration: none;
+}
+
+a:not([class]) {
+  color: var(--color-primary-deep);
+}
+
+a:not([class]):hover {
+  color: var(--color-primary);
 }
 
 :focus-visible {

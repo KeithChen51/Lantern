@@ -131,7 +131,7 @@ export default function HeartPage() {
       />
 
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-        <LhCard className="border-primary-deep bg-primary-deep p-6 text-panel shadow-lh-md">
+        <LhCard className="border-primary/30 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-6 text-panel shadow-lh-deck">
           <p className="text-xs font-extrabold tracking-[0.14em] text-panel/65">核心</p>
           <h2 className="mt-3 text-2xl font-extrabold text-panel">精诚服务的核心</h2>
           <p className="mt-4 text-base leading-8 text-panel/80">

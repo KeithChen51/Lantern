@@ -68,7 +68,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2 text-xs font-bold leading-5 text-muted">
-        <span className="rounded-sm bg-primary-deep px-2.5 py-1 text-panel">先讲场景</span>
+        <span className="rounded-sm bg-primary px-2.5 py-1 text-panel">先讲场景</span>
         <span>再问“该怎么判断”或“下一步怎么说”。</span>
       </div>
     </form>

@@ -9,9 +9,9 @@ type Tone = "neutral" | "primary" | "signal" | "success" | "warning" | "danger" 
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    "border-primary bg-primary text-panel shadow-[0_1px_2px_rgba(16,43,59,0.12),0_8px_18px_rgba(22,70,88,0.12)] hover:bg-primary-deep",
+    "border-primary-deep bg-primary text-panel shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_16px_rgba(15,82,104,0.18)] hover:bg-primary-deep",
   signal:
-    "border-signal/45 bg-signal-soft text-signal-deep shadow-lh-sm hover:border-signal-deep hover:bg-primary-soft",
+    "border-signal bg-signal-soft text-signal-deep shadow-lh-sm hover:border-signal-deep hover:bg-primary-soft",
   secondary:
     "border-line-strong bg-panel text-primary-deep shadow-lh-sm hover:border-primary hover:bg-surface-quiet",
   quiet:
@@ -101,8 +101,8 @@ export const LhPanel = React.forwardRef<HTMLDivElement, LhPanelProps>(
     <section
       ref={ref}
       className={cn(
-        "rounded-sm border border-line bg-surface text-ink",
-        elevated ? "border-line-strong bg-panel shadow-lh-md" : "shadow-lh-sm",
+        "rounded-md border border-line bg-surface text-ink",
+        elevated ? "border-line-strong bg-surface shadow-lh-md" : "shadow-lh-sm",
         className,
       )}
       {...props}
@@ -115,7 +115,10 @@ export const LhCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <article
       ref={ref}
-      className={cn("rounded-sm border border-line bg-panel text-ink shadow-lh-sm", className)}
+      className={cn(
+        "relative overflow-hidden rounded-md border border-line bg-surface text-ink shadow-lh-sm before:absolute before:left-4 before:right-4 before:top-0 before:h-px before:bg-gradient-to-r before:from-primary/35 before:via-signal/20 before:to-transparent",
+        className,
+      )}
       {...props}
     />
   ),
@@ -258,7 +261,7 @@ export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivE
 
 export function LhSectionHeader({ className, eyebrow, title, description, action, ...props }: LhSectionHeaderProps) {
   return (
-    <div className={cn("grid gap-4 border-t border-line-strong pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
+    <div className={cn("grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
       <div className="min-w-0">
         {eyebrow && (
           <p className="mb-3 inline-flex min-h-6 items-center rounded-sm border border-primary/20 bg-primary-soft px-2.5 text-xs font-extrabold uppercase tracking-[0.12em] text-primary-deep">
@@ -303,7 +306,7 @@ export function LhPageHero({
 }: LhPageHeroProps) {
   return (
     <LhPanel elevated className={cn("overflow-hidden", className)} {...props}>
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <span className="inline-flex min-h-9 items-center gap-2 rounded-sm bg-primary-deep px-3 text-sm font-extrabold text-panel">
@@ -316,12 +319,13 @@ export function LhPageHero({
           {description && <div className="mt-5 max-w-4xl space-y-3 text-base leading-8 text-ink-soft">{description}</div>}
         </div>
 
-        <aside className="border-t border-primary/30 bg-primary-deep p-5 text-panel lg:border-l lg:border-t-0 md:p-6">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-panel/65">{asideTitle}</p>
+        <aside className="relative overflow-hidden border-t border-primary/30 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-5 text-panel shadow-lh-deck xl:border-l xl:border-t-0 md:p-6">
+          <div className="absolute inset-x-5 top-0 h-0.5 bg-gradient-to-r from-signal via-primary-soft/60 to-transparent" />
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-panel/70">{asideTitle}</p>
           <ol className="mt-5 grid gap-4">
             {asideItems.map((item, index) => (
               <li key={index} className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-panel/20 bg-panel/10 text-sm font-extrabold text-panel">
+                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-panel/20 bg-signal-soft/10 text-sm font-extrabold text-signal-soft">
                   {index + 1}
                 </span>
                 <span className="min-w-0">

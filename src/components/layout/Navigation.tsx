@@ -27,18 +27,18 @@ function Logo({ isExpanded }: { isExpanded: boolean }) {
     <Link
       href="/"
       className={cn(
-        "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-sm border border-line bg-panel p-2 text-ink shadow-lh-sm transition-colors hover:border-line-strong",
+        "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-md border border-panel/10 bg-panel/5 p-2 text-panel shadow-lh-sm transition-colors hover:border-signal/40 hover:bg-panel/10",
         !isExpanded && "grid-cols-1 justify-items-center",
       )}
       aria-label="Lighthouse 首页"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
+      <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-primary text-panel shadow-lh-sm">
         <Icon icon={lighthouseIcons.logo} className="h-5 w-5" />
       </span>
       {isExpanded && (
         <span className="min-w-0">
-          <span className="block text-lg font-extrabold leading-tight text-ink">Lighthouse</span>
-          <span className="block text-xs font-bold leading-tight text-muted">服务文化平台</span>
+          <span className="block text-lg font-extrabold leading-tight text-panel">Lighthouse</span>
+          <span className="block text-xs font-bold leading-tight text-[#b6d1d8]">服务文化平台</span>
         </span>
       )}
     </Link>
@@ -66,20 +66,20 @@ function NavLinks({
           "group relative grid min-h-12 items-center rounded-sm border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
-            ? "border-primary-deep bg-primary-deep text-panel shadow-lh-md"
-            : "border-transparent text-ink-soft hover:border-line hover:bg-panel hover:text-ink",
+            ? "border-signal/30 bg-signal-soft/10 text-panel shadow-lh-sm"
+            : "border-transparent text-[#c4d9dd] hover:border-panel/15 hover:bg-panel/10 hover:text-panel",
         )}
         title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
       >
         {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-signal" />}
         <Icon
           icon={item.icon}
-          className={cn("h-5 w-5", isActive ? "text-panel" : "text-muted group-hover:text-primary")}
+          className={cn("h-5 w-5", isActive ? "text-signal-soft" : "text-[#a4bdc6] group-hover:text-signal-soft")}
         />
         {isExpanded && (
           <span className="min-w-0">
             <span className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
-            <span className={cn("block truncate text-xs font-bold leading-tight", isActive ? "text-panel/70" : "text-muted")}>
+            <span className={cn("block truncate text-xs font-bold leading-tight", isActive ? "text-[#c6e3e6]" : "text-[#8eabb5]")}>
               {item.label}
             </span>
           </span>
@@ -97,7 +97,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
     <>
       <nav
         style={{ width: isExpanded ? "256px" : "88px" }}
-        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-line bg-surface px-4 py-5 shadow-lh-sm transition-[width] duration-200 ease-out md:flex"
+        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-primary/30 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-lh-deck transition-[width] duration-200 ease-out md:flex"
         aria-label="主导航"
       >
         <Logo isExpanded={isExpanded} />
@@ -108,7 +108,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
 
         <div className="mt-6 grid gap-3">
           {isExpanded && (
-            <LhStatusBadge tone="info" className="justify-center">
+            <LhStatusBadge tone="info" className="justify-center border-panel/15 bg-panel/10 text-signal-soft">
               组件映射
             </LhStatusBadge>
           )}
@@ -116,7 +116,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
             type="button"
             onClick={onTogglePin}
             className={cn(
-              "grid min-h-11 items-center rounded-sm border border-line bg-panel px-3 py-2 text-sm font-bold text-ink-soft shadow-lh-sm transition-colors hover:border-line-strong hover:text-ink",
+              "grid min-h-11 items-center rounded-sm border border-panel/15 bg-panel/5 px-3 py-2 text-sm font-bold text-[#bdd4dc] shadow-lh-sm transition-colors hover:border-signal/35 hover:bg-panel/10 hover:text-panel",
               isExpanded ? "grid-cols-[20px_minmax(0,1fr)] gap-3" : "justify-items-center",
             )}
             aria-label={isPinned ? "收起侧栏" : "固定侧栏"}
@@ -129,14 +129,14 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
 
       <div
         className={cn(
-          "fixed inset-0 z-50 bg-ink/28 transition-opacity duration-200 md:hidden",
+          "fixed inset-0 z-50 bg-ink/30 transition-opacity duration-200 md:hidden",
           isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <button type="button" onClick={onMobileClose} aria-label="关闭导航菜单" className="absolute inset-0" />
         <nav
           className={cn(
-            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-line bg-surface px-4 py-5 shadow-lh-md transition-transform duration-200 ease-out",
+            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-primary/30 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-lh-deck transition-transform duration-200 ease-out",
             isMobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
           aria-label="移动端主导航"
@@ -149,6 +149,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
               icon={<Icon icon={lighthouseIcons.close} className="h-5 w-5" />}
               onClick={onMobileClose}
               size="sm"
+              className="border-panel/15 bg-panel/5 text-panel hover:border-signal/35 hover:bg-panel/10"
             />
           </div>
 

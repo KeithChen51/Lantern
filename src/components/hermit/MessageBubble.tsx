@@ -46,7 +46,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     return (
       <article className="grid grid-cols-[minmax(0,1fr)_36px] gap-3">
         <div className="flex justify-end">
-          <div className="max-w-[min(720px,92%)] rounded-sm border border-primary-deep bg-primary-deep px-4 py-3 text-sm font-bold leading-7 text-panel shadow-lh-sm">
+          <div className="max-w-[min(720px,92%)] rounded-sm border border-primary-deep bg-primary px-4 py-3 text-sm font-bold leading-7 text-panel shadow-lh-sm">
             <div className="mb-1 text-xs font-extrabold text-panel/70">你</div>
             <p className="whitespace-pre-wrap">{text}</p>
           </div>

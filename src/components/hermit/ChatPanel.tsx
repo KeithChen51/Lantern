@@ -58,10 +58,10 @@ export function ChatPanel() {
   }
 
   return (
-    <LhPanel elevated className="overflow-hidden border-line-strong lg:grid lg:h-[calc(100vh-104px)] lg:min-h-[560px] lg:grid-rows-[auto_minmax(0,1fr)]">
-      <div className="grid border-b border-line-strong bg-panel px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5">
+    <LhPanel elevated className="overflow-hidden border-line-strong bg-surface lg:grid lg:h-[calc(100vh-104px)] lg:min-h-[560px] lg:grid-rows-[auto_minmax(0,1fr)]">
+      <div className="grid border-b border-line bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface-quiet))] px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary-deep text-panel">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary text-panel shadow-lh-sm">
             <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
           </span>
           <div className="min-w-0">
@@ -84,7 +84,7 @@ export function ChatPanel() {
 
       <div className="grid lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="grid min-h-[640px] grid-rows-[auto_minmax(0,1fr)_auto] border-line lg:min-h-0 lg:border-r">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/30 bg-primary-deep px-4 py-2.5 text-panel md:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/30 bg-[linear-gradient(90deg,var(--color-deck),var(--color-deck-soft))] px-4 py-2.5 text-panel md:px-5">
             <div className="flex flex-wrap gap-2">
               <span className="rounded-sm border border-panel/20 bg-panel/10 px-2.5 py-1 text-xs font-extrabold">对话流</span>
               <span className="rounded-sm border border-panel/20 bg-panel/10 px-2.5 py-1 text-xs font-bold text-panel/75">回车发送</span>
@@ -125,7 +125,7 @@ export function ChatPanel() {
             <div className="mt-3 grid gap-2">
               {answerContract.map(([title, text], index) => (
                 <div key={title} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-sm border border-line bg-surface-quiet p-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary-deep text-sm font-extrabold text-panel">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-extrabold text-panel shadow-lh-sm">
                     {index + 1}
                   </span>
                   <span>
@@ -203,7 +203,7 @@ function StarterGrid({ onSelect, disabled }: { onSelect: (question: string) => v
           )}
         >
           <span className="flex items-center justify-between gap-3">
-            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-sm bg-primary-deep text-xs font-extrabold text-panel">
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-sm bg-primary text-xs font-extrabold text-panel shadow-lh-sm">
               {index + 1}
             </span>
             <Icon icon={lighthouseIcons.send} className="h-4 w-4 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
