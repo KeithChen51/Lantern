@@ -82,14 +82,18 @@ export function ChatPanel() {
         </div>
       </main>
 
-      <footer className="border-t border-line-strong bg-surface-quiet px-4 py-4 md:px-6">
+      <footer className="bg-surface-quiet px-4 py-4 md:px-6">
         <div className="mx-auto max-w-4xl">
           <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
-          <SuggestedQuestions onSelect={handleSuggestedQuestion} disabled={isLoading} />
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold leading-5 text-muted">
-            <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
-            <span>路引不替代现场责任与最终决策。</span>
-          </div>
+          {!hasMessages && (
+            <>
+              <SuggestedQuestions onSelect={handleSuggestedQuestion} disabled={isLoading} />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold leading-5 text-muted">
+                <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
+                <span>路引不替代现场责任与最终决策。</span>
+              </div>
+            </>
+          )}
         </div>
       </footer>
     </LhPanel>
