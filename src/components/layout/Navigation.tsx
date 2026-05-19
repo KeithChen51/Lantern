@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@iconify/react";
-import { Pin, PinOff, X } from "lucide-react";
+import { LhIconButton, LhStatusBadge } from "@/components/ui/lighthouse-primitives";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
 import { getVisibleNavItems } from "./navigation-model";
 
@@ -26,25 +27,18 @@ function Logo({ isExpanded }: { isExpanded: boolean }) {
     <Link
       href="/"
       className={cn(
-        "flex items-center p-3 transition-all duration-300 group/logo",
-        !isExpanded && "justify-center",
+        "grid min-h-12 grid-cols-[44px_minmax(0,1fr)] items-center gap-3 rounded-md border border-line bg-panel p-2 text-ink shadow-lh-sm transition-colors hover:border-line-strong",
+        !isExpanded && "grid-cols-1 justify-items-center",
       )}
+      aria-label="Lighthouse 首页"
     >
-      <div className="relative flex h-6 w-6 items-center justify-center">
-        <div
-          className={cn(
-            "absolute h-10 w-10 rounded-xl bg-ink/5 transition-all duration-300 group-hover/logo:bg-amber/10",
-            !isExpanded && "h-12 w-12",
-          )}
-        />
-        <Icon
-          icon="game-icons:lighthouse"
-          className="z-10 h-6 w-6 text-amber drop-shadow-[0_0_5px_rgba(217,119,6,0.3)] transition-all group-hover/logo:drop-shadow-[0_0_8px_rgba(217,119,6,0.6)]"
-        />
-      </div>
+      <span className="flex h-11 w-11 items-center justify-center rounded-sm border border-primary/20 bg-primary-soft text-primary-deep">
+        <Icon icon={lighthouseIcons.logo} className="h-6 w-6" />
+      </span>
       {isExpanded && (
-        <span className="ml-3 font-serif text-2xl font-bold tracking-tight text-amber transition-colors duration-300">
-          Lighthouse
+        <span className="min-w-0">
+          <span className="block text-lg font-extrabold leading-tight text-ink">Lighthouse</span>
+          <span className="block text-xs font-bold leading-tight text-muted">Harbor Signal</span>
         </span>
       )}
     </Link>
@@ -69,37 +63,31 @@ function NavLinks({
         href={item.href}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center rounded-lg p-3 transition-all duration-300",
+          "group relative grid min-h-12 items-center rounded-sm border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
+          isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
-            ? "bg-amber/5 text-amber shadow-[0_0_15px_rgba(217,119,6,0.1)]"
-            : "text-ink/60 hover:bg-ink/5 hover:text-ink",
+            ? "border-line-strong bg-primary-soft text-primary-deep shadow-lh-sm"
+            : "border-transparent text-ink-soft hover:border-line hover:bg-surface-quiet hover:text-ink",
         )}
-        title={item.isDev ? "开发中，灯火待点亮" : ""}
+        title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
       >
+        {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-1 rounded-r-full bg-signal" />}
         <Icon
           icon={item.icon}
-          className={cn(
-            "h-6 w-6 transition-all duration-300",
-            isActive ? "text-amber drop-shadow-[0_0_8px_rgba(217,119,6,0.5)]" : "opacity-100",
-          )}
+          className={cn("h-5 w-5", isActive ? "text-primary-deep" : "text-muted group-hover:text-primary")}
         />
         {isExpanded && (
-          <div
-            className={cn(
-              "ml-3 flex items-baseline gap-2 font-noto transition-colors duration-300",
-              isActive ? "text-amber" : "text-ink",
-            )}
-          >
-            <span className="text-sm font-bold leading-none tracking-wide">{item.subLabel}</span>
-            <span
-              className={cn(
-                "text-xs font-semibold opacity-60",
-                isActive ? "text-amber" : "text-ink",
-              )}
-            >
-              {item.label}
+          <span className="flex min-w-0 items-center justify-between gap-3">
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
+              <span className="block truncate text-xs font-bold leading-tight text-muted">{item.label}</span>
             </span>
-          </div>
+            {item.isDev && (
+              <span className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] font-extrabold text-muted">
+                预览
+              </span>
+            )}
+          </span>
         )}
       </Link>
     );
@@ -113,66 +101,63 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
   return (
     <>
       <nav
-        style={{ width: isExpanded ? "240px" : "80px" }}
-        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[rgba(0,0,0,0.05)] bg-paper py-8 shadow-sm backdrop-blur-sm transition-[width] duration-300 ease-in-out md:flex"
+        style={{ width: isExpanded ? "256px" : "88px" }}
+        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-line bg-surface px-4 py-5 shadow-lh-sm transition-[width] duration-200 ease-out md:flex"
+        aria-label="主导航"
       >
-        <div className="mb-12 px-4">
-          <Logo isExpanded={isExpanded} />
-        </div>
+        <Logo isExpanded={isExpanded} />
 
-        <div className="flex flex-1 flex-col gap-2 px-4">
+        <div className="mt-8 flex flex-1 flex-col gap-2">
           <NavLinks isExpanded={isExpanded} pathname={pathname} />
         </div>
 
-        <div className="mt-auto px-4">
+        <div className="mt-6 grid gap-3">
+          {isExpanded && (
+            <LhStatusBadge tone="info" className="justify-center">
+              UI Kit Mapping
+            </LhStatusBadge>
+          )}
           <button
             type="button"
             onClick={onTogglePin}
             className={cn(
-              "flex w-full items-center rounded-lg p-3 text-sm transition-colors",
-              isPinned ? "bg-ink/5 text-ink" : "text-ink/40 hover:bg-ink/5 hover:text-ink",
-              !isExpanded && "justify-center",
+              "grid min-h-11 items-center rounded-sm border border-line bg-panel px-3 py-2 text-sm font-bold text-ink-soft shadow-lh-sm transition-colors hover:border-line-strong hover:text-ink",
+              isExpanded ? "grid-cols-[20px_minmax(0,1fr)] gap-3" : "justify-items-center",
             )}
+            aria-label={isPinned ? "收起侧栏" : "固定侧栏"}
           >
-            {isPinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
-            {isExpanded && (
-              <span className="ml-3 font-serif">{isPinned ? "Unpin Sidebar" : "Pin Sidebar"}</span>
-            )}
+            <Icon icon={isPinned ? lighthouseIcons.pin : lighthouseIcons.unpin} className="h-5 w-5" />
+            {isExpanded && <span className="text-left">{isPinned ? "收起侧栏" : "固定侧栏"}</span>}
           </button>
         </div>
       </nav>
 
       <div
         className={cn(
-          "fixed inset-0 z-50 bg-ink/20 backdrop-blur-[1px] transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-50 bg-ink/28 transition-opacity duration-200 md:hidden",
           isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
-        <button
-          type="button"
-          onClick={onMobileClose}
-          aria-label="关闭导航菜单"
-          className="absolute inset-0"
-        />
+        <button type="button" onClick={onMobileClose} aria-label="关闭导航菜单" className="absolute inset-0" />
         <nav
           className={cn(
-            "absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[rgba(0,0,0,0.08)] bg-paper py-6 shadow-xl transition-transform duration-300",
+            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-line bg-surface px-4 py-5 shadow-lh-md transition-transform duration-200 ease-out",
             isMobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
+          aria-label="移动端主导航"
         >
-          <div className="mb-8 flex items-center justify-between px-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <Logo isExpanded />
-            <button
+            <LhIconButton
               type="button"
+              label="关闭导航菜单"
+              icon={<Icon icon={lighthouseIcons.close} className="h-5 w-5" />}
               onClick={onMobileClose}
-              className="rounded-md p-2 text-ink/50 transition-colors hover:bg-ink/5 hover:text-ink"
-              aria-label="关闭导航菜单"
-            >
-              <X className="h-4 w-4" />
-            </button>
+              size="sm"
+            />
           </div>
 
-          <div className="flex flex-1 flex-col gap-2 px-4">
+          <div className="mt-8 flex flex-1 flex-col gap-2">
             <NavLinks isExpanded pathname={pathname} onNavigate={onMobileClose} />
           </div>
         </nav>

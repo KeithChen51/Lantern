@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ShieldCheck, UserRound } from "lucide-react";
+import { Icon } from "@iconify/react";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
 
 type PreviewIdentity = {
@@ -36,7 +37,7 @@ async function fetchPreviewIdentity(init?: RequestInit) {
 }
 
 function IdentityIcon({ role }: { role: PreviewIdentity["role"] }) {
-  return role === "highest_admin" ? <ShieldCheck className="h-4 w-4" /> : <UserRound className="h-4 w-4" />;
+  return <Icon icon={role === "highest_admin" ? lighthouseIcons.admin : lighthouseIcons.user} className="h-4 w-4" />;
 }
 
 export function PreviewIdentitySwitcher() {
@@ -75,7 +76,7 @@ export function PreviewIdentitySwitcher() {
 
   return (
     <div
-      className="flex shrink-0 items-center rounded-full border border-ink/10 bg-white/45 p-1 shadow-sm backdrop-blur-sm"
+      className="flex shrink-0 items-center rounded-sm border border-line bg-surface-quiet p-1 shadow-lh-sm"
       aria-label="体验身份"
     >
       {payload.identities.map((identity) => {
@@ -89,8 +90,8 @@ export function PreviewIdentitySwitcher() {
             title={`${identity.label}：${identity.description}`}
             aria-pressed={isActive}
             className={cn(
-              "inline-flex h-9 min-w-9 items-center justify-center gap-2 rounded-full px-2.5 text-xs font-medium transition-colors disabled:cursor-wait",
-              isActive ? "bg-ink text-paper shadow-sm" : "text-ink/55 hover:bg-ink/5 hover:text-ink",
+              "inline-flex h-8 min-w-8 items-center justify-center gap-2 rounded-xs px-2.5 text-xs font-bold transition-colors disabled:cursor-wait",
+              isActive ? "bg-primary text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
             )}
           >
             <IdentityIcon role={identity.role} />

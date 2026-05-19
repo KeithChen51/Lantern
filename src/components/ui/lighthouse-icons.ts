@@ -24,6 +24,8 @@ export const lighthouseIcons = {
   status: "solar:check-circle-bold",
   warning: "solar:danger-triangle-bold",
   info: "solar:info-circle-bold",
+  admin: "solar:shield-check-bold",
+  user: "solar:user-rounded-bold",
 } as const;
 
 export type LighthouseIconName = keyof typeof lighthouseIcons;

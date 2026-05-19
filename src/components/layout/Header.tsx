@@ -2,23 +2,25 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Menu, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Icon } from "@iconify/react";
 import { PreviewIdentitySwitcher } from "@/components/layout/PreviewIdentitySwitcher";
+import { LhIconButton } from "@/components/ui/lighthouse-primitives";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { cn } from "@/lib/utils";
 
 const SEARCH_TARGETS = [
   { href: "/", label: "本心 Heart", keywords: ["heart", "本心", "首页", "价值观", "文化"] },
   { href: "/mirror", label: "镜鉴 Mirror", keywords: ["mirror", "镜鉴", "案例"] },
   { href: "/action", label: "笃行 Action", keywords: ["action", "笃行", "行动", "实践"] },
   { href: "/workshop", label: "共创 Workshop", keywords: ["workshop", "共创", "do", "dont", "指南", "提交"] },
-  { href: "/workshop?section=review", label: "共创审核", keywords: ["admin", "审核", "管理", "发布"] },
+  { href: "/admin/workshop", label: "共创审核", keywords: ["admin", "审核", "管理", "发布"] },
   { href: "/hermit", label: "路引 Hermit", keywords: ["hermit", "路引", "决策", "对话"] },
 ];
 
 const NOTIFICATIONS = [
-  "诊断项已接入：代码质量、性能、移动端适配。",
-  "当前可搜索页面：镜鉴、本心、笃行、共创、路引。",
-  "下一步建议：将大图压缩为 WebP 进一步提速。",
+  "新视觉迁移中：先完成组件库，再替换原版页面。",
+  "当前重点：提高正文对比、状态可见性和操作层级。",
+  "Solar 图标体系已锁定，新增控件继续沿用同一图标集。",
 ];
 
 interface HeaderProps {
@@ -42,7 +44,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
     event.preventDefault();
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) {
-      setSearchFeedback("请输入关键词，如：镜鉴、本心、笃行、共创、路引。");
+      setSearchFeedback("请输入关键词，例如：镜鉴、本心、笃行、共创、路引。");
       return;
     }
 
@@ -65,65 +67,72 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
   return (
     <header
       className={cn(
-        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 bg-gradient-to-b from-paper via-paper/85 to-transparent pl-4 pr-4 md:pr-8",
-        isSidebarPinned ? "md:pl-[260px]" : "md:pl-[100px]",
+        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 px-4 pt-3 transition-[padding] duration-200 ease-out md:px-8",
+        isSidebarPinned ? "md:pl-[280px]" : "md:pl-[112px]",
       )}
     >
-      <div className="pointer-events-auto mx-auto flex h-full w-full max-w-7xl min-w-0 items-center justify-end gap-2 md:gap-4">
-        <button
+      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1220px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-line bg-panel/95 px-3 shadow-lh-sm">
+        <LhIconButton
           type="button"
+          label="打开导航菜单"
+          icon={<Icon icon={lighthouseIcons.menu} className="h-5 w-5" />}
           onClick={onOpenMobileNav}
-          aria-label="打开导航菜单"
-          className="shrink-0 rounded-full p-2 text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink md:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+          size="sm"
+          className="md:hidden"
+        />
 
-        <form onSubmit={handleSearchSubmit} className="min-w-0 flex-1 max-w-md">
-          <div className="group relative">
-            <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-              <Search className="h-4 w-4 text-ink/40 transition-colors group-focus-within:text-ink" />
-            </div>
+        <form onSubmit={handleSearchSubmit} className="relative min-w-0">
+          <div className="relative">
+            <Icon
+              icon={lighthouseIcons.search}
+              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary"
+            />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               type="text"
-              placeholder="搜索页面（如：镜鉴、共创、路引）"
-              className="w-full rounded-full border border-transparent bg-ink/5 py-2.5 pl-10 pr-4 text-sm text-ink shadow-sm outline-none transition-all duration-300 placeholder:text-ink/30 hover:bg-ink/10 focus:border-ink/10 focus:bg-white/50"
+              placeholder="搜索页面：本心、镜鉴、共创、路引"
+              className="h-10 w-full rounded-sm border border-line bg-surface-quiet pl-10 pr-3 text-sm font-medium text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
             />
           </div>
           {searchFeedback && (
-            <p className="mt-2 pl-2 text-xs text-ink/50">{searchFeedback}</p>
+            <p
+              className="absolute left-0 top-full mt-2 w-min min-w-full max-w-[min(560px,calc(100vw-32px))] rounded-sm border border-line bg-panel px-3 py-2 text-xs font-bold leading-5 text-muted shadow-lh-sm"
+              aria-live="polite"
+            >
+              {searchFeedback}
+            </p>
           )}
         </form>
 
-        <div className="hidden lg:block">
-          <PreviewIdentitySwitcher />
-        </div>
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <div className="hidden lg:block">
+            <PreviewIdentitySwitcher />
+          </div>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsNotificationOpen((prev) => !prev)}
-            className="relative shrink-0 rounded-full p-2 text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink"
-            aria-label="通知"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-paper bg-red-400" />
-          </button>
+          <div className="relative">
+            <LhIconButton
+              type="button"
+              label="通知"
+              icon={<Icon icon={lighthouseIcons.bell} className="h-5 w-5" />}
+              onClick={() => setIsNotificationOpen((prev) => !prev)}
+              size="sm"
+            />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-panel bg-signal" />
 
-          {isNotificationOpen && (
-            <div className="absolute right-0 top-12 w-72 rounded-xl border border-white/60 bg-white/80 p-4 text-sm text-ink/70 shadow-lg backdrop-blur-sm">
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-amber">通知</p>
-              <ul className="space-y-2">
-                {NOTIFICATIONS.map((item) => (
-                  <li key={item} className="leading-relaxed">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {isNotificationOpen && (
+              <div className="absolute right-0 top-12 w-[min(20rem,calc(100vw-32px))] rounded-md border border-line bg-panel p-4 text-sm text-ink-soft shadow-lh-md">
+                <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">通知</p>
+                <ul className="space-y-2">
+                  {NOTIFICATIONS.map((item) => (
+                    <li key={item} className="leading-6">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { Navigation } from "@/components/layout/Navigation";
 import { Header } from "@/components/layout/Header";
+import { Navigation } from "@/components/layout/Navigation";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_STORAGE_KEY = "lighthouse-sidebar-pinned";
@@ -35,7 +35,7 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-paper text-ink font-sans selection:bg-ink/10 selection:text-ink">
+    <div className="min-h-screen bg-transparent text-ink font-sans selection:bg-signal-soft selection:text-ink">
       <Navigation
         isPinned={isSidebarPinned}
         onTogglePin={handleTogglePin}
@@ -49,11 +49,11 @@ export function AppShell({ children }: AppShellProps) {
 
       <main
         className={cn(
-          "pt-24 pr-4 md:pr-8 pb-20 min-h-screen pl-5 transition-[padding] duration-300 ease-in-out",
-          isSidebarPinned ? "md:pl-[260px]" : "md:pl-[100px]",
+          "min-h-screen px-4 pb-20 pt-24 transition-[padding] duration-200 ease-out md:px-8",
+          isSidebarPinned ? "md:pl-[280px]" : "md:pl-[112px]",
         )}
       >
-        {children}
+        <div className="mx-auto w-full max-w-[1220px]">{children}</div>
       </main>
     </div>
   );
