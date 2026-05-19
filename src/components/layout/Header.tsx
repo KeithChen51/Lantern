@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 
 const SEARCH_TARGETS = [
   { href: "/", label: "本心", keywords: ["heart", "本心", "首页", "价值观", "文化"] },
-  { href: "/mirror", label: "镜鉴", keywords: ["mirror", "镜鉴", "案例"] },
-  { href: "/action", label: "笃行", keywords: ["action", "笃行", "行动", "实践"] },
-  { href: "/workshop", label: "共创", keywords: ["workshop", "共创", "do", "dont", "指南", "提交"] },
+  { href: "/mirror", label: "镜鉴", keywords: ["mirror", "镜鉴", "外部标杆", "标杆", "案例"] },
+  { href: "/action", label: "笃行", keywords: ["action", "笃行", "内部实践", "行动", "实践"] },
+  { href: "/workshop", label: "共创", keywords: ["workshop", "共创", "行动指南", "do", "dont", "指南", "提交"] },
   { href: "/admin/workshop", label: "共创审核", keywords: ["admin", "审核", "管理", "发布"] },
-  { href: "/hermit", label: "路引", keywords: ["hermit", "路引", "决策", "对话"] },
+  { href: "/hermit", label: "路引", keywords: ["hermit", "路引", "AI问答", "ai问答", "问答", "决策", "对话"] },
 ];
 
 const NOTIFICATIONS = [
@@ -91,7 +91,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               type="text"
-              placeholder="搜索页面：本心、镜鉴、共创、路引"
+              placeholder="搜索页面：本心、镜鉴、行动指南、AI问答"
               className="h-10 w-full rounded-sm border border-line bg-surface-quiet pl-10 pr-3 text-sm font-medium text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
             />
           </div>

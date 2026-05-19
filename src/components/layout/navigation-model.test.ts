@@ -3,7 +3,7 @@ import { getVisibleNavItems, NAV_ITEMS } from "./navigation-model";
 
 describe("navigation model", () => {
   it("keeps the primary app navigation to five modules for every identity", () => {
-    const expectedLabels = ["价值起点", "标杆案例", "判断训练", "岗位共创", "服务路引"];
+    const expectedLabels = ["价值起点", "外部标杆", "内部实践", "行动指南", "AI问答"];
 
     expect(NAV_ITEMS.map((item) => item.label)).toEqual(expectedLabels);
     expect(getVisibleNavItems("normal_user").map((item) => item.label)).toEqual(expectedLabels);
