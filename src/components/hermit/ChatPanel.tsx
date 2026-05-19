@@ -6,10 +6,10 @@ import { ChatInput } from "./ChatInput";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
 
 const SUGGESTED_QUESTIONS = [
-  "胖东来的经营哲学对我们有什么启发？",
-  "在面对服务质量与成本之间的矛盾时，应该如何取舍？",
-  "如何将「致真」落实到日常服务中？",
-  "我们的核心价值观是什么？它们之间有什么内在联系？",
+  "这个案例应该如何判断主维度与关联维度？",
+  "善和爱在服务案例里应该怎么区分？",
+  "客户利益和员工承压发生冲突时，应该怎么判断？",
+  "真、善、美、爱之间有交叉时，应该如何分析？",
 ];
 
 export function ChatPanel() {
@@ -66,12 +66,12 @@ export function ChatPanel() {
 
               <div>
                 <h2 className="text-2xl font-serif text-ink mb-2">
-                  与光对话，在迷雾中寻路
+                  把问题带回具体场景
                 </h2>
                 <p className="text-ink/50 font-serif text-sm leading-relaxed">
-                  祂聚合了所有智慧的光芒，等待您的提问。祂不会直接给予答案，
+                  路引不会替你做最终决定，也不会把价值观变成简单标签。
                   <br className="hidden sm:block" />
-                  而是会与您一同思考，用一束束思辨之光，照亮通往未来的方向。
+                  它会帮助你回到事实、处境和选择，辨析主维度、关联维度与下一步。
                 </p>
               </div>
 
@@ -125,7 +125,7 @@ export function ChatPanel() {
             isLoading={isLoading}
           />
           <p className="text-center text-xs text-ink/25 mt-3 font-serif">
-            路引仅提供思考引导，不代表最终决策建议
+            路引提供价值辨析与思考引导，不替代现场责任与最终决策
           </p>
         </div>
       </div>

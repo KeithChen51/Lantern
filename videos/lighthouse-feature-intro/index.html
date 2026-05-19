@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Lighthouse 功能介绍</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f3efe0;
+        color: #2c2c2c;
+        font-family: "Noto Serif SC", serif;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+        opacity: 0.5;
+        z-index: 20;
+      }
+
+      #lighthouse-feature-intro {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f3efe0;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f3efe0;
+        will-change: transform, opacity, filter;
+      }
+
+      .scene:not(#scene1) {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .scene-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        padding: 86px 110px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+
+      .fine-grid {
+        position: absolute;
+        inset: 72px;
+        border: 1px solid rgba(44, 44, 44, 0.06);
+        background-image:
+          linear-gradient(rgba(44, 44, 44, 0.05) 1px, rgba(243, 239, 224, 0) 1px),
+          linear-gradient(90deg, rgba(44, 44, 44, 0.05) 1px, rgba(243, 239, 224, 0) 1px);
+        background-size: 86px 86px;
+        z-index: 0;
+      }
+
+      .ghost-word {
+        position: absolute;
+        font-size: 260px;
+        line-height: 1;
+        color: rgba(217, 119, 6, 0.1);
+        opacity: 0.08;
+        white-space: nowrap;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .ghost-word::before {
+        content: attr(data-text);
+      }
+
+      .topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+        font-size: 24px;
+        color: #5a5144;
+      }
+
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        color: #2c2c2c;
+        font-weight: 700;
+      }
+
+      .mark-symbol {
+        position: relative;
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: rgba(217, 119, 6, 0.11);
+      }
+
+      .mark-symbol::before {
+        content: "";
+        position: absolute;
+        left: 16px;
+        top: 9px;
+        width: 10px;
+        height: 24px;
+        border-radius: 8px;
+        background: #d97706;
+      }
+
+      .mark-symbol::after {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 26px;
+        width: 22px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(217, 119, 6, 0.56);
+      }
+
+      .label,
+      .mono {
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+
+      .label {
+        font-size: 20px;
+        color: #5a5144;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-weight: 700;
+        color: #2c2c2c;
+      }
+
+      .hero-title {
+        max-width: 1180px;
+        font-size: 118px;
+        line-height: 1.05;
+      }
+
+      .hero-title .en,
+      .page-title .en,
+      .section-title .en {
+        color: #8a4500;
+        font-style: italic;
+        font-weight: 700;
+      }
+
+      .hero-title .en {
+        font-size: 92px;
+      }
+
+      .lead {
+        max-width: 1040px;
+        font-size: 38px;
+        line-height: 1.55;
+        color: #4f473a;
+      }
+
+      .module-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 18px;
+        margin-top: auto;
+      }
+
+      .module-card,
+      .soft-card,
+      .mini-card {
+        border: 1px solid rgba(255, 255, 255, 0.74);
+        background: rgba(251, 248, 237, 0.72);
+        box-shadow: 0 18px 45px rgba(44, 44, 44, 0.08);
+      }
+
+      .module-card {
+        min-height: 172px;
+        border-radius: 24px;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .module-card strong {
+        font-size: 28px;
+      }
+
+      .module-card span {
+        display: block;
+        margin-top: 8px;
+        font-size: 20px;
+        color: #5a5144;
+      }
+
+      .module-card em {
+        font-style: normal;
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 18px;
+        color: #9a4f00;
+      }
+
+      .split-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+        gap: 58px;
+        align-items: center;
+        flex: 1;
+        min-height: 0;
+        height: auto;
+      }
+
+      .section-title {
+        font-size: 74px;
+        line-height: 1.14;
+      }
+
+      .section-copy {
+        margin-top: 28px;
+        font-size: 29px;
+        line-height: 1.62;
+        color: #4f473a;
+      }
+
+      .pill-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 32px;
+      }
+
+      .pill,
+      .chip {
+        border-radius: 999px;
+        border: 1px solid rgba(217, 119, 6, 0.26);
+        background: rgba(217, 119, 6, 0.1);
+        color: #8a4500;
+        font-weight: 700;
+      }
+
+      .pill {
+        padding: 12px 22px;
+        font-size: 22px;
+      }
+
+      .chip {
+        padding: 7px 12px;
+        font-size: 15px;
+      }
+
+      .app-window {
+        position: relative;
+        width: 100%;
+        height: 650px;
+        display: grid;
+        grid-template-columns: 184px minmax(0, 1fr);
+        overflow: hidden;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.78);
+        background: #f3efe0;
+        box-shadow: 0 30px 76px rgba(44, 44, 44, 0.14);
+      }
+
+      .app-window.tall {
+        height: 780px;
+      }
+
+      .app-window.compact {
+        height: 330px;
+        grid-template-columns: 122px minmax(0, 1fr);
+        border-radius: 24px;
+      }
+
+      .app-sidebar {
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+        border-right: 1px solid rgba(44, 44, 44, 0.06);
+        background: rgba(243, 239, 224, 0.96);
+        padding: 26px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .app-window.compact .app-sidebar {
+        padding: 16px 10px;
+        gap: 10px;
+      }
+
+      .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 8px 20px;
+        color: #8a4500;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .app-window.compact .app-logo {
+        font-size: 10px;
+        padding-bottom: 6px;
+      }
+
+      .lighthouse-glyph {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        background: rgba(217, 119, 6, 0.12);
+        flex: 0 0 auto;
+      }
+
+      .lighthouse-glyph::before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        top: 5px;
+        width: 6px;
+        height: 18px;
+        border-radius: 999px;
+        background: #d97706;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        border-radius: 14px;
+        padding: 10px 12px;
+        color: rgba(44, 44, 44, 0.78);
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .app-window.compact .nav-link {
+        min-height: 28px;
+        padding: 6px 7px;
+        font-size: 10px;
+        border-radius: 9px;
+        gap: 6px;
+      }
+
+      .nav-link.active {
+        background: rgba(217, 119, 6, 0.09);
+        color: #8a4500;
+        box-shadow: 0 10px 24px rgba(217, 119, 6, 0.09);
+      }
+
+      .nav-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        background: currentColor;
+        opacity: 0.72;
+        flex: 0 0 auto;
+      }
+
+      .app-window.compact .nav-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 4px;
+      }
+
+      .app-main {
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .app-header {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 14px;
+        padding: 17px 24px;
+      }
+
+      .app-window.compact .app-header {
+        height: 44px;
+        padding: 10px 14px;
+      }
+
+      .search-pill {
+        width: 430px;
+        height: 42px;
+        border-radius: 999px;
+        background: rgba(44, 44, 44, 0.075);
+        color: rgba(44, 44, 44, 0.76);
+        display: flex;
+        align-items: center;
+        padding: 0 18px;
+        font-size: 14px;
+      }
+
+      .app-window.compact .search-pill {
+        width: 210px;
+        height: 24px;
+        font-size: 8px;
+        padding: 0 10px;
+      }
+
+      .identity-pill,
+      .bell-dot {
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.62);
+        background: rgba(251, 248, 237, 0.72);
+      }
+
+      .identity-pill {
+        padding: 9px 14px;
+        color: #5a5144;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .bell-dot {
+        width: 34px;
+        height: 34px;
+        position: relative;
+      }
+
+      .bell-dot::after {
+        content: "";
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #b65b51;
+      }
+
+      .app-page {
+        flex: 1;
+        min-height: 0;
+        padding: 18px 34px 34px;
+        overflow: hidden;
+      }
+
+      .app-window.compact .app-page {
+        padding: 8px 16px 16px;
+      }
+
+      .page-title {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        font-size: 44px;
+        line-height: 1.1;
+      }
+
+      .page-title .en {
+        font-size: 34px;
+      }
+
+      .compact .page-title {
+        font-size: 22px;
+      }
+
+      .compact .page-title .en {
+        font-size: 17px;
+      }
+
+      .page-lede {
+        margin-top: 12px;
+        max-width: 740px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 17px;
+        line-height: 1.65;
+      }
+
+      .compact .page-lede {
+        margin-top: 7px;
+        font-size: 10px;
+        line-height: 1.45;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 16px 0 8px;
+        font-size: 24px;
+      }
+
+      .section-heading em {
+        color: #8a4500;
+        font-size: 18px;
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .soft-card {
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .soft-card h3 {
+        font-size: 25px;
+      }
+
+      .soft-card p {
+        margin-top: 10px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 15px;
+        line-height: 1.58;
+      }
+
+      .mini-card {
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      .mini-card h3 {
+        font-size: 22px;
+      }
+
+      .mini-card p {
+        margin-top: 8px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 13px;
+        margin-top: 22px;
+      }
+
+      .module-preview {
+        min-height: 268px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.74);
+        background: rgba(251, 248, 237, 0.62);
+        padding: 14px;
+        box-shadow: 0 12px 30px rgba(44, 44, 44, 0.08);
+      }
+
+      .module-preview strong {
+        display: block;
+        font-size: 20px;
+      }
+
+      .module-preview small {
+        display: block;
+        margin-top: 5px;
+        color: #9a4f00;
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .preview-lines {
+        display: grid;
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .line {
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(44, 44, 44, 0.09);
+      }
+
+      .line.amber {
+        background: rgba(217, 119, 6, 0.16);
+      }
+
+      .feature-card {
+        margin-top: 20px;
+        min-height: 210px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        background: rgba(251, 248, 237, 0.7);
+        box-shadow: 0 16px 38px rgba(44, 44, 44, 0.08);
+        padding: 20px;
+      }
+
+      .feature-card .date {
+        color: #8a4500;
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 15px;
+      }
+
+      .feature-card h3 {
+        margin-top: 16px;
+        font-size: 31px;
+      }
+
+      .feature-card p {
+        margin-top: 12px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      .action-card {
+        margin-top: 8px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.76);
+        background: rgba(251, 248, 237, 0.72);
+        box-shadow: 0 16px 42px rgba(44, 44, 44, 0.09);
+        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 258px;
+        gap: 20px;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+
+      .light-tag {
+        border-radius: 999px;
+        background: rgba(44, 44, 44, 0.055);
+        color: rgba(44, 44, 44, 0.76);
+        padding: 7px 11px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .action-card h3 {
+        margin-top: 11px;
+        font-size: 26px;
+        line-height: 1.12;
+      }
+
+      .action-card p {
+        margin-top: 9px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .decision-list {
+        border-left: 1px solid rgba(44, 44, 44, 0.1);
+        padding-left: 16px;
+        display: grid;
+        gap: 7px;
+      }
+
+      .decision-list div {
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 8px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .decision-list span {
+        color: #8a4500;
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+
+      .workshop-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 18px;
+        margin-top: 20px;
+      }
+
+      .tab-row {
+        display: flex;
+        gap: 9px;
+        margin-top: 16px;
+      }
+
+      .tab {
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        background: rgba(251, 248, 237, 0.58);
+        padding: 8px 13px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .tab.active {
+        border-color: rgba(217, 119, 6, 0.3);
+        background: rgba(217, 119, 6, 0.1);
+        color: #8a4500;
+      }
+
+      .form-card {
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        background: rgba(251, 248, 237, 0.7);
+        padding: 20px;
+        box-shadow: 0 14px 36px rgba(44, 44, 44, 0.08);
+      }
+
+      .form-card h3 {
+        font-size: 30px;
+      }
+
+      .input-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .input-box,
+      .text-box {
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        background: rgba(243, 239, 224, 0.72);
+        padding: 10px 12px;
+        color: #2c2c2c;
+        font-size: 15px;
+      }
+
+      .text-box {
+        min-height: 64px;
+        line-height: 1.45;
+      }
+
+      .rule-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .rule-item {
+        border-radius: 14px;
+        background: rgba(243, 239, 224, 0.72);
+        padding: 12px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 15px;
+      }
+
+      .chat-panel {
+        margin-top: 18px;
+        height: 445px;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) 72px;
+        gap: 14px;
+      }
+
+      .welcome-box {
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.74);
+        background: rgba(251, 248, 237, 0.6);
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+
+      .suggestion-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .suggestion {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.38);
+        padding: 15px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      .chat-input {
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.76);
+        background: rgba(251, 248, 237, 0.8);
+        box-shadow: 0 14px 34px rgba(44, 44, 44, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px 0 22px;
+        color: rgba(44, 44, 44, 0.35);
+        font-size: 16px;
+      }
+
+      .send-dot {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: rgba(217, 119, 6, 0.24);
+      }
+
+      .answer-contract {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .contract-card {
+        border-radius: 18px;
+        background: rgba(251, 248, 237, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.74);
+        padding: 16px;
+        min-height: 118px;
+      }
+
+      .contract-card strong {
+        font-size: 20px;
+      }
+
+      .contract-card p {
+        margin-top: 8px;
+        color: rgba(44, 44, 44, 0.76);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .loop {
+        position: relative;
+        flex: 1;
+        display: grid;
+        place-items: center;
+      }
+
+      .loop-ring {
+        position: absolute;
+        width: 830px;
+        height: 500px;
+        border-radius: 50%;
+        border: 2px solid rgba(217, 119, 6, 0.28);
+      }
+
+      .loop-ring:nth-child(2) {
+        width: 1040px;
+        height: 625px;
+        border-color: rgba(73, 99, 79, 0.22);
+      }
+
+      .loop-item {
+        position: absolute;
+        width: 258px;
+        min-height: 118px;
+        border-radius: 24px;
+        background: rgba(251, 248, 237, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.76);
+        box-shadow: 0 20px 52px rgba(44, 44, 44, 0.1);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .loop-item strong {
+        font-size: 30px;
+      }
+
+      .loop-item span {
+        margin-top: 6px;
+        font-size: 18px;
+        color: #5a5144;
+      }
+
+      .loop-item.heart {
+        left: 224px;
+        top: 38px;
+      }
+
+      .loop-item.mirror {
+        right: 220px;
+        top: 78px;
+      }
+
+      .loop-item.action {
+        right: 132px;
+        bottom: 178px;
+      }
+
+      .loop-item.workshop {
+        left: 146px;
+        bottom: 122px;
+      }
+
+      .loop-item.hermit {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(217, 119, 6, 0.13);
+        border-color: rgba(217, 119, 6, 0.28);
+      }
+
+      .closing-title {
+        max-width: 1280px;
+        font-size: 92px;
+        line-height: 1.16;
+        text-align: center;
+      }
+
+      .closing-copy {
+        margin-top: 28px;
+        max-width: 980px;
+        text-align: center;
+        font-size: 31px;
+        line-height: 1.6;
+        color: #4f473a;
+      }
+
+      .small-note {
+        position: absolute;
+        left: 110px;
+        bottom: 72px;
+        font-size: 20px;
+        color: #665c4f;
+      }
+
+      .transition-wash {
+        position: absolute;
+        inset: 0;
+        z-index: 18;
+        pointer-events: none;
+        background: #fbf8ed;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="lighthouse-feature-intro"
+      data-composition-id="lighthouse-feature-intro"
+      data-width="1920"
+      data-height="1080"
+      data-start="0"
+      data-duration="54"
+    >
+      <div id="scene1" class="scene">
+        <div class="fine-grid" data-layout-ignore></div>
+        <div class="ghost-word" data-layout-ignore data-text="Lighthouse" style="right: -110px; bottom: 20px;"></div>
+        <div class="scene-content">
+          <div class="topline">
+            <div class="brand-mark">
+              <span class="mark-symbol"></span>
+              <span>Lantern | Lighthouse</span>
+            </div>
+            <span class="label">Automotive After-sales Culture Platform</span>
+          </div>
+          <div style="margin-top: 122px;">
+            <h1 class="hero-title">灯塔 <span class="en">Lighthouse</span></h1>
+            <p class="lead" style="margin-top: 34px;">
+              面向汽车品牌售后体系的企业文化数字平台，把服务理念、标杆案例、内部实践、岗位规范和领域问答放进同一个工作台。
+            </p>
+          </div>
+          <div class="module-row">
+            <div class="module-card"><strong>本心</strong><span>讲清服务价值底座</span><em>Heart</em></div>
+            <div class="module-card"><strong>镜鉴</strong><span>打开外部案例参照</span><em>Mirror</em></div>
+            <div class="module-card"><strong>笃行</strong><span>沉淀内部真实实践</span><em>Action</em></div>
+            <div class="module-card"><strong>共创</strong><span>生成岗位动作规范</span><em>Workshop</em></div>
+            <div class="module-card"><strong>路引</strong><span>辅助理解与判断</span><em>Hermit</em></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene2" class="scene">
+        <div class="fine-grid" data-layout-ignore></div>
+        <div class="scene-content">
+          <div class="topline">
+            <div class="brand-mark"><span class="mark-symbol"></span><span>平台闭环</span></div>
+            <span class="label">rewritten as product UI components</span>
+          </div>
+          <div class="split-layout">
+            <div>
+              <h2 class="section-title">这次不贴截图，直接把前端界面写进视频。</h2>
+              <p class="section-copy">
+                侧栏、搜索、模块页头、卡片、表单和问答区，都按现有 Next 前端的可见结构改写为 HyperFrames HTML，让每个功能画面可以分层进入。
+              </p>
+              <div class="pill-list">
+                <span class="pill">AppShell</span>
+                <span class="pill">Navigation</span>
+                <span class="pill">Header</span>
+                <span class="pill">Page Content</span>
+              </div>
+            </div>
+            <div class="app-window tall">
+              <aside class="app-sidebar">
+                <div class="app-logo"><span class="lighthouse-glyph"></span><span>Lighthouse</span></div>
+                <div class="nav-link active"><span class="nav-dot"></span><span>本心 Heart</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>镜鉴 Mirror</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>笃行 Action</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>共创 Workshop</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>路引 Hermit</span></div>
+              </aside>
+              <div class="app-main">
+                <header class="app-header">
+                  <div class="search-pill">搜索页面（如：镜鉴、共创、路引）</div>
+                  <div class="identity-pill">一线用户</div>
+                  <div class="bell-dot"></div>
+                </header>
+                <main class="app-page">
+                  <h2 class="page-title">模块工作台 <span class="en">Overview</span></h2>
+                  <p class="page-lede">当前视频将页面结构还原成 HTML 组件，而不是把页面截成一张图片。</p>
+                  <div class="overview-grid">
+                    <div class="module-preview"><strong>本心</strong><small>Heart</small><div class="preview-lines"><span class="line amber"></span><span class="line" style="width: 82%;"></span><span class="line" style="width: 68%;"></span></div></div>
+                    <div class="module-preview"><strong>镜鉴</strong><small>Mirror</small><div class="preview-lines"><span class="line amber" style="width: 64%;"></span><span class="line"></span><span class="line" style="width: 74%;"></span></div></div>
+                    <div class="module-preview"><strong>笃行</strong><small>Action</small><div class="preview-lines"><span class="line amber"></span><span class="line" style="width: 88%;"></span><span class="line" style="width: 58%;"></span></div></div>
+                    <div class="module-preview"><strong>共创</strong><small>Workshop</small><div class="preview-lines"><span class="line amber" style="width: 72%;"></span><span class="line"></span><span class="line" style="width: 80%;"></span></div></div>
+                    <div class="module-preview"><strong>路引</strong><small>Hermit</small><div class="preview-lines"><span class="line amber"></span><span class="line" style="width: 76%;"></span><span class="line" style="width: 64%;"></span></div></div>
+                  </div>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene3" class="scene">
+        <div class="ghost-word" data-layout-ignore data-text="Heart" style="left: -80px; top: 42px;"></div>
+        <div class="scene-content">
+          <div class="topline">
+            <div class="brand-mark"><span class="mark-symbol"></span><span>Heart / Mirror</span></div>
+            <span class="label">belief and reference</span>
+          </div>
+          <div class="split-layout">
+            <div>
+              <h2 class="section-title">先讲清本心，再看见参照。</h2>
+              <p class="section-copy">
+                Heart 的价值解释和 Mirror 的案例卡片，直接来自当前页面结构：标题、说明、价值芯片、核心卡片和标杆案例都以 DOM 呈现。
+              </p>
+              <div class="pill-list">
+                <span class="pill">真</span>
+                <span class="pill">善</span>
+                <span class="pill">美</span>
+                <span class="pill">爱</span>
+              </div>
+            </div>
+            <div style="display: grid; gap: 24px;">
+              <div class="app-window compact">
+                <aside class="app-sidebar">
+                  <div class="app-logo"><span class="lighthouse-glyph"></span><span>Lighthouse</span></div>
+                  <div class="nav-link active"><span class="nav-dot"></span><span>本心</span></div>
+                  <div class="nav-link"><span class="nav-dot"></span><span>镜鉴</span></div>
+                  <div class="nav-link"><span class="nav-dot"></span><span>笃行</span></div>
+                </aside>
+                <div class="app-main">
+                  <header class="app-header"><div class="search-pill">搜索页面</div><div class="bell-dot"></div></header>
+                  <main class="app-page">
+                    <h2 class="page-title">本心 <span class="en">Heart</span></h2>
+                    <p class="page-lede">于此，回答“精诚服务”到底相信什么。</p>
+                    <div class="pill-list" style="margin-top: 12px;"><span class="chip">真</span><span class="chip">善</span><span class="chip">美</span><span class="chip">爱</span></div>
+                    <div class="card-grid" style="margin-top: 14px;">
+                      <div class="mini-card"><h3>精</h3><p>把事情做好，尊重服务行业的基本规律。</p></div>
+                      <div class="mini-card"><h3>诚</h3><p>体现在真、善、美、爱之中。</p></div>
+                    </div>
+                  </main>
+                </div>
+              </div>
+              <div class="app-window compact">
+                <aside class="app-sidebar">
+                  <div class="app-logo"><span class="lighthouse-glyph"></span><span>Lighthouse</span></div>
+                  <div class="nav-link"><span class="nav-dot"></span><span>本心</span></div>
+                  <div class="nav-link active"><span class="nav-dot"></span><span>镜鉴</span></div>
+                  <div class="nav-link"><span class="nav-dot"></span><span>笃行</span></div>
+                </aside>
+                <div class="app-main">
+                  <header class="app-header"><div class="search-pill">搜索页面</div><div class="bell-dot"></div></header>
+                  <main class="app-page">
+                    <h2 class="page-title">镜鉴 <span class="en">Mirror</span></h2>
+                    <p class="page-lede">在别人的灯火里看见基业长青的文化基因。</p>
+                    <div class="feature-card" style="min-height: 126px; margin-top: 14px;">
+                      <div class="date">JAN 2026</div>
+                      <h3 style="font-size: 24px; margin-top: 8px;">云游胖东来</h3>
+                      <p style="font-size: 13px;">探索其如何在零售业中践行人文关怀与卓越治理。</p>
+                    </div>
+                  </main>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene4" class="scene">
+        <div class="fine-grid" data-layout-ignore></div>
+        <div class="scene-content">
+          <div class="topline">
+            <div class="brand-mark"><span class="mark-symbol"></span><span>Action / 笃行</span></div>
+            <span class="label">internal practice cases</span>
+          </div>
+          <div style="margin-top: 24px;">
+            <h2 class="section-title" style="max-width: 1060px; font-size: 64px;">内部案例不只展示结果，也复盘选择。</h2>
+            <p class="section-copy" style="max-width: 1160px; font-size: 25px; line-height: 1.5;">
+              Action 页面里的案例列表、标签、详情入口和 Decision Nodes 被转写成 HTML 卡片，展示当前前端真正承载的案例结构。
+            </p>
+          </div>
+          <div class="app-window" style="height: 650px; margin-top: 0;">
+            <aside class="app-sidebar">
+              <div class="app-logo"><span class="lighthouse-glyph"></span><span>Lighthouse</span></div>
+              <div class="nav-link"><span class="nav-dot"></span><span>本心 Heart</span></div>
+              <div class="nav-link"><span class="nav-dot"></span><span>镜鉴 Mirror</span></div>
+              <div class="nav-link active"><span class="nav-dot"></span><span>笃行 Action</span></div>
+              <div class="nav-link"><span class="nav-dot"></span><span>共创 Workshop</span></div>
+              <div class="nav-link"><span class="nav-dot"></span><span>路引 Hermit</span></div>
+            </aside>
+            <div class="app-main">
+              <header class="app-header"><div class="search-pill">搜索页面（如：镜鉴、共创、路引）</div><div class="bell-dot"></div></header>
+              <main class="app-page">
+                <div class="mono" style="color: #8a4500; font-size: 13px; font-weight: 700; letter-spacing: 0.1em;">INTERNAL PRACTICE</div>
+                <h2 class="page-title" style="margin-top: 10px;">笃行 <span class="en">Action</span></h2>
+                <p class="page-lede">记录内部已经发生的服务实践，回到真实政策、真实门店和真实客户场景里复盘选择。</p>
+                <div class="section-heading">内部实践案例 <em>Cases</em></div>
+                <article class="action-card">
+                  <div>
+                    <div class="tag-row">
+                      <span class="chip">MAY 2026</span>
+                      <span class="light-tag">客户体验</span>
+                      <span class="light-tag">门店能力</span>
+                      <span class="light-tag">代用车</span>
+                    </div>
+                    <h3>代用车政策演变中的权衡与认知冲突</h3>
+                    <p>复盘代用车政策如何在客户体验、门店实际能力和财务合规之间做权衡。</p>
+                  </div>
+                  <div class="decision-list">
+                    <div><span>01</span><p>注册年限：从 12 个月到 15/18/24 个月</p></div>
+                    <div><span>02</span><p>配车台次：运营率与覆盖率的取舍</p></div>
+                    <div><span>03</span><p>索赔与事故车：把资源交给更需要的人</p></div>
+                    <div><span>04</span><p>A/B 类车型：体验目标与现实车源</p></div>
+                  </div>
+                </article>
+              </main>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene5" class="scene">
+        <div class="ghost-word" data-layout-ignore data-text="Workshop" style="right: -96px; bottom: -10px;"></div>
+        <div class="scene-content">
+          <div class="topline">
+            <div class="brand-mark"><span class="mark-symbol"></span><span>Workshop / 共创</span></div>
+            <span class="label">Do and Don't action cards</span>
+          </div>
+          <div class="split-layout" style="grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);">
+            <div class="app-window tall">
+              <aside class="app-sidebar">
+                <div class="app-logo"><span class="lighthouse-glyph"></span><span>Lighthouse</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>本心 Heart</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>镜鉴 Mirror</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>笃行 Action</span></div>
+                <div class="nav-link active"><span class="nav-dot"></span><span>共创 Workshop</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>路引 Hermit</span></div>
+              </aside>
+              <div class="app-main">
+                <header class="app-header"><div class="search-pill">搜索页面（如：镜鉴、共创、路引）</div><div class="identity-pill">一线用户</div><div class="bell-dot"></div></header>
+                <main class="app-page">
+                  <h2 class="page-title">共创 <span class="en">Workshop</span></h2>
+                  <p class="page-lede">把本心里的原则，写成一线可执行的 Do & Don't。</p>
+                  <div class="tab-row">
+                    <span class="tab">公共可见区</span>
+                    <span class="tab active">提交区</span>
+                    <span class="tab">个人区域</span>
+                    <span class="tab">审核区</span>
+                  </div>
+                  <div class="workshop-layout">
+                    <div class="form-card">
+                      <h3>提交 Do & Don't</h3>
+                      <div class="input-grid">
+                        <div class="field"><label>标题</label><div class="input-box">客户等待超预期时的主动说明</div></div>
+                        <div class="field"><label>适用岗位</label><div class="input-box">服务顾问</div></div>
+                        <div class="field"><label>门店</label><div class="input-box">星河店</div></div>
+                        <div class="field"><label>服务场景</label><div class="input-box">维修等待</div></div>
+                      </div>
+                      <div class="field" style="margin-top: 12px;"><label>Do：应该做什么</label><div class="text-box">主动说明进度、原因和下一次更新时间。</div></div>
+                      <div class="field" style="margin-top: 12px;"><label>Don't：不要做什么</label><div class="text-box">不要让客户反复追问，也不要用模糊话术拖延。</div></div>
+                    </div>
+                    <aside class="form-card">
+                      <h3 style="font-size: 24px;">初审规则</h3>
+                      <div class="rule-list" style="margin-top: 18px;">
+                        <div class="rule-item">至少填写 Do 或 Don't 一项</div>
+                        <div class="rule-item">未与已发布指南重复</div>
+                        <div class="rule-item">可执行动作明确</div>
+                      </div>
+                    </aside>
+                  </div>
+                </main>
+              </div>
+            </div>
+            <div>
+              <h2 class="section-title">一线经验，经过审核后变成公共指南。</h2>
+              <p class="section-copy">
+                这里保留 Workshop 的真实产品边界：公共可见区、提交区、个人区域和审核区，不做泛论坛，只服务 Do & Don't 的长期共创。
+              </p>
+              <div class="pill-list">
+                <span class="pill">长期开放提交</span>
+                <span class="pill">基础初筛</span>
+                <span class="pill">管理员审核</span>
+                <span class="pill">发布公共指南</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene6" class="scene">
+        <div class="scene-content">
+          <div class="topline">
+            <div class="brand-mark"><span class="mark-symbol"></span><span>Hermit / 路引</span></div>
+            <span class="label">domain assistant, not autonomous agent</span>
+          </div>
+          <div class="split-layout" style="grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);">
+            <div>
+              <h2 class="section-title">把难判断的服务场景带回来。</h2>
+              <p class="section-copy">
+                Hermit 的欢迎态、建议问题、输入区和回答契约都转写成可动画的 HTML。它保持领域助手定位，帮助用户回到事实、处境和选择。
+              </p>
+              <div class="answer-contract">
+                <div class="contract-card"><strong>直接回答</strong><p>先给出可执行判断，不绕开问题。</p></div>
+                <div class="contract-card"><strong>理念依据</strong><p>说明关联的本心原则和服务立场。</p></div>
+                <div class="contract-card"><strong>相关材料</strong><p>推荐案例、规范或 Do & Don't 指南。</p></div>
+                <div class="contract-card"><strong>下一步建议</strong><p>帮助用户回到现场动作。</p></div>
+              </div>
+            </div>
+            <div class="app-window tall">
+              <aside class="app-sidebar">
+                <div class="app-logo"><span class="lighthouse-glyph"></span><span>Lighthouse</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>本心 Heart</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>镜鉴 Mirror</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>笃行 Action</span></div>
+                <div class="nav-link"><span class="nav-dot"></span><span>共创 Workshop</span></div>
+                <div class="nav-link active"><span class="nav-dot"></span><span>路引 Hermit</span></div>
+              </aside>
+              <div class="app-main">
+                <header class="app-header"><div class="search-pill">搜索页面（如：镜鉴、共创、路引）</div><div class="bell-dot"></div></header>
+                <main class="app-page">
+                  <h2 class="page-title">路引 <span class="en">Hermit</span></h2>
+                  <p class="page-lede">把难判断的服务场景带回真、善、美、爱。路引不替代现场决策。</p>
+                  <div class="chat-panel">
+                    <div class="welcome-box">
+                      <div style="max-width: 560px; text-align: center;">
+                        <div style="width: 62px; height: 62px; margin: 0 auto 18px; border-radius: 20px; background: rgba(217,119,6,0.12);"></div>
+                        <h3 style="font-size: 28px;">把问题带回具体场景</h3>
+                        <p style="margin-top: 10px; color: rgba(44,44,44,0.52); font-size: 16px; line-height: 1.55;">路引不会替你做最终决定，也不会把价值观变成简单标签。</p>
+                        <div class="suggestion-grid">
+                          <div class="suggestion">这个案例应该如何判断主维度与关联维度？</div>
+                          <div class="suggestion">善和爱在服务案例里应该怎么区分？</div>
+                          <div class="suggestion">客户利益和员工承压发生冲突时，应该怎么判断？</div>
+                          <div class="suggestion">真、善、美、爱之间有交叉时，应该如何分析？</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="chat-input"><span>在此提问，与路引对话...</span><span class="send-dot"></span></div>
+                  </div>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene7" class="scene">
+        <div class="fine-grid" data-layout-ignore></div>
+        <div class="scene-content" style="align-items: center; justify-content: center;">
+          <div class="loop">
+            <div class="loop-ring" data-layout-ignore></div>
+            <div class="loop-ring" data-layout-ignore></div>
+            <div class="loop-item heart"><strong>本心</strong><span>共同相信什么</span></div>
+            <div class="loop-item mirror"><strong>镜鉴</strong><span>外部如何实践</span></div>
+            <div class="loop-item action"><strong>笃行</strong><span>内部做成什么</span></div>
+            <div class="loop-item workshop"><strong>共创</strong><span>一线如何参与</span></div>
+            <div class="loop-item hermit"><strong>路引</strong><span>遇到问题如何判断</span></div>
+          </div>
+          <h2 class="closing-title">让服务文化持续发生。</h2>
+          <p class="closing-copy">
+            Lighthouse 把学习、参照、实践、共创和问答连接成闭环，让抽象理念逐步沉淀为可查、可学、可复用的一线服务准则。
+          </p>
+          <div class="small-note">Lantern | Lighthouse · Feature Intro</div>
+        </div>
+      </div>
+
+      <div class="transition-wash" data-layout-ignore></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene1", "#scene2", "#scene3", "#scene4", "#scene5", "#scene6", "#scene7"];
+
+      function enter(scene, at) {
+        tl.set(scene, { visibility: "visible" }, at);
+        tl.fromTo(scene, { opacity: 0, x: 90, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.62, ease: "power3.out" }, at);
+      }
+
+      function pushTransition(fromScene, toScene, at, direction = "left") {
+        const offset = direction === "left" ? -92 : 92;
+        tl.to(".transition-wash", { opacity: 0.92, duration: 0.28, ease: "sine.inOut", overwrite: "auto" }, at);
+        tl.to(fromScene, { x: offset, opacity: 0, filter: "blur(6px)", duration: 0.46, ease: "power3.inOut" }, at + 0.08);
+        tl.set(fromScene, { visibility: "hidden" }, at + 0.58);
+        tl.set(toScene, { visibility: "visible" }, at + 0.2);
+        tl.to(".transition-wash", { opacity: 0, duration: 0.42, ease: "sine.out", overwrite: "auto" }, at + 0.38);
+      }
+
+      gsap.set(scenes.slice(1).join(","), { opacity: 0, visibility: "hidden" });
+
+      enter("#scene1", 0);
+      tl.from("#scene1 .hero-title", { y: 58, opacity: 0, duration: 0.75, ease: "expo.out" }, 0.38);
+      tl.from("#scene1 .lead", { x: -44, opacity: 0, duration: 0.68, ease: "power3.out" }, 0.72);
+      tl.from("#scene1 .module-card", { y: 72, opacity: 0, scale: 0.96, duration: 0.72, stagger: 0.09, ease: "back.out(1.25)" }, 1.15);
+      tl.to("#scene1 .ghost-word", { x: -24, duration: 5.2, ease: "sine.inOut" }, 0.4);
+
+      pushTransition("#scene1", "#scene2", 6.0, "left");
+      enter("#scene2", 6.35);
+      tl.from("#scene2 .section-title", { x: -70, opacity: 0, duration: 0.72, ease: "expo.out" }, 6.72);
+      tl.from("#scene2 .section-copy", { y: 46, opacity: 0, duration: 0.6, ease: "power3.out" }, 7.12);
+      tl.from("#scene2 .pill", { scale: 0.82, opacity: 0, duration: 0.35, stagger: 0.07, ease: "back.out(1.8)" }, 7.55);
+      tl.from("#scene2 .app-window", { x: 84, opacity: 0, scale: 0.985, duration: 0.72, ease: "power4.out" }, 7.1);
+      tl.from("#scene2 .module-preview", { y: 46, opacity: 0, duration: 0.42, stagger: 0.07, ease: "circ.out" }, 7.82);
+
+      pushTransition("#scene2", "#scene3", 14.0, "left");
+      enter("#scene3", 14.35);
+      tl.from("#scene3 .section-title", { y: 64, opacity: 0, duration: 0.7, ease: "expo.out" }, 14.72);
+      tl.from("#scene3 .section-copy", { x: -42, opacity: 0, duration: 0.55, ease: "power3.out" }, 15.12);
+      tl.from("#scene3 .pill", { y: 28, opacity: 0, duration: 0.32, stagger: 0.07, ease: "circ.out" }, 15.48);
+      tl.from("#scene3 .app-window", { x: 88, opacity: 0, scale: 0.98, duration: 0.72, stagger: 0.18, ease: "power4.out" }, 15.0);
+      tl.from("#scene3 .mini-card, #scene3 .feature-card", { y: 36, opacity: 0, duration: 0.48, stagger: 0.08, ease: "back.out(1.2)" }, 15.78);
+      tl.to("#scene3 .ghost-word", { x: 28, duration: 7.2, ease: "sine.inOut" }, 14.7);
+
+      pushTransition("#scene3", "#scene4", 22.0, "left");
+      enter("#scene4", 22.35);
+      tl.from("#scene4 .section-title", { x: -68, opacity: 0, duration: 0.68, ease: "expo.out" }, 22.72);
+      tl.from("#scene4 .section-copy", { y: 48, opacity: 0, duration: 0.58, ease: "power2.out" }, 23.12);
+      tl.from("#scene4 .app-window", { y: 64, opacity: 0, scale: 0.985, duration: 0.72, ease: "back.out(1.1)" }, 23.6);
+      tl.from("#scene4 .light-tag, #scene4 .chip", { y: 24, opacity: 0, duration: 0.34, stagger: 0.06, ease: "circ.out" }, 24.1);
+      tl.from("#scene4 .decision-list div", { x: 42, opacity: 0, duration: 0.38, stagger: 0.07, ease: "power3.out" }, 24.35);
+
+      pushTransition("#scene4", "#scene5", 30.0, "left");
+      enter("#scene5", 30.35);
+      tl.from("#scene5 .app-window", { x: -96, opacity: 0, rotation: -1.1, duration: 0.72, ease: "expo.out" }, 30.74);
+      tl.from("#scene5 .section-title", { y: 62, opacity: 0, duration: 0.68, ease: "power4.out" }, 31.02);
+      tl.from("#scene5 .section-copy", { x: 42, opacity: 0, duration: 0.54, ease: "power3.out" }, 31.42);
+      tl.from("#scene5 .tab", { y: 26, opacity: 0, duration: 0.34, stagger: 0.07, ease: "circ.out" }, 31.22);
+      tl.from("#scene5 .field, #scene5 .rule-item", { y: 36, opacity: 0, duration: 0.38, stagger: 0.05, ease: "power2.out" }, 31.6);
+      tl.from("#scene5 .pill", { x: 78, opacity: 0, duration: 0.44, stagger: 0.08, ease: "back.out(1.35)" }, 31.86);
+      tl.to("#scene5 .ghost-word", { x: -38, duration: 8.6, ease: "sine.inOut" }, 30.6);
+
+      pushTransition("#scene5", "#scene6", 40.0, "left");
+      enter("#scene6", 40.35);
+      tl.from("#scene6 .section-title", { x: -64, opacity: 0, duration: 0.68, ease: "expo.out" }, 40.72);
+      tl.from("#scene6 .section-copy", { y: 42, opacity: 0, duration: 0.55, ease: "power3.out" }, 41.12);
+      tl.from("#scene6 .contract-card", { scale: 0.94, opacity: 0, duration: 0.46, stagger: 0.09, ease: "back.out(1.55)" }, 41.52);
+      tl.from("#scene6 .app-window", { x: 96, opacity: 0, scale: 0.985, duration: 0.72, ease: "power4.out" }, 41.0);
+      tl.from("#scene6 .suggestion", { y: 30, opacity: 0, duration: 0.36, stagger: 0.08, ease: "circ.out" }, 41.9);
+
+      pushTransition("#scene6", "#scene7", 48.0, "left");
+      enter("#scene7", 48.35);
+      tl.from("#scene7 .loop-ring", { scale: 0.7, opacity: 0, duration: 0.74, stagger: 0.12, ease: "sine.out" }, 48.72);
+      tl.from("#scene7 .loop-item", { y: 46, opacity: 0, scale: 0.92, duration: 0.5, stagger: 0.08, ease: "back.out(1.4)" }, 49.05);
+      tl.from("#scene7 .closing-title", { y: 58, opacity: 0, duration: 0.68, ease: "expo.out" }, 50.0);
+      tl.from("#scene7 .closing-copy", { y: 38, opacity: 0, duration: 0.52, ease: "power3.out" }, 50.42);
+      tl.from("#scene7 .small-note", { opacity: 0, duration: 0.42, ease: "sine.out" }, 50.85);
+      tl.to("#scene7 .loop-ring", { rotation: 4, duration: 4.8, ease: "sine.inOut" }, 49.1);
+      tl.to("#scene7", { opacity: 0, duration: 0.75, ease: "sine.inOut" }, 53.05);
+      tl.set("#scene7", { visibility: "hidden" }, 53.82);
+
+      window.__timelines["lighthouse-feature-intro"] = tl;
+    </script>
+  </body>
+</html>

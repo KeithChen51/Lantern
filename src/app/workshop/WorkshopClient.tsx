@@ -194,6 +194,12 @@ function ContributionBoard({ items }: { items: ContributionStat[] }) {
 }
 
 function GuideCard({ guide }: { guide: PublishedGuide }) {
+  const snippets = [
+    { label: "DO", tone: "amber" as const, text: guide.doText },
+    { label: "HOW", tone: "paper" as const, text: guide.howText ?? "待管理员补充执行说明。" },
+    { label: "DON'T", tone: "red" as const, text: guide.dontText },
+  ].filter((snippet) => snippet.text.trim().length > 0);
+
   return (
     <article className="min-w-0 rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -212,10 +218,10 @@ function GuideCard({ guide }: { guide: PublishedGuide }) {
         </span>
       </div>
 
-      <div className="mt-5 grid gap-3 lg:grid-cols-3">
-        <GuideSnippet label="DO" tone="amber" text={guide.doText} />
-        <GuideSnippet label="HOW" tone="paper" text={guide.howText ?? "待管理员补充执行说明。"} />
-        <GuideSnippet label="DON'T" tone="red" text={guide.dontText} />
+      <div className={`mt-5 grid gap-3 ${snippets.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+        {snippets.map((snippet) => (
+          <GuideSnippet key={snippet.label} label={snippet.label} tone={snippet.tone} text={snippet.text} />
+        ))}
       </div>
 
       <div className="mt-5 flex flex-col gap-2 border-t border-ink/5 pt-4 text-sm text-ink/50 sm:flex-row sm:items-center sm:justify-between">
@@ -538,9 +544,9 @@ export function WorkshopClient() {
             </div>
             <div className="mt-4 grid gap-4">
               {[
-                ["doText", "Do：应该做什么"],
+                ["doText", "Do：应该做什么（可单独填写）"],
                 ["howText", "How：具体怎么做"],
-                ["dontText", "Don't：绝对不能做什么"],
+                ["dontText", "Don't：不要做什么（可单独填写）"],
               ].map(([field, label]) => (
                 <label key={field} className="space-y-2">
                   <span className="text-sm font-medium text-ink/60">{label}</span>
@@ -571,7 +577,7 @@ export function WorkshopClient() {
               <h3 className="font-serif text-xl text-ink">初审规则</h3>
             </div>
             <div className="space-y-3">
-              {["结构完整", "未与已发布指南重复", "可执行动作明确"].map((item) => (
+              {["至少填写 Do 或 Don't 一项", "未与已发布指南重复", "可执行动作明确"].map((item) => (
                 <div key={item} className="flex items-center gap-2 rounded-xl bg-paper/60 p-3 text-sm text-ink/65">
                   <CheckCircle2 className="h-4 w-4 text-amber" />
                   {item}

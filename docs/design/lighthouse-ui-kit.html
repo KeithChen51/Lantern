@@ -1,0 +1,2935 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse UI Kit v0.1</title>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ui-ink: #0f2d44;
+      --ui-ink-soft: #28516a;
+      --ui-muted: #5f7b8b;
+      --ui-faint: #8da4ad;
+      --ui-page: #f2f8f8;
+      --ui-panel: #fefffb;
+      --ui-panel-soft: #f7fbfa;
+      --ui-raised: #ffffff;
+      --ui-surface-polished: #fbfefd;
+      --ui-surface-quiet: #f6fbf9;
+      --ui-fog: #ddeff1;
+      --ui-line: #bfd8de;
+      --ui-line-strong: #8db2bc;
+      --ui-hairline: rgba(141, 178, 188, 0.58);
+      --ui-hairline-soft: rgba(191, 216, 222, 0.6);
+      --ui-primary: #176e8b;
+      --ui-primary-deep: #0f5268;
+      --ui-primary-soft: #d7ecef;
+      --ui-signal: #28b8c7;
+      --ui-signal-deep: #137b89;
+      --ui-signal-soft: #d8f5f7;
+      --ui-chart: #e8f3f1;
+      --ui-chart-strong: #d2e5e5;
+      --ui-deck: #0e334b;
+      --ui-deck-soft: #174b63;
+      --ui-brass: #b4874d;
+      --ui-brass-soft: #f2e6d3;
+      --ui-green: #2d8560;
+      --ui-green-soft: #dcf2e8;
+      --ui-orange: #a86420;
+      --ui-orange-soft: #f6eadb;
+      --ui-red: #aa443f;
+      --ui-red-soft: #f5dfdd;
+      --ui-blue: #3e89a8;
+      --ui-blue-soft: #deedf3;
+      --ui-shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
+      --ui-shadow-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
+      --ui-shadow-deck: 0 30px 68px rgba(14, 51, 75, 0.24);
+      --ui-focus: 0 0 0 3px rgba(40, 184, 199, 0.24);
+      --ui-radius-xs: 4px;
+      --ui-radius-sm: 6px;
+      --ui-radius-md: 8px;
+      --ui-font: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", Arial, sans-serif;
+      --ui-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --ui-max: 1220px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(23, 110, 139, 0.026) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(0deg, rgba(23, 110, 139, 0.022) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(180deg, #f8fbfa 0%, var(--ui-page) 58%, #eef6f3 100%);
+      color: var(--ui-ink);
+      font-family: var(--ui-font);
+      font-size: 16px;
+      font-kerning: normal;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.62;
+      letter-spacing: 0;
+    }
+
+    ::selection {
+      background: rgba(40, 184, 199, 0.24);
+      color: var(--ui-deck);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page-shell {
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0) 300px),
+        linear-gradient(118deg, transparent 0 18%, rgba(40, 184, 199, 0.055) 18% 23%, transparent 23% 100%);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(141, 178, 188, 0.72);
+      background: rgba(247, 252, 251, 0.98);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.84) inset, 0 12px 34px rgba(15, 45, 68, 0.08);
+    }
+
+    .topbar::after {
+      position: absolute;
+      right: 0;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(23, 110, 139, 0.85) 0 26%, rgba(40, 184, 199, 0.72) 26% 42%, transparent 42% 100%);
+      content: "";
+    }
+
+    .topbar-inner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      max-width: var(--ui-max);
+      margin: 0 auto;
+      padding: 16px 28px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      position: relative;
+      display: grid;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--ui-line-strong);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-panel);
+      color: var(--ui-primary);
+      box-shadow: var(--ui-shadow-sm);
+      overflow: hidden;
+    }
+
+    .brand-mark::before {
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(40, 184, 199, 0.32);
+      border-radius: 999px;
+      content: "";
+    }
+
+    .brand-mark iconify-icon {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 750;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .brand-note {
+      margin: 4px 0 0;
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 28px;
+      max-width: var(--ui-max);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .side-nav {
+      position: sticky;
+      top: 90px;
+      align-self: start;
+      border: 1px solid var(--ui-hairline);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      overflow: hidden;
+    }
+
+    .side-title {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--ui-line);
+      color: var(--ui-muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .side-nav a {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(191, 216, 222, 0.62);
+      color: var(--ui-ink-soft);
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+
+    .side-nav a::before {
+      width: 5px;
+      height: 5px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: var(--ui-line-strong);
+      content: "";
+      opacity: 0.7;
+    }
+
+    .side-nav a:last-child {
+      border-bottom: 0;
+    }
+
+    .side-nav a:hover {
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+    }
+
+    .side-nav a:hover::before {
+      background: var(--ui-signal);
+      opacity: 1;
+    }
+
+    .content {
+      display: grid;
+      gap: 22px;
+      min-width: 0;
+    }
+
+    .section {
+      position: relative;
+      border: 1px solid var(--ui-hairline);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-md);
+      overflow: hidden;
+    }
+
+    .section::before {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 4px;
+      background: linear-gradient(180deg, rgba(23, 110, 139, 0.95), rgba(40, 184, 199, 0.68));
+      content: "";
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      padding: 26px 28px 24px;
+      border-bottom: 1px solid var(--ui-line);
+      background: linear-gradient(180deg, #ffffff, var(--ui-surface-quiet));
+    }
+
+    .section-header > *,
+    .tile,
+    .content-card,
+    .page-template,
+    .template-head > *,
+    .template-body > *,
+    .status-card > *,
+    .rule-list li > *,
+    .token-row > *,
+    .solar-row > * {
+      min-width: 0;
+    }
+
+    .section-kicker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 7px;
+      color: var(--ui-primary-deep);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .section-kicker::after {
+      width: 42px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--ui-signal), transparent);
+      content: "";
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: var(--ui-ink);
+      font-family: var(--ui-font);
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 30px;
+      font-weight: 780;
+      line-height: 1.14;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      font-size: 24px;
+      font-weight: 820;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 750;
+      line-height: 1.32;
+    }
+
+    .section-desc,
+    .muted {
+      color: var(--ui-muted);
+      overflow-wrap: anywhere;
+    }
+
+    .section-desc {
+      max-width: 760px;
+      margin-bottom: 0;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .section-body {
+      padding: 28px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .tile {
+      min-width: 0;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 18px;
+    }
+
+    .tile.compact {
+      padding: 13px 14px;
+    }
+
+    .tile-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--ui-ink);
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1.32;
+    }
+
+    .tile p {
+      margin-bottom: 0;
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .token-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .token-row {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(191, 216, 222, 0.64);
+    }
+
+    .token-row:last-child {
+      border-bottom: 0;
+    }
+
+    .token-name {
+      color: var(--ui-ink);
+      font-size: 13px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .token-value {
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .swatch-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .swatch {
+      min-height: 92px;
+      overflow: hidden;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-raised);
+      box-shadow: var(--ui-shadow-sm);
+    }
+
+    .swatch-color {
+      height: 44px;
+      border-bottom: 1px solid rgba(15, 45, 68, 0.08);
+    }
+
+    .swatch-info {
+      padding: 9px 10px 10px;
+    }
+
+    .swatch-name {
+      color: var(--ui-ink);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .swatch-code {
+      margin-top: 4px;
+      color: var(--ui-muted);
+      font-family: var(--ui-mono);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .type-scale {
+      display: grid;
+      gap: 12px;
+    }
+
+    .type-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr) 160px;
+      gap: 14px;
+      align-items: baseline;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--ui-line);
+    }
+
+    .type-row:last-child {
+      border-bottom: 0;
+    }
+
+    .type-name {
+      color: var(--ui-muted);
+      font-size: 12px;
+      font-weight: 780;
+      text-transform: uppercase;
+    }
+
+    .type-sample {
+      color: var(--ui-ink);
+      line-height: 1.34;
+    }
+
+    .type-meta {
+      color: var(--ui-muted);
+      font-family: var(--ui-mono);
+      font-size: 12px;
+    }
+
+    .text-display {
+      font-size: 30px;
+      font-weight: 780;
+    }
+
+    .text-h1 {
+      font-size: 24px;
+      font-weight: 760;
+    }
+
+    .text-h2 {
+      font-size: 18px;
+      font-weight: 750;
+    }
+
+    .text-body {
+      font-size: 15px;
+      font-weight: 450;
+    }
+
+    .text-small {
+      font-size: 13px;
+      font-weight: 450;
+    }
+
+    .btn-row,
+    .chip-row,
+    .icon-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      --btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.78) inset;
+      --btn-hover-shadow: var(--btn-shadow), 0 10px 20px rgba(15, 45, 68, 0.1);
+      --btn-active-shadow: inset 0 1px 3px rgba(15, 45, 68, 0.18);
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: var(--ui-radius-sm);
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1.2;
+      white-space: nowrap;
+      box-shadow: var(--btn-shadow);
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .btn iconify-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-primary {
+      --btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(15, 82, 104, 0.18);
+      --btn-hover-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 10px 20px rgba(15, 82, 104, 0.22);
+      --btn-active-shadow: inset 0 2px 5px rgba(15, 45, 68, 0.22);
+      border-color: var(--ui-primary-deep);
+      background: var(--ui-primary);
+      color: #ffffff;
+    }
+
+    .btn-signal {
+      border-color: var(--ui-signal);
+      background: var(--ui-signal-soft);
+      color: var(--ui-signal-deep);
+    }
+
+    .btn-secondary {
+      border-color: var(--ui-line-strong);
+      background: var(--ui-surface-polished);
+      color: var(--ui-primary-deep);
+    }
+
+    .btn-ghost {
+      border-color: transparent;
+      background: transparent;
+      color: var(--ui-primary-deep);
+    }
+
+    .btn-danger {
+      border-color: rgba(170, 68, 63, 0.32);
+      background: var(--ui-red-soft);
+      color: var(--ui-red);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--btn-hover-shadow);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: var(--btn-active-shadow);
+    }
+
+    .btn:focus {
+      outline: 0;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid rgba(19, 123, 137, 0.56);
+      outline-offset: 3px;
+      box-shadow: var(--btn-shadow);
+    }
+
+    a:focus {
+      outline: 0;
+    }
+
+    a:focus-visible:not(.btn) {
+      outline: 2px solid rgba(19, 123, 137, 0.48);
+      outline-offset: 3px;
+    }
+
+    .side-nav a:focus-visible {
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+      outline-offset: -3px;
+    }
+
+    .input:focus,
+    textarea:focus {
+      outline: 0;
+      box-shadow: var(--ui-focus);
+    }
+
+    .icon-btn {
+      display: inline-grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid var(--ui-line);
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-surface-polished);
+      color: var(--ui-primary-deep);
+      box-shadow: var(--ui-shadow-sm);
+    }
+
+    .icon-btn iconify-icon,
+    .nav-icon iconify-icon,
+    .status-icon iconify-icon,
+    .solar-glyph iconify-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .chip-primary {
+      border-color: rgba(23, 110, 139, 0.24);
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+    }
+
+    .chip-signal {
+      border-color: rgba(40, 184, 199, 0.34);
+      background: var(--ui-signal-soft);
+      color: var(--ui-signal-deep);
+    }
+
+    .chip-green {
+      border-color: rgba(45, 133, 96, 0.24);
+      background: var(--ui-green-soft);
+      color: var(--ui-green);
+    }
+
+    .chip-orange {
+      border-color: rgba(168, 100, 32, 0.24);
+      background: var(--ui-orange-soft);
+      color: var(--ui-orange);
+    }
+
+    .chip-red {
+      border-color: rgba(170, 68, 63, 0.24);
+      background: var(--ui-red-soft);
+      color: var(--ui-red);
+    }
+
+    .chip-blue {
+      border-color: rgba(62, 137, 168, 0.24);
+      background: var(--ui-blue-soft);
+      color: var(--ui-blue);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: var(--ui-ink);
+      font-size: 13px;
+      font-weight: 760;
+      line-height: 1.3;
+    }
+
+    .input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--ui-line-strong);
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-raised);
+      color: var(--ui-ink);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .input::placeholder,
+    textarea::placeholder {
+      color: var(--ui-faint);
+    }
+
+    .input {
+      min-height: 40px;
+      padding: 9px 11px;
+    }
+
+    .input-invalid {
+      border-color: rgba(170, 68, 63, 0.58);
+      background: linear-gradient(180deg, #fffefe, rgba(245, 223, 221, 0.42));
+      box-shadow: inset 3px 0 0 rgba(170, 68, 63, 0.46);
+    }
+
+    .input-invalid:focus {
+      box-shadow: var(--ui-focus), inset 3px 0 0 rgba(170, 68, 63, 0.58);
+    }
+
+    textarea {
+      min-height: 102px;
+      resize: vertical;
+      padding: 10px 11px;
+    }
+
+    .field-help {
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.42;
+    }
+
+    .field-error {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--ui-red);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.42;
+    }
+
+    .field-error iconify-icon {
+      flex: 0 0 auto;
+      width: 14px;
+      height: 14px;
+    }
+
+    .search-box {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      border: 1px solid var(--ui-line);
+      border-radius: var(--ui-radius-sm);
+      background: linear-gradient(180deg, var(--ui-surface-polished), var(--ui-surface-quiet));
+      padding: 7px 11px;
+      color: var(--ui-muted);
+      font-size: 14px;
+      line-height: 1.45;
+      box-shadow: var(--ui-shadow-sm);
+    }
+
+    .search-box:focus-visible {
+      border-color: var(--ui-primary);
+      outline: 0;
+      box-shadow: var(--ui-focus), var(--ui-shadow-sm);
+    }
+
+    .search-box iconify-icon {
+      display: inline-grid;
+      width: 26px;
+      height: 26px;
+      place-items: center;
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+      font-size: 18px;
+    }
+
+    .search-box span {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--ui-muted);
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      min-height: 38px;
+      overflow: hidden;
+      border: 1px solid var(--ui-line-strong);
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-raised);
+    }
+
+    .segment {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 8px 13px;
+      border-right: 1px solid var(--ui-line);
+      color: var(--ui-muted);
+      font-size: 13px;
+      font-weight: 740;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .segment:last-child {
+      border-right: 0;
+    }
+
+    .segment.active {
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+    }
+
+    .switch {
+      display: inline-flex;
+      width: 42px;
+      height: 24px;
+      align-items: center;
+      border: 1px solid var(--ui-line-strong);
+      border-radius: 999px;
+      background: var(--ui-primary);
+      padding: 2px;
+    }
+
+    .switch::after {
+      display: block;
+      width: 18px;
+      height: 18px;
+      margin-left: auto;
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(15, 45, 68, 0.18);
+      content: "";
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .status-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 11px;
+      min-height: 112px;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 15px;
+    }
+
+    .status-card::before {
+      position: absolute;
+      top: 0;
+      right: 14px;
+      left: 14px;
+      height: 2px;
+      background: rgba(23, 110, 139, 0.18);
+      content: "";
+    }
+
+    .status-icon {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: var(--ui-radius-sm);
+    }
+
+    .status-icon.info {
+      background: var(--ui-blue-soft);
+      color: var(--ui-blue);
+    }
+
+    .status-icon.success {
+      background: var(--ui-green-soft);
+      color: var(--ui-green);
+    }
+
+    .status-icon.warning {
+      background: var(--ui-orange-soft);
+      color: var(--ui-orange);
+    }
+
+    .status-icon.danger {
+      background: var(--ui-red-soft);
+      color: var(--ui-red);
+    }
+
+    .status-title {
+      margin: 0 0 4px;
+      color: var(--ui-ink);
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1.32;
+    }
+
+    .status-text {
+      margin: 0;
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .shell-preview {
+      display: grid;
+      grid-template-columns: 182px minmax(0, 1fr);
+      min-height: 440px;
+      overflow: hidden;
+      border: 1px solid var(--ui-line-strong);
+      border-radius: var(--ui-radius-md);
+      background:
+        linear-gradient(90deg, rgba(23, 110, 139, 0.052) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(0deg, rgba(23, 110, 139, 0.044) 1px, transparent 1px) 0 0 / 34px 34px,
+        var(--ui-raised);
+      box-shadow: var(--ui-shadow-md);
+    }
+
+    .app-sidebar {
+      border-right: 1px solid rgba(15, 82, 104, 0.28);
+      background: var(--ui-deck);
+      padding: 14px 12px;
+    }
+
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 36px;
+      margin-bottom: 14px;
+      color: #f2fbfa;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .app-logo-mark {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-primary);
+      color: #ffffff;
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      min-height: 42px;
+      border-radius: var(--ui-radius-sm);
+      padding: 6px 8px;
+      color: rgba(242, 251, 250, 0.72);
+    }
+
+    .nav-item.active {
+      background: rgba(216, 245, 247, 0.14);
+      color: #f2fbfa;
+    }
+
+    .nav-icon {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: var(--ui-radius-xs);
+      background: rgba(216, 245, 247, 0.11);
+    }
+
+    .nav-copy {
+      min-width: 0;
+    }
+
+    .nav-label {
+      display: block;
+      overflow: hidden;
+      color: inherit;
+      font-size: 13px;
+      font-weight: 760;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-sub {
+      display: block;
+      margin-top: 2px;
+      overflow: hidden;
+      color: rgba(242, 251, 250, 0.64);
+      font-size: 11px;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .app-main {
+      min-width: 0;
+      background: var(--ui-page);
+    }
+
+    .app-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 64px;
+      border-bottom: 1px solid var(--ui-line);
+      background: var(--ui-panel);
+      padding: 12px 16px;
+    }
+
+    .app-page {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .page-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .page-heading h3 {
+      margin-bottom: 4px;
+      font-size: 18px;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      position: relative;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 14px;
+    }
+
+    .metric::before {
+      position: absolute;
+      top: 0;
+      right: 12px;
+      left: 12px;
+      height: 2px;
+      background: rgba(40, 184, 199, 0.34);
+      content: "";
+    }
+
+    .metric-label {
+      color: var(--ui-muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      color: var(--ui-ink);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .metric-note {
+      margin-top: 5px;
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .content-card {
+      position: relative;
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 18px;
+    }
+
+    .content-card::before {
+      position: absolute;
+      top: 0;
+      right: 16px;
+      left: 16px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(23, 110, 139, 0.46), rgba(40, 184, 199, 0.18), transparent);
+      content: "";
+    }
+
+    .content-card-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .section-header > .chip,
+    .content-card-head > .chip,
+    .page-heading > .chip,
+    .template-head > .chip {
+      justify-self: start;
+      align-self: start;
+    }
+
+    .content-card h3 {
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .content-card p {
+      margin-bottom: 0;
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .component-sample-grid {
+      align-items: stretch;
+      gap: 16px;
+    }
+
+    .component-sample-grid .content-card {
+      min-height: 260px;
+      grid-template-rows: minmax(84px, auto) minmax(108px, 1fr) minmax(54px, auto);
+      gap: 12px;
+    }
+
+    .component-sample-grid .content-card-head {
+      min-height: 84px;
+      align-items: start;
+    }
+
+    .component-sample-grid .dense-list {
+      align-content: start;
+      gap: 10px;
+    }
+
+    .component-sample-grid .card-actions {
+      align-self: end;
+      min-height: 54px;
+      align-items: center;
+      border-top: 1px solid var(--ui-line);
+      padding-top: 12px;
+    }
+
+    .dense-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .dense-list li {
+      display: grid;
+      grid-template-columns: 8px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      color: var(--ui-ink-soft);
+      font-size: 13px;
+      line-height: 1.52;
+    }
+
+    .dense-list li::before {
+      width: 8px;
+      height: 8px;
+      margin-top: 7px;
+      border-radius: 999px;
+      background: var(--ui-signal);
+      content: "";
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--ui-line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--ui-surface-quiet);
+      color: var(--ui-muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    td {
+      color: var(--ui-ink-soft);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .chat-preview {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 14px;
+    }
+
+    .chat-panel {
+      display: grid;
+      gap: 12px;
+      min-height: 420px;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 14px;
+    }
+
+    .message {
+      max-width: 82%;
+      border: 1px solid var(--ui-line);
+      border-radius: var(--ui-radius-md);
+      padding: 12px;
+      color: var(--ui-ink-soft);
+      font-size: 13px;
+      line-height: 1.62;
+    }
+
+    .message.assistant {
+      background: var(--ui-panel-soft);
+    }
+
+    .message.user {
+      justify-self: end;
+      border-color: rgba(23, 110, 139, 0.24);
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+    }
+
+    .evidence {
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 14px;
+    }
+
+    .evidence h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+
+    .evidence-item {
+      padding: 10px 0;
+      border-top: 1px solid var(--ui-line);
+    }
+
+    .evidence-item:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .evidence-item strong {
+      display: block;
+      color: var(--ui-ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .evidence-item span {
+      display: block;
+      margin-top: 4px;
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .prompt-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .page-template {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+    }
+
+    .template-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 54px;
+      border-bottom: 1px solid var(--ui-line);
+      background: var(--ui-surface-quiet);
+      padding: 12px;
+    }
+
+    .template-head strong {
+      color: var(--ui-ink);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .template-body {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .mini-card {
+      min-height: 70px;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-sm);
+      background: #ffffff;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      padding: 10px;
+    }
+
+    .mini-card strong {
+      display: block;
+      color: var(--ui-ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .mini-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rule-list li {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 13px 0;
+      border-bottom: 1px solid rgba(191, 216, 222, 0.78);
+      background: transparent;
+    }
+
+    .rule-list li:last-child {
+      border-bottom: 0;
+    }
+
+    .rule-index {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: var(--ui-radius-sm);
+      background: linear-gradient(180deg, var(--ui-primary-soft), rgba(216, 245, 247, 0.75));
+      color: var(--ui-primary-deep);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .rule-list strong {
+      display: block;
+      color: var(--ui-ink);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .rule-list span {
+      display: block;
+      margin-top: 4px;
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .icon-spec-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 14px;
+    }
+
+    .solar-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .solar-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 48px;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 8px;
+    }
+
+    .solar-glyph {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: var(--ui-radius-sm);
+      background: var(--ui-primary-soft);
+      color: var(--ui-primary-deep);
+    }
+
+    .solar-row > span:last-child {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .solar-name {
+      display: block;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      color: var(--ui-ink);
+      font-family: var(--ui-mono);
+      font-size: 12px;
+      line-height: 1.3;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .solar-use {
+      display: block;
+      min-width: 0;
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .notice {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 11px;
+      align-items: start;
+      border: 1px solid rgba(23, 110, 139, 0.24);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-primary-soft);
+      padding: 14px;
+      color: var(--ui-primary-deep);
+    }
+
+    .notice p {
+      margin-bottom: 0;
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    .identity-panel {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+      gap: 24px;
+      margin-bottom: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(191, 216, 222, 0.42);
+      border-radius: var(--ui-radius-md);
+      background:
+        linear-gradient(90deg, rgba(216, 245, 247, 0.065) 1px, transparent 1px) 0 0 / 42px 42px,
+        linear-gradient(0deg, rgba(216, 245, 247, 0.06) 1px, transparent 1px) 0 0 / 42px 42px,
+        #0e344c;
+      box-shadow: var(--ui-shadow-deck);
+      color: #effafa;
+      padding: 30px;
+    }
+
+    .identity-panel::before {
+      position: absolute;
+      top: 0;
+      right: 10%;
+      bottom: 0;
+      width: 22%;
+      transform: skewX(-18deg);
+      background: rgba(40, 184, 199, 0.1);
+      content: "";
+      pointer-events: none;
+    }
+
+    .identity-panel::after {
+      position: absolute;
+      right: 26px;
+      bottom: 22px;
+      width: 132px;
+      height: 132px;
+      border: 1px solid rgba(216, 245, 247, 0.22);
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(216, 245, 247, 0.22) 49% 51%, transparent 51%),
+        linear-gradient(0deg, transparent 49%, rgba(216, 245, 247, 0.22) 49% 51%, transparent 51%);
+      content: "";
+      opacity: 0.56;
+      pointer-events: none;
+    }
+
+    .identity-copy,
+    .signal-board {
+      position: relative;
+      z-index: 1;
+    }
+
+    .identity-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(216, 245, 247, 0.24);
+      border-radius: 999px;
+      background: rgba(216, 245, 247, 0.08);
+      color: #bfeff2;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .identity-title {
+      max-width: 14ch;
+      margin: 0 0 16px;
+      color: #ffffff;
+      font-size: 42px;
+      font-weight: 860;
+      line-height: 1.04;
+    }
+
+    .identity-lead {
+      max-width: 56ch;
+      margin: 0;
+      color: rgba(239, 250, 250, 0.78);
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .identity-materials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .material-pill {
+      border: 1px solid rgba(216, 245, 247, 0.24);
+      border-radius: 999px;
+      background: rgba(14, 51, 75, 0.54);
+      color: rgba(239, 250, 250, 0.82);
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.2;
+    }
+
+    .signal-board {
+      display: grid;
+      align-self: stretch;
+      gap: 12px;
+      border: 1px solid rgba(216, 245, 247, 0.24);
+      border-radius: var(--ui-radius-md);
+      background: rgba(14, 51, 75, 0.52);
+      padding: 16px;
+    }
+
+    .signal-row {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 42px;
+      border-bottom: 1px solid rgba(216, 245, 247, 0.16);
+      color: rgba(239, 250, 250, 0.82);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.25;
+    }
+
+    .signal-row:last-child {
+      border-bottom: 0;
+    }
+
+    .signal-meter {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(216, 245, 247, 0.12);
+    }
+
+    .signal-meter span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--ui-signal);
+    }
+
+    .signal-value {
+      color: #ffffff;
+      font-family: var(--ui-mono);
+      font-size: 12px;
+    }
+
+    .grid-system-wrap {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-spec-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+      gap: 14px;
+    }
+
+    .grid-board {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+      min-height: 320px;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-md);
+      background: var(--ui-surface-polished);
+      box-shadow: var(--ui-shadow-sm);
+      padding: 16px;
+    }
+
+    .grid-rail {
+      display: grid;
+      min-height: 34px;
+      place-items: center;
+      border: 1px solid rgba(141, 178, 188, 0.44);
+      border-radius: var(--ui-radius-xs);
+      background: rgba(23, 110, 139, 0.035);
+      color: var(--ui-muted);
+      font-family: var(--ui-mono);
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .grid-block {
+      display: grid;
+      min-height: 62px;
+      align-content: center;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-sm);
+      background: #ffffff;
+      color: var(--ui-ink-soft);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.84) inset, 0 8px 18px rgba(15, 45, 68, 0.05);
+      padding: 11px 12px;
+    }
+
+    .grid-block strong {
+      display: block;
+      color: var(--ui-ink);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .grid-block span {
+      display: block;
+      margin-top: 4px;
+      color: var(--ui-muted);
+      font-family: var(--ui-mono);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .grid-block.shell {
+      grid-column: span 12;
+      border-color: rgba(23, 110, 139, 0.32);
+      background: var(--ui-surface-quiet);
+    }
+
+    .grid-block.nav {
+      grid-column: span 3;
+    }
+
+    .grid-block.main-area {
+      grid-column: span 9;
+    }
+
+    .grid-block.card {
+      grid-column: span 4;
+    }
+
+    .grid-rule-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .grid-rule-list li {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--ui-hairline-soft);
+    }
+
+    .grid-rule-list li:last-child {
+      border-bottom: 0;
+    }
+
+    .grid-rule-list strong {
+      color: var(--ui-ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .grid-rule-list span {
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .spacing-scale {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .space-step {
+      display: grid;
+      gap: 8px;
+      min-height: 78px;
+      align-content: end;
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-sm);
+      background: #ffffff;
+      padding: 8px;
+    }
+
+    .space-bar {
+      display: block;
+      width: var(--space-width);
+      max-width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ui-primary);
+    }
+
+    .space-step strong {
+      color: var(--ui-ink);
+      font-family: var(--ui-mono);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .breakpoint-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .breakpoint-card {
+      border: 1px solid var(--ui-hairline-soft);
+      border-radius: var(--ui-radius-sm);
+      background: #ffffff;
+      padding: 12px;
+    }
+
+    .breakpoint-card strong {
+      display: block;
+      color: var(--ui-ink);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .breakpoint-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .migration-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .code-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .code-list li {
+      display: grid;
+      gap: 4px;
+      border-bottom: 1px solid var(--ui-line);
+      padding: 9px 0;
+      color: var(--ui-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .code-list li:last-child {
+      border-bottom: 0;
+    }
+
+    code {
+      border-radius: var(--ui-radius-xs);
+      background: rgba(15, 45, 68, 0.06);
+      color: var(--ui-primary-deep);
+      font-family: var(--ui-mono);
+      font-size: 12px;
+      padding: 2px 5px;
+    }
+
+    .footer-note {
+      max-width: var(--ui-max);
+      margin: 0 auto;
+      padding: 0 28px 34px;
+      color: var(--ui-muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .side-nav {
+        position: static;
+      }
+
+      .side-title {
+        display: none;
+      }
+
+      .side-nav {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+        gap: 8px;
+        overflow: visible;
+        padding: 8px;
+      }
+
+      .side-nav a {
+        border: 1px solid var(--ui-line);
+        border-radius: var(--ui-radius-sm);
+        min-width: 0;
+        padding: 9px 11px;
+      }
+
+      .component-sample-grid .content-card {
+        min-height: 0;
+        grid-template-rows: auto;
+      }
+
+      .component-sample-grid .content-card-head,
+      .component-sample-grid .card-actions {
+        min-height: 0;
+      }
+
+      .grid-3,
+      .grid-4,
+      .status-grid,
+      .template-grid,
+      .chat-preview,
+      .icon-spec-grid,
+      .identity-panel,
+      .grid-spec-grid,
+      .migration-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .swatch-row,
+      .metric-strip,
+      .breakpoint-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .topbar-inner {
+        grid-template-columns: 1fr;
+        padding: 14px 16px;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+      }
+
+      .main {
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .main,
+      .content,
+      .section,
+      .section-header,
+      .section-body,
+      .side-nav {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .section {
+        overflow: hidden;
+      }
+
+      .section-header,
+      .page-heading,
+      .content-card-head,
+      .app-top {
+        grid-template-columns: 1fr;
+      }
+
+      .section h2 {
+        word-break: break-all;
+      }
+
+      .section-body,
+      .section-header {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+
+      .identity-panel {
+        padding: 22px;
+      }
+
+      .identity-title {
+        max-width: 12ch;
+        font-size: 32px;
+      }
+
+      .signal-row {
+        grid-template-columns: 72px minmax(0, 1fr) 34px;
+      }
+
+      .grid-2,
+      .input-grid,
+      .swatch-row,
+      .metric-strip,
+      .solar-list,
+      .spacing-scale,
+      .breakpoint-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-board {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .grid-block.shell,
+      .grid-block.nav,
+      .grid-block.main-area,
+      .grid-block.card {
+        grid-column: span 4;
+      }
+
+      .grid-rule-list li {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .side-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .type-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .shell-preview {
+        grid-template-columns: 1fr;
+      }
+
+      .app-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--ui-line);
+      }
+
+      .nav-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .message {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true">
+            <iconify-icon icon="solar:map-point-wave-bold"></iconify-icon>
+          </div>
+          <div>
+            <h1 class="brand-title">Lighthouse UI Kit v0.1</h1>
+            <p class="brand-note">基于 A / Harbor Signal。先定组件库，再替换原版页面。</p>
+          </div>
+        </div>
+        <div class="top-actions" aria-label="规范入口">
+          <a class="btn btn-secondary" href="./lighthouse-color-system.html">
+            <iconify-icon icon="solar:palette-bold"></iconify-icon>
+            Color System
+          </a>
+          <span class="btn btn-signal">
+            <iconify-icon icon="solar:bolt-bold"></iconify-icon>
+            Solar Icons Locked
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <nav class="side-nav" aria-label="UI Kit sections">
+        <div class="side-title">Kit Index</div>
+        <a href="#foundation"><iconify-icon icon="solar:ruler-cross-pen-bold"></iconify-icon> 基础定义</a>
+        <a href="#grid-system"><iconify-icon icon="solar:layers-bold"></iconify-icon> 网格系统</a>
+        <a href="#type"><iconify-icon icon="solar:text-bold"></iconify-icon> 字体系统</a>
+        <a href="#icons"><iconify-icon icon="solar:star-bold"></iconify-icon> Solar 图标</a>
+        <a href="#controls"><iconify-icon icon="solar:tuning-2-bold"></iconify-icon> 控件</a>
+        <a href="#states"><iconify-icon icon="solar:check-circle-bold"></iconify-icon> 状态系统</a>
+        <a href="#shell"><iconify-icon icon="solar:sidebar-minimalistic-bold"></iconify-icon> 页面框架</a>
+        <a href="#components"><iconify-icon icon="solar:widget-5-bold"></iconify-icon> 业务组件</a>
+        <a href="#templates"><iconify-icon icon="solar:layers-bold"></iconify-icon> 页面模板</a>
+        <a href="#redesign"><iconify-icon icon="solar:sort-by-time-bold"></iconify-icon> 改造原则</a>
+        <a href="#migration"><iconify-icon icon="solar:refresh-bold"></iconify-icon> 替换规则</a>
+      </nav>
+
+      <div class="content">
+        <section class="section" id="foundation">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:ruler-cross-pen-bold"></iconify-icon> Foundation</p>
+              <h2>视觉底层先收住</h2>
+              <p class="section-desc">当前阶段把 A 配色当作默认方向，但真正要解决的是可读性、层级、密度、组件一致性和状态表达。Kit 定稿后再迁移到真实页面，避免边改页面边改规范。</p>
+            </div>
+            <span class="chip chip-primary">Default: A / Harbor Signal</span>
+          </div>
+          <div class="section-body">
+            <div class="identity-panel" aria-label="Lighthouse visual identity sample">
+              <div class="identity-copy">
+                <div class="identity-kicker">
+                  <iconify-icon icon="solar:radar-2-bold"></iconify-icon>
+                  Visual Language
+                </div>
+                <h3 class="identity-title">海图、信号、控制台</h3>
+                <p class="identity-lead">质感不靠大面积琥珀或装饰卡片，而是来自可解释的材料：细密坐标线、深海蓝控制面、清亮信号色、少量黄铜标记。它应该像一个服务文化导航系统，而不是一份被美化的文档。</p>
+                <div class="identity-materials">
+                  <span class="material-pill">Chart grid</span>
+                  <span class="material-pill">Signal beam</span>
+                  <span class="material-pill">Deck panel</span>
+                  <span class="material-pill">Solar icons</span>
+                </div>
+              </div>
+              <div class="signal-board" aria-label="视觉质量指标">
+                <div class="signal-row"><span>Readability</span><span class="signal-meter"><span style="width:92%"></span></span><span class="signal-value">92</span></div>
+                <div class="signal-row"><span>Hierarchy</span><span class="signal-meter"><span style="width:86%"></span></span><span class="signal-value">86</span></div>
+                <div class="signal-row"><span>Texture</span><span class="signal-meter"><span style="width:78%"></span></span><span class="signal-value">78</span></div>
+                <div class="signal-row"><span>Density</span><span class="signal-meter"><span style="width:81%"></span></span><span class="signal-value">81</span></div>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="tile">
+                <h3>设计原则</h3>
+                <ul class="rule-list">
+                  <li>
+                    <span class="rule-index">1</span>
+                    <span><strong>企业服务工具优先</strong><span>界面要稳定、清楚、可反复使用，不走文艺阅读稿或活动页方向。</span></span>
+                  </li>
+                  <li>
+                    <span class="rule-index">2</span>
+                    <span><strong>清晰层级优先</strong><span>正文、弱文本、状态标签和操作按钮都要有明确职责，避免浅、散、糊。</span></span>
+                  </li>
+                  <li>
+                    <span class="rule-index">3</span>
+                    <span><strong>先 Kit，后替换</strong><span>组件形态、页面结构和状态语言定稿后，再替换原版实现。</span></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="tile">
+                <h3>核心 Token</h3>
+                <ul class="token-list">
+                  <li class="token-row"><span class="token-name">页面底色</span><span class="token-value"><code>--ui-page</code> 用于应用背景，避免纸张旧感。</span></li>
+                  <li class="token-row"><span class="token-name">承载面</span><span class="token-value"><code>--ui-panel</code> 用于卡片、表格、聊天面板。</span></li>
+                  <li class="token-row"><span class="token-name">主操作</span><span class="token-value"><code>--ui-primary</code> 用于主按钮、当前导航、关键强调。</span></li>
+                  <li class="token-row"><span class="token-name">信号色</span><span class="token-value"><code>--ui-signal</code> 用于提醒、AI 协助、选中辅助，不再是全局琥珀。</span></li>
+                  <li class="token-row"><span class="token-name">圆角</span><span class="token-value">业务组件默认 8px 以内，工具界面不做大圆角卡片感。</span></li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="swatch-row" style="margin-top:14px">
+              <div class="swatch"><div class="swatch-color" style="background:#0f2d44"></div><div class="swatch-info"><div class="swatch-name">Ink</div><div class="swatch-code">#0F2D44</div></div></div>
+              <div class="swatch"><div class="swatch-color" style="background:#176e8b"></div><div class="swatch-info"><div class="swatch-name">Primary</div><div class="swatch-code">#176E8B</div></div></div>
+              <div class="swatch"><div class="swatch-color" style="background:#28b8c7"></div><div class="swatch-info"><div class="swatch-name">Signal</div><div class="swatch-code">#28B8C7</div></div></div>
+              <div class="swatch"><div class="swatch-color" style="background:#f2f8f8"></div><div class="swatch-info"><div class="swatch-name">Page</div><div class="swatch-code">#F2F8F8</div></div></div>
+              <div class="swatch"><div class="swatch-color" style="background:#bfd8de"></div><div class="swatch-info"><div class="swatch-name">Line</div><div class="swatch-code">#BFD8DE</div></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="grid-system">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:layers-bold"></iconify-icon> Grid System</p>
+              <h2>网格系统先定骨架</h2>
+              <p class="section-desc">网格不是背景装饰，而是页面迁移时的结构合同。Lighthouse 采用 4pt 间距刻度、12 栏内容画布和组件级自适应栅格，让 Heart、Workshop、Hermit 的页面密度有统一依据。</p>
+            </div>
+            <span class="chip chip-primary">12 columns / 4pt scale</span>
+          </div>
+          <div class="section-body">
+            <div class="grid-system-wrap">
+              <div class="grid-spec-grid">
+                <div class="grid-board" aria-label="12 column grid sample">
+                  <span class="grid-rail">1</span>
+                  <span class="grid-rail">2</span>
+                  <span class="grid-rail">3</span>
+                  <span class="grid-rail">4</span>
+                  <span class="grid-rail">5</span>
+                  <span class="grid-rail">6</span>
+                  <span class="grid-rail">7</span>
+                  <span class="grid-rail">8</span>
+                  <span class="grid-rail">9</span>
+                  <span class="grid-rail">10</span>
+                  <span class="grid-rail">11</span>
+                  <span class="grid-rail">12</span>
+                  <span class="grid-block shell"><strong>Page Shell</strong><span>12 columns / max 1220</span></span>
+                  <span class="grid-block nav"><strong>Side Nav</strong><span>3 cols</span></span>
+                  <span class="grid-block main-area"><strong>Main Work Area</strong><span>9 cols</span></span>
+                  <span class="grid-block card"><strong>Content Card</strong><span>4 cols</span></span>
+                  <span class="grid-block card"><strong>Review Card</strong><span>4 cols</span></span>
+                  <span class="grid-block card"><strong>Evidence Card</strong><span>4 cols</span></span>
+                </div>
+
+                <div class="tile">
+                  <h3>布局规则</h3>
+                  <ul class="grid-rule-list">
+                    <li><strong>页面画布</strong><span><code>max-width: 1220px</code>，桌面端左右安全边距 28px，移动端 16px。</span></li>
+                    <li><strong>主栅格</strong><span>桌面采用 12 栏，内容区可按 3/9、4/8、6/6、4/4/4 组合。</span></li>
+                    <li><strong>组件栅格</strong><span>卡片内部优先用 4pt 间距刻度和局部二栏，不在小组件里继续套复杂栏。</span></li>
+                    <li><strong>纵向节奏</strong><span>Section 间距 22-28px，卡片内间距 12-18px，表格行高保持稳定。</span></li>
+                    <li><strong>触控下限</strong><span>按钮、图标按钮和可点标签的触控区域不低于 42px，移动端优先 44px。</span></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="tile">
+                <h3>4pt 间距刻度</h3>
+                <p class="muted" style="margin-bottom:0;font-size:13px">用 4pt 做底层刻度，避免 8pt 系统在中文工具界面里过粗。常用间距保持在 8、12、16、24、32，48 以上只用于大区块分隔。</p>
+                <div class="spacing-scale" aria-label="4pt spacing scale">
+                  <span class="space-step"><span class="space-bar" style="--space-width:4px"></span><strong>4</strong></span>
+                  <span class="space-step"><span class="space-bar" style="--space-width:8px"></span><strong>8</strong></span>
+                  <span class="space-step"><span class="space-bar" style="--space-width:12px"></span><strong>12</strong></span>
+                  <span class="space-step"><span class="space-bar" style="--space-width:16px"></span><strong>16</strong></span>
+                  <span class="space-step"><span class="space-bar" style="--space-width:24px"></span><strong>24</strong></span>
+                  <span class="space-step"><span class="space-bar" style="--space-width:32px"></span><strong>32</strong></span>
+                  <span class="space-step"><span class="space-bar" style="--space-width:48px"></span><strong>48</strong></span>
+                </div>
+              </div>
+
+              <div class="breakpoint-grid" aria-label="responsive grid rules">
+                <div class="breakpoint-card"><strong>Desktop</strong><span>>= 1180px：12 栏，侧栏固定，主内容按 3/9 或 4/8 组织。</span></div>
+                <div class="breakpoint-card"><strong>Laptop</strong><span>980-1179px：保留 12 栏逻辑，减少横向装饰，优先内容宽度。</span></div>
+                <div class="breakpoint-card"><strong>Tablet</strong><span>720-979px：页面改单列，组件用 auto-fit 卡片栅格。</span></div>
+                <div class="breakpoint-card"><strong>Mobile</strong><span>&lt; 720px：内容单列，导航两列，组件内部不再并排挤压。</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="type">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:text-bold"></iconify-icon> Typography</p>
+              <h2>字体换成不锋利的非衬线</h2>
+              <p class="section-desc">产品界面不再使用宋体感或文学稿件气质。标题、正文、按钮统一使用柔和非衬线，通过字重、字号、间距和色值建立层级。</p>
+            </div>
+            <span class="chip chip-blue">No Serif UI</span>
+          </div>
+          <div class="section-body">
+            <div class="notice" style="margin-bottom:14px">
+              <span class="status-icon info"><iconify-icon icon="solar:info-circle-bold"></iconify-icon></span>
+              <p>推荐栈：<code>Aptos</code>、<code>Noto Sans SC</code>、<code>Microsoft YaHei UI</code>、<code>Microsoft YaHei</code>、<code>PingFang SC</code>、<code>Source Han Sans SC</code>。不使用负字距，不用随视口缩放字号。</p>
+            </div>
+            <div class="type-scale">
+              <div class="type-row">
+                <span class="type-name">Page Title</span>
+                <span class="type-sample text-display">服务文化工作台</span>
+                <span class="type-meta">30 / 780 / 1.14</span>
+              </div>
+              <div class="type-row">
+                <span class="type-name">Section H1</span>
+                <span class="type-sample text-h1">把经验转成可复用的服务动作</span>
+                <span class="type-meta">24 / 760 / 1.24</span>
+              </div>
+              <div class="type-row">
+                <span class="type-name">Card H2</span>
+                <span class="type-sample text-h2">一线案例与审核状态</span>
+                <span class="type-meta">18 / 750 / 1.32</span>
+              </div>
+              <div class="type-row">
+                <span class="type-name">Body</span>
+                <span class="type-sample text-body">正文用于说明操作、解释证据和展示内容摘要，默认必须有足够对比度。</span>
+                <span class="type-meta">15 / 450 / 1.62</span>
+              </div>
+              <div class="type-row">
+                <span class="type-name">Meta</span>
+                <span class="type-sample text-small">更新时间、来源、审核人、引用位置等辅助信息。</span>
+                <span class="type-meta">13 / 450 / 1.45</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="icons">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:star-bold"></iconify-icon> Icon System</p>
+              <h2>Solar 图标体系保持不变</h2>
+              <p class="section-desc">这次视觉重做不替换 icon family。Solar 继续承载导航、操作、状态和 AI 协助含义；Kit 只定义尺寸、粗细、颜色和使用位置。</p>
+            </div>
+            <a class="btn btn-secondary" href="https://icon-sets.iconify.design/solar/" target="_blank" rel="noreferrer">
+              <iconify-icon icon="solar:link-bold"></iconify-icon>
+              Solar Set
+            </a>
+          </div>
+          <div class="section-body">
+            <div class="icon-spec-grid">
+              <div class="tile">
+                <h3>现有导航图标保留</h3>
+                <div class="solar-list">
+                  <div class="solar-row"><span class="solar-glyph"><iconify-icon icon="solar:heart-bold"></iconify-icon></span><span><span class="solar-name">solar:heart-bold</span><span class="solar-use">Heart / 本心</span></span></div>
+                  <div class="solar-row"><span class="solar-glyph"><iconify-icon icon="solar:book-2-bold"></iconify-icon></span><span><span class="solar-name">solar:book-2-bold</span><span class="solar-use">Mirror / 镜鉴</span></span></div>
+                  <div class="solar-row"><span class="solar-glyph"><iconify-icon icon="solar:bolt-bold"></iconify-icon></span><span><span class="solar-name">solar:bolt-bold</span><span class="solar-use">Action / 笃行</span></span></div>
+                  <div class="solar-row"><span class="solar-glyph"><iconify-icon icon="solar:clipboard-check-bold"></iconify-icon></span><span><span class="solar-name">solar:clipboard-check-bold</span><span class="solar-use">Workshop / 共创</span></span></div>
+                  <div class="solar-row"><span class="solar-glyph"><iconify-icon icon="solar:magic-stick-3-bold"></iconify-icon></span><span><span class="solar-name">solar:magic-stick-3-bold</span><span class="solar-use">Hermit / 路引</span></span></div>
+                  <div class="solar-row"><span class="solar-glyph"><iconify-icon icon="solar:magnifer-linear"></iconify-icon></span><span><span class="solar-name">solar:magnifer-linear</span><span class="solar-use">搜索 / 查询</span></span></div>
+                </div>
+              </div>
+              <div class="tile">
+                <h3>使用规则</h3>
+                <ul class="token-list">
+                  <li class="token-row"><span class="token-name">导航</span><span class="token-value">20px，优先 <code>-bold</code>，当前页使用主色底。</span></li>
+                  <li class="token-row"><span class="token-name">工具按钮</span><span class="token-value">18px，线性或实心都可，但同一工具栏内保持一致。</span></li>
+                  <li class="token-row"><span class="token-name">状态</span><span class="token-value">图标跟随状态色，不单独引入新的颜色。</span></li>
+                  <li class="token-row"><span class="token-name">禁用项</span><span class="token-value">只降低对比度和边框，不换成另一套图标表达。</span></li>
+                  <li class="token-row"><span class="token-name">禁止</span><span class="token-value">不混用 Lucide、Heroicons、Material Symbols 等其他家族。</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="controls">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:tuning-2-bold"></iconify-icon> Controls</p>
+              <h2>控件要像工具</h2>
+              <p class="section-desc">按钮、输入框、标签、切换器先统一形态。真实页面迁移时优先替换这些底层控件，再处理大页面结构。</p>
+            </div>
+            <span class="chip chip-signal">Radius <= 8px</span>
+          </div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="tile">
+                <h3>Buttons</h3>
+                <div class="btn-row">
+                  <button class="btn btn-primary"><iconify-icon icon="solar:check-circle-bold"></iconify-icon>主操作</button>
+                  <button class="btn btn-signal"><iconify-icon icon="solar:magic-stick-3-bold"></iconify-icon>AI 协助</button>
+                  <button class="btn btn-secondary"><iconify-icon icon="solar:document-text-bold"></iconify-icon>次操作</button>
+                  <button class="btn btn-ghost"><iconify-icon icon="solar:arrow-right-up-bold"></iconify-icon>文本操作</button>
+                  <button class="btn btn-danger"><iconify-icon icon="solar:trash-bin-trash-bold"></iconify-icon>危险操作</button>
+                </div>
+                <div class="icon-row" style="margin-top:14px">
+                  <span class="icon-btn" title="搜索"><iconify-icon icon="solar:magnifer-linear"></iconify-icon></span>
+                  <span class="icon-btn" title="刷新"><iconify-icon icon="solar:refresh-bold"></iconify-icon></span>
+                  <span class="icon-btn" title="通知"><iconify-icon icon="solar:bell-bold"></iconify-icon></span>
+                  <span class="icon-btn" title="更多"><iconify-icon icon="solar:menu-dots-bold"></iconify-icon></span>
+                </div>
+              </div>
+
+              <div class="tile">
+                <h3>Tags and Segments</h3>
+                <div class="chip-row">
+                  <span class="chip chip-primary">主线内容</span>
+                  <span class="chip chip-signal">AI 草拟</span>
+                  <span class="chip chip-green">已通过</span>
+                  <span class="chip chip-orange">待审核</span>
+                  <span class="chip chip-red">需修改</span>
+                </div>
+                <div class="segmented" style="margin-top:14px">
+                  <span class="segment active">公开区</span>
+                  <span class="segment">投稿区</span>
+                  <span class="segment">我的</span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+                  <span class="switch" aria-label="开启"></span>
+                  <span class="muted" style="font-size:13px">接收审核通知</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="tile" style="margin-top:14px">
+              <h3>Forms</h3>
+              <div class="input-grid">
+                <div class="field">
+                  <label for="kit-title">标题</label>
+                  <input id="kit-title" class="input" value="一次高压投诉后的服务动作复盘">
+                  <span class="field-help">标题要帮助审核人快速判断内容类型。</span>
+                </div>
+                <div class="field">
+                  <label for="kit-role">角色</label>
+                  <input id="kit-role" class="input" value="服务顾问 / 店总 / 客服经理">
+                  <span class="field-help">用于后续按角色筛选 Do and Don't。</span>
+                </div>
+                <div class="field">
+                  <label for="kit-search">知识搜索</label>
+                  <div id="kit-search" class="search-box" role="searchbox" tabindex="0" aria-label="知识搜索"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><span>搜索服务价值观、案例、动作建议</span></div>
+                  <span class="field-help">辅助检索入口，视觉层级低于正式录入字段。</span>
+                </div>
+                <div class="field">
+                  <label for="kit-error">必填校验</label>
+                  <input id="kit-error" class="input input-invalid" value="" placeholder="例如：确认交车时间并约定回访频率" aria-invalid="true" aria-describedby="kit-error-msg">
+                  <span id="kit-error-msg" class="field-error"><iconify-icon icon="solar:danger-triangle-bold"></iconify-icon>请补充至少一个可执行动作。</span>
+                </div>
+                <div class="field" style="grid-column:1 / -1">
+                  <label for="kit-textarea">案例说明</label>
+                  <textarea id="kit-textarea">客户到店时情绪已经明显升级，顾问先暂停解释责任归属，改为复述客户诉求并确认交车时间约束。</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="states">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:check-circle-bold"></iconify-icon> States</p>
+              <h2>状态系统覆盖真实工作流</h2>
+              <p class="section-desc">Workshop、Hermit 和内容库都需要统一状态语言。颜色只表达类型，状态文案负责解释下一步。</p>
+            </div>
+            <span class="chip chip-orange">Workflow Ready</span>
+          </div>
+          <div class="section-body">
+            <div class="status-grid">
+              <div class="status-card">
+                <span class="status-icon info"><iconify-icon icon="solar:document-add-bold"></iconify-icon></span>
+                <span><strong class="status-title">草稿</strong><p class="status-text">内容尚未提交，可继续编辑、保存、预览。</p></span>
+              </div>
+              <div class="status-card">
+                <span class="status-icon warning"><iconify-icon icon="solar:clock-circle-bold"></iconify-icon></span>
+                <span><strong class="status-title">待审核</strong><p class="status-text">提交后进入管理员审核队列，保留来源和角色信息。</p></span>
+              </div>
+              <div class="status-card">
+                <span class="status-icon success"><iconify-icon icon="solar:check-circle-bold"></iconify-icon></span>
+                <span><strong class="status-title">已通过</strong><p class="status-text">进入公开区或知识库，可被检索和引用。</p></span>
+              </div>
+              <div class="status-card">
+                <span class="status-icon danger"><iconify-icon icon="solar:close-circle-bold"></iconify-icon></span>
+                <span><strong class="status-title">需修改</strong><p class="status-text">审核人给出明确原因，贡献者可按建议重提。</p></span>
+              </div>
+              <div class="status-card">
+                <span class="status-icon info"><iconify-icon icon="solar:magic-stick-3-bold"></iconify-icon></span>
+                <span><strong class="status-title">AI 草拟</strong><p class="status-text">Hermit 可辅助组织表达，但必须保留人工确认入口。</p></span>
+              </div>
+              <div class="status-card">
+                <span class="status-icon warning"><iconify-icon icon="solar:danger-triangle-bold"></iconify-icon></span>
+                <span><strong class="status-title">证据不足</strong><p class="status-text">回答或内容缺少引用，提示补充来源而不是装作确定。</p></span>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:14px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>状态</th>
+                    <th>视觉角色</th>
+                    <th>允许操作</th>
+                    <th>文案原则</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="chip chip-blue">Empty</span></td>
+                    <td>轻提示 + 单一主操作</td>
+                    <td>创建、导入、查看示例</td>
+                    <td>说明这里现在没有什么，以及下一步能做什么。</td>
+                  </tr>
+                  <tr>
+                    <td><span class="chip chip-primary">Loading</span></td>
+                    <td>骨架屏 + 保持布局尺寸</td>
+                    <td>不可重复提交</td>
+                    <td>不写泛泛的“请稍候”，优先说明正在处理的对象。</td>
+                  </tr>
+                  <tr>
+                    <td><span class="chip chip-red">Error</span></td>
+                    <td>红色状态块 + 修复入口</td>
+                    <td>重试、返回草稿、联系管理员</td>
+                    <td>说清失败原因、影响范围和可恢复动作。</td>
+                  </tr>
+                  <tr>
+                    <td><span class="chip chip-green">Success</span></td>
+                    <td>绿色状态 + 后续路径</td>
+                    <td>查看公开页、继续提交、分享</td>
+                    <td>确认结果，不做夸张情绪表达。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="shell">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:sidebar-minimalistic-bold"></iconify-icon> App Shell</p>
+              <h2>页面结构先稳定</h2>
+              <p class="section-desc">当前真实页面容易显得散，是因为导航、头部、内容区、核心操作没有形成稳定骨架。Kit 先定义统一 Shell，再让 Heart、Workshop、Hermit 落到不同内容模板里。</p>
+            </div>
+            <span class="chip chip-primary">Desktop First, Mobile Adapted</span>
+          </div>
+          <div class="section-body">
+            <div class="shell-preview">
+              <aside class="app-sidebar">
+                <div class="app-logo"><span class="app-logo-mark"><iconify-icon icon="solar:map-point-wave-bold"></iconify-icon></span> Lighthouse</div>
+                <div class="nav-list">
+                  <div class="nav-item active"><span class="nav-icon"><iconify-icon icon="solar:heart-bold"></iconify-icon></span><span class="nav-copy"><span class="nav-label">Heart</span><span class="nav-sub">本心</span></span></div>
+                  <div class="nav-item"><span class="nav-icon"><iconify-icon icon="solar:book-2-bold"></iconify-icon></span><span class="nav-copy"><span class="nav-label">Mirror</span><span class="nav-sub">镜鉴</span></span></div>
+                  <div class="nav-item"><span class="nav-icon"><iconify-icon icon="solar:bolt-bold"></iconify-icon></span><span class="nav-copy"><span class="nav-label">Action</span><span class="nav-sub">笃行</span></span></div>
+                  <div class="nav-item"><span class="nav-icon"><iconify-icon icon="solar:clipboard-check-bold"></iconify-icon></span><span class="nav-copy"><span class="nav-label">Workshop</span><span class="nav-sub">共创</span></span></div>
+                  <div class="nav-item"><span class="nav-icon"><iconify-icon icon="solar:magic-stick-3-bold"></iconify-icon></span><span class="nav-copy"><span class="nav-label">Hermit</span><span class="nav-sub">路引</span></span></div>
+                </div>
+              </aside>
+              <section class="app-main">
+                <div class="app-top">
+                  <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><span>搜索案例、理念、动作、角色</span></div>
+                  <div class="btn-row">
+                    <span class="icon-btn"><iconify-icon icon="solar:bell-bold"></iconify-icon></span>
+                    <span class="btn btn-primary"><iconify-icon icon="solar:add-circle-bold"></iconify-icon>新建投稿</span>
+                  </div>
+                </div>
+                <div class="app-page">
+                  <div class="page-heading">
+                    <div>
+                      <h3>服务文化工作台</h3>
+                      <p class="muted" style="margin-bottom:0;font-size:13px">把价值观内容、共创投稿和 Hermit 辅助沉淀到同一个工作流。</p>
+                    </div>
+                    <span class="chip chip-signal">本周更新 12 条</span>
+                  </div>
+                  <div class="metric-strip">
+                    <div class="metric"><div class="metric-label">待审核</div><div class="metric-value">8</div><div class="metric-note">Workshop 投稿</div></div>
+                    <div class="metric"><div class="metric-label">已发布</div><div class="metric-value">42</div><div class="metric-note">服务动作条目</div></div>
+                    <div class="metric"><div class="metric-label">Hermit 引用</div><div class="metric-value">156</div><div class="metric-note">近 7 天问答</div></div>
+                  </div>
+                  <div class="content-card">
+                    <div class="content-card-head">
+                      <div><h3>今日重点</h3><p>优先处理证据充分、角色明确、动作可复用的贡献。</p></div>
+                      <span class="chip chip-orange">待处理</span>
+                    </div>
+                    <ul class="dense-list">
+                      <li>将“客户等待焦虑”场景转成服务顾问 Do and Don't。</li>
+                      <li>为 Hermit 回答补充来源段落，避免无引用建议。</li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="components">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:widget-5-bold"></iconify-icon> Product Components</p>
+              <h2>典型界面抽成组件样例</h2>
+              <p class="section-desc">组件样例不只是好看，还要能解释真实页面怎么迁移：Heart 的内容卡、Workshop 的贡献卡、管理员审核表、Hermit 的问答和证据面板。</p>
+            </div>
+            <span class="chip chip-green">Ready for Mapping</span>
+          </div>
+          <div class="section-body">
+            <div class="grid-3 component-sample-grid">
+              <article class="content-card">
+                <div class="content-card-head">
+                  <div>
+                    <h3>Heart 内容卡</h3>
+                    <p>承载核心理念、章节摘要和可引用段落，不再像长文章一样铺满页面。</p>
+                  </div>
+                  <span class="chip chip-primary">本心</span>
+                </div>
+                <ul class="dense-list">
+                  <li>标题明确，不用文学化大标题压过信息。</li>
+                  <li>正文对比度足够，辅助信息独立成 meta。</li>
+                  <li>操作区固定在卡片底部，支持继续阅读和引用。</li>
+                </ul>
+                <div class="btn-row card-actions"><span class="btn btn-secondary"><iconify-icon icon="solar:book-bold"></iconify-icon>阅读</span><span class="btn btn-ghost">引用</span></div>
+              </article>
+
+              <article class="content-card">
+                <div class="content-card-head">
+                  <div>
+                    <h3>Workshop 贡献卡</h3>
+                    <p>围绕角色、场景、Do and Don't 组织，不扩成泛论坛。</p>
+                  </div>
+                  <span class="chip chip-orange">待审核</span>
+                </div>
+                <ul class="dense-list">
+                  <li>角色：服务顾问</li>
+                  <li>场景：客户质疑维修时长</li>
+                  <li>动作：先确认时间约束，再解释流程。</li>
+                </ul>
+                <div class="btn-row card-actions"><span class="btn btn-primary">审核</span><span class="btn btn-secondary">退回修改</span></div>
+              </article>
+
+              <article class="content-card">
+                <div class="content-card-head">
+                  <div>
+                    <h3>Hermit 建议卡</h3>
+                    <p>回答、引用、下一步动作分开，避免看起来像普通聊天。</p>
+                  </div>
+                  <span class="chip chip-signal">AI 协助</span>
+                </div>
+                <ul class="dense-list">
+                  <li>先给可执行建议，再列来源。</li>
+                  <li>不确定时进入“证据不足”状态。</li>
+                  <li>支持保存为 Workshop 草稿。</li>
+                </ul>
+                <div class="btn-row card-actions"><span class="btn btn-signal"><iconify-icon icon="solar:magic-stick-3-bold"></iconify-icon>生成草稿</span></div>
+              </article>
+            </div>
+
+            <div class="table-wrap" style="margin-top:14px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>组件</th>
+                    <th>用于页面</th>
+                    <th>必备信息</th>
+                    <th>替换目标</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>ContentCard</td>
+                    <td>Heart / Mirror</td>
+                    <td>标题、摘要、来源、主操作</td>
+                    <td>替换长文式低层级内容块。</td>
+                  </tr>
+                  <tr>
+                    <td>ContributionCard</td>
+                    <td>Workshop</td>
+                    <td>角色、场景、Do、Don't、状态</td>
+                    <td>替换泛卡片和不稳定标签。</td>
+                  </tr>
+                  <tr>
+                    <td>ReviewTable</td>
+                    <td>Admin / Workshop</td>
+                    <td>提交人、状态、更新时间、审核动作</td>
+                    <td>替换分散的审核入口。</td>
+                  </tr>
+                  <tr>
+                    <td>HermitAnswer</td>
+                    <td>Hermit</td>
+                    <td>回答、引用、可信度、下一步</td>
+                    <td>替换单纯聊天气泡。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="chat-preview" style="margin-top:14px">
+              <div class="chat-panel">
+                <div class="message user">客户说“每次保养都要等这么久”，服务顾问应该怎么回应？</div>
+                <div class="message assistant">先不要解释内部排班。可以先复述客户的时间焦虑，再确认交车节点，最后给出可选择的等待方案。</div>
+                <div class="message assistant">建议动作：1. 确认客户后续安排；2. 给出预计完成时间和更新频率；3. 若延迟，主动说明原因和补偿方案。</div>
+                <div class="prompt-bar">
+                  <div class="search-box"><iconify-icon icon="solar:pen-2-bold"></iconify-icon><span>追问或保存为投稿草稿</span></div>
+                  <span class="btn btn-signal"><iconify-icon icon="solar:plain-bold"></iconify-icon>发送</span>
+                </div>
+              </div>
+              <aside class="evidence">
+                <h3><iconify-icon icon="solar:document-text-bold"></iconify-icon> 引用证据</h3>
+                <div class="evidence-item"><strong>服务响应原则</strong><span>先承接情绪，再进入解释和承诺。</span></div>
+                <div class="evidence-item"><strong>等待场景 Do</strong><span>明确时间节点，主动更新，不让客户追问。</span></div>
+                <div class="evidence-item"><strong>可沉淀动作</strong><span>可以转入 Workshop 作为“等待焦虑”案例。</span></div>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="templates">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:layers-bold"></iconify-icon> Page Templates</p>
+              <h2>页面模板先定职责</h2>
+              <p class="section-desc">Heart、Workshop、Hermit 的问题不同，不能只套同一张大卡片。模板层要定义首屏信息、主要操作、状态入口和内容密度。</p>
+            </div>
+            <span class="chip chip-blue">Structure First</span>
+          </div>
+          <div class="section-body">
+            <div class="template-grid">
+              <div class="page-template">
+                <div class="template-head"><strong>Heart / 本心</strong><span class="chip chip-primary">内容入口</span></div>
+                <div class="template-body">
+                  <div class="mini-card"><strong>首屏</strong><span>页面标题、核心章节、当前阅读路径。</span></div>
+                  <div class="mini-card"><strong>中段</strong><span>理念卡片、引用段落、服务动作链接。</span></div>
+                  <div class="mini-card"><strong>底部</strong><span>关联 Workshop 案例和 Hermit 提问入口。</span></div>
+                </div>
+              </div>
+              <div class="page-template">
+                <div class="template-head"><strong>Workshop / 共创</strong><span class="chip chip-orange">工作流</span></div>
+                <div class="template-body">
+                  <div class="mini-card"><strong>公开区</strong><span>已审核案例，按角色和场景筛选。</span></div>
+                  <div class="mini-card"><strong>投稿区</strong><span>角色、场景、Do and Don't、来源说明。</span></div>
+                  <div class="mini-card"><strong>个人区</strong><span>草稿、待审核、已通过、需修改。</span></div>
+                </div>
+              </div>
+              <div class="page-template">
+                <div class="template-head"><strong>Hermit / 路引</strong><span class="chip chip-signal">辅助</span></div>
+                <div class="template-body">
+                  <div class="mini-card"><strong>输入区</strong><span>问题、角色、场景上下文。</span></div>
+                  <div class="mini-card"><strong>回答区</strong><span>建议、依据、风险提醒、下一步。</span></div>
+                  <div class="mini-card"><strong>沉淀区</strong><span>保存为草稿、补证据、进入审核。</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="redesign">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:sort-by-time-bold"></iconify-icon> Redesign Contract</p>
+              <h2>改造不是一一对应换皮</h2>
+              <p class="section-desc">真实前端本身在信息层级、可读性和任务密度上需要重做。迁移时保留该有的业务内容和用户任务，但允许重排首屏、拆分长文、合并弱入口、删掉旧视觉噪音。</p>
+            </div>
+            <span class="chip chip-primary">Readability First</span>
+          </div>
+          <div class="section-body">
+            <div class="notice" style="margin-bottom:14px">
+              <iconify-icon icon="solar:compass-big-bold"></iconify-icon>
+              <p>迁移判断顺序：先确认页面职责和核心用户任务，再确定内容优先级、阅读路径、组件密度和状态入口。旧页面结构只作为材料来源，不作为新页面布局的约束。</p>
+            </div>
+
+            <div class="grid-3">
+              <article class="content-card">
+                <div class="content-card-head">
+                  <div>
+                    <h3>保留内容责任</h3>
+                    <p>保留用户需要理解、判断和行动的信息，不保留旧页面的装饰层、低对比层和重复说明。</p>
+                  </div>
+                  <span class="chip chip-blue">Content</span>
+                </div>
+                <ul class="dense-list">
+                  <li>每页先列必须回答的问题。</li>
+                  <li>相同含义的标题、说明和标签合并。</li>
+                  <li>引用、来源、状态说明放到固定位置。</li>
+                </ul>
+              </article>
+
+              <article class="content-card">
+                <div class="content-card-head">
+                  <div>
+                    <h3>重建信息层级</h3>
+                    <p>首屏先给判断入口，正文按任务分块，弱辅助信息进入 meta、侧栏或折叠区。</p>
+                  </div>
+                  <span class="chip chip-primary">Hierarchy</span>
+                </div>
+                <ul class="dense-list">
+                  <li>标题、摘要、主操作不被长段落淹没。</li>
+                  <li>卡片内部使用固定轨道和 4pt 间距。</li>
+                  <li>桌面优先横向比较，移动端优先单列阅读。</li>
+                </ul>
+              </article>
+
+              <article class="content-card">
+                <div class="content-card-head">
+                  <div>
+                    <h3>提高可读性</h3>
+                    <p>减少 serif 正文、低透明文字和大块松散留白，转为更稳的工具型阅读密度。</p>
+                  </div>
+                  <span class="chip chip-green">Clarity</span>
+                </div>
+                <ul class="dense-list">
+                  <li>普通正文不低于 14px，关键说明保持高对比。</li>
+                  <li>长文拆成摘要、要点、证据和行动。</li>
+                  <li>状态色只表达状态，不承担装饰。</li>
+                </ul>
+              </article>
+            </div>
+
+            <div class="table-wrap" style="margin-top:14px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>现有区域</th>
+                    <th>新页面优先保留</th>
+                    <th>允许重构</th>
+                    <th>可读性目标</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>AppShell / Navigation</td>
+                    <td>当前模块、身份、关键入口</td>
+                    <td>侧栏宽度、顶栏布局、移动端导航方式</td>
+                    <td>进入页面后 3 秒内知道位置和下一步。</td>
+                  </tr>
+                  <tr>
+                    <td>Heart / Mirror</td>
+                    <td>核心理念、章节摘要、引用来源</td>
+                    <td>长文章式铺排、过大的文学化标题</td>
+                    <td>先读懂结构，再进入完整内容。</td>
+                  </tr>
+                  <tr>
+                    <td>Action / Case</td>
+                    <td>案例问题、关键权衡、最终做法、可复用原则</td>
+                    <td>重复卡片、过轻的标签、低对比说明</td>
+                    <td>把案例从阅读材料改成判断训练。</td>
+                  </tr>
+                  <tr>
+                    <td>Workshop / Admin</td>
+                    <td>投稿、审核、状态、Do and Don't、角色筛选</td>
+                    <td>表单顺序、审核入口、个人区和公共区分组</td>
+                    <td>操作路径清楚，状态和责任不混淆。</td>
+                  </tr>
+                  <tr>
+                    <td>Hermit</td>
+                    <td>问题输入、回答、引用证据、下一步动作</td>
+                    <td>聊天气泡比例、证据侧栏、保存草稿入口</td>
+                    <td>像专业辅助面板，不像普通聊天页。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="migration">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker"><iconify-icon icon="solar:refresh-bold"></iconify-icon> Migration Contract</p>
+              <h2>定稿后替换原版的规则</h2>
+              <p class="section-desc">这不是只换几组颜色变量，也不是照旧页面逐块复刻。定稿后要按层替换：基础 token、字体、控件、页面结构、业务组件、状态语言；页面层允许围绕信息层级和可读性重新组织。</p>
+            </div>
+            <span class="chip chip-red">Do Not Patch Randomly</span>
+          </div>
+          <div class="section-body">
+            <div class="migration-grid">
+              <div class="tile">
+                <h3>需要替换掉的旧特征</h3>
+                <ul class="code-list">
+                  <li><span><code>#F3EFE0</code>、浅米纸张底色</span><span>容易把工具界面带回文艺稿件感。</span></li>
+                  <li><span><code>text-ink/50</code>、<code>text-ink/30</code></span><span>正文和辅助信息可读性不足。</span></li>
+                  <li><span>serif / 宋体感正文</span><span>只保留在内容材料或引用场景，不作为 UI 默认字体。</span></li>
+                  <li><span>大面积琥珀强调</span><span>改为主色 + 信号色 + 状态色分工。</span></li>
+                  <li><span>玻璃卡片、过大圆角、松散留白</span><span>改为稳定面板、8px 圆角和明确网格。</span></li>
+                </ul>
+              </div>
+              <div class="tile">
+                <h3>替换顺序</h3>
+                <ul class="rule-list">
+                  <li><span class="rule-index">1</span><span><strong>Token and type</strong><span>先替换全局色彩、字体、字号、边框、阴影、圆角。</span></span></li>
+                  <li><span class="rule-index">2</span><span><strong>Primitive controls</strong><span>按钮、输入框、标签、分段控件、状态块统一。</span></span></li>
+                  <li><span class="rule-index">3</span><span><strong>App shell</strong><span>导航、顶部搜索、内容容器和页面操作区统一。</span></span></li>
+                  <li><span class="rule-index">4</span><span><strong>Page redesign pass</strong><span>按页面职责重排首屏、阅读路径、信息密度和操作优先级。</span></span></li>
+                  <li><span class="rule-index">5</span><span><strong>Product components</strong><span>再替换 Heart、Workshop、Hermit 的业务组件。</span></span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <p class="footer-note">Lighthouse UI Kit v0.1 defines the visual, component, and redesign contract. It does not change the production React implementation yet.</p>
+  </div>
+</body>
+</html>

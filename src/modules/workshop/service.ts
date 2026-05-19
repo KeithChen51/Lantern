@@ -33,9 +33,13 @@ function ensureTransition(submission: WorkshopSubmission, allowed: WorkshopSubmi
 }
 
 function validateDraftInput(input: CreateWorkshopDraftInput) {
-  const requiredFields = [input.title, input.roleName, input.doText, input.dontText];
+  const requiredFields = [input.title, input.roleName];
   if (requiredFields.some((value) => value.trim().length === 0)) {
-    throw new AppError("validation_error", "Title, role, Do, and Don't are required.", 422);
+    throw new AppError("validation_error", "Title and role are required.", 422);
+  }
+
+  if (input.doText.trim().length === 0 && input.dontText.trim().length === 0) {
+    throw new AppError("validation_error", "At least one of Do or Don't is required.", 422);
   }
 }
 
@@ -48,11 +52,13 @@ function buildAiReviewResult(passed: boolean, reason: string): AiReviewResult {
 }
 
 function isCompleteForReview(submission: WorkshopSubmission) {
+  const actionTexts = [submission.doText, submission.dontText].map((text) => text.trim()).filter(Boolean);
+
   return (
     submission.title.trim().length > 0 &&
     submission.roleName.trim().length > 0 &&
-    submission.doText.trim().length >= MIN_ACTION_LENGTH &&
-    submission.dontText.trim().length >= MIN_ACTION_LENGTH &&
+    actionTexts.length > 0 &&
+    actionTexts.every((text) => text.length >= MIN_ACTION_LENGTH) &&
     (!submission.howText || submission.howText.trim().length >= MIN_ACTION_LENGTH)
   );
 }

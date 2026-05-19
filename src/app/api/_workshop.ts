@@ -67,9 +67,9 @@ export async function readDraftInput(request: Request, user: WorkshopUser): Prom
     storeName: optionalString(body.storeName),
     serviceScenario: optionalString(body.serviceScenario),
     principleRef: optionalString(body.principleRef),
-    doText: requireString(body.doText, "doText"),
+    doText: optionalString(body.doText) ?? "",
     howText: optionalString(body.howText),
-    dontText: requireString(body.dontText, "dontText"),
+    dontText: optionalString(body.dontText) ?? "",
   };
 }
 

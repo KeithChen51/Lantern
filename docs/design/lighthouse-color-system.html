@@ -1,0 +1,2046 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse Color System v0.1</title>
+  <style>
+    :root,
+    body[data-theme="harbor-signal"] {
+      color-scheme: light;
+      --lh-ink: #0f2d44;
+      --lh-ink-soft: #28516a;
+      --lh-muted: #5f7b8b;
+      --lh-faint: #8da4ad;
+      --lh-paper: #f2f8f8;
+      --lh-chalk: #fefffb;
+      --lh-fog: #ddeff1;
+      --lh-line: #bfd8de;
+      --lh-line-strong: #8db2bc;
+      --lh-coast: #176e8b;
+      --lh-coast-deep: #0f5268;
+      --lh-horizon: #3e89a8;
+      --lh-tide: #5d9f86;
+      --lh-signal: #28b8c7;
+      --lh-signal-deep: #137b89;
+      --lh-signal-fg: #0f2d44;
+      --lh-coral: #c65e52;
+      --lh-success: #2d8560;
+      --lh-warning: #a86420;
+      --lh-danger: #aa443f;
+      --lh-info: #3e89a8;
+      --lh-shadow: 0 18px 50px rgba(15, 45, 68, 0.095);
+      --lh-bg-end: #e3f0f1;
+      --lh-border: color-mix(in srgb, var(--lh-ink) 12%, transparent);
+      --lh-border-soft: color-mix(in srgb, var(--lh-ink) 8%, transparent);
+      --lh-surface: color-mix(in srgb, var(--lh-chalk) 78%, transparent);
+      --lh-surface-soft: color-mix(in srgb, var(--lh-chalk) 64%, transparent);
+      --lh-primary-tint: color-mix(in srgb, var(--lh-coast) 10%, transparent);
+      --lh-primary-glow: color-mix(in srgb, var(--lh-coast) 16%, transparent);
+      --lh-signal-tint: color-mix(in srgb, var(--lh-signal) 18%, transparent);
+      --lh-signal-glow: color-mix(in srgb, var(--lh-signal) 32%, transparent);
+      --lh-code-bg: #101816;
+      --lh-code-fg: #edf0e8;
+      --lh-info-fg: #23627c;
+      --lh-success-fg: #216748;
+      --lh-warning-fg: #784813;
+      --lh-danger-fg: #7b302d;
+      --lh-radius-sm: 6px;
+      --lh-radius-md: 10px;
+      --lh-radius-lg: 16px;
+      --lh-max: 1180px;
+    }
+
+    body[data-theme="harbor"] {
+      --lh-ink: #102a43;
+      --lh-ink-soft: #31485c;
+      --lh-muted: #667887;
+      --lh-faint: #93a0a9;
+      --lh-paper: #f4f7f6;
+      --lh-chalk: #fcfffd;
+      --lh-fog: #e5edf0;
+      --lh-line: #cbd8dc;
+      --lh-line-strong: #9fb0b8;
+      --lh-coast: #1f5d7a;
+      --lh-coast-deep: #123d54;
+      --lh-horizon: #4b7893;
+      --lh-tide: #6f947c;
+      --lh-signal: #3fa7b6;
+      --lh-signal-deep: #1d6874;
+      --lh-signal-fg: #102a43;
+      --lh-coral: #bd5b4e;
+      --lh-success: #2f7454;
+      --lh-warning: #9b5b1d;
+      --lh-danger: #a9443f;
+      --lh-info: #4b7893;
+      --lh-shadow: 0 18px 48px rgba(16, 42, 67, 0.09);
+      --lh-bg-end: #e8eeee;
+      --lh-info-fg: #254c66;
+      --lh-success-fg: #22563e;
+      --lh-warning-fg: #704015;
+      --lh-danger-fg: #78302d;
+    }
+
+    body[data-theme="stone-standard"] {
+      --lh-ink: #1f2b31;
+      --lh-ink-soft: #435158;
+      --lh-muted: #6c7a80;
+      --lh-faint: #9aa5a8;
+      --lh-paper: #f5f6f1;
+      --lh-chalk: #fffdf8;
+      --lh-fog: #e9eeea;
+      --lh-line: #d3d8d4;
+      --lh-line-strong: #a5afab;
+      --lh-coast: #4e6870;
+      --lh-coast-deep: #354b52;
+      --lh-horizon: #6b8190;
+      --lh-tide: #789181;
+      --lh-signal: #8ea59e;
+      --lh-signal-deep: #5d746d;
+      --lh-signal-fg: #182524;
+      --lh-coral: #b76a5d;
+      --lh-success: #5d7b66;
+      --lh-warning: #8c6b38;
+      --lh-danger: #994a45;
+      --lh-info: #667f8e;
+      --lh-shadow: 0 18px 48px rgba(31, 43, 49, 0.075);
+      --lh-bg-end: #e9ece5;
+      --lh-info-fg: #485f6b;
+      --lh-success-fg: #46604d;
+      --lh-warning-fg: #654b27;
+      --lh-danger-fg: #703532;
+    }
+
+    body[data-theme="paper-ledger"] {
+      --lh-ink: #2c2926;
+      --lh-ink-soft: #534d47;
+      --lh-muted: #77716a;
+      --lh-faint: #a39d96;
+      --lh-paper: #f8f4ee;
+      --lh-chalk: #fffdf8;
+      --lh-fog: #eee8df;
+      --lh-line: #ded5ca;
+      --lh-line-strong: #b8afa4;
+      --lh-coast: #756a5e;
+      --lh-coast-deep: #554b41;
+      --lh-horizon: #747b8c;
+      --lh-tide: #7d8c73;
+      --lh-signal: #b88a5a;
+      --lh-signal-deep: #7d5b39;
+      --lh-signal-fg: #211912;
+      --lh-coral: #aa655f;
+      --lh-success: #6d805f;
+      --lh-warning: #8f6837;
+      --lh-danger: #8f4a46;
+      --lh-info: #6c7586;
+      --lh-shadow: 0 18px 46px rgba(44, 41, 38, 0.07);
+      --lh-bg-end: #ece3d8;
+      --lh-info-fg: #505a6c;
+      --lh-success-fg: #536545;
+      --lh-warning-fg: #694b27;
+      --lh-danger-fg: #683532;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(120deg, var(--lh-primary-tint), transparent 34%),
+        linear-gradient(180deg, var(--lh-chalk) 0%, var(--lh-paper) 44%, var(--lh-bg-end) 100%);
+      color: var(--lh-ink);
+      font-family:
+        "Noto Sans SC",
+        "Microsoft YaHei",
+        "PingFang SC",
+        "Source Han Sans SC",
+        Arial,
+        sans-serif;
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+    }
+
+    .theme-switcher {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--lh-border);
+      background: color-mix(in srgb, var(--lh-chalk) 88%, transparent);
+      backdrop-filter: blur(18px);
+    }
+
+    .theme-switcher-inner {
+      width: min(var(--lh-max), calc(100% - 48px));
+      margin: 0 auto;
+      padding: 14px 0;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .theme-kicker {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--lh-coast-deep);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .theme-summary strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .theme-summary p {
+      margin: 2px 0 0;
+      color: var(--lh-muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .theme-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .theme-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      border: 1px solid var(--lh-border);
+      border-radius: 999px;
+      background: var(--lh-surface);
+      color: var(--lh-ink-soft);
+      padding: 7px 12px 7px 8px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .theme-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--lh-coast);
+      color: var(--lh-ink);
+    }
+
+    .theme-button[aria-pressed="true"] {
+      border-color: var(--lh-coast);
+      background: var(--lh-coast);
+      color: var(--lh-chalk);
+    }
+
+    .theme-dot {
+      width: 18px;
+      height: 18px;
+      border: 1px solid color-mix(in srgb, var(--lh-ink) 18%, transparent);
+      border-radius: 999px;
+      background:
+        linear-gradient(135deg, var(--dot-primary) 0 50%, var(--dot-signal) 50% 100%);
+      box-shadow: inset 0 0 0 3px var(--dot-paper);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--lh-border);
+      background:
+        linear-gradient(115deg, var(--lh-signal-tint) 0 8%, transparent 8% 100%),
+        linear-gradient(90deg, var(--lh-primary-glow), transparent 62%);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -12vw;
+      top: 22%;
+      width: 58vw;
+      height: 26vw;
+      min-height: 260px;
+      background: linear-gradient(100deg, var(--lh-signal-glow), color-mix(in srgb, var(--lh-signal) 4%, transparent) 65%, transparent);
+      transform: rotate(-8deg);
+      transform-origin: 100% 50%;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      width: min(var(--lh-max), calc(100% - 48px));
+      margin: 0 auto;
+      padding: 68px 0 64px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.7fr);
+      gap: 56px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 16px;
+      color: var(--lh-coast-deep);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin-bottom: 24px;
+      font-size: 88px;
+      line-height: 0.94;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: 44px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin-bottom: 28px;
+      color: var(--lh-ink-soft);
+      font-size: 22px;
+      line-height: 1.68;
+      font-weight: 520;
+    }
+
+    .hero-note {
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-surface);
+      box-shadow: var(--lh-shadow);
+      padding: 24px;
+    }
+
+    .hero-note p {
+      color: var(--lh-ink-soft);
+      font-size: 15px;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rule-list li {
+      display: grid;
+      grid-template-columns: 12px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      color: var(--lh-ink-soft);
+      font-size: 14px;
+    }
+
+    .rule-list li::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      margin-top: 8px;
+      border-radius: 2px;
+      background: var(--lh-signal);
+      box-shadow: 0 0 0 3px var(--lh-signal-tint);
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 32px;
+    }
+
+    .tab {
+      border: 1px solid var(--lh-border);
+      border-radius: 999px;
+      background: var(--lh-surface);
+      color: var(--lh-ink-soft);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .tab.primary {
+      border-color: var(--lh-coast);
+      background: var(--lh-coast);
+      color: var(--lh-chalk);
+    }
+
+    main {
+      width: min(var(--lh-max), calc(100% - 48px));
+      margin: 0 auto;
+      padding: 56px 0 72px;
+    }
+
+    .section {
+      padding: 54px 0;
+      border-bottom: 1px solid var(--lh-border-soft);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(280px, 0.42fr);
+      gap: 40px;
+      align-items: start;
+      margin-bottom: 30px;
+    }
+
+    .section-head p {
+      color: var(--lh-muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .principle {
+      min-height: 132px;
+      padding: 18px;
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-md);
+      background: var(--lh-surface-soft);
+    }
+
+    .principle strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--lh-coast-deep);
+      font-size: 15px;
+    }
+
+    .principle span {
+      color: var(--lh-muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .swatch {
+      min-height: 245px;
+      overflow: hidden;
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-chalk);
+      box-shadow: var(--lh-shadow);
+    }
+
+    .color-block {
+      height: 118px;
+      border-bottom: 1px solid var(--lh-border);
+      background: var(--swatch);
+    }
+
+    .swatch-body {
+      padding: 18px;
+    }
+
+    .swatch-body strong,
+    .swatch-body code {
+      display: block;
+    }
+
+    .swatch-body strong {
+      margin-bottom: 4px;
+      font-size: 18px;
+    }
+
+    .swatch-body code {
+      margin-bottom: 12px;
+      color: var(--lh-coast-deep);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .swatch-body p {
+      color: var(--lh-muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .scale {
+      display: grid;
+      gap: 10px;
+    }
+
+    .scale-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr) 86px;
+      gap: 16px;
+      align-items: center;
+      color: var(--lh-ink-soft);
+      font-size: 13px;
+    }
+
+    .bar {
+      height: 28px;
+      border: 1px solid var(--lh-border-soft);
+      border-radius: 999px;
+      background: var(--bar);
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .pair {
+      min-height: 164px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      padding: 20px;
+      background: var(--pair-bg);
+      color: var(--pair-fg);
+    }
+
+    .pair strong {
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .pair span {
+      max-width: 28ch;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .usage-layout {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .sidebar-demo {
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-ink);
+      color: var(--lh-chalk);
+      padding: 18px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      font-weight: 850;
+    }
+
+    .mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--lh-radius-sm);
+      background: var(--lh-signal);
+      color: var(--lh-signal-fg);
+      font-weight: 900;
+    }
+
+    .nav-demo {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: var(--lh-radius-sm);
+      padding: 10px 12px;
+      color: color-mix(in srgb, var(--lh-chalk) 72%, transparent);
+      font-size: 14px;
+    }
+
+    .nav-item.active {
+      background: var(--lh-signal-tint);
+      color: var(--lh-chalk);
+      box-shadow: inset 3px 0 0 var(--lh-signal);
+    }
+
+    .product-demo {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-surface);
+      box-shadow: var(--lh-shadow);
+      padding: 22px;
+    }
+
+    .panel-header {
+      display: flex;
+      gap: 16px;
+      align-items: start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .panel-header p {
+      margin-bottom: 0;
+      color: var(--lh-muted);
+      font-size: 14px;
+    }
+
+    .button-row,
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: var(--lh-radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .btn.primary {
+      background: var(--lh-coast);
+      color: var(--lh-chalk);
+    }
+
+    .btn.signal {
+      background: var(--lh-signal);
+      color: var(--lh-signal-fg);
+    }
+
+    .btn.secondary {
+      border-color: color-mix(in srgb, var(--lh-coast) 30%, transparent);
+      background: var(--lh-primary-tint);
+      color: var(--lh-coast-deep);
+    }
+
+    .btn.ghost {
+      border-color: var(--lh-border);
+      background: transparent;
+      color: var(--lh-ink-soft);
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 820;
+    }
+
+    .badge.info {
+      background: color-mix(in srgb, var(--lh-info) 14%, transparent);
+      color: var(--lh-info-fg);
+    }
+
+    .badge.success {
+      background: color-mix(in srgb, var(--lh-success) 14%, transparent);
+      color: var(--lh-success-fg);
+    }
+
+    .badge.warning {
+      background: color-mix(in srgb, var(--lh-warning) 14%, transparent);
+      color: var(--lh-warning-fg);
+    }
+
+    .badge.danger {
+      background: color-mix(in srgb, var(--lh-danger) 14%, transparent);
+      color: var(--lh-danger-fg);
+    }
+
+    .signal-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .signal {
+      border-radius: var(--lh-radius-md);
+      padding: 16px;
+      background: var(--lh-fog);
+      border-left: 5px solid var(--signal);
+    }
+
+    .signal strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .signal span {
+      color: var(--lh-muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: var(--lh-radius-md);
+      font-size: 13px;
+    }
+
+    .table th,
+    .table td {
+      border-bottom: 1px solid var(--lh-border-soft);
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .table th {
+      color: var(--lh-coast-deep);
+      font-size: 12px;
+      font-weight: 850;
+      background: var(--lh-primary-tint);
+    }
+
+    .table td {
+      color: var(--lh-ink-soft);
+    }
+
+    .sample-board {
+      display: grid;
+      gap: 18px;
+    }
+
+    .sample-shell {
+      overflow: hidden;
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-surface);
+      box-shadow: var(--lh-shadow);
+      display: grid;
+      grid-template-columns: 224px minmax(0, 1fr);
+    }
+
+    .sample-nav-panel {
+      min-height: 420px;
+      background: var(--lh-ink);
+      color: var(--lh-chalk);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .sample-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+    }
+
+    .sample-logo-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--lh-radius-sm);
+      background: var(--lh-signal);
+      color: var(--lh-signal-fg);
+    }
+
+    .sample-nav-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sample-nav-link {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: var(--lh-radius-sm);
+      padding: 10px 12px;
+      color: color-mix(in srgb, var(--lh-chalk) 70%, transparent);
+      font-size: 13px;
+    }
+
+    .sample-nav-link.active {
+      background: color-mix(in srgb, var(--lh-signal) 16%, transparent);
+      color: var(--lh-chalk);
+      box-shadow: inset 3px 0 0 var(--lh-signal);
+    }
+
+    .sample-main {
+      min-width: 0;
+      display: grid;
+      gap: 18px;
+      padding: 18px;
+      background:
+        linear-gradient(135deg, var(--lh-primary-tint), transparent 42%),
+        var(--lh-paper);
+    }
+
+    .sample-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--lh-border-soft);
+      padding-bottom: 14px;
+    }
+
+    .sample-search {
+      min-width: min(100%, 280px);
+      border: 1px solid var(--lh-border-soft);
+      border-radius: 999px;
+      background: var(--lh-chalk);
+      color: var(--lh-muted);
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .sample-identity {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--lh-border-soft);
+      border-radius: 999px;
+      background: var(--lh-surface);
+      color: var(--lh-ink-soft);
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .sample-identity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--lh-success);
+    }
+
+    .sample-page-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 0.8fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .sample-page-head h3 {
+      margin: 0 0 8px;
+      font-size: 48px;
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .sample-page-head p {
+      margin: 0;
+      color: var(--lh-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .sample-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .sample-chip {
+      border: 1px solid color-mix(in srgb, var(--lh-coast) 24%, transparent);
+      border-radius: 999px;
+      background: var(--lh-primary-tint);
+      color: var(--lh-coast-deep);
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .sample-value-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .sample-value {
+      min-height: 126px;
+      border: 1px solid var(--lh-border-soft);
+      border-radius: var(--lh-radius-md);
+      background: var(--lh-chalk);
+      padding: 14px;
+    }
+
+    .sample-value strong {
+      display: block;
+      color: var(--lh-coast-deep);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .sample-value span {
+      display: block;
+      margin-top: 10px;
+      color: var(--lh-muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .sample-component-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .sample-unit {
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-surface);
+      box-shadow: var(--lh-shadow);
+      padding: 20px;
+    }
+
+    .sample-unit-header {
+      display: flex;
+      gap: 12px;
+      align-items: start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .sample-unit-header h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .sample-unit-header p {
+      margin: 6px 0 0;
+      color: var(--lh-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .sample-kicker {
+      color: var(--lh-coast-deep);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .sample-case-title {
+      color: var(--lh-ink);
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    .sample-decision-list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .sample-decision-list li {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      color: var(--lh-ink-soft);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .sample-number {
+      border-radius: 999px;
+      background: var(--lh-signal-tint);
+      color: var(--lh-signal-deep);
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .sample-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sample-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .sample-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .sample-field span {
+      color: var(--lh-muted);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .sample-input,
+    .sample-textarea {
+      border: 1px solid var(--lh-border-soft);
+      border-radius: var(--lh-radius-md);
+      background: var(--lh-fog);
+      color: var(--lh-ink-soft);
+      padding: 11px 12px;
+      font-size: 13px;
+    }
+
+    .sample-textarea {
+      min-height: 74px;
+      line-height: 1.6;
+    }
+
+    .sample-review {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .sample-review-copy {
+      border: 1px solid var(--lh-border-soft);
+      border-radius: var(--lh-radius-md);
+      background: var(--lh-fog);
+      padding: 14px;
+    }
+
+    .sample-review-copy strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--lh-ink);
+    }
+
+    .sample-review-copy p {
+      margin: 0;
+      color: var(--lh-muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .sample-action-stack {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .sample-chat {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-message {
+      max-width: 86%;
+      border-radius: var(--lh-radius-md);
+      padding: 13px 14px;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .sample-message.user {
+      justify-self: end;
+      background: color-mix(in srgb, var(--lh-ink) 8%, transparent);
+      color: var(--lh-ink);
+    }
+
+    .sample-message.assistant {
+      border: 1px solid color-mix(in srgb, var(--lh-signal) 24%, transparent);
+      background: var(--lh-signal-tint);
+      color: var(--lh-ink-soft);
+    }
+
+    .sample-message.assistant strong {
+      color: var(--lh-ink);
+    }
+
+    .sample-prompt-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .sample-prompt {
+      border: 1px solid var(--lh-border-soft);
+      border-radius: 999px;
+      background: var(--lh-chalk);
+      color: var(--lh-muted);
+      padding: 11px 14px;
+      font-size: 13px;
+    }
+
+    .sample-rubric {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sample-rubric-item {
+      border: 1px solid var(--lh-border-soft);
+      border-radius: var(--lh-radius-md);
+      background: var(--lh-fog);
+      padding: 14px;
+    }
+
+    .sample-rubric-item strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--lh-coast-deep);
+      font-size: 14px;
+    }
+
+    .sample-rubric-item span {
+      color: var(--lh-muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .token-code {
+      overflow-x: auto;
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-code-bg);
+      color: var(--lh-code-fg);
+      padding: 22px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      white-space: pre;
+    }
+
+    .do-dont {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .guideline {
+      border: 1px solid var(--lh-border);
+      border-radius: var(--lh-radius-lg);
+      background: var(--lh-surface);
+      padding: 22px;
+    }
+
+    .guideline h3 {
+      color: var(--guideline);
+    }
+
+    .guideline ul {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0 0;
+      padding-left: 20px;
+      color: var(--lh-ink-soft);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .footer {
+      padding: 34px 0 0;
+      color: var(--lh-muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 920px) {
+      .theme-switcher-inner {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .theme-options {
+        justify-content: flex-start;
+      }
+
+      .hero-inner,
+      .section-head,
+      .usage-layout,
+      .sample-shell,
+      .sample-page-head,
+      .sample-review {
+        grid-template-columns: 1fr;
+      }
+
+      .principles,
+      .palette-grid,
+      .sample-value-grid,
+      .sample-component-grid,
+      .sample-rubric {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .matrix,
+      .signal-strip,
+      .do-dont {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .hero-inner,
+      .theme-switcher-inner,
+      main {
+        width: min(100% - 28px, var(--lh-max));
+      }
+
+      .hero-inner {
+        padding: 42px 0 46px;
+      }
+
+      h1 {
+        font-size: 44px;
+      }
+
+      h2 {
+        font-size: 30px;
+      }
+
+      .lead {
+        font-size: 18px;
+      }
+
+      .principles,
+      .palette-grid,
+      .sample-value-grid,
+      .sample-component-grid,
+      .sample-form-grid,
+      .sample-rubric {
+        grid-template-columns: 1fr;
+      }
+
+      .sample-nav-panel {
+        min-height: auto;
+      }
+
+      .sample-prompt-row {
+        grid-template-columns: 1fr;
+      }
+
+      .sample-page-head h3 {
+        font-size: 34px;
+      }
+
+      .scale-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--lh-border-soft);
+      }
+    }
+  </style>
+</head>
+<body data-theme="harbor-signal">
+  <div class="page">
+    <div class="theme-switcher">
+      <div class="theme-switcher-inner">
+        <div class="theme-summary">
+          <span class="theme-kicker">Palette compare</span>
+          <strong data-theme-title>方案 A · Harbor Signal</strong>
+          <p data-theme-note>B 组的同系变体，整体更清亮、更鲜明一点。</p>
+        </div>
+        <div class="theme-options" aria-label="配色方案切换">
+          <button class="theme-button" type="button" data-theme-choice="harbor-signal" aria-pressed="true">
+            <span class="theme-dot" style="--dot-primary:#176e8b;--dot-signal:#28b8c7;--dot-paper:#f2f8f8"></span>
+            A Signal
+          </button>
+          <button class="theme-button" type="button" data-theme-choice="harbor" aria-pressed="false">
+            <span class="theme-dot" style="--dot-primary:#1f5d7a;--dot-signal:#3fa7b6;--dot-paper:#f4f7f6"></span>
+            B Harbor
+          </button>
+          <button class="theme-button" type="button" data-theme-choice="stone-standard" aria-pressed="false">
+            <span class="theme-dot" style="--dot-primary:#4e6870;--dot-signal:#8ea59e;--dot-paper:#f5f6f1"></span>
+            C Stone
+          </button>
+          <button class="theme-button" type="button" data-theme-choice="paper-ledger" aria-pressed="false">
+            <span class="theme-dot" style="--dot-primary:#756a5e;--dot-signal:#b88a5a;--dot-paper:#f8f4ee"></span>
+            D Paper
+          </button>
+          <a class="theme-button" href="./lighthouse-ui-kit.html">
+            UI Kit
+          </a>
+        </div>
+      </div>
+    </div>
+    <header class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">Lighthouse color system v0.1</p>
+          <h1>从灯笼的暖光，转向灯塔的信号系统。</h1>
+          <p class="lead">Lighthouse 的视觉底层不再以米黄、固定暖色和纸张感为主。新的色彩系统要更清晰、更稳定、更有导航感，同时允许每套方案拥有不同光质。</p>
+          <nav class="tabs" aria-label="页面导航">
+            <a class="tab primary" href="#principles">色彩原则</a>
+            <a class="tab" href="#palette">核心色板</a>
+            <a class="tab" href="#semantics">语义与状态</a>
+            <a class="tab" href="#preview">产品预览</a>
+            <a class="tab" href="#samples">界面样例</a>
+            <a class="tab" href="#tokens">Token 草案</a>
+          </nav>
+        </div>
+        <aside class="hero-note" aria-label="设计判断">
+          <p class="eyebrow">Design judgment</p>
+          <p>Lantern 是近身照明，适合柔和、暖、手持感。Lighthouse 是远距导航，适合高对比、清晰边界、稳定方向和少量强信号色。</p>
+          <ul class="rule-list">
+            <li>大面积背景从米黄改为雾白和浅石灰，不让页面发旧。</li>
+            <li>信号色不固定为琥珀；它可以是暖光、冷光或金属标记。</li>
+            <li>主色改为每套方案各自的导航色，承载秩序、信任和系统感。</li>
+          </ul>
+        </aside>
+      </div>
+    </header>
+
+    <main>
+      <section class="section" id="principles">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 Principles</p>
+            <h2>色彩不是装饰，而是导航。</h2>
+          </div>
+          <p>这套颜色要服务三件事：让一线员工看得清，让管理者判断得快，让平台从“阅读材料”转向“服务文化操作台”。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <strong>信号稀缺</strong>
+            <span>Signal Light 只给当前状态、关键行动和需要注意的判断点，不再铺满页面。</span>
+          </div>
+          <div class="principle">
+            <strong>背景退后</strong>
+            <span>背景用雾白、石灰和纸白，不抢内容，让知识和操作成为第一视觉层级。</span>
+          </div>
+          <div class="principle">
+            <strong>边界明确</strong>
+            <span>减少半透明和 blur，容器边界更实，适合工作场景中的长期阅读。</span>
+          </div>
+          <div class="principle">
+            <strong>温度保留</strong>
+            <span>保留少量暖色和柔和中性色，避免系统变成冷冰冰的后台。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="palette">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 Core palette</p>
+            <h2>核心色板：导航、雾面背景、信号和深墨。</h2>
+          </div>
+          <p>主色不再由暖色承担，而是由每套方案的主导航色负责系统秩序；Signal Light 退到强调层，只处理定位、提醒和关键行动。</p>
+        </div>
+        <div class="palette-grid">
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-ink)"></div>
+            <div class="swatch-body">
+              <strong>Deep Ink</strong>
+              <code data-token="ink">#0F2D44</code>
+              <p>主要文字、深色导航、强对比背景。比纯黑更柔和，但足够稳。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-paper)"></div>
+            <div class="swatch-body">
+              <strong>Fog Paper</strong>
+              <code data-token="paper">#F2F8F8</code>
+              <p>主背景。保留一点暖度，但比旧米黄色更轻、更干净。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-coast)"></div>
+            <div class="swatch-body">
+              <strong>Primary Navigation</strong>
+              <code data-token="coast">#176E8B</code>
+              <p>新的主导航色。用于导航、主要按钮、选中状态和信息结构。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-signal)"></div>
+            <div class="swatch-body">
+              <strong>Signal Light</strong>
+              <code data-token="signal">#28B8C7</code>
+              <p>灯塔信号色。不限定为琥珀，只给高价值提醒、核心 CTA 和当前定位。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-horizon)"></div>
+            <div class="swatch-body">
+              <strong>Evidence / Info</strong>
+              <code data-token="horizon">#3E89A8</code>
+              <p>信息、解释、搜索、Hermit 引用依据。避免科技蓝的廉价感。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-tide)"></div>
+            <div class="swatch-body">
+              <strong>Practice / Success</strong>
+              <code data-token="tide">#5D9F86</code>
+              <p>通过、完成、可复用经验。适合服务文化中的正向反馈。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-coral)"></div>
+            <div class="swatch-body">
+              <strong>Risk / Boundary</strong>
+              <code data-token="coral">#C65E52</code>
+              <p>驳回、风险、禁止行为。比鲜红更克制，适合企业内部语境。</p>
+            </div>
+          </article>
+          <article class="swatch">
+            <div class="color-block" style="--swatch:var(--lh-line)"></div>
+            <div class="swatch-body">
+              <strong>Stone Line</strong>
+              <code data-token="line">#BFD8DE</code>
+              <p>边框和分隔线。比白色边框更清楚，也比灰色更贴合品牌。</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">03 Neutral scale</p>
+            <h2>中性色：不再发灰，而是带轻微品牌温度。</h2>
+          </div>
+          <p>旧界面的问题不是“颜色少”，而是大量低透明文字叠在浅米色背景上，造成阅读发虚。新系统直接定义清晰层级，少依赖透明度。</p>
+        </div>
+        <div class="scale">
+          <div class="scale-row">
+            <strong>Ink 100</strong>
+            <div class="bar" style="--bar:var(--lh-ink)"></div>
+            <code data-token="ink">#0F2D44</code>
+          </div>
+          <div class="scale-row">
+            <strong>Ink 80</strong>
+            <div class="bar" style="--bar:var(--lh-ink-soft)"></div>
+            <code data-token="inkSoft">#28516A</code>
+          </div>
+          <div class="scale-row">
+            <strong>Ink 60</strong>
+            <div class="bar" style="--bar:var(--lh-muted)"></div>
+            <code data-token="muted">#5F7B8B</code>
+          </div>
+          <div class="scale-row">
+            <strong>Ink 45</strong>
+            <div class="bar" style="--bar:var(--lh-faint)"></div>
+            <code data-token="faint">#8DA4AD</code>
+          </div>
+          <div class="scale-row">
+            <strong>Fog 20</strong>
+            <div class="bar" style="--bar:var(--lh-fog)"></div>
+            <code data-token="fog">#DDEFF1</code>
+          </div>
+          <div class="scale-row">
+            <strong>Paper 10</strong>
+            <div class="bar" style="--bar:var(--lh-paper)"></div>
+            <code data-token="paper">#F2F8F8</code>
+          </div>
+          <div class="scale-row">
+            <strong>Chalk 0</strong>
+            <div class="bar" style="--bar:var(--lh-chalk)"></div>
+            <code data-token="chalk">#FEFFFB</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="semantics">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">04 Contrast pairs</p>
+            <h2>可读性组合先于审美组合。</h2>
+          </div>
+          <p>工作场景中的正文、说明、表格和审核状态必须清楚。低对比可以用于禁用、辅助和装饰，但不再承担正文阅读。</p>
+        </div>
+        <div class="matrix">
+          <div class="pair" style="--pair-bg:var(--lh-chalk);--pair-fg:var(--lh-ink)">
+            <strong>Ink on Chalk</strong>
+            <span>主要正文、标题、表格内容。默认阅读组合。</span>
+          </div>
+          <div class="pair" style="--pair-bg:var(--lh-ink);--pair-fg:var(--lh-chalk)">
+            <strong>Chalk on Ink</strong>
+            <span>侧边导航、重要容器、聚焦场景。高稳定感。</span>
+          </div>
+          <div class="pair" style="--pair-bg:var(--lh-coast);--pair-fg:var(--lh-chalk)">
+            <strong>Chalk on Coast</strong>
+            <span>主要按钮、激活导航、关键系统动作。</span>
+          </div>
+          <div class="pair" style="--pair-bg:var(--lh-signal);--pair-fg:var(--lh-signal-fg)">
+            <strong>Text on Signal</strong>
+            <span>信号按钮和短标签。不同方案可以使用不同光质，避免长段正文使用。</span>
+          </div>
+          <div class="pair" style="--pair-bg:var(--lh-fog);--pair-fg:var(--lh-ink-soft)">
+            <strong>Ink Soft on Fog</strong>
+            <span>说明性内容、空状态、次级提示。</span>
+          </div>
+          <div class="pair" style="--pair-bg:var(--lh-coral);--pair-fg:var(--lh-chalk)">
+            <strong>Chalk on Coral</strong>
+            <span>风险和禁止提示。只在需要强提醒时使用。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="preview">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">05 Product preview</p>
+            <h2>套入真实模块后的样子。</h2>
+          </div>
+          <p>下面不是最终 UI，只是用新色彩系统演示 Lighthouse 应该呈现的稳定感、导航感和状态清晰度。</p>
+        </div>
+
+        <div class="usage-layout">
+          <aside class="sidebar-demo">
+            <div class="brand-mark">
+              <div class="mark">L</div>
+              <span>Lighthouse</span>
+            </div>
+            <div class="nav-demo">
+              <div class="nav-item active"><span>本心 Heart</span><span>当前</span></div>
+              <div class="nav-item"><span>镜鉴 Mirror</span><span>案例</span></div>
+              <div class="nav-item"><span>笃行 Action</span><span>实践</span></div>
+              <div class="nav-item"><span>共创 Workshop</span><span>指南</span></div>
+              <div class="nav-item"><span>路引 Hermit</span><span>问答</span></div>
+            </div>
+          </aside>
+
+          <div class="product-demo">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Workshop 审核台</h3>
+                  <p>颜色用于区分状态，而不是装饰页面。</p>
+                </div>
+                <div class="button-row">
+                  <button class="btn secondary">查看来源</button>
+                  <button class="btn primary">进入审核</button>
+                  <button class="btn signal">发布指南</button>
+                </div>
+              </div>
+              <div class="badge-row">
+                <span class="badge info">AI 初审中</span>
+                <span class="badge success">可发布</span>
+                <span class="badge warning">需补充场景</span>
+                <span class="badge danger">禁止行为冲突</span>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="signal-strip">
+                <div class="signal" style="--signal:var(--lh-coast)">
+                  <strong>导航色</strong>
+                  <span>用于当前路径、主按钮、模块入口和信息结构。</span>
+                </div>
+                <div class="signal" style="--signal:var(--lh-signal)">
+                  <strong>信号色</strong>
+                  <span>用于关键行动、灯塔定位和需要立即注意的位置。</span>
+                </div>
+                <div class="signal" style="--signal:var(--lh-coral)">
+                  <strong>风险色</strong>
+                  <span>用于驳回、冲突、禁止行为，不和普通提示混用。</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Hermit 回答依据</h3>
+                  <p>Hermit 的信息层级适合用信息色和主导航色区分。</p>
+                </div>
+                <button class="btn ghost">保存为指南线索</button>
+              </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>段落</th>
+                    <th>色彩角色</th>
+                    <th>用途</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>直接回答</td>
+                    <td>Deep Ink</td>
+                    <td>最高可读性，承担主要判断。</td>
+                  </tr>
+                  <tr>
+                    <td>理念依据</td>
+                    <td>Primary Navigation</td>
+                    <td>标记系统性解释和导航。</td>
+                  </tr>
+                  <tr>
+                    <td>相关案例</td>
+                    <td>Evidence / Info</td>
+                    <td>标记引用、证据和延伸阅读。</td>
+                  </tr>
+                  <tr>
+                    <td>下一步行动</td>
+                    <td>Signal Light</td>
+                    <td>只用于需要推进的关键动作。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="samples">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 Project samples</p>
+            <h2>把配色放进真实界面样例里比较。</h2>
+          </div>
+          <p>这一段把当前项目里的导航、Heart、Action、Workshop、Hermit 抽成同一组样例。切换 A/B/C/D 时，比较的不只是色板，而是这些颜色能否支撑真实工作界面的阅读、操作和状态判断。</p>
+        </div>
+
+        <div class="sample-board">
+          <section class="sample-shell" aria-label="Lighthouse app shell sample">
+            <aside class="sample-nav-panel">
+              <div class="sample-logo">
+                <div class="sample-logo-mark">L</div>
+                <span>Lighthouse</span>
+              </div>
+              <div class="sample-nav-list">
+                <div class="sample-nav-link"><span>本心 Heart</span><span>价值</span></div>
+                <div class="sample-nav-link"><span>镜鉴 Mirror</span><span>案例</span></div>
+                <div class="sample-nav-link"><span>笃行 Action</span><span>实践</span></div>
+                <div class="sample-nav-link active"><span>共创 Workshop</span><span>当前</span></div>
+                <div class="sample-nav-link"><span>路引 Hermit</span><span>问答</span></div>
+              </div>
+            </aside>
+
+            <div class="sample-main">
+              <div class="sample-topbar">
+                <div class="sample-search">搜索页面（如：镜鉴、共创、路引）</div>
+                <div class="sample-identity">
+                  <span class="sample-identity-dot"></span>
+                  品牌方最高管理员
+                </div>
+              </div>
+
+              <div class="sample-page-head">
+                <div>
+                  <p class="sample-kicker">Heart / Workshop entry</p>
+                  <h3>把原则写成一线可执行的动作。</h3>
+                  <p>当前项目的核心路径不是宣传页，而是把价值、案例、实践、共创和提问组织成可长期使用的服务文化工作台。</p>
+                  <div class="sample-chip-row">
+                    <span class="sample-chip">长期开放共创</span>
+                    <span class="sample-chip">AI 初审</span>
+                    <span class="sample-chip">审核发布</span>
+                    <span class="sample-chip">执行指南</span>
+                  </div>
+                </div>
+                <div class="sample-value-grid">
+                  <div class="sample-value">
+                    <strong>真</strong>
+                    <span>尊重事实、规律和真实处境。</span>
+                  </div>
+                  <div class="sample-value">
+                    <strong>善</strong>
+                    <span>在规则、成本和效率之间选择更有益于人的做法。</span>
+                  </div>
+                  <div class="sample-value">
+                    <strong>美</strong>
+                    <span>让服务变得清楚、体面、有秩序。</span>
+                  </div>
+                  <div class="sample-value">
+                    <strong>爱</strong>
+                    <span>看见人的处境，而不只看见流程和指标。</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="sample-component-grid">
+            <article class="sample-unit">
+              <div class="sample-unit-header">
+                <div>
+                  <p class="sample-kicker">Action case card</p>
+                  <h3>内部实践案例</h3>
+                  <p>对应当前 Action 页面里的案例卡与 Decision Nodes。</p>
+                </div>
+                <span class="badge info">案例复盘</span>
+              </div>
+              <div class="sample-case-title">代用车政策演变中的客户价值权衡</div>
+              <ol class="sample-decision-list">
+                <li><span class="sample-number">01</span><span>客户体验是否被守住，而不是只看政策指标。</span></li>
+                <li><span class="sample-number">02</span><span>门店是否具备执行条件，避免把压力转嫁给一线。</span></li>
+                <li><span class="sample-number">03</span><span>风险控制是否清楚，保留后续追溯和复盘依据。</span></li>
+              </ol>
+            </article>
+
+            <article class="sample-unit">
+              <div class="sample-unit-header">
+                <div>
+                  <p class="sample-kicker">Workshop submit</p>
+                  <h3>提交 Do &amp; Don&apos;t</h3>
+                  <p>对应当前 Workshop 的提交区和初审规则。</p>
+                </div>
+                <span class="badge success">可进入初审</span>
+              </div>
+              <div class="sample-form-grid">
+                <div class="sample-field">
+                  <span>适用岗位</span>
+                  <div class="sample-input">服务顾问</div>
+                </div>
+                <div class="sample-field">
+                  <span>服务场景</span>
+                  <div class="sample-input">客户等待时间超预期</div>
+                </div>
+                <div class="sample-field full">
+                  <span>Do：应该做什么</span>
+                  <div class="sample-textarea">主动说明进度、原因和下一步安排，先让客户知道自己没有被忽略。</div>
+                </div>
+                <div class="sample-field full">
+                  <span>Don&apos;t：不要做什么</span>
+                  <div class="sample-textarea">不要只说“快好了”，也不要把系统或同事作为唯一解释。</div>
+                </div>
+              </div>
+            </article>
+
+            <article class="sample-unit">
+              <div class="sample-unit-header">
+                <div>
+                  <p class="sample-kicker">Hermit answer</p>
+                  <h3>路引问答</h3>
+                  <p>对应 Hermit 的欢迎态、建议问题和回答气泡。</p>
+                </div>
+                <span class="badge warning">需辨析</span>
+              </div>
+              <div class="sample-chat">
+                <div class="sample-message user">客户利益和员工承压发生冲突时，应该怎么判断？</div>
+                <div class="sample-message assistant">
+                  <strong>先回到事实与边界。</strong><br>
+                  判断时不要只问“谁更委屈”，而要看客户安全、承诺范围、员工承压来源和组织是否提供了可执行支持。
+                </div>
+                <div class="sample-prompt-row">
+                  <div class="sample-prompt">继续追问：善和爱在这个场景里怎么区分？</div>
+                  <button class="btn signal">发送</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="sample-unit">
+              <div class="sample-unit-header">
+                <div>
+                  <p class="sample-kicker">Admin review</p>
+                  <h3>Workshop 审核队列</h3>
+                  <p>对应品牌方最高管理员的编辑、发布、退回流程。</p>
+                </div>
+                <span class="badge danger">待决策</span>
+              </div>
+              <div class="sample-review">
+                <div class="sample-review-copy">
+                  <strong>接待时先确认客户真实诉求</strong>
+                  <p>AI 初审通过。管理员需要检查动作是否具体、是否与已发布指南重复，以及退回说明是否足够清楚。</p>
+                </div>
+                <div class="sample-action-stack">
+                  <button class="btn primary">编辑后发布</button>
+                  <button class="btn ghost">退回修改</button>
+                  <span class="badge success">更新贡献榜</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="sample-rubric">
+            <div class="sample-rubric-item">
+              <strong>导航清晰度</strong>
+              <span>侧边栏、当前项、主操作能否一眼分清。</span>
+            </div>
+            <div class="sample-rubric-item">
+              <strong>阅读密度</strong>
+              <span>长段中文、表单说明和案例摘要是否发虚。</span>
+            </div>
+            <div class="sample-rubric-item">
+              <strong>动作优先级</strong>
+              <span>发布、提交、追问等关键按钮是否足够明确。</span>
+            </div>
+            <div class="sample-rubric-item">
+              <strong>状态区分</strong>
+              <span>初审、通过、退回、待决策是否不只靠颜色猜。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">07 Usage rules</p>
+            <h2>使用规则：少量颜色，明确职责。</h2>
+          </div>
+          <p>真正的变化不是“从黄色换成蓝绿色”，而是让每个颜色在产品中有固定职责。</p>
+        </div>
+        <div class="do-dont">
+          <article class="guideline" style="--guideline:var(--lh-success)">
+            <h3>Do</h3>
+            <ul>
+              <li>主导航和主要行动使用 Primary Navigation。</li>
+              <li>Signal Light 只用于当前定位、关键 CTA 和高价值提醒。</li>
+              <li>正文优先使用 Deep Ink 或 Ink Soft，避免透明度正文。</li>
+              <li>状态色必须和文字、图标、标签一起使用，不只依赖颜色。</li>
+            </ul>
+          </article>
+          <article class="guideline" style="--guideline:var(--lh-danger)">
+            <h3>Don't</h3>
+            <ul>
+              <li>不要把信号色大面积铺开，否则会重新变成单一色调。</li>
+              <li>不要用低透明灰字承担正文阅读。</li>
+              <li>不要用半透明白卡和 blur 承载核心工作区。</li>
+              <li>不要把所有模块都染成同一种主色。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="tokens">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">08 CSS token draft</p>
+            <h2>后续落到 Tailwind 前，先稳定 token。</h2>
+          </div>
+          <p>这份 token 是 v0.1 草案。下一步如果认可方向，可以迁移到 `src/app/globals.css`，再逐页替换旧的 `paper / ink / amber` 逻辑，并把强调色改成开放的 signal 语义。</p>
+        </div>
+        <pre class="token-code" id="token-code">:root {
+  --lh-ink: #0f2d44;
+  --lh-ink-soft: #28516a;
+  --lh-muted: #5f7b8b;
+  --lh-paper: #f2f8f8;
+  --lh-chalk: #fefffb;
+  --lh-fog: #ddeff1;
+  --lh-line: #bfd8de;
+  --lh-coast: #176e8b;
+  --lh-coast-deep: #0f5268;
+  --lh-horizon: #3e89a8;
+  --lh-tide: #5d9f86;
+  --lh-signal: #28b8c7;
+  --lh-signal-deep: #137b89;
+  --lh-coral: #c65e52;
+  --lh-success: #2d8560;
+  --lh-warning: #a86420;
+  --lh-danger: #aa443f;
+  --lh-info: #3e89a8;
+}</pre>
+      </section>
+
+      <footer class="footer">
+        <p>Prepared for Lighthouse visual redesign. Scope: color foundation only. Typography, spacing, component geometry and full UI migration should be defined in later passes.</p>
+      </footer>
+    </main>
+  </div>
+  <script>
+    const lighthouseThemes = {
+      "harbor-signal": {
+        title: "方案 A · Harbor Signal",
+        note: "以 B 组为基底，整体更清亮、更鲜明一点，适合希望界面更有识别度的方向。",
+        tokens: {
+          ink: "#0F2D44",
+          inkSoft: "#28516A",
+          muted: "#5F7B8B",
+          faint: "#8DA4AD",
+          paper: "#F2F8F8",
+          chalk: "#FEFFFB",
+          fog: "#DDEFF1",
+          line: "#BFD8DE",
+          coast: "#176E8B",
+          coastDeep: "#0F5268",
+          horizon: "#3E89A8",
+          tide: "#5D9F86",
+          signal: "#28B8C7",
+          signalDeep: "#137B89",
+          coral: "#C65E52",
+          success: "#2D8560",
+          warning: "#A86420",
+          danger: "#AA443F",
+          info: "#3E89A8"
+        }
+      },
+      harbor: {
+        title: "方案 B · Harbor Authority",
+        note: "更企业、更专业、更像运营系统，信号色改为水蓝冷光。",
+        tokens: {
+          ink: "#102A43",
+          inkSoft: "#31485C",
+          muted: "#667887",
+          faint: "#93A0A9",
+          paper: "#F4F7F6",
+          chalk: "#FCFFFD",
+          fog: "#E5EDF0",
+          line: "#CBD8DC",
+          coast: "#1F5D7A",
+          coastDeep: "#123D54",
+          horizon: "#4B7893",
+          tide: "#6F947C",
+          signal: "#3FA7B6",
+          signalDeep: "#1D6874",
+          coral: "#BD5B4E",
+          success: "#2F7454",
+          warning: "#9B5B1D",
+          danger: "#A9443F",
+          info: "#4B7893"
+        }
+      },
+      "stone-standard": {
+        title: "方案 C · Stone Standard",
+        note: "更朴素、更企业化的浅灰蓝方案，去掉时尚感，保留稳定的制度和阅读秩序。",
+        tokens: {
+          ink: "#1F2B31",
+          inkSoft: "#435158",
+          muted: "#6C7A80",
+          faint: "#9AA5A8",
+          paper: "#F5F6F1",
+          chalk: "#FFFDF8",
+          fog: "#E9EEEA",
+          line: "#D3D8D4",
+          coast: "#4E6870",
+          coastDeep: "#354B52",
+          horizon: "#6B8190",
+          tide: "#789181",
+          signal: "#8EA59E",
+          signalDeep: "#5D746D",
+          coral: "#B76A5D",
+          success: "#5D7B66",
+          warning: "#8C6B38",
+          danger: "#994A45",
+          info: "#667F8E"
+        }
+      },
+      "paper-ledger": {
+        title: "方案 D · Paper Ledger",
+        note: "更轻的纸面和档案色方案，压低紫色和橙色浓度，适合文档、审核和知识沉淀。",
+        tokens: {
+          ink: "#2C2926",
+          inkSoft: "#534D47",
+          muted: "#77716A",
+          faint: "#A39D96",
+          paper: "#F8F4EE",
+          chalk: "#FFFDF8",
+          fog: "#EEE8DF",
+          line: "#DED5CA",
+          coast: "#756A5E",
+          coastDeep: "#554B41",
+          horizon: "#747B8C",
+          tide: "#7D8C73",
+          signal: "#B88A5A",
+          signalDeep: "#7D5B39",
+          coral: "#AA655F",
+          success: "#6D805F",
+          warning: "#8F6837",
+          danger: "#8F4A46",
+          info: "#6C7586"
+        }
+      }
+    };
+
+    const tokenNames = {
+      ink: "--lh-ink",
+      inkSoft: "--lh-ink-soft",
+      muted: "--lh-muted",
+      paper: "--lh-paper",
+      chalk: "--lh-chalk",
+      fog: "--lh-fog",
+      line: "--lh-line",
+      coast: "--lh-coast",
+      coastDeep: "--lh-coast-deep",
+      horizon: "--lh-horizon",
+      tide: "--lh-tide",
+      signal: "--lh-signal",
+      signalDeep: "--lh-signal-deep",
+      coral: "--lh-coral",
+      success: "--lh-success",
+      warning: "--lh-warning",
+      danger: "--lh-danger",
+      info: "--lh-info"
+    };
+
+    const renderTokenCode = (tokens) => {
+      const lines = Object.entries(tokenNames).map(([key, cssName]) => `  ${cssName}: ${tokens[key]};`);
+      return `:root {\n${lines.join("\n")}\n}`;
+    };
+
+    const applyTheme = (themeName) => {
+      const theme = lighthouseThemes[themeName] || lighthouseThemes["harbor-signal"];
+      const activeThemeName = lighthouseThemes[themeName] ? themeName : "harbor-signal";
+      document.body.dataset.theme = activeThemeName;
+      document.querySelector("[data-theme-title]").textContent = theme.title;
+      document.querySelector("[data-theme-note]").textContent = theme.note;
+
+      document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+        const isActive = button.dataset.themeChoice === activeThemeName;
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+
+      document.querySelectorAll("[data-token]").forEach((node) => {
+        const value = theme.tokens[node.dataset.token];
+        if (value) node.textContent = value;
+      });
+
+      document.getElementById("token-code").textContent = renderTokenCode(theme.tokens);
+      localStorage.setItem("lighthouse-color-theme", activeThemeName);
+    };
+
+    document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+      button.addEventListener("click", () => applyTheme(button.dataset.themeChoice));
+    });
+
+    const requestedTheme = new URLSearchParams(window.location.search).get("theme");
+    applyTheme(requestedTheme || localStorage.getItem("lighthouse-color-theme") || "harbor-signal");
+  </script>
+</body>
+</html>

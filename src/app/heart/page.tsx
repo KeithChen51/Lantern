@@ -3,7 +3,7 @@ import Link from "next/link";
 const valueSections = [
   {
     title: "真",
-    summary: "真，是尊重事实，也尊重人的知情权。",
+    summary: "真，是尊重事实、尊重规律、尊重真实处境。",
     customer:
       "面对客户，真意味着如实说明车况、费用、进度、风险和不确定性。不夸大问题，不隐瞒失误，不用信息差诱导消费。",
     employee:
@@ -11,7 +11,7 @@ const valueSections = [
   },
   {
     title: "善",
-    summary: "善，是在商业判断中保留对人的体察。",
+    summary: "善，是在规则、成本和效率之间选择更有益于人的做法。",
     customer:
       "面对客户，善不是一味迁就，而是在灰色地带里先问一句：这样做是否真正为客户创造价值？能不能多解释一步、多帮一步，同时守住合理边界？",
     employee:
@@ -19,7 +19,7 @@ const valueSections = [
   },
   {
     title: "美",
-    summary: "美，是把服务和管理都做得有序、得体、有尊严。",
+    summary: "美，是让服务变得清楚、体面、有秩序。",
     customer:
       "面对客户，美体现在清楚的流程、整洁的环境、克制的表达和稳定的交付中。客户不需要反复解释同一个问题，也不该在混乱等待中消耗耐心。",
     employee:
@@ -27,11 +27,24 @@ const valueSections = [
   },
   {
     title: "爱",
-    summary: "爱，是把人当作目的，而不只是流程和指标里的对象。",
+    summary: "爱，是看见人的处境，而不只看见流程、指标和结果。",
     customer:
       "面对客户，爱体现在对处境的体察。遇到特殊困难、紧急场景、长期关系和安全问题时，服务不能只剩下条款和流程。",
     employee:
       "面对员工，爱体现在对安全、尊严、成长和承压状态的关心。它不等于要求员工无限付出，也不是用情怀替代管理责任。",
+  },
+];
+
+const dimensionNotes = [
+  {
+    title: "四维不是四格",
+    description:
+      "真实案例里，真、善、美、爱常常同时出现。分析时不必强行单选，而是先看它主要回答什么问题，再标注主维度与关联维度。",
+  },
+  {
+    title: "善与爱怎样区分",
+    description:
+      "善更偏向“选择”，看我们是否在规则、成本、效率之间选择了更有利于人的做法；爱更偏向“看见”，看我们是否体察到对方当下的压力、困难、尊严和安全。",
   },
 ];
 
@@ -64,7 +77,7 @@ const guideSections = [
     title: "路引",
     label: "Hermit",
     href: "/hermit",
-    description: "遇到问题时去提问：当一个场景不好判断，可以获得理念依据、相关案例和下一步建议。",
+    description: "遇到问题时去提问：把具体场景带回来，辨析主维度与关联维度，获得理念依据、相关案例和下一步建议。",
   },
 ];
 
@@ -140,6 +153,20 @@ export default function HeartPage() {
           <p className="text-sm leading-relaxed text-ink/70 md:text-base">
             它既适用于客户，也适用于员工。经销商怎样对待员工，最终会影响员工怎样对待客户。一个不真实、不善待、不体面、不关心人的内部环境，很难长期提供有温度的服务。
           </p>
+        </div>
+
+        <div className="mb-6 grid gap-4 md:grid-cols-2">
+          {dimensionNotes.map((note) => (
+            <article
+              key={note.title}
+              className="rounded-2xl border border-amber/20 bg-amber/10 p-5"
+            >
+              <h3 className="mb-3 font-noto text-lg text-ink">{note.title}</h3>
+              <p className="text-sm leading-7 text-ink/68">
+                {note.description}
+              </p>
+            </article>
+          ))}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">

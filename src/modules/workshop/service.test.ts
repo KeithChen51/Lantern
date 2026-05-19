@@ -174,6 +174,34 @@ describe("workshop service", () => {
     expect(reviewed.aiReviewResult?.passed).toBe(true);
   });
 
+  it("passes initial review when only Do is provided", async () => {
+    const service = createWorkshopService(new MemoryWorkshopRepository());
+    const draft = await service.createDraft({ ...validDraft, dontText: "" }, normalUser);
+
+    const reviewed = await service.runInitialReview((await service.submitForReview(draft.id, normalUser)).id);
+
+    expect(reviewed.status).toBe("pending_admin_review");
+    expect(reviewed.aiReviewResult?.passed).toBe(true);
+  });
+
+  it("passes initial review when only Don't is provided", async () => {
+    const service = createWorkshopService(new MemoryWorkshopRepository());
+    const draft = await service.createDraft({ ...validDraft, doText: "" }, normalUser);
+
+    const reviewed = await service.runInitialReview((await service.submitForReview(draft.id, normalUser)).id);
+
+    expect(reviewed.status).toBe("pending_admin_review");
+    expect(reviewed.aiReviewResult?.passed).toBe(true);
+  });
+
+  it("rejects drafts without either Do or Don't", async () => {
+    const service = createWorkshopService(new MemoryWorkshopRepository());
+
+    await expect(service.createDraft({ ...validDraft, doText: "", dontText: "" }, normalUser)).rejects.toMatchObject({
+      code: "validation_error",
+    });
+  });
+
   it("moves submitted content to AI rejected when it duplicates a published guide", async () => {
     const repository = new MemoryWorkshopRepository();
     const service = createWorkshopService(repository);

@@ -15,4 +15,14 @@ describe("navigation model", () => {
     expect(NAV_ITEMS.find((item) => item.label === "Heart")?.href).toBe("/");
     expect(NAV_ITEMS.find((item) => item.label === "Mirror")?.href).toBe("/mirror");
   });
+
+  it("keeps readable Chinese module names in the sidebar", () => {
+    expect(NAV_ITEMS.map((item) => item.subLabel)).toEqual([
+      "本心",
+      "镜鉴",
+      "笃行",
+      "共创",
+      "路引",
+    ]);
+  });
 });

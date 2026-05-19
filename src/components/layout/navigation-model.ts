@@ -14,6 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Hermit", subLabel: "路引", icon: "solar:magic-stick-3-bold", href: "/hermit", isDev: true },
 ];
 
-export function getVisibleNavItems() {
+export function getVisibleNavItems(role?: "normal_user" | "highest_admin" | null) {
+  void role;
   return NAV_ITEMS;
 }
