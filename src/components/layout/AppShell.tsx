@@ -49,11 +49,11 @@ export function AppShell({ children }: AppShellProps) {
 
       <main
         className={cn(
-          "min-h-screen px-4 pb-20 pt-24 transition-[padding] duration-200 ease-out md:px-8",
-          isSidebarPinned ? "md:pl-[280px]" : "md:pl-[112px]",
+          "min-h-screen px-4 pb-8 pt-24 transition-[padding] duration-200 ease-out md:px-6",
+          isSidebarPinned ? "md:pl-[272px]" : "md:pl-[104px]",
         )}
       >
-        <div className="mx-auto w-full max-w-[1220px]">{children}</div>
+        <div className="mx-auto w-full max-w-[1680px]">{children}</div>
       </main>
     </div>
   );

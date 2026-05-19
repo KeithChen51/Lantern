@@ -67,11 +67,11 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
   return (
     <header
       className={cn(
-        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 px-4 pt-3 transition-[padding] duration-200 ease-out md:px-8",
-        isSidebarPinned ? "md:pl-[280px]" : "md:pl-[112px]",
+        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 px-4 pt-3 transition-[padding] duration-200 ease-out md:px-6",
+        isSidebarPinned ? "md:pl-[272px]" : "md:pl-[104px]",
       )}
     >
-      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1220px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-line bg-panel/95 px-3 shadow-lh-sm">
+      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1680px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-line bg-panel/95 px-3 shadow-lh-sm">
         <LhIconButton
           type="button"
           label="打开导航菜单"
