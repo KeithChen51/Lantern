@@ -202,7 +202,7 @@ function StateNotice({ tone, children }: { tone: NoticeTone; children: React.Rea
   return (
     <div
       className={cn(
-        "mb-6 flex items-start gap-3 rounded-md border px-4 py-3 text-sm font-bold leading-6",
+        "mb-6 flex items-start gap-3 rounded-sm border px-4 py-3 text-sm font-bold leading-6",
         tone === "success" && "border-success/25 bg-success-soft text-success",
         tone === "danger" && "border-danger/25 bg-danger-soft text-danger",
         tone === "info" && "border-info/25 bg-info-soft text-info",
@@ -251,24 +251,24 @@ function SectionTabs({
 
 function WorkshopHero({ onCreate }: { onCreate: () => void }) {
   return (
-    <LhPanel className="mb-8 overflow-hidden">
-      <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-8">
+    <LhPanel className="mb-6 overflow-hidden">
+      <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-6">
         <div className="min-w-0">
-          <div className="mb-5 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />
               共创
             </LhChip>
-            <LhChip tone="signal">长期开放提交</LhChip>
+            <LhChip tone="neutral">长期开放提交</LhChip>
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-5xl">
+          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
             把服务经验，沉淀成可审核、可复用的岗位应做与避免。
           </h1>
-          <p className="mt-5 max-w-4xl text-base leading-8 text-ink-soft md:text-lg">
+          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
             共创不扩成论坛。它只处理三件事：一线提交具体动作，系统保留来源和状态，品牌管理员把合格内容发布为公共指南。
           </p>
         </div>
-        <div className="grid gap-3 rounded-md border border-line bg-surface-quiet p-4">
+        <div className="grid gap-3 rounded-sm border border-line bg-surface-quiet p-4">
           {[
             ["1", "提交", "角色、场景、应做、方法、避免"],
             ["2", "初审", "检查可执行性与重复内容"],
@@ -286,7 +286,7 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
           ))}
         </div>
       </div>
-      <div className="flex flex-col gap-3 border-t border-line bg-surface-quiet px-6 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+      <div className="flex flex-col gap-3 border-t border-line bg-surface-quiet px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
         <p className="text-sm font-bold text-muted">公开区、提交区、个人区固定保留；管理员只多一个审核区。</p>
         <LhButton
           type="button"
@@ -305,7 +305,7 @@ function ContributionBoard({ items }: { items: ContributionStat[] }) {
   return (
     <LhPanel className="p-5">
       <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+        <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
           <Icon icon="solar:cup-star-bold" className="h-5 w-5" />
         </span>
         <div>
@@ -362,7 +362,7 @@ function GuideCard({ guide }: { guide: PublishedGuide }) {
             ))}
             <LhStatusBadge tone="success">已发布</LhStatusBadge>
           </div>
-          <h3 className="text-2xl font-extrabold leading-snug text-ink">{guide.title}</h3>
+          <h3 className="text-xl font-extrabold leading-snug text-ink">{guide.title}</h3>
         </div>
         <span className="text-sm font-extrabold text-muted">
           {new Date(guide.publishedAt).toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
@@ -505,7 +505,7 @@ function SubmissionForm({
   onCancelEdit: () => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="rounded-md border border-line bg-surface p-5 text-ink shadow-lh-sm">
+    <form onSubmit={onSubmit} className="rounded-sm border border-line bg-surface p-5 text-ink shadow-lh-sm">
       <LhSectionHeader
         eyebrow="提交内容"
         title={editingSubmissionId ? "修改应做/避免" : "提交应做/避免"}
@@ -685,11 +685,11 @@ function PersonalSection({
     <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
       <LhPanel className="p-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+          <span className="flex h-11 w-11 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
             <Icon icon={lighthouseIcons.user} className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="text-2xl font-extrabold text-ink">我的共创</h2>
+            <h2 className="text-xl font-extrabold text-ink">我的共创</h2>
             <p className="text-sm text-muted">当前演示用户</p>
           </div>
         </div>
@@ -910,7 +910,7 @@ export function WorkshopClient() {
       )}
 
       <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="rounded-md border border-line bg-surface-quiet p-4 text-sm font-bold leading-6 text-muted">
+        <div className="rounded-sm border border-line bg-surface-quiet p-4 text-sm font-bold leading-6 text-muted">
           <Icon icon={lighthouseIcons.workshop} className="mr-2 inline h-4 w-4 text-primary" />
           当前页面通过共创接口读取指南、榜单和个人提交。
         </div>

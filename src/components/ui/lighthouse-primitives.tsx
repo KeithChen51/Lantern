@@ -9,11 +9,11 @@ type Tone = "neutral" | "primary" | "signal" | "success" | "warning" | "danger" 
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    "border-primary bg-primary text-panel shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_16px_rgba(15,82,104,0.18)] hover:bg-primary-deep",
+    "border-primary bg-primary text-panel shadow-[0_1px_2px_rgba(16,43,59,0.12),0_8px_18px_rgba(22,70,88,0.12)] hover:bg-primary-deep",
   signal:
-    "border-signal bg-signal-soft text-signal-deep shadow-lh-sm hover:border-signal-deep hover:bg-signal",
+    "border-signal/45 bg-signal-soft text-signal-deep shadow-lh-sm hover:border-signal-deep hover:bg-primary-soft",
   secondary:
-    "border-line-strong bg-panel text-primary-deep shadow-lh-sm hover:border-primary hover:bg-primary-soft",
+    "border-line-strong bg-panel text-primary-deep shadow-lh-sm hover:border-primary hover:bg-surface-quiet",
   quiet:
     "border-line bg-surface-quiet text-ink-soft hover:border-line-strong hover:bg-panel",
   ghost:
@@ -50,7 +50,7 @@ export const LhButton = React.forwardRef<HTMLButtonElement, LhButtonProps>(
     <button
       ref={ref}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-2 rounded-sm border font-bold leading-none transition-[background,border-color,box-shadow,transform,color] duration-150 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-55",
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-sm border font-bold leading-none transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -79,7 +79,7 @@ export const LhIconButton = React.forwardRef<HTMLButtonElement, LhIconButtonProp
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,box-shadow,transform,color] duration-150 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-55",
+        "inline-flex shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
         size === "sm" ? "h-9 w-9 text-sm" : "h-11 w-11 text-base",
         buttonVariants[variant],
         className,
@@ -101,7 +101,7 @@ export const LhPanel = React.forwardRef<HTMLDivElement, LhPanelProps>(
     <section
       ref={ref}
       className={cn(
-        "rounded-md border border-line bg-surface text-ink",
+        "rounded-sm border border-line bg-surface text-ink",
         elevated ? "shadow-lh-md" : "shadow-lh-sm",
         className,
       )}
@@ -115,7 +115,7 @@ export const LhCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <article
       ref={ref}
-      className={cn("rounded-md border border-line bg-panel text-ink shadow-lh-sm", className)}
+      className={cn("rounded-sm border border-line bg-panel text-ink shadow-lh-sm", className)}
       {...props}
     />
   ),
@@ -130,7 +130,7 @@ export function LhChip({ className, tone = "neutral", ...props }: LhChipProps) {
   return (
     <span
       className={cn(
-        "inline-flex min-h-7 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold leading-none",
+        "inline-flex min-h-6 items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-bold leading-none",
         toneClasses[tone],
         className,
       )}
@@ -148,7 +148,7 @@ export function LhStatusBadge({ className, tone = "neutral", withDot = true, chi
   return (
     <span
       className={cn(
-        "inline-flex min-h-8 items-center gap-2 rounded-full border px-3 py-1 text-xs font-extrabold leading-none",
+        "inline-flex min-h-7 items-center gap-2 rounded-sm border px-2.5 py-1 text-xs font-bold leading-none",
         toneClasses[tone],
         className,
       )}
@@ -242,7 +242,7 @@ export const LhSearchBox = React.forwardRef<HTMLInputElement, Omit<LhTextFieldPr
     <LhTextField
       ref={ref}
       leftIcon={<Icon icon={lighthouseIcons.search} className="h-5 w-5" />}
-      className={cn("rounded-md", className)}
+      className={cn("rounded-sm", className)}
       {...props}
     />
   ),
@@ -260,9 +260,9 @@ export function LhSectionHeader({ className, eyebrow, title, description, action
   return (
     <div className={cn("grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
       <div className="min-w-0">
-        {eyebrow && <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">{eyebrow}</p>}
-        <h2 className="text-2xl font-extrabold leading-tight text-ink md:text-3xl">{title}</h2>
-        {description && <p className="mt-3 max-w-3xl text-base leading-7 text-muted">{description}</p>}
+        {eyebrow && <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-primary-deep">{eyebrow}</p>}
+        <h2 className="text-xl font-extrabold leading-tight text-ink md:text-2xl">{title}</h2>
+        {description && <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">{description}</p>}
       </div>
       {action}
     </div>
@@ -273,7 +273,7 @@ export function LhDataTableShell({ className, ...props }: React.HTMLAttributes<H
   return (
     <div
       className={cn(
-        "overflow-x-auto rounded-md border border-line bg-panel shadow-lh-sm [&_table]:w-full [&_td]:border-t [&_td]:border-line [&_td]:px-4 [&_td]:py-3 [&_td]:text-sm [&_td]:text-ink-soft [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:uppercase [&_th]:tracking-[0.12em] [&_th]:text-muted",
+        "overflow-x-auto rounded-sm border border-line bg-panel shadow-lh-sm [&_table]:w-full [&_td]:border-t [&_td]:border-line [&_td]:px-4 [&_td]:py-3 [&_td]:text-sm [&_td]:text-ink-soft [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:uppercase [&_th]:tracking-[0.12em] [&_th]:text-muted",
         className,
       )}
       {...props}

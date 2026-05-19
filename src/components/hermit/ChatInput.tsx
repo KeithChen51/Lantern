@@ -38,7 +38,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-md border border-line-strong bg-panel p-3 shadow-lh-sm transition-[border-color,box-shadow] focus-within:border-signal focus-within:shadow-[var(--shadow-focus)]">
+    <form onSubmit={handleSubmit} className="rounded-sm border border-line-strong bg-panel p-3 shadow-lh-sm transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[var(--shadow-focus)]">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
         <label className="min-w-0">
           <span className="sr-only">向路引提问</span>
@@ -59,16 +59,16 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
           aria-label={isLoading ? "正在生成" : "发送"}
           title={isLoading ? "正在生成" : "发送"}
           className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,transform,color] duration-150",
-            "border-primary bg-primary text-panel shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_16px_rgba(15,82,104,0.18)]",
-            "hover:-translate-y-0.5 hover:bg-primary-deep disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-55",
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,color] duration-150",
+            "border-primary bg-primary text-panel shadow-[0_1px_2px_rgba(16,43,59,0.12),0_8px_18px_rgba(22,70,88,0.12)]",
+            "hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-55",
           )}
         >
           <Icon icon={isLoading ? lighthouseIcons.refresh : lighthouseIcons.send} className={cn("h-5 w-5", isLoading && "animate-spin")} />
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2 text-xs font-bold leading-5 text-muted">
-        <span className="rounded-full bg-primary-soft px-2.5 py-1 text-primary-deep">先讲场景</span>
+        <span className="rounded-sm bg-primary-soft px-2.5 py-1 text-primary-deep">先讲场景</span>
         <span>再问“该怎么判断”或“下一步怎么说”。</span>
       </div>
     </form>

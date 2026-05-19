@@ -37,25 +37,25 @@ const compareRows = [
 
 export default function MirrorPage() {
   return (
-    <div className="space-y-10 pb-16">
-      <LhPanel elevated className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_320px] md:p-8">
+    <div className="space-y-8 pb-12">
+      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_320px] md:p-6">
         <div>
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />
               镜鉴
             </LhChip>
             <LhStatusBadge tone="info">标杆知识库</LhStatusBadge>
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
+          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
             在别人的灯火里，看见服务文化可以怎样成立。
           </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-ink-soft md:text-lg">
+          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
             镜鉴不是文学化案例合集，而是外部标杆知识库。每个案例都要回答：它的做法解决了什么问题、背后的组织条件是什么、哪些部分可以转成我们自己的服务动作。
           </p>
         </div>
 
-        <aside className="rounded-md border border-line bg-surface-quiet p-5">
+        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
           <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例筛选规则</p>
           <ul className="mt-4 grid gap-3 text-sm leading-6 text-ink-soft">
             <li>先看事实与来源，不先下结论。</li>
@@ -75,11 +75,11 @@ export default function MirrorPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           {caseCards.map((card) => {
             const content = (
-              <LhCard className="grid min-h-[300px] grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-lh-md">
+              <LhCard className="grid min-h-[300px] grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow] duration-150 hover:border-line-strong hover:shadow-lh-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <LhChip tone={card.href ? "success" : "neutral"}>{card.status}</LhChip>
-                    <h2 className="mt-4 text-3xl font-extrabold leading-tight text-ink">{card.title}</h2>
+                    <h2 className="mt-4 text-2xl font-extrabold leading-tight text-ink">{card.title}</h2>
                   </div>
                   <span className="text-sm font-extrabold text-muted">{card.date}</span>
                 </div>
@@ -87,7 +87,7 @@ export default function MirrorPage() {
                   <p className="text-base leading-8 text-ink-soft">{card.description}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {card.dimensions.map((dimension) => (
-                      <LhChip key={dimension} tone="signal">
+                      <LhChip key={dimension} tone="neutral">
                         {dimension}
                       </LhChip>
                     ))}

@@ -25,7 +25,7 @@ export default function SubstituteVehiclePolicyPage() {
   const { metadata, brief, background, evidence } = actionCase;
 
   return (
-    <article className="space-y-10 pb-16">
+    <article className="space-y-8 pb-12">
       <div>
         <Link
           href="/action"
@@ -36,20 +36,20 @@ export default function SubstituteVehiclePolicyPage() {
         </Link>
       </div>
 
-      <LhPanel elevated className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_340px] md:p-8">
+      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_340px] md:p-6">
         <div>
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
               {metadata.kicker}
             </LhChip>
             <LhStatusBadge tone="warning">{metadata.status === "published" ? "已发布" : "草稿"}</LhStatusBadge>
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">{metadata.title}</h1>
-          <p className="mt-6 max-w-4xl text-base leading-8 text-ink-soft md:text-lg">{brief.oneLine}</p>
+          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">{metadata.title}</h1>
+          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">{brief.oneLine}</p>
         </div>
 
-        <aside className="rounded-md border border-line bg-surface-quiet p-5">
+        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
           <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例信息</p>
           <dl className="mt-4 grid gap-4 text-sm">
             <MetaItem label="受众" value={metadata.audience.join("、")} />
@@ -58,7 +58,7 @@ export default function SubstituteVehiclePolicyPage() {
           </dl>
           <div className="mt-5 flex flex-wrap gap-2">
             {metadata.tags.map((tag) => (
-              <LhChip key={tag} tone="signal">
+              <LhChip key={tag} tone="neutral">
                 {tag}
               </LhChip>
             ))}
@@ -192,8 +192,8 @@ export default function SubstituteVehiclePolicyPage() {
       <ContentSection eyebrow="最终做法" title="最终做法">
         <ol className="grid gap-4 md:grid-cols-2">
           {actionCase.finalPractice.map((item, index) => (
-            <li key={item} className="rounded-md border border-line bg-panel p-5 shadow-lh-sm">
-              <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-primary-soft text-sm font-extrabold text-primary-deep">
+            <li key={item} className="rounded-sm border border-line bg-panel p-5 shadow-lh-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-surface-quiet text-sm font-extrabold text-primary-deep">
                 {index + 1}
               </span>
               <p className="mt-4 text-sm leading-7 text-ink-soft">{item}</p>
@@ -216,7 +216,7 @@ export default function SubstituteVehiclePolicyPage() {
       <ContentSection eyebrow="可复用原则" title="可复用原则">
         <div className="grid gap-3">
           {actionCase.reusablePrinciples.map((principle) => (
-            <div key={principle} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-md border border-line bg-surface-quiet p-4 text-sm leading-7 text-ink-soft">
+            <div key={principle} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-sm border border-line bg-surface-quiet p-4 text-sm leading-7 text-ink-soft">
               <Icon icon={lighthouseIcons.status} className="mt-1 h-5 w-5 text-success" />
               <p>{principle}</p>
             </div>
@@ -229,7 +229,7 @@ export default function SubstituteVehiclePolicyPage() {
         title="来源材料"
         description="原始正文和访谈材料保留为维护信息，前台只呈现结构化案例。"
       >
-        <details className="rounded-md border border-dashed border-line-strong bg-surface-quiet p-5">
+        <details className="rounded-sm border border-dashed border-line-strong bg-surface-quiet p-5">
           <summary className="cursor-pointer text-sm font-extrabold text-primary-deep">查看维护字段</summary>
           <div className="mt-5 space-y-5">
             {evidence.sourceMaterials.map((source) => (
@@ -260,7 +260,7 @@ export default function SubstituteVehiclePolicyPage() {
             这个案例后续可以拆成共创里的岗位应做/避免，也可以作为路引回答代用车、等待焦虑、政策弹性问题时的引用材料。
           </p>
         </div>
-        <LhChip tone="signal">转入共创与路引</LhChip>
+        <LhChip tone="neutral">转入共创与路引</LhChip>
       </LhPanel>
     </article>
   );

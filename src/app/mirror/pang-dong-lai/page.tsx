@@ -112,19 +112,19 @@ export default function PangDongLaiPage() {
           </div>
         </aside>
 
-        <main className="min-w-0 space-y-10">
-          <LhPanel elevated className="p-6 md:p-8">
-            <div className="mb-5 flex flex-wrap items-center gap-3">
+        <main className="min-w-0 space-y-8">
+          <LhPanel elevated className="p-5 md:p-6">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
               <LhChip tone="primary">
                 <Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />
                 镜鉴案例
               </LhChip>
               <LhStatusBadge tone="success">可阅读</LhStatusBadge>
             </div>
-            <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
+            <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
               云游胖东来
             </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-ink-soft">
+            <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
               深入一家区域零售企业的商业哲学与人文关怀，观察它如何把“自由、爱、人本经营”落到组织制度和服务现场。
             </p>
             <div className="mt-6 grid gap-3 text-sm font-bold text-muted sm:grid-cols-3">
@@ -143,10 +143,10 @@ export default function PangDongLaiPage() {
                 <LhCard key={item.label} className="p-5">
                   <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted">{item.label}</p>
                   <p className="mt-3 flex items-end gap-2">
-                    <span className="text-4xl font-extrabold text-ink">{item.value}</span>
+                    <span className="text-3xl font-extrabold text-ink">{item.value}</span>
                     <span className="pb-1 text-sm font-bold text-ink-soft">{item.unit}</span>
                   </p>
-                  <LhChip tone="signal" className="mt-4">
+                  <LhChip tone="neutral" className="mt-4">
                     {item.note}
                   </LhChip>
                 </LhCard>
@@ -181,8 +181,8 @@ export default function PangDongLaiPage() {
           </ContentSection>
 
           <ContentSection id="culture" eyebrow="文化制度" title="自由与爱如何进入制度">
-            <LhPanel className="border-signal/30 bg-signal-soft p-6">
-              <blockquote className="text-lg font-bold leading-8 text-ink md:text-xl md:leading-9">
+            <LhPanel className="border-line bg-surface-quiet p-5">
+              <blockquote className="text-base font-bold leading-8 text-ink">
                 “有的人说胖东来是神话，其实就是真诚了一点、善良了一点，如果这样都被说是神话，那我们过得多悲哀啊！”
               </blockquote>
               <p className="mt-4 text-sm font-extrabold text-primary-deep">于东来</p>
@@ -226,7 +226,7 @@ export default function PangDongLaiPage() {
             </div>
           </ContentSection>
 
-          <ContentSection id="conclusion" eyebrow="Conclusion" title="镜鉴结论">
+          <ContentSection id="conclusion" eyebrow="结论" title="镜鉴结论">
             <LhPanel className="p-6">
               <p className="max-w-4xl text-lg leading-9 text-ink">
                 胖东来证明了商业成功可以建立在对人的真诚与关爱之上。但对本项目来说，更重要的是它提示我们：服务文化不是一段好听的话，而是一套能保护员工、稳定现场、兑现客户信任的组织安排。
@@ -234,7 +234,7 @@ export default function PangDongLaiPage() {
             </LhPanel>
           </ContentSection>
 
-          <footer className="rounded-md border border-line bg-surface-quiet p-5">
+          <footer className="rounded-sm border border-line bg-surface-quiet p-5">
             <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">参考来源</p>
             <ul className="mt-4 grid gap-2 text-xs leading-6 text-muted">
               {references.map((item) => (

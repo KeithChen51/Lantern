@@ -71,7 +71,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
         isSidebarPinned ? "md:pl-[272px]" : "md:pl-[104px]",
       )}
     >
-      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1680px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-line bg-panel/95 px-3 shadow-lh-sm">
+      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1680px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-sm border border-line bg-panel/95 px-3 shadow-lh-sm">
         <LhIconButton
           type="button"
           label="打开导航菜单"
@@ -118,7 +118,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
               onClick={() => setIsNotificationOpen((prev) => !prev)}
               size="sm"
             />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-panel bg-signal" />
+            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />
 
             {isNotificationOpen && (
               <div className="absolute right-0 top-12 w-[min(20rem,calc(100vw-32px))] rounded-md border border-line bg-panel p-4 text-sm text-ink-soft shadow-lh-md">

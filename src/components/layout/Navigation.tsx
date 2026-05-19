@@ -27,13 +27,13 @@ function Logo({ isExpanded }: { isExpanded: boolean }) {
     <Link
       href="/"
       className={cn(
-        "grid min-h-12 grid-cols-[44px_minmax(0,1fr)] items-center gap-3 rounded-md border border-line bg-panel p-2 text-ink shadow-lh-sm transition-colors hover:border-line-strong",
+        "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-sm border border-line bg-panel p-2 text-ink shadow-lh-sm transition-colors hover:border-line-strong",
         !isExpanded && "grid-cols-1 justify-items-center",
       )}
       aria-label="Lighthouse 首页"
     >
-      <span className="flex h-11 w-11 items-center justify-center rounded-sm border border-primary/20 bg-primary-soft text-primary-deep">
-        <Icon icon={lighthouseIcons.logo} className="h-6 w-6" />
+      <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
+        <Icon icon={lighthouseIcons.logo} className="h-5 w-5" />
       </span>
       {isExpanded && (
         <span className="min-w-0">
@@ -66,12 +66,12 @@ function NavLinks({
           "group relative grid min-h-12 items-center rounded-sm border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
-            ? "border-line-strong bg-primary-soft text-primary-deep shadow-lh-sm"
+            ? "border-primary/35 bg-surface-quiet text-primary-deep"
             : "border-transparent text-ink-soft hover:border-line hover:bg-surface-quiet hover:text-ink",
         )}
         title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
       >
-        {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-1 rounded-r-full bg-signal" />}
+        {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-primary" />}
         <Icon
           icon={item.icon}
           className={cn("h-5 w-5", isActive ? "text-primary-deep" : "text-muted group-hover:text-primary")}

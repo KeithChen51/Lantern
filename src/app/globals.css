@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --lh-ink: #0f2d44;
-  --lh-ink-soft: #28516a;
-  --lh-muted: #5f7b8b;
-  --lh-faint: #8da4ad;
-  --lh-page: #f2f8f8;
-  --lh-panel: #fefffb;
-  --lh-surface: #fbfefd;
-  --lh-surface-quiet: #f6fbf9;
-  --lh-fog: #ddeff1;
-  --lh-line: #bfd8de;
-  --lh-line-strong: #8db2bc;
-  --lh-primary: #176e8b;
-  --lh-primary-deep: #0f5268;
-  --lh-primary-soft: #d7ecef;
-  --lh-signal: #28b8c7;
-  --lh-signal-deep: #137b89;
-  --lh-signal-soft: #d8f5f7;
-  --lh-success: #2d8560;
-  --lh-success-soft: #dcf2e8;
-  --lh-warning: #a86420;
-  --lh-warning-soft: #f6eadb;
-  --lh-danger: #aa443f;
-  --lh-danger-soft: #f5dfdd;
-  --lh-info: #3e89a8;
-  --lh-info-soft: #deedf3;
+  --lh-ink: #102b3b;
+  --lh-ink-soft: #2c4f5f;
+  --lh-muted: #667c86;
+  --lh-faint: #9aabb1;
+  --lh-page: #f5f8f7;
+  --lh-panel: #ffffff;
+  --lh-surface: #fbfcfb;
+  --lh-surface-quiet: #f3f7f6;
+  --lh-fog: #e6eeee;
+  --lh-line: #d1dde0;
+  --lh-line-strong: #9fb6bd;
+  --lh-primary: #255f70;
+  --lh-primary-deep: #164658;
+  --lh-primary-soft: #e7f0f2;
+  --lh-signal: #3d94a8;
+  --lh-signal-deep: #256f82;
+  --lh-signal-soft: #e9f5f6;
+  --lh-success: #36745b;
+  --lh-success-soft: #e8f3ed;
+  --lh-warning: #9c6a34;
+  --lh-warning-soft: #f5eddf;
+  --lh-danger: #9a4d49;
+  --lh-danger-soft: #f3e6e4;
+  --lh-info: #4f7f94;
+  --lh-info-soft: #eaf1f4;
 
   --color-page: var(--lh-page);
   --color-panel: var(--lh-panel);
@@ -55,9 +55,9 @@
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
-  --shadow-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
-  --shadow-focus: 0 0 0 3px rgba(40, 184, 199, 0.24);
+  --shadow-sm: 0 1px 2px rgba(16, 43, 59, 0.055), 0 6px 14px rgba(16, 43, 59, 0.035);
+  --shadow-md: 0 1px 2px rgba(16, 43, 59, 0.07), 0 14px 30px rgba(16, 43, 59, 0.065);
+  --shadow-focus: 0 0 0 3px rgba(37, 95, 112, 0.2);
 
   --font-sans-stack: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
   --font-mono-stack: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -101,8 +101,8 @@
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --shadow-lh-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
-  --shadow-lh-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
+  --shadow-lh-sm: 0 1px 2px rgba(16, 43, 59, 0.055), 0 6px 14px rgba(16, 43, 59, 0.035);
+  --shadow-lh-md: 0 1px 2px rgba(16, 43, 59, 0.07), 0 14px 30px rgba(16, 43, 59, 0.065);
 }
 
 * {
@@ -118,11 +118,8 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(rgba(141, 178, 188, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(141, 178, 188, 0.1) 1px, transparent 1px),
-    linear-gradient(120deg, rgba(215, 236, 239, 0.72), transparent 34%),
-    linear-gradient(180deg, #f8fbfa 0%, var(--color-page) 58%, #eef6f3 100%);
-  background-size: 34px 34px, 34px 34px, auto, auto;
+    linear-gradient(180deg, #fbfcfb 0%, var(--color-page) 64%, #f2f6f5 100%);
+  background-size: auto;
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
   font-kerning: normal;
@@ -139,8 +136,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 34%),
-    linear-gradient(90deg, rgba(40, 184, 199, 0.1), transparent 38%, rgba(23, 110, 139, 0.08));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), transparent 38%),
+    linear-gradient(90deg, rgba(37, 95, 112, 0.028), transparent 46%, rgba(37, 95, 112, 0.022));
 }
 
 ::selection {

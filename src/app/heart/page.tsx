@@ -100,20 +100,20 @@ const readingPath = [
 
 export default function HeartPage() {
   return (
-    <div className="space-y-10 pb-16">
-      <LhPanel elevated className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_340px] md:p-8">
+    <div className="space-y-8 pb-12">
+      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_340px] md:p-6">
         <div className="min-w-0">
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.heart} className="h-4 w-4" />
               本心
             </LhChip>
             <LhChip tone="signal">清晰优先</LhChip>
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
+          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
             于此，回答“精诚服务”到底相信什么。
           </h1>
-          <div className="mt-6 max-w-4xl space-y-4 text-base leading-8 text-ink-soft md:text-lg">
+          <div className="mt-5 max-w-3xl space-y-3 text-base leading-7 text-ink-soft">
             <p>
               客户把车交给我们，交出的不只是一次维修或保养需求，也是一份信任。员工站在一线，面对的也不只是流程、指标和投诉，而是真实的人、真实的压力，以及每天必须作出的判断。
             </p>
@@ -123,7 +123,7 @@ export default function HeartPage() {
           </div>
         </div>
 
-        <aside className="rounded-md border border-line bg-surface-quiet p-5">
+        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
           <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">阅读路径</p>
           <ol className="mt-4 grid gap-3">
             {readingPath.map((item, index) => (
@@ -148,20 +148,20 @@ export default function HeartPage() {
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
         <LhCard className="p-6">
           <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">核心</p>
-          <h2 className="mt-3 text-3xl font-extrabold text-ink">精诚服务的核心</h2>
+          <h2 className="mt-3 text-2xl font-extrabold text-ink">精诚服务的核心</h2>
           <p className="mt-4 text-base leading-8 text-ink-soft">
             本心，是灯塔的起点。先把我们共同相信的价值讲清楚，再去看案例、做实践、共创规范、提出问题，后面的内容才有共同的出发点。
           </p>
         </LhCard>
         <div className="grid gap-5 md:grid-cols-2">
           <LhCard className="p-6">
-            <h3 className="text-2xl font-extrabold text-ink">精</h3>
+            <h3 className="text-xl font-extrabold text-ink">精</h3>
             <p className="mt-4 text-sm leading-7 text-ink-soft">
               精，是把事情做好。它要求专业、认真、持续改善，也要求我们尊重服务行业的基本规律，不用粗糙的方式处理人的问题。
             </p>
           </LhCard>
           <LhCard className="p-6">
-            <h3 className="text-2xl font-extrabold text-ink">诚</h3>
+            <h3 className="text-xl font-extrabold text-ink">诚</h3>
             <p className="mt-4 text-sm leading-7 text-ink-soft">
               诚，是我们对人的态度。它体现在真、善、美、爱之中。真善美爱不是新的口号，而是判断服务和管理是否站得住的四个维度。
             </p>
@@ -190,7 +190,7 @@ export default function HeartPage() {
             <LhCard key={value.title} className="grid gap-5 p-5 lg:grid-cols-[180px_minmax(0,1fr)]">
               <div className="min-w-0">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-md border border-signal/25 bg-signal-soft text-3xl font-extrabold text-signal-deep">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-sm border border-line bg-surface-quiet text-xl font-extrabold text-primary-deep">
                     {value.title}
                   </span>
                   <div>
@@ -223,15 +223,15 @@ export default function HeartPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {guideSections.map((section) => (
             <Link key={section.title} href={section.href} className="group block">
-              <LhCard className="grid min-h-56 grid-rows-[auto_1fr_auto] gap-4 p-5 transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:border-line-strong group-hover:shadow-lh-md">
+              <LhCard className="grid min-h-52 grid-rows-[auto_1fr_auto] gap-4 p-5 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
                     <Icon icon={section.icon} className="h-5 w-5" />
                   </span>
                   <LhChip tone="neutral">{section.label}</LhChip>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-extrabold text-ink">{section.title}</h3>
+                  <h3 className="text-xl font-extrabold text-ink">{section.title}</h3>
                   <p className="mt-3 text-sm leading-7 text-ink-soft">{section.description}</p>
                 </div>
                 <span className="text-sm font-extrabold text-primary-deep">进入页面</span>

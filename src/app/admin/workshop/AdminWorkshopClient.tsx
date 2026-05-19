@@ -102,7 +102,7 @@ function StateNotice({ tone, children }: { tone: NoticeTone; children: React.Rea
   return (
     <div
       className={cn(
-        "mb-5 flex items-start gap-3 rounded-md border px-4 py-3 text-sm font-bold leading-6",
+        "mb-5 flex items-start gap-3 rounded-sm border px-4 py-3 text-sm font-bold leading-6",
         tone === "success" && "border-success/25 bg-success-soft text-success",
         tone === "danger" && "border-danger/25 bg-danger-soft text-danger",
         tone === "info" && "border-info/25 bg-info-soft text-info",
@@ -157,7 +157,7 @@ function QueueSummary({ submissions, edits }: { submissions: Submission[]; edits
   return (
     <div className="mb-5 grid gap-3 md:grid-cols-3">
       {stats.map((stat) => (
-        <div key={stat.label} className="rounded-md border border-line bg-panel p-4 shadow-lh-sm">
+        <div key={stat.label} className="rounded-sm border border-line bg-panel p-4 shadow-lh-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted">{stat.label}</span>
             <Icon icon={stat.icon} className="h-5 w-5 text-primary" />
@@ -212,7 +212,7 @@ function FilterBar({
 
 function SourcePanel({ submission, ready }: { submission: Submission; ready: boolean }) {
   return (
-    <div className="rounded-md border border-line bg-surface-quiet p-4">
+    <div className="rounded-sm border border-line bg-surface-quiet p-4">
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <LhStatusBadge tone="warning">待审核</LhStatusBadge>
         <LhChip tone={ready ? "success" : "danger"}>{ready ? "信息完整" : "需补来源"}</LhChip>
@@ -287,7 +287,7 @@ function ActionPanel({
   onReject: () => void;
 }) {
   return (
-    <div className="rounded-md border border-line bg-panel p-4">
+    <div className="rounded-sm border border-line bg-panel p-4">
       <h3 className="text-xl font-extrabold text-ink">审核动作</h3>
       <p className="mt-2 text-sm leading-6 text-muted">发布会进入公共指南；退回会带原因回到贡献者个人区。</p>
       <LhTextArea
@@ -351,7 +351,7 @@ function ReviewCard({
   const ready = isReadyForPublish(edit);
 
   return (
-    <article className="grid gap-5 rounded-md border border-line bg-surface p-5 shadow-lh-sm xl:grid-cols-[minmax(0,1fr)_320px]">
+    <article className="grid gap-5 rounded-sm border border-line bg-surface p-5 shadow-lh-sm xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="min-w-0 space-y-5">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="min-w-0">

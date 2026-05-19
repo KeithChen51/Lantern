@@ -19,25 +19,25 @@ const trainingSteps = [
 
 export default function ActionPage() {
   return (
-    <div className="space-y-10 pb-16">
-      <LhPanel elevated className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_320px] md:p-8">
+    <div className="space-y-8 pb-12">
+      <LhPanel elevated className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_320px] md:p-6">
         <div>
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
               笃行
             </LhChip>
             <LhStatusBadge tone="warning">判断训练</LhStatusBadge>
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">
+          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
             把真实服务实践，拆成可以复盘的判断训练。
           </h1>
-          <p className="mt-6 max-w-4xl text-base leading-8 text-ink-soft md:text-lg">
+          <p className="mt-5 max-w-3xl text-base leading-7 text-ink-soft">
             笃行记录内部已经发生的服务实践。重点不是把案例讲完，而是回到真实政策、真实门店和真实客户场景里，看客户体验是否被守住，门店是否具备执行条件，政策指标是否真的服务于客户价值。
           </p>
         </div>
 
-        <aside className="rounded-md border border-line bg-surface-quiet p-5">
+        <aside className="rounded-sm border border-line bg-surface-quiet p-5">
           <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">训练流程</p>
           <ol className="mt-4 grid gap-3">
             {trainingSteps.map((step, index) => (
@@ -62,7 +62,7 @@ export default function ActionPage() {
         <div className="grid gap-5">
           {ACTION_CASES.map((actionCase) => (
             <Link key={actionCase.slug} href={actionCase.href} className="group block">
-              <LhCard className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-0.5 group-hover:border-line-strong group-hover:shadow-lh-md lg:grid-cols-[minmax(0,1fr)_360px]">
+              <LhCard className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="grid min-w-0 grid-rows-[auto_1fr_auto] gap-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <LhChip tone="primary">{actionCase.metadata.date}</LhChip>
@@ -77,7 +77,7 @@ export default function ActionPage() {
                   </div>
 
                   <div>
-                    <h2 className="max-w-4xl text-3xl font-extrabold leading-tight text-ink md:text-4xl">
+                    <h2 className="max-w-4xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
                       {actionCase.metadata.title}
                     </h2>
                     <p className="mt-5 max-w-3xl text-base leading-8 text-ink-soft">{actionCase.brief.oneLine}</p>
@@ -96,7 +96,7 @@ export default function ActionPage() {
                   </div>
                 </div>
 
-                <aside className="rounded-md border border-line bg-surface-quiet p-5">
+                <aside className="rounded-sm border border-line bg-surface-quiet p-5">
                   <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">关键节点</p>
                   <ol className="mt-4 grid gap-3">
                     {actionCase.decisionNodes.map((decision, index) => (

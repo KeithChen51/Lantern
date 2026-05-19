@@ -20,7 +20,7 @@ export function FeatureCard({
   return (
     <LhCard
       className={cn(
-        "group grid min-h-[240px] overflow-hidden transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-lh-md md:grid-cols-[minmax(0,1.16fr)_minmax(260px,0.84fr)]",
+        "group grid min-h-[240px] overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-lh-md md:grid-cols-[minmax(0,1.16fr)_minmax(260px,0.84fr)]",
         className,
       )}
     >
@@ -51,7 +51,7 @@ export function FeatureCard({
 
         <div className="flex items-center justify-between border-t border-line pt-4 text-sm font-bold text-primary-deep">
           <span>查看案例</span>
-          <span aria-hidden="true" className="h-1.5 w-8 rounded-full bg-signal transition-[width] duration-200 group-hover:w-12" />
+          <span aria-hidden="true" className="h-px w-8 bg-primary transition-[width] duration-200 group-hover:w-12" />
         </div>
       </div>
     </LhCard>
