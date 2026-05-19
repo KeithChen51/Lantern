@@ -249,7 +249,7 @@ export const LhSearchBox = React.forwardRef<HTMLInputElement, Omit<LhTextFieldPr
 );
 LhSearchBox.displayName = "LhSearchBox";
 
-export interface LhSectionHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;

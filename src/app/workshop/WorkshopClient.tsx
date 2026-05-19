@@ -1,23 +1,22 @@
 "use client";
 
 import * as React from "react";
+import { Icon } from "@iconify/react";
 import { useSearchParams } from "next/navigation";
-import {
-  ArrowUpRight,
-  CheckCircle2,
-  ClipboardCheck,
-  Clock3,
-  FilePlus2,
-  Loader2,
-  MessageSquareText,
-  PencilLine,
-  Search,
-  Send,
-  Trophy,
-  UserRound,
-  X,
-} from "lucide-react";
 import { AdminWorkshopClient } from "../admin/workshop/AdminWorkshopClient";
+import {
+  LhButton,
+  LhCard,
+  LhChip,
+  LhPanel,
+  LhSearchBox,
+  LhSectionHeader,
+  LhStatusBadge,
+  LhTextArea,
+  LhTextField,
+} from "@/components/ui/lighthouse-primitives";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { cn } from "@/lib/utils";
 import {
   getVisibleWorkshopSections,
   isWorkshopSectionId,
@@ -82,6 +81,9 @@ type PreviewIdentityResponse = {
   };
 };
 
+type BadgeTone = React.ComponentProps<typeof LhStatusBadge>["tone"];
+type NoticeTone = "success" | "danger" | "info";
+
 const roles = ["全部岗位", "服务顾问", "理赔顾问", "休息区服务专员", "备件人员", "维修人员", "洗车人员", "其他后台支持人员"];
 
 const initialForm: FormState = {
@@ -94,6 +96,47 @@ const initialForm: FormState = {
   howText: "",
   dontText: "",
 };
+
+const sectionCopy: Record<WorkshopSectionId, { title: string; description: string; icon: string }> = {
+  public: {
+    title: "公开区",
+    description: "只展示已审核发布的岗位 Do and Don't，便于一线按角色、场景检索和复用。",
+    icon: lighthouseIcons.document,
+  },
+  submit: {
+    title: "提交区",
+    description: "把服务经验写成角色、场景、Do、How、Don't，先进入 AI 初审，再进入管理员审核。",
+    icon: lighthouseIcons.add,
+  },
+  personal: {
+    title: "个人区",
+    description: "查看草稿、待审核、退回和已发布状态，按退回原因修改后重提。",
+    icon: lighthouseIcons.user,
+  },
+  review: {
+    title: "审核区",
+    description: "品牌方最高管理员在 Workshop 内完成最后编辑、发布或退回。",
+    icon: lighthouseIcons.admin,
+  },
+};
+
+const statusMeta: Record<string, { label: string; tone: BadgeTone; description: string }> = {
+  draft: { label: "草稿", tone: "info", description: "尚未提交，可继续编辑。" },
+  submitted: { label: "已提交", tone: "info", description: "已进入初审流程。" },
+  ai_rejected: { label: "AI 初审退回", tone: "danger", description: "补齐可执行细节后再提交。" },
+  pending_admin_review: { label: "待管理员审核", tone: "warning", description: "等待品牌管理员最终确认。" },
+  admin_rejected: { label: "管理员退回", tone: "danger", description: "按审核意见修改后重提。" },
+  published: { label: "已发布", tone: "success", description: "已进入公开区，可被引用。" },
+  withdrawn: { label: "已撤回", tone: "neutral", description: "内容已撤回。" },
+};
+
+const formFields: Array<[keyof FormState, string, string]> = [
+  ["title", "标题", "标题要帮助审核人快速判断内容类型。"],
+  ["roleName", "适用岗位", "用于后续按角色筛选 Do and Don't。"],
+  ["storeName", "门店", "保留来源，便于追溯。"],
+  ["serviceScenario", "服务场景", "例如维修等待、交车解释、客户投诉。"],
+  ["principleRef", "理念依据", "连接本心原则或已有案例。"],
+];
 
 function isSubmissionEditable(status: string) {
   return status === "draft" || status === "ai_rejected" || status === "admin_rejected";
@@ -144,109 +187,547 @@ async function fetchWorkshopRole(): Promise<WorkshopRole | null> {
   return toWorkshopRole(payload.data?.current?.role);
 }
 
+function getStatusMeta(status: string) {
+  return statusMeta[status] ?? { label: status, tone: "neutral" as BadgeTone, description: "未知状态。" };
+}
+
 function StatusBadge({ status }: { status: string }) {
-  const tone =
-    status === "published"
-      ? "bg-emerald-100 text-emerald-800"
-      : status === "pending_admin_review"
-        ? "bg-amber/10 text-amber"
-        : status.includes("rejected")
-          ? "bg-red-100 text-red-800"
-          : "bg-ink/5 text-ink/55";
+  const meta = getStatusMeta(status);
+  return <LhStatusBadge tone={meta.tone}>{meta.label}</LhStatusBadge>;
+}
 
-  const labelMap: Record<string, string> = {
-    draft: "草稿",
-    submitted: "已提交",
-    ai_rejected: "AI 初审退回",
-    pending_admin_review: "待管理员审核",
-    admin_rejected: "管理员退回",
-    published: "已发布",
-    withdrawn: "已撤回",
-  };
+function StateNotice({ tone, children }: { tone: NoticeTone; children: React.ReactNode }) {
+  const icon =
+    tone === "success" ? lighthouseIcons.status : tone === "danger" ? lighthouseIcons.warning : lighthouseIcons.info;
+  return (
+    <div
+      className={cn(
+        "mb-6 flex items-start gap-3 rounded-md border px-4 py-3 text-sm font-bold leading-6",
+        tone === "success" && "border-success/25 bg-success-soft text-success",
+        tone === "danger" && "border-danger/25 bg-danger-soft text-danger",
+        tone === "info" && "border-info/25 bg-info-soft text-info",
+      )}
+    >
+      <Icon icon={icon} className="mt-0.5 h-5 w-5 shrink-0" />
+      <span className="min-w-0">{children}</span>
+    </div>
+  );
+}
 
-  return <span className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${tone}`}>{labelMap[status] ?? status}</span>;
+function SectionTabs({
+  sections,
+  current,
+  onChange,
+}: {
+  sections: ReturnType<typeof getVisibleWorkshopSections>;
+  current: WorkshopSectionId;
+  onChange: (section: WorkshopSectionId) => void;
+}) {
+  return (
+    <div className="mb-8 flex max-w-full flex-wrap gap-2 pb-2">
+      {sections.map(({ id, label }) => {
+        const active = current === id;
+        const copy = sectionCopy[id];
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            className={cn(
+              "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-sm border px-4 text-sm font-extrabold transition-[background,border-color,color]",
+              active
+                ? "border-primary bg-primary-soft text-primary-deep"
+                : "border-line bg-panel text-muted hover:border-line-strong hover:text-ink",
+            )}
+          >
+            <Icon icon={copy.icon} className="h-4 w-4" />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function WorkshopHero({ onCreate }: { onCreate: () => void }) {
+  return (
+    <LhPanel className="mb-8 overflow-hidden">
+      <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-8">
+        <div className="min-w-0">
+          <div className="mb-5 flex flex-wrap gap-2">
+            <LhChip tone="primary">
+              <Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />
+              Workshop / 共创
+            </LhChip>
+            <LhChip tone="signal">Long-term Open Submission</LhChip>
+          </div>
+          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-5xl">
+            把服务经验，沉淀成可审核、可复用的岗位 Do and Don&apos;t。
+          </h1>
+          <p className="mt-5 max-w-4xl text-base leading-8 text-ink-soft md:text-lg">
+            共创不扩成论坛。它只处理三件事：一线提交具体动作，系统保留来源和状态，品牌管理员把合格内容发布为公共指南。
+          </p>
+        </div>
+        <div className="grid gap-3 rounded-md border border-line bg-surface-quiet p-4">
+          {[
+            ["1", "提交", "角色、场景、Do、How、Don't"],
+            ["2", "初审", "检查可执行性与重复内容"],
+            ["3", "发布", "最高管理员编辑后进入公开区"],
+          ].map(([step, title, text]) => (
+            <div key={step} className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-panel text-sm font-extrabold text-primary">
+                {step}
+              </span>
+              <span>
+                <strong className="block text-sm font-extrabold text-ink">{title}</strong>
+                <span className="text-sm leading-6 text-muted">{text}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 border-t border-line bg-surface-quiet px-6 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+        <p className="text-sm font-bold text-muted">公开区、提交区、个人区固定保留；管理员只多一个审核区。</p>
+        <LhButton
+          type="button"
+          variant="primary"
+          icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
+          onClick={onCreate}
+        >
+          新建共创
+        </LhButton>
+      </div>
+    </LhPanel>
+  );
 }
 
 function ContributionBoard({ items }: { items: ContributionStat[] }) {
   return (
-    <aside className="min-w-0 rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <Trophy className="h-5 w-5 text-amber" />
-        <h3 className="font-serif text-xl text-ink">贡献榜单</h3>
+    <LhPanel className="p-5">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+          <Icon icon="solar:cup-star-bold" className="h-5 w-5" />
+        </span>
+        <div>
+          <h3 className="text-xl font-extrabold text-ink">贡献榜单</h3>
+          <p className="text-sm text-muted">按已发布条目展示门店和个人。</p>
+        </div>
       </div>
-      <div className="space-y-3">
+      <div className="grid gap-3">
         {items.length > 0 ? (
           items.map((item) => (
-            <div key={item.userId} className="flex items-center justify-between rounded-xl bg-paper/60 px-3 py-3">
-              <span className="text-sm text-ink/70">
+            <div key={item.userId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-sm border border-line bg-panel px-3 py-3">
+              <span className="min-w-0 text-sm font-bold text-ink-soft">
                 {item.storeName ? `${item.storeName} · ` : ""}
                 {item.displayName}
               </span>
-              <span className="text-xs font-semibold text-amber">{item.publishedCount} 条</span>
+              <LhChip tone="success">{item.publishedCount} 条</LhChip>
             </div>
           ))
         ) : (
-          <p className="rounded-xl bg-paper/60 p-4 text-sm leading-relaxed text-ink/45">暂无已发布贡献。</p>
+          <p className="rounded-sm border border-dashed border-line bg-surface-quiet p-4 text-sm leading-6 text-muted">
+            暂无已发布贡献。发布后会显示门店和个人贡献。
+          </p>
         )}
       </div>
-    </aside>
+    </LhPanel>
+  );
+}
+
+function GuideSnippet({ label, text, tone }: { label: string; text: string; tone: BadgeTone }) {
+  return (
+    <div className="min-w-0 rounded-sm border border-line bg-surface-quiet p-4">
+      <LhChip tone={tone}>{label}</LhChip>
+      <p className="mt-3 text-sm leading-7 text-ink-soft">{text}</p>
+    </div>
   );
 }
 
 function GuideCard({ guide }: { guide: PublishedGuide }) {
   const snippets = [
-    { label: "DO", tone: "amber" as const, text: guide.doText },
-    { label: "HOW", tone: "paper" as const, text: guide.howText ?? "待管理员补充执行说明。" },
-    { label: "DON'T", tone: "red" as const, text: guide.dontText },
+    { label: "Do", tone: "success" as BadgeTone, text: guide.doText },
+    { label: "How", tone: "info" as BadgeTone, text: guide.howText ?? "待管理员补充执行说明。" },
+    { label: "Don't", tone: "danger" as BadgeTone, text: guide.dontText },
   ].filter((snippet) => snippet.text.trim().length > 0);
 
   return (
-    <article className="min-w-0 rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
+    <LhCard className="grid gap-5 p-5">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0">
           <div className="mb-3 flex flex-wrap gap-2">
-            {[guide.roleName, guide.serviceScenario, guide.principleRef, "已发布"].filter(Boolean).map((tag) => (
-              <span key={tag} className="rounded-full bg-ink/5 px-3 py-1 text-xs text-ink/55">
+            {[guide.roleName, guide.serviceScenario, guide.principleRef].filter(Boolean).map((tag) => (
+              <LhChip key={tag} tone="primary">
                 {tag}
-              </span>
+              </LhChip>
             ))}
+            <LhStatusBadge tone="success">已发布</LhStatusBadge>
           </div>
-          <h3 className="font-serif text-2xl leading-snug text-ink">{guide.title}</h3>
+          <h3 className="text-2xl font-extrabold leading-snug text-ink">{guide.title}</h3>
         </div>
-        <span className="text-xs font-medium tracking-[0.2em] text-ink/30">
+        <span className="text-sm font-extrabold text-muted">
           {new Date(guide.publishedAt).toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
         </span>
       </div>
 
-      <div className={`mt-5 grid gap-3 ${snippets.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+      <div className={cn("grid gap-3", snippets.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
         {snippets.map((snippet) => (
           <GuideSnippet key={snippet.label} label={snippet.label} tone={snippet.tone} text={snippet.text} />
         ))}
       </div>
 
-      <div className="mt-5 flex flex-col gap-2 border-t border-ink/5 pt-4 text-sm text-ink/50 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-line pt-4 text-sm font-bold text-muted sm:flex-row sm:items-center sm:justify-between">
         <span>
           {guide.storeName ? `${guide.storeName} · ` : ""}
           {guide.submitterName}
         </span>
-        <span className="inline-flex items-center gap-1 text-amber">
-          可纳入 Hermit 推荐素材
-          <ArrowUpRight className="h-4 w-4" />
+        <span className="inline-flex items-center gap-2 text-primary-deep">
+          可作为 Hermit 引用素材
+          <Icon icon="solar:arrow-right-up-bold" className="h-4 w-4" />
         </span>
       </div>
-    </article>
+    </LhCard>
   );
 }
 
-function GuideSnippet({ label, tone, text }: { label: string; tone: "amber" | "paper" | "red"; text: string }) {
-  const toneClass =
-    tone === "amber" ? "bg-amber/10 text-amber" : tone === "red" ? "bg-red-100/60 text-red-700/75" : "bg-paper/70 text-ink/35";
+function StatusReference() {
+  return (
+    <LhPanel className="p-5">
+      <h3 className="text-xl font-extrabold text-ink">状态系统</h3>
+      <p className="mt-2 text-sm leading-6 text-muted">颜色只表达类型，文案解释下一步。</p>
+      <div className="mt-5 grid gap-3">
+        {["draft", "pending_admin_review", "published", "admin_rejected"].map((status) => {
+          const meta = getStatusMeta(status);
+          return (
+            <div key={status} className="grid gap-2 rounded-sm border border-line bg-panel p-3">
+              <LhStatusBadge tone={meta.tone}>{meta.label}</LhStatusBadge>
+              <p className="text-sm leading-6 text-muted">{meta.description}</p>
+            </div>
+          );
+        })}
+      </div>
+    </LhPanel>
+  );
+}
+
+function PublicSection({
+  guides,
+  leaderboard,
+  loading,
+  query,
+  selectedRole,
+  onQueryChange,
+  onRoleChange,
+  onCreate,
+}: {
+  guides: PublishedGuide[];
+  leaderboard: ContributionStat[];
+  loading: boolean;
+  query: string;
+  selectedRole: string;
+  onQueryChange: (value: string) => void;
+  onRoleChange: (value: string) => void;
+  onCreate: () => void;
+}) {
+  return (
+    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="min-w-0 space-y-5">
+        <LhPanel className="p-5">
+          <LhSectionHeader
+            eyebrow="Published Guides"
+            title="已发布指南"
+            description="来自管理员审核发布的 Do and Don't 内容。先筛选角色和场景，再进入可执行动作。"
+            action={
+              <LhButton type="button" variant="primary" icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />} onClick={onCreate}>
+                提交新的 Do and Don&apos;t
+              </LhButton>
+            }
+          />
+          <div className="mt-5 grid gap-4">
+            <LhSearchBox
+              aria-label="搜索岗位、场景或关键词"
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+              placeholder="搜索岗位、场景或关键词"
+            />
+            <div className="flex max-w-full flex-wrap gap-2">
+              {roles.map((role) => (
+                <button
+                  type="button"
+                  key={role}
+                  onClick={() => onRoleChange(role)}
+                  className={cn(
+                    "min-h-9 rounded-sm border px-3 text-sm font-bold transition-[background,border-color,color]",
+                    selectedRole === role
+                      ? "border-primary bg-primary-soft text-primary-deep"
+                      : "border-line bg-panel text-muted hover:border-line-strong hover:text-ink",
+                  )}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+        </LhPanel>
+
+        {loading ? (
+          <StateNotice tone="info">
+            <Icon icon={lighthouseIcons.refresh} className="mr-2 inline h-4 w-4 animate-spin" />
+            正在加载 Workshop 数据
+          </StateNotice>
+        ) : guides.length > 0 ? (
+          guides.map((guide) => <GuideCard key={guide.id} guide={guide} />)
+        ) : (
+          <LhPanel className="border-dashed p-8 text-center">
+            <Icon icon={lighthouseIcons.document} className="mx-auto h-8 w-8 text-primary" />
+            <p className="mt-3 text-base font-bold text-ink">当前范围内还没有已发布指南。</p>
+            <p className="mt-2 text-sm leading-6 text-muted">提交通过审核后会出现在这里。</p>
+          </LhPanel>
+        )}
+      </div>
+      <ContributionBoard items={leaderboard} />
+    </section>
+  );
+}
+
+function SubmissionForm({
+  form,
+  editingSubmissionId,
+  submitting,
+  onUpdate,
+  onSubmit,
+  onCancelEdit,
+}: {
+  form: FormState;
+  editingSubmissionId: string | null;
+  submitting: boolean;
+  onUpdate: (key: keyof FormState, value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onCancelEdit: () => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="rounded-md border border-line bg-surface p-5 text-ink shadow-lh-sm">
+      <LhSectionHeader
+        eyebrow="Submission"
+        title={editingSubmissionId ? "修改 Do and Don't" : "提交 Do and Don't"}
+        description={
+          editingSubmissionId
+            ? "当前修改的是已退回内容，提交后会重新进入 AI 初审。"
+            : "至少填写 Do 或 Don't 一项。How 用于补充具体执行方式。"
+        }
+        action={
+          editingSubmissionId ? (
+            <LhButton
+              type="button"
+              variant="quiet"
+              icon={<Icon icon={lighthouseIcons.close} className="h-4 w-4" />}
+              onClick={onCancelEdit}
+            >
+              取消修改
+            </LhButton>
+          ) : null
+        }
+      />
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {formFields.map(([field, label, helperText]) => (
+          <LhTextField
+            key={field}
+            label={label}
+            helperText={helperText}
+            value={form[field]}
+            onChange={(event) => onUpdate(field, event.target.value)}
+          />
+        ))}
+      </div>
+      <div className="mt-4 grid gap-4">
+        <LhTextArea
+          label="Do：应该做什么"
+          helperText="写成一线可直接执行的动作。"
+          value={form.doText}
+          onChange={(event) => onUpdate("doText", event.target.value)}
+          rows={3}
+        />
+        <LhTextArea
+          label="How：具体怎么做"
+          helperText="用于补充步骤、话术或检查点。"
+          value={form.howText}
+          onChange={(event) => onUpdate("howText", event.target.value)}
+          rows={3}
+        />
+        <LhTextArea
+          label="Don't：不要做什么"
+          helperText="明确禁止或应避免的动作。"
+          value={form.dontText}
+          onChange={(event) => onUpdate("dontText", event.target.value)}
+          rows={3}
+        />
+      </div>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <LhButton
+          type="submit"
+          disabled={submitting}
+          variant="primary"
+          icon={
+            <Icon
+              icon={submitting ? lighthouseIcons.refresh : lighthouseIcons.send}
+              className={cn("h-4 w-4", submitting && "animate-spin")}
+            />
+          }
+        >
+          {editingSubmissionId ? "保存并重新初审" : "提交并进入初审"}
+        </LhButton>
+      </div>
+    </form>
+  );
+}
+
+function ReviewRules() {
+  return (
+    <LhPanel className="p-5">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-info-soft text-info">
+          <Icon icon={lighthouseIcons.info} className="h-5 w-5" />
+        </span>
+        <div>
+          <h3 className="text-xl font-extrabold text-ink">初审规则</h3>
+          <p className="text-sm text-muted">先保证投稿能进入结构化审核。</p>
+        </div>
+      </div>
+      <div className="grid gap-3">
+        {["至少填写 Do 或 Don't 一项", "未与已发布指南重复", "可执行动作明确"].map((item) => (
+          <div key={item} className="grid grid-cols-[24px_minmax(0,1fr)] gap-3 rounded-sm border border-line bg-panel p-3">
+            <Icon icon={lighthouseIcons.status} className="mt-0.5 h-5 w-5 text-success" />
+            <span className="text-sm font-bold leading-6 text-ink-soft">{item}</span>
+          </div>
+        ))}
+      </div>
+    </LhPanel>
+  );
+}
+
+function SubmitSection({
+  form,
+  editingSubmissionId,
+  submitting,
+  onUpdate,
+  onSubmit,
+  onCancelEdit,
+}: {
+  form: FormState;
+  editingSubmissionId: string | null;
+  submitting: boolean;
+  onUpdate: (key: keyof FormState, value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onCancelEdit: () => void;
+}) {
+  return (
+    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <SubmissionForm
+        form={form}
+        editingSubmissionId={editingSubmissionId}
+        submitting={submitting}
+        onUpdate={onUpdate}
+        onSubmit={onSubmit}
+        onCancelEdit={onCancelEdit}
+      />
+      <ReviewRules />
+    </section>
+  );
+}
+
+function SubmissionRecord({ item, onEdit }: { item: Submission; onEdit: (submission: Submission) => void }) {
+  const meta = getStatusMeta(item.status);
+  return (
+    <LhCard className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+      <div className="min-w-0">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <StatusBadge status={item.status} />
+          <LhChip tone="primary">{item.roleName}</LhChip>
+          {item.serviceScenario && <LhChip tone="neutral">{item.serviceScenario}</LhChip>}
+        </div>
+        <h3 className="text-xl font-extrabold leading-snug text-ink">{item.title}</h3>
+        <p className="mt-2 text-sm font-bold text-muted">最近更新：{new Date(item.updatedAt).toLocaleString("zh-CN")}</p>
+        <p className="mt-2 text-sm leading-6 text-muted">{meta.description}</p>
+        {item.aiReviewResult && !item.aiReviewResult.passed && (
+          <p className="mt-3 rounded-sm border border-danger/25 bg-danger-soft p-3 text-sm font-bold leading-6 text-danger">
+            退回原因：{item.aiReviewResult.reason}
+          </p>
+        )}
+      </div>
+      {isSubmissionEditable(item.status) && (
+        <LhButton
+          type="button"
+          variant="secondary"
+          icon={<Icon icon={lighthouseIcons.edit} className="h-4 w-4" />}
+          onClick={() => onEdit(item)}
+        >
+          {item.status === "draft" ? "继续编辑" : "修改后重提"}
+        </LhButton>
+      )}
+    </LhCard>
+  );
+}
+
+function PersonalSection({
+  submissions,
+  onCreate,
+  onEdit,
+}: {
+  submissions: Submission[];
+  onCreate: () => void;
+  onEdit: (submission: Submission) => void;
+}) {
+  const counts = submissions.reduce<Record<string, number>>((acc, submission) => {
+    acc[submission.status] = (acc[submission.status] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
-    <div className={`rounded-xl p-4 ${toneClass}`}>
-      <p className="mb-2 text-xs font-bold tracking-[0.2em]">{label}</p>
-      <p className="text-sm leading-relaxed text-ink/75">{text}</p>
-    </div>
+    <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <LhPanel className="p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-sm border border-line bg-primary-soft text-primary-deep">
+            <Icon icon={lighthouseIcons.user} className="h-6 w-6" />
+          </span>
+          <div>
+            <h2 className="text-2xl font-extrabold text-ink">我的共创</h2>
+            <p className="text-sm text-muted">当前演示用户</p>
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          {["draft", "pending_admin_review", "published", "admin_rejected"].map((status) => {
+            const meta = getStatusMeta(status);
+            return (
+              <div key={status} className="rounded-sm border border-line bg-panel p-3">
+                <p className="text-2xl font-extrabold text-ink">{counts[status] ?? 0}</p>
+                <p className="mt-1 text-xs font-bold text-muted">{meta.label}</p>
+              </div>
+            );
+          })}
+        </div>
+        <LhButton
+          type="button"
+          variant="primary"
+          className="mt-5 w-full"
+          icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
+          onClick={onCreate}
+        >
+          新建提交
+        </LhButton>
+      </LhPanel>
+
+      <LhPanel className="p-5">
+        <LhSectionHeader eyebrow="Personal Queue" title="提交记录" description="草稿、待审核、已发布、需修改都在这里回看。" />
+        <div className="mt-5 grid gap-4">
+          {submissions.length > 0 ? (
+            submissions.map((item) => <SubmissionRecord key={item.id} item={item} onEdit={onEdit} />)
+          ) : (
+            <p className="rounded-sm border border-dashed border-line bg-surface-quiet p-5 text-sm leading-6 text-muted">
+              还没有提交记录。先从提交区创建一条岗位 Do and Don&apos;t。
+            </p>
+          )}
+        </div>
+      </LhPanel>
+    </section>
   );
 }
 
@@ -388,285 +869,52 @@ export function WorkshopClient() {
 
   return (
     <div className="mx-auto w-full max-w-7xl min-w-0">
-      <div className="mb-12 px-4">
-        <h1 className="mb-4 flex flex-wrap items-baseline gap-3 text-4xl font-bold md:text-5xl">
-          <span className="font-noto text-ink">共创</span>
-          <span className="font-serif text-3xl italic text-amber opacity-90 md:text-4xl">Workshop</span>
-        </h1>
-        <div className="max-w-3xl space-y-4 break-words font-serif text-lg leading-relaxed text-ink/60">
-          <p>把本心里的原则，写成一线可执行的 Do & Don&apos;t。</p>
-          <p>
-            共创面向长期开放提交。员工可以围绕岗位、服务场景和价值原则沉淀经验；品牌管理员在同一个板块内审核、编辑并发布为公共指南。
-          </p>
-        </div>
-        <div className="mt-6 flex max-w-full flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
-          <span className="max-w-full break-words rounded-full border border-amber/30 bg-amber/10 px-4 py-2 text-sm font-medium text-amber">
-            长期开放共创
-          </span>
-          <span className="max-w-full break-words rounded-full border border-white/70 bg-white/35 px-4 py-2 text-sm text-ink/55">
-            AI 初审 · 审核发布 · 执行指南
-          </span>
-        </div>
-      </div>
+      <WorkshopHero onCreate={startNewSubmission} />
+      <SectionTabs sections={visibleSections} current={section} onChange={setSection} />
 
-      <div className="mb-8 flex max-w-full gap-2 overflow-x-auto px-4 pb-2">
-        {visibleSections.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setSection(id)}
-            className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-all ${
-              section === id
-                ? "border-amber/30 bg-amber/10 text-amber"
-                : "border-white/70 bg-white/35 text-ink/60 hover:border-ink/10 hover:bg-white/55 hover:text-ink"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {error && (
-        <div className="mx-4 mb-6 break-words rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
-      )}
-      {feedback && (
-        <div className="mx-4 mb-6 break-words rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-          {feedback}
-        </div>
-      )}
+      {error && <StateNotice tone="danger">{error}</StateNotice>}
+      {feedback && <StateNotice tone="success">{feedback}</StateNotice>}
 
       {section === "public" && (
-        <section className="grid gap-6 px-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-5">
-            <div className="min-w-0 rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-              <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="min-w-0">
-                  <h2 className="font-serif text-2xl text-ink md:text-3xl">已发布指南</h2>
-                  <p className="mt-2 text-sm text-ink/55">来自管理员审核发布的 Do & Don&apos;t 内容。</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={startNewSubmission}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber px-5 py-3 text-sm font-medium text-white shadow-[0_10px_24px_rgba(217,119,6,0.22)] transition-transform hover:-translate-y-0.5 sm:w-fit"
-                >
-                  <FilePlus2 className="h-4 w-4" />
-                  提交新的 Do & Don&apos;t
-                </button>
-              </div>
-              <div className="relative mb-4">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/35" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="搜索岗位、场景或关键词"
-                  className="w-full rounded-full border border-transparent bg-white/55 py-3 pl-11 pr-4 text-sm text-ink outline-none transition-all placeholder:text-ink/30 focus:border-amber/20 focus:bg-white/70"
-                />
-              </div>
-              <div className="flex max-w-full flex-wrap gap-2">
-                {roles.map((role) => (
-                  <button
-                    type="button"
-                    key={role}
-                    onClick={() => setSelectedRole(role)}
-                    className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-all ${
-                      selectedRole === role
-                        ? "border-amber/30 bg-amber/10 text-amber"
-                        : "border-white/70 bg-white/35 text-ink/60 hover:border-ink/10 hover:bg-white/55 hover:text-ink"
-                    }`}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex items-center gap-2 rounded-2xl bg-white/35 p-8 text-sm text-ink/45">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                正在加载 Workshop 数据
-              </div>
-            ) : guides.length > 0 ? (
-              guides.map((guide) => <GuideCard key={guide.id} guide={guide} />)
-            ) : (
-              <div className="rounded-2xl border border-dashed border-ink/15 bg-white/35 p-8 text-center text-sm text-ink/45">
-                当前范围内还没有已发布指南。提交通过审核后会出现在这里。
-              </div>
-            )}
-          </div>
-          <ContributionBoard items={leaderboard} />
-        </section>
+        <PublicSection
+          guides={guides}
+          leaderboard={leaderboard}
+          loading={loading}
+          query={query}
+          selectedRole={selectedRole}
+          onQueryChange={setQuery}
+          onRoleChange={setSelectedRole}
+          onCreate={startNewSubmission}
+        />
       )}
 
       {section === "submit" && (
-        <section className="grid gap-6 px-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <form
-            onSubmit={submitForReview}
-            className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm"
-          >
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h2 className="font-serif text-2xl text-ink md:text-3xl">
-                  {editingSubmissionId ? "修改 Do & Don't" : "提交 Do & Don't"}
-                </h2>
-                {editingSubmissionId && (
-                  <p className="mt-2 text-sm text-ink/55">当前修改的是已退回内容，提交后会重新进入 AI 初审。</p>
-                )}
-              </div>
-              {editingSubmissionId && (
-                <button
-                  type="button"
-                  onClick={startNewSubmission}
-                  className="inline-flex w-fit items-center gap-2 rounded-full border border-white/70 bg-white/35 px-4 py-2 text-sm text-ink/55 transition-colors hover:border-ink/10 hover:bg-white/55 hover:text-ink"
-                >
-                  <X className="h-4 w-4" />
-                  取消修改
-                </button>
-              )}
-            </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {[
-                ["title", "标题"],
-                ["roleName", "适用岗位"],
-                ["storeName", "门店"],
-                ["serviceScenario", "服务场景"],
-                ["principleRef", "理念依据"],
-              ].map(([field, label]) => (
-                <label key={field} className="space-y-2">
-                  <span className="text-sm font-medium text-ink/60">{label}</span>
-                  <input
-                    value={form[field as keyof FormState]}
-                    onChange={(event) => updateForm(field as keyof FormState, event.target.value)}
-                    className="w-full rounded-xl border border-white/70 bg-paper/70 px-4 py-3 text-sm text-ink outline-none focus:border-amber/30"
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="mt-4 grid gap-4">
-              {[
-                ["doText", "Do：应该做什么（可单独填写）"],
-                ["howText", "How：具体怎么做"],
-                ["dontText", "Don't：不要做什么（可单独填写）"],
-              ].map(([field, label]) => (
-                <label key={field} className="space-y-2">
-                  <span className="text-sm font-medium text-ink/60">{label}</span>
-                  <textarea
-                    value={form[field as keyof FormState]}
-                    onChange={(event) => updateForm(field as keyof FormState, event.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-xl border border-white/70 bg-paper/70 px-4 py-3 text-sm leading-relaxed text-ink outline-none transition-colors focus:border-amber/30"
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="mt-5">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber px-6 py-3 text-sm font-medium text-white shadow-[0_10px_24px_rgba(217,119,6,0.22)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {editingSubmissionId ? "保存并重新初审" : "提交并进入初审"}
-              </button>
-            </div>
-          </form>
-
-          <aside className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <MessageSquareText className="h-5 w-5 text-amber" />
-              <h3 className="font-serif text-xl text-ink">初审规则</h3>
-            </div>
-            <div className="space-y-3">
-              {["至少填写 Do 或 Don't 一项", "未与已发布指南重复", "可执行动作明确"].map((item) => (
-                <div key={item} className="flex items-center gap-2 rounded-xl bg-paper/60 p-3 text-sm text-ink/65">
-                  <CheckCircle2 className="h-4 w-4 text-amber" />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </aside>
-        </section>
+        <SubmitSection
+          form={form}
+          editingSubmissionId={editingSubmissionId}
+          submitting={submitting}
+          onUpdate={updateForm}
+          onSubmit={submitForReview}
+          onCancelEdit={startNewSubmission}
+        />
       )}
 
       {section === "personal" && (
-        <section className="grid gap-6 px-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber/10 text-amber">
-                <UserRound className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="font-serif text-2xl text-ink">我的共创</h2>
-                <p className="text-sm text-ink/45">当前演示用户</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={startNewSubmission}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink/5 px-5 py-3 text-sm font-medium text-ink/65 transition-colors hover:bg-amber/10 hover:text-amber"
-            >
-              <FilePlus2 className="h-4 w-4" />
-              新建提交
-            </button>
-          </aside>
-
-          <div className="rounded-2xl border border-white/60 bg-white/40 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-            <h2 className="font-serif text-2xl text-ink md:text-3xl">提交记录</h2>
-            <div className="mt-6 grid gap-4">
-              {submissions.length > 0 ? (
-                submissions.map((item) => (
-                  <article
-                    key={item.id}
-                    className="flex flex-col gap-4 rounded-xl bg-paper/60 p-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <h3 className="font-serif text-xl text-ink">{item.title}</h3>
-                      <p className="mt-1 flex items-center gap-1 text-sm text-ink/45">
-                        <Clock3 className="h-3.5 w-3.5" />
-                        最近更新：{new Date(item.updatedAt).toLocaleString("zh-CN")}
-                      </p>
-                      {item.aiReviewResult && !item.aiReviewResult.passed && (
-                        <p className="mt-2 max-w-2xl break-words text-sm text-rose-700/75">
-                          退回原因：{item.aiReviewResult.reason}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <StatusBadge status={item.status} />
-                      {isSubmissionEditable(item.status) && (
-                        <button
-                          type="button"
-                          onClick={() => startEditingSubmission(item)}
-                          className="inline-flex items-center justify-center gap-2 rounded-full border border-amber/30 bg-amber/10 px-4 py-2 text-sm font-medium text-amber transition-colors hover:bg-amber/15"
-                        >
-                          <PencilLine className="h-4 w-4" />
-                          {item.status === "draft" ? "继续编辑" : "修改后重提"}
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <p className="rounded-xl bg-paper/60 p-5 text-sm text-ink/45">还没有提交记录。</p>
-              )}
-            </div>
-          </div>
-        </section>
+        <PersonalSection submissions={submissions} onCreate={startNewSubmission} onEdit={startEditingSubmission} />
       )}
 
       {section === "review" && (
-        <section className="px-4">
+        <section>
           <AdminWorkshopClient embedded />
         </section>
       )}
 
-      <div className="mt-10 px-4">
-        <div className="rounded-2xl border border-white/60 bg-white/30 p-4 text-sm text-ink/45">
-          <div className="flex items-center gap-2">
-            <ClipboardCheck className="h-4 w-4 text-amber" />
-            当前页面通过 Phase 1 Workshop API 读取指南、榜单和个人提交。
-          </div>
+      <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="rounded-md border border-line bg-surface-quiet p-4 text-sm font-bold leading-6 text-muted">
+          <Icon icon={lighthouseIcons.workshop} className="mr-2 inline h-4 w-4 text-primary" />
+          当前页面通过 Phase 1 Workshop API 读取指南、榜单和个人提交。
         </div>
+        <StatusReference />
       </div>
     </div>
   );
