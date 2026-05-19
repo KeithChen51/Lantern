@@ -60,13 +60,11 @@
   --shadow-focus: 0 0 0 3px rgba(40, 184, 199, 0.24);
 
   --font-sans-stack: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
-  --font-serif-stack: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
   --font-mono-stack: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
   --background: var(--color-page);
   --foreground: var(--color-ink);
   --color-paper: var(--color-page);
-  --color-amber: var(--color-primary);
 }
 
 @theme inline {
@@ -97,10 +95,8 @@
   --color-info: var(--lh-info);
   --color-info-soft: var(--lh-info-soft);
   --color-paper: var(--lh-page);
-  --color-amber: var(--lh-primary);
   --font-sans: var(--font-sans-stack);
   --font-mono: var(--font-mono-stack);
-  --font-serif: var(--font-serif-stack);
   --font-noto: var(--font-sans-stack);
   --radius-xs: 4px;
   --radius-sm: 6px;

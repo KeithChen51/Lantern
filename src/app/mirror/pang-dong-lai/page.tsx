@@ -182,7 +182,7 @@ export default function PangDongLaiPage() {
 
           <ContentSection id="culture" eyebrow="Culture" title="自由与爱如何进入制度">
             <LhPanel className="border-signal/30 bg-signal-soft p-6">
-              <blockquote className="font-serif text-xl leading-9 text-ink">
+              <blockquote className="text-lg font-bold leading-8 text-ink md:text-xl md:leading-9">
                 “有的人说胖东来是神话，其实就是真诚了一点、善良了一点，如果这样都被说是神话，那我们过得多悲哀啊！”
               </blockquote>
               <p className="mt-4 text-sm font-extrabold text-primary-deep">于东来</p>
