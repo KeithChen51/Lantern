@@ -1,5 +1,16 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Icon } from "@iconify/react";
+import {
+  LhCard,
+  LhChip,
+  LhDataTableShell,
+  LhPanel,
+  LhSectionHeader,
+  LhStatusBadge,
+} from "@/components/ui/lighthouse-primitives";
+import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { getActionCaseBySlug } from "../action-cases";
 
 const CASE_SLUG = "substitute-vehicle-policy";
@@ -14,270 +25,271 @@ export default function SubstituteVehiclePolicyPage() {
   const { metadata, brief, background, evidence } = actionCase;
 
   return (
-    <article className="mx-auto max-w-7xl px-4">
-      <div className="mb-8">
+    <article className="space-y-10 pb-16">
+      <div>
         <Link
           href="/action"
-          className="text-sm font-medium text-ink/50 transition-colors hover:text-amber"
+          className="inline-flex items-center gap-2 rounded-sm border border-line bg-panel px-3 py-2 text-sm font-bold text-primary-deep shadow-lh-sm transition-colors hover:border-line-strong hover:bg-primary-soft"
         >
+          <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
           返回笃行
         </Link>
       </div>
 
-      <header className="grid gap-8 border-b border-ink/10 pb-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <LhPanel elevated className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_340px] md:p-8">
         <div>
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-amber">
-            {metadata.kicker}
-          </p>
-          <h1 className="max-w-4xl font-serif text-4xl leading-tight text-ink md:text-6xl">
-            {metadata.title}
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-9 text-ink/68">{brief.oneLine}</p>
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <LhChip tone="primary">
+              <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
+              {metadata.kicker}
+            </LhChip>
+            <LhStatusBadge tone="warning">{metadata.status === "published" ? "已发布" : "草稿"}</LhStatusBadge>
+          </div>
+          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-ink md:text-6xl">{metadata.title}</h1>
+          <p className="mt-6 max-w-4xl text-base leading-8 text-ink-soft md:text-lg">{brief.oneLine}</p>
         </div>
 
-        <aside className="self-start rounded-xl border border-white/60 bg-white/45 p-6 shadow-[0_12px_35px_rgba(0,0,0,0.05)] backdrop-blur-sm">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-ink/35">
-            Audience
-          </p>
-          <p className="text-sm leading-7 text-ink/70">{metadata.audience.join("、")}</p>
+        <aside className="rounded-md border border-line bg-surface-quiet p-5">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Case Meta</p>
+          <dl className="mt-4 grid gap-4 text-sm">
+            <MetaItem label="受众" value={metadata.audience.join("、")} />
+            <MetaItem label="版本" value={metadata.version} />
+            <MetaItem label="负责人" value={metadata.owner} />
+          </dl>
           <div className="mt-5 flex flex-wrap gap-2">
             {metadata.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-amber/20 bg-amber/10 px-3 py-1 text-xs text-amber"
-              >
+              <LhChip key={tag} tone="signal">
                 {tag}
-              </span>
+              </LhChip>
             ))}
           </div>
-          <dl className="mt-6 grid gap-3 border-t border-ink/10 pt-5 text-sm">
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/35">
-                Version
-              </dt>
-              <dd className="mt-1 text-ink/68">{metadata.version}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/35">
-                Owner
-              </dt>
-              <dd className="mt-1 text-ink/68">{metadata.owner}</dd>
-            </div>
-          </dl>
         </aside>
-      </header>
+      </LhPanel>
 
-      <section className="grid gap-8 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">案例速览</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-white/60 bg-white/40 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-amber">
-              Learning Goal
-            </p>
-            <p className="text-sm leading-7 text-ink/70">{brief.learningGoal}</p>
-          </div>
-          <div className="rounded-xl border border-white/60 bg-white/40 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-amber">
-              Case Question
-            </p>
-            <p className="text-sm leading-7 text-ink/70">{brief.caseQuestion}</p>
-          </div>
-        </div>
+      <section className="grid gap-5 md:grid-cols-2">
+        <LhCard className="p-5">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Learning Goal</p>
+          <p className="mt-3 text-base leading-8 text-ink-soft">{brief.learningGoal}</p>
+        </LhCard>
+        <LhCard className="p-5">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Case Question</p>
+          <p className="mt-3 text-base leading-8 text-ink-soft">{brief.caseQuestion}</p>
+        </LhCard>
       </section>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">背景与触发</h2>
-        </div>
+      <ContentSection eyebrow="Trigger Context" title="背景与触发">
         <div className="grid gap-5 md:grid-cols-2">
-          <section className="rounded-xl border border-white/60 bg-white/35 p-6">
-            <h3 className="text-sm font-semibold text-ink">业务背景</h3>
-            <p className="mt-3 text-sm leading-7 text-ink/68">{background.context}</p>
-          </section>
-          <section className="rounded-xl border border-white/60 bg-white/35 p-6">
-            <h3 className="text-sm font-semibold text-ink">触发问题</h3>
-            <p className="mt-3 text-sm leading-7 text-ink/68">{background.trigger}</p>
-          </section>
+          <LhCard className="p-5">
+            <h3 className="text-lg font-extrabold text-ink">业务背景</h3>
+            <p className="mt-3 text-sm leading-7 text-ink-soft">{background.context}</p>
+          </LhCard>
+          <LhCard className="p-5">
+            <h3 className="text-lg font-extrabold text-ink">触发问题</h3>
+            <p className="mt-3 text-sm leading-7 text-ink-soft">{background.trigger}</p>
+          </LhCard>
         </div>
-      </section>
+      </ContentSection>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">认知视角</h2>
-          <p className="mt-3 text-sm leading-7 text-ink/55">
-            这个案例不是门店和总部之间的利益冲突，而是不同角色对“什么才算照顾好客户”的认知差异。
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
+      <ContentSection
+        eyebrow="Cognitive Frames"
+        title="先拆认知视角"
+        description="这个案例不是门店和总部之间的简单冲突，而是不同角色对“什么才算照顾好客户”的判断差异。"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {actionCase.cognitiveFrames.map((frame) => (
-            <section key={frame.label} className="rounded-xl border border-white/60 bg-white/40 p-5">
-              <h3 className="font-serif text-2xl text-ink">{frame.label}</h3>
-              <p className="mt-3 text-sm font-medium text-amber">{frame.focus}</p>
-              <p className="mt-3 text-sm leading-7 text-ink/68">{frame.question}</p>
-            </section>
+            <LhCard key={frame.label} className="grid min-h-52 grid-rows-[auto_auto_1fr] gap-3 p-5">
+              <h3 className="text-xl font-extrabold text-ink">{frame.label}</h3>
+              <LhChip tone="primary">{frame.focus}</LhChip>
+              <p className="text-sm leading-7 text-ink-soft">{frame.question}</p>
+            </LhCard>
           ))}
         </div>
-      </section>
+      </ContentSection>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">关键权衡</h2>
-          <p className="mt-3 text-sm leading-7 text-ink/55">
-            每个节点都需要同时看客户体验、门店实际能力和政策执行风险。
-          </p>
-        </div>
-        <div className="space-y-5">
+      <ContentSection
+        eyebrow="Decision Nodes"
+        title="关键权衡"
+        description="每个节点都同时看客户体验、门店实际能力和政策执行风险。"
+      >
+        <div className="space-y-6">
           {actionCase.decisionNodes.map((decision, index) => (
-            <section
-              key={decision.title}
-              className="rounded-xl border border-white/60 bg-white/45 p-6 shadow-[0_12px_35px_rgba(0,0,0,0.04)]"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
+            <LhPanel key={decision.title} className="p-5 md:p-6">
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber">
-                    0{index + 1}
-                  </p>
-                  <h3 className="font-serif text-2xl text-ink">{decision.title}</h3>
+                  <LhChip tone="primary">Node {index + 1}</LhChip>
+                  <h3 className="mt-3 text-2xl font-extrabold leading-tight text-ink">{decision.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-ink-soft">{decision.trigger}</p>
                 </div>
-                <span className="rounded-full border border-ink/10 bg-white/45 px-3 py-1 text-xs text-ink/50">
-                  {decision.status}
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-ink/68">{decision.trigger}</p>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber">
-                    Customer
-                  </p>
-                  <p className="text-sm leading-7 text-ink/65">{decision.impacts.customer}</p>
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber">
-                    Store
-                  </p>
-                  <p className="text-sm leading-7 text-ink/65">{decision.impacts.store}</p>
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber">
-                    Compliance
-                  </p>
-                  <p className="text-sm leading-7 text-ink/65">{decision.impacts.compliance}</p>
-                </div>
+                <LhStatusBadge tone={decision.status === "已落地" ? "success" : "warning"}>{decision.status}</LhStatusBadge>
               </div>
 
-              <div className="mt-6 border-t border-ink/10 pt-5">
-                <p className="text-sm font-semibold text-ink">最终选择</p>
-                <p className="mt-2 text-sm leading-7 text-ink/68">{decision.finalChoice}</p>
-              </div>
-              <details className="mt-4 rounded-xl border border-ink/10 bg-white/30 p-4">
-                <summary className="cursor-pointer text-sm font-medium text-ink/72">
-                  查看当时面对的选择
-                </summary>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {decision.options.map((option) => (
-                    <div key={option.label} className="rounded-lg border border-ink/10 bg-white/35 p-4">
-                      <p className="text-sm font-semibold text-ink">{option.label}</p>
-                      <p className="mt-2 text-sm leading-6 text-ink/62">{option.description}</p>
-                      <p className="mt-3 text-xs leading-6 text-ink/48">
-                        客户影响：{option.customerEffect}
-                      </p>
-                      <p className="mt-1 text-xs leading-6 text-ink/48">
-                        门店影响：{option.storeEffect}
-                      </p>
-                    </div>
-                  ))}
+              <LhDataTableShell className="mt-5">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>视角</th>
+                      <th>影响判断</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>客户体验</td>
+                      <td>{decision.impacts.customer}</td>
+                    </tr>
+                    <tr>
+                      <td>门店能力</td>
+                      <td>{decision.impacts.store}</td>
+                    </tr>
+                    <tr>
+                      <td>财务合规</td>
+                      <td>{decision.impacts.compliance}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </LhDataTableShell>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <div className="rounded-sm border border-line bg-surface-quiet p-4">
+                  <p className="text-sm font-extrabold text-primary-deep">最终选择</p>
+                  <p className="mt-2 text-sm leading-7 text-ink-soft">{decision.finalChoice}</p>
                 </div>
+                <div className="rounded-sm border border-line bg-surface-quiet p-4">
+                  <p className="text-sm font-extrabold text-primary-deep">风险控制</p>
+                  <p className="mt-2 text-sm leading-7 text-ink-soft">{decision.riskControl}</p>
+                </div>
+              </div>
+
+              <details className="mt-5 rounded-sm border border-line bg-panel p-4">
+                <summary className="cursor-pointer text-sm font-extrabold text-primary-deep">查看当时面对的选择</summary>
+                <LhDataTableShell className="mt-4">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>选择</th>
+                        <th>描述</th>
+                        <th>客户影响</th>
+                        <th>门店影响</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {decision.options.map((option) => (
+                        <tr key={option.label}>
+                          <td>{option.label}</td>
+                          <td>{option.description}</td>
+                          <td>{option.customerEffect}</td>
+                          <td>{option.storeEffect}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </LhDataTableShell>
               </details>
-              <p className="mt-4 text-sm leading-7 text-ink/58">风险控制：{decision.riskControl}</p>
-            </section>
+            </LhPanel>
           ))}
         </div>
-      </section>
+      </ContentSection>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">最终做法</h2>
-        </div>
+      <ContentSection eyebrow="Final Practice" title="最终做法">
         <ol className="grid gap-4 md:grid-cols-2">
           {actionCase.finalPractice.map((item, index) => (
-            <li
-              key={item}
-              className="rounded-xl border border-white/60 bg-white/40 p-5 text-sm leading-7 text-ink/70"
-            >
-              <span className="mb-3 block text-xs font-semibold uppercase tracking-[0.22em] text-amber">
-                0{index + 1}
+            <li key={item} className="rounded-md border border-line bg-panel p-5 shadow-lh-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-primary-soft text-sm font-extrabold text-primary-deep">
+                {index + 1}
               </span>
-              {item}
+              <p className="mt-4 text-sm leading-7 text-ink-soft">{item}</p>
             </li>
           ))}
         </ol>
-      </section>
+      </ContentSection>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">门店启示</h2>
-        </div>
+      <ContentSection eyebrow="Store Takeaways" title="门店启示">
         <div className="grid gap-4 md:grid-cols-2">
           {actionCase.storeTakeaways.map((takeaway) => (
-            <section
-              key={takeaway.title}
-              className="rounded-xl border border-amber/20 bg-amber/10 p-5 text-sm leading-7 text-ink/72"
-            >
-              <h3 className="mb-3 font-serif text-xl text-ink">{takeaway.title}</h3>
-              <p>{takeaway.body}</p>
-            </section>
+            <LhCard key={takeaway.title} className="p-5">
+              <h3 className="text-lg font-extrabold text-ink">{takeaway.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-ink-soft">{takeaway.body}</p>
+            </LhCard>
           ))}
         </div>
-      </section>
+      </ContentSection>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">可复用原则</h2>
-        </div>
-        <div className="space-y-3">
+      <ContentSection eyebrow="Reusable Principles" title="可复用原则">
+        <div className="grid gap-3">
           {actionCase.reusablePrinciples.map((principle) => (
-            <p
-              key={principle}
-              className="border-l-2 border-amber/45 bg-white/30 px-5 py-3 text-sm leading-7 text-ink/70"
-            >
-              {principle}
-            </p>
+            <div key={principle} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-md border border-line bg-surface-quiet p-4 text-sm leading-7 text-ink-soft">
+              <Icon icon={lighthouseIcons.status} className="mt-1 h-5 w-5 text-success" />
+              <p>{principle}</p>
+            </div>
           ))}
         </div>
-      </section>
+      </ContentSection>
 
-      <section className="grid gap-8 border-t border-ink/10 py-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div>
-          <h2 className="font-serif text-2xl text-ink">来源材料</h2>
-          <p className="mt-3 text-sm leading-7 text-ink/55">
-            原始正文和访谈材料保留为维护信息，前台只呈现结构化案例。
-          </p>
-        </div>
-        <details className="rounded-xl border border-dashed border-ink/15 bg-white/25 p-5">
-          <summary className="cursor-pointer text-sm font-medium text-ink/72">
-            查看维护字段
-          </summary>
-          <div className="mt-5 space-y-4">
+      <ContentSection
+        eyebrow="Source Material"
+        title="来源材料"
+        description="原始正文和访谈材料保留为维护信息，前台只呈现结构化案例。"
+      >
+        <details className="rounded-md border border-dashed border-line-strong bg-surface-quiet p-5">
+          <summary className="cursor-pointer text-sm font-extrabold text-primary-deep">查看维护字段</summary>
+          <div className="mt-5 space-y-5">
             {evidence.sourceMaterials.map((source) => (
-              <div key={source.title} className="border-t border-ink/10 pt-4 first:border-t-0 first:pt-0">
-                <p className="text-sm font-semibold text-ink">{source.title}</p>
-                <p className="mt-1 text-xs text-amber">{source.type} · {source.visibility}</p>
-                <p className="mt-2 text-sm leading-7 text-ink/62">{source.note}</p>
+              <div key={source.title} className="border-t border-line pt-4 first:border-t-0 first:pt-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-extrabold text-ink">{source.title}</p>
+                  <LhChip tone="neutral">{source.type}</LhChip>
+                  <LhChip tone="warning">{source.visibility}</LhChip>
+                </div>
+                <p className="mt-2 text-sm leading-7 text-ink-soft">{source.note}</p>
               </div>
             ))}
-            <div className="space-y-2 border-t border-ink/10 pt-4">
+            <div className="space-y-2 border-t border-line pt-4">
               {evidence.sourceNotes.map((note) => (
-                <p key={note} className="text-xs leading-6 text-ink/48">
+                <p key={note} className="text-xs leading-6 text-muted">
                   {note}
                 </p>
               ))}
             </div>
           </div>
         </details>
-      </section>
+      </ContentSection>
+
+      <LhPanel className="grid gap-5 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">Next Use</p>
+          <p className="mt-2 text-sm leading-7 text-ink-soft">
+            这个案例后续可以拆成 Workshop 的岗位 Do and Don&apos;t，也可以作为 Hermit 回答代用车、等待焦虑、政策弹性问题时的引用材料。
+          </p>
+        </div>
+        <LhChip tone="signal">Action to Workshop / Hermit</LhChip>
+      </LhPanel>
     </article>
+  );
+}
+
+function MetaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted">{label}</dt>
+      <dd className="mt-1 leading-6 text-ink-soft">{value}</dd>
+    </div>
+  );
+}
+
+function ContentSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-5">
+      <LhSectionHeader eyebrow={eyebrow} title={title} description={description} />
+      {children}
+    </section>
   );
 }
