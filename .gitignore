@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Hermit knowledge base vectors (generated)
 knowledge-vectors.json
+
+# Local Netlify folder
+.netlify

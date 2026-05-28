@@ -6,7 +6,6 @@ import {
   LhDataTableShell,
   LhPageHero,
   LhSectionHeader,
-  LhStatusBadge,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { ACTION_CASES } from "./action-cases";
@@ -21,10 +20,7 @@ export default function ActionPage() {
   return (
     <div className="space-y-8 pb-12">
       <LhPageHero
-        icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
-        eyebrow="笃行"
-        meta={<LhStatusBadge tone="warning">判断训练</LhStatusBadge>}
-        title="把真实服务实践，拆成可以复盘的判断训练。"
+        title="回到决策的十字路口，看清楚我们的理念和权衡。"
         description={
           <p>
             笃行记录内部已经发生的服务实践。重点不是把案例讲完，而是回到真实政策、真实门店和真实客户场景里，看客户体验是否被守住，门店是否具备执行条件，政策指标是否真的服务于客户价值。

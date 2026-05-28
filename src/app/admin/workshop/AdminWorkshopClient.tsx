@@ -127,8 +127,8 @@ function AdminHeader({
     <LhPanel className={cn("mb-6 p-5", !embedded && "mx-1 md:mx-4")}>
       <LhSectionHeader
         eyebrow="审核管理"
-        title={embedded ? "审核队列" : "共创审核"}
-        description="品牌方最高管理员在这里做最后编辑、发布或退回。队列只处理 AI 初审通过后的应做/避免内容。"
+        title={embedded ? "审核队列" : "行动指南审核"}
+        description="品牌方最高管理员在这里做最后编辑、发布或退回。队列只处理初审通过后的应做/避免内容。"
         action={
           <LhButton
             type="button"
@@ -149,7 +149,7 @@ function QueueSummary({ submissions, edits }: { submissions: Submission[]; edits
   const readyCount = submissions.filter((submission) => isReadyForPublish(edits[submission.id] ?? toEditable(submission))).length;
   const needsContext = submissions.length - readyCount;
   const stats = [
-    { label: "待审核", value: submissions.length, note: "AI 初审通过后进入队列", icon: "solar:clock-circle-bold" },
+    { label: "待审核", value: submissions.length, note: "初审通过后进入队列", icon: lighthouseIcons.clock },
     { label: "信息完整", value: readyCount, note: "具备发布所需字段", icon: lighthouseIcons.status },
     { label: "需补来源", value: needsContext, note: "缺少场景、原则或动作", icon: lighthouseIcons.warning },
   ];
@@ -357,7 +357,7 @@ function ReviewCard({
           <div className="min-w-0">
             <LhChip tone="primary">
               <Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />
-              共创提交
+              行动建议
             </LhChip>
             <ReviewField
               label="标题"

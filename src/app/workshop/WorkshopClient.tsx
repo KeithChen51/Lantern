@@ -16,7 +16,7 @@ import {
   LhTextArea,
   LhTextField,
 } from "@/components/ui/lighthouse-primitives";
-import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { lighthouseIcons, type LighthouseIcon } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
 import {
   getVisibleWorkshopSections,
@@ -98,7 +98,7 @@ const initialForm: FormState = {
   dontText: "",
 };
 
-const sectionCopy: Record<WorkshopSectionId, { title: string; description: string; icon: string }> = {
+const sectionCopy: Record<WorkshopSectionId, { title: string; description: string; icon: LighthouseIcon }> = {
   public: {
     title: "公开区",
     description: "只展示已审核发布的岗位应做/避免，便于一线按角色、场景检索和复用。",
@@ -106,7 +106,7 @@ const sectionCopy: Record<WorkshopSectionId, { title: string; description: strin
   },
   submit: {
     title: "提交区",
-    description: "把服务经验写成角色、场景、应做、方法、避免，先进入 AI 初审，再进入管理员审核。",
+    description: "把服务经验写成角色、场景、应做、方法、避免，先进入系统初审，再进入管理员审核。",
     icon: lighthouseIcons.add,
   },
   personal: {
@@ -116,7 +116,7 @@ const sectionCopy: Record<WorkshopSectionId, { title: string; description: strin
   },
   review: {
     title: "审核区",
-    description: "品牌方最高管理员在共创内完成最后编辑、发布或退回。",
+    description: "品牌方最高管理员在这里完成最后编辑、发布或退回。",
     icon: lighthouseIcons.admin,
   },
 };
@@ -124,7 +124,7 @@ const sectionCopy: Record<WorkshopSectionId, { title: string; description: strin
 const statusMeta: Record<string, { label: string; tone: BadgeTone; description: string }> = {
   draft: { label: "草稿", tone: "info", description: "尚未提交，可继续编辑。" },
   submitted: { label: "已提交", tone: "info", description: "已进入初审流程。" },
-  ai_rejected: { label: "AI 初审退回", tone: "danger", description: "补齐可执行细节后再提交。" },
+  ai_rejected: { label: "初审退回", tone: "danger", description: "补齐可执行细节后再提交。" },
   pending_admin_review: { label: "待管理员审核", tone: "warning", description: "等待品牌管理员最终确认。" },
   admin_rejected: { label: "管理员退回", tone: "danger", description: "按审核意见修改后重提。" },
   published: { label: "已发布", tone: "success", description: "已进入公开区，可被引用。" },
@@ -254,13 +254,10 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
   return (
     <LhPageHero
       className="mb-6"
-      icon={<Icon icon={lighthouseIcons.workshop} className="h-4 w-4" />}
-      eyebrow="共创"
-      meta={<LhChip tone="neutral">长期开放提交</LhChip>}
-      title="把服务经验，沉淀成可审核、可复用的岗位应做与避免。"
+      title="把现场做对的事，写成大家都能用的行动指南。"
       description={
         <p>
-          共创不扩成论坛。它只处理三件事：一线提交具体动作，系统保留来源和状态，品牌管理员把合格内容发布为公共指南。
+          一次处理得好的等待安抚、一次少走弯路的解释、一次有效的跨岗配合，都值得留下来。写清角色、场景、应该怎么做、哪些话不要说，审核通过后就会成为门店同事可参考的应做与避免。
         </p>
       }
       asideTitle="发布流程"
@@ -271,14 +268,14 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
       ]}
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-bold text-muted">公开区、提交区、个人区固定保留；管理员只多一个审核区。</p>
+          <p className="text-sm font-bold text-muted">先写清一个具体场景，比写一套大原则更有用。</p>
           <LhButton
             type="button"
             variant="primary"
             icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
             onClick={onCreate}
           >
-            新建共创
+            提交行动建议
           </LhButton>
         </div>
       }
@@ -291,7 +288,7 @@ function ContributionBoard({ items }: { items: ContributionStat[] }) {
     <LhPanel className="p-5">
       <div className="mb-5 flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
-          <Icon icon="solar:cup-star-bold" className="h-5 w-5" />
+          <Icon icon={lighthouseIcons.cupStar} className="h-5 w-5" />
         </span>
         <div>
           <h3 className="text-xl font-extrabold text-ink">贡献榜单</h3>
@@ -367,7 +364,7 @@ function GuideCard({ guide }: { guide: PublishedGuide }) {
         </span>
         <span className="inline-flex items-center gap-2 text-primary-deep">
           可作为路引引用素材
-          <Icon icon="solar:arrow-right-up-bold" className="h-4 w-4" />
+          <Icon icon={lighthouseIcons.arrowRightUp} className="h-4 w-4" />
         </span>
       </div>
     </LhCard>
@@ -423,7 +420,7 @@ function PublicSection({
             description="来自管理员审核发布的应做/避免内容。先筛选角色和场景，再进入可执行动作。"
             action={
               <LhButton type="button" variant="primary" icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />} onClick={onCreate}>
-                提交新的应做/避免
+                提交行动建议
               </LhButton>
             }
           />
@@ -457,7 +454,7 @@ function PublicSection({
         {loading ? (
           <StateNotice tone="info">
             <Icon icon={lighthouseIcons.refresh} className="mr-2 inline h-4 w-4 animate-spin" />
-            正在加载共创数据
+            正在加载行动指南
           </StateNotice>
         ) : guides.length > 0 ? (
           guides.map((guide) => <GuideCard key={guide.id} guide={guide} />)
@@ -496,7 +493,7 @@ function SubmissionForm({
         title={editingSubmissionId ? "修改应做/避免" : "提交应做/避免"}
         description={
           editingSubmissionId
-            ? "当前修改的是已退回内容，提交后会重新进入 AI 初审。"
+            ? "当前修改的是已退回内容，提交后会重新进入初审。"
             : "至少填写应做或避免一项。方法用于补充具体执行方式。"
         }
         action={
@@ -674,7 +671,7 @@ function PersonalSection({
             <Icon icon={lighthouseIcons.user} className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="text-xl font-extrabold text-ink">我的共创</h2>
+            <h2 className="text-xl font-extrabold text-ink">我的提交</h2>
             <p className="text-sm text-muted">当前演示用户</p>
           </div>
         </div>
@@ -838,8 +835,8 @@ export function WorkshopClient() {
       });
       setFeedback(
         reviewed.status === "pending_admin_review"
-          ? "AI 初审通过，已进入品牌方管理员审核队列。"
-          : `AI 初审未通过：${reviewed.aiReviewResult?.reason ?? "需要补充内容"}`,
+          ? "初审通过，已进入品牌方管理员审核队列。"
+          : `初审未通过：${reviewed.aiReviewResult?.reason ?? "需要补充内容"}`,
       );
       setForm({ ...initialForm, doText: "", howText: "", dontText: "" });
       setEditingSubmissionId(null);
@@ -897,7 +894,7 @@ export function WorkshopClient() {
       <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="rounded-sm border border-line bg-surface-quiet p-4 text-sm font-bold leading-6 text-muted">
           <Icon icon={lighthouseIcons.workshop} className="mr-2 inline h-4 w-4 text-primary" />
-          当前页面通过共创接口读取指南、榜单和个人提交。
+          当前页面展示已发布指南、贡献榜单和个人提交记录。
         </div>
         <StatusReference />
       </div>

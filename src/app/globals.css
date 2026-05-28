@@ -6,7 +6,11 @@
   --lh-muted: #5f7b8b;
   --lh-faint: #8da4ad;
   --lh-page: #f2f8f8;
+  --lh-page-start: #f8fbfa;
+  --lh-page-end: #eef6f3;
+  --lh-body-accent-rgb: 40, 184, 199;
   --lh-panel: #fefffb;
+  --lh-panel-soft: #f7fbfa;
   --lh-raised: #ffffff;
   --lh-surface: #fbfefd;
   --lh-surface-quiet: #f6fbf9;
@@ -21,8 +25,24 @@
   --lh-signal: #28b8c7;
   --lh-signal-deep: #137b89;
   --lh-signal-soft: #d8f5f7;
+  --lh-action: #176e8b;
+  --lh-action-deep: #0f5268;
+  --lh-chart: #e8f3f1;
+  --lh-chart-strong: #d2e5e5;
   --lh-deck: #0e334b;
   --lh-deck-soft: #174b63;
+  --lh-deck-text: #effafa;
+  --lh-deck-text-soft: #c4d9dd;
+  --lh-deck-muted: #8eabb5;
+  --lh-deck-muted-strong: #c6e3e6;
+  --lh-deck-icon: #a4bdc6;
+  --lh-deck-panel-bg: rgba(254, 255, 251, 0.08);
+  --lh-deck-panel-hover: rgba(254, 255, 251, 0.12);
+  --lh-deck-panel-active: rgba(216, 245, 247, 0.12);
+  --lh-deck-panel-border: rgba(216, 245, 247, 0.16);
+  --lh-deck-panel-active-border: rgba(40, 184, 199, 0.3);
+  --lh-brass: #b4874d;
+  --lh-brass-soft: #f2e6d3;
   --lh-success: #2d8560;
   --lh-success-soft: #dcf2e8;
   --lh-warning: #a86420;
@@ -31,14 +51,27 @@
   --lh-danger-soft: #f5dfdd;
   --lh-info: #3e89a8;
   --lh-info-soft: #deedf3;
+  --lh-max: 1220px;
 
   --color-page: var(--lh-page);
+  --color-page-start: var(--lh-page-start);
+  --color-page-end: var(--lh-page-end);
   --color-panel: var(--lh-panel);
+  --color-panel-soft: var(--lh-panel-soft);
   --color-raised: var(--lh-raised);
   --color-surface: var(--lh-surface);
   --color-surface-quiet: var(--lh-surface-quiet);
+  --color-chart: var(--lh-chart);
+  --color-chart-strong: var(--lh-chart-strong);
   --color-deck: var(--lh-deck);
   --color-deck-soft: var(--lh-deck-soft);
+  --color-deck-text: var(--lh-deck-text);
+  --color-deck-text-soft: var(--lh-deck-text-soft);
+  --color-deck-muted: var(--lh-deck-muted);
+  --color-deck-muted-strong: var(--lh-deck-muted-strong);
+  --color-deck-icon: var(--lh-deck-icon);
+  --color-brass: var(--lh-brass);
+  --color-brass-soft: var(--lh-brass-soft);
   --color-ink: var(--lh-ink);
   --color-ink-soft: var(--lh-ink-soft);
   --color-muted: var(--lh-muted);
@@ -49,6 +82,8 @@
   --color-signal: var(--lh-signal);
   --color-signal-deep: var(--lh-signal-deep);
   --color-signal-soft: var(--lh-signal-soft);
+  --color-action: var(--lh-action);
+  --color-action-deep: var(--lh-action-deep);
   --color-line: var(--lh-line);
   --color-line-strong: var(--lh-line-strong);
   --color-danger: var(--lh-danger);
@@ -63,6 +98,7 @@
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
+  --radius-lg: 12px;
   --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 8px 18px rgba(15, 45, 68, 0.055);
   --shadow-md: 0 1px 0 rgba(255, 255, 255, 0.86) inset, 0 20px 42px rgba(15, 45, 68, 0.105);
   --shadow-deck: 0 30px 68px rgba(14, 51, 75, 0.24);
@@ -74,18 +110,88 @@
   --background: var(--color-page);
   --foreground: var(--color-ink);
   --color-paper: var(--color-page);
+  --color-amber: var(--lh-signal);
+}
+
+html[data-lighthouse-theme="amber"] {
+  --lh-ink: #2f2a23;
+  --lh-ink-soft: #635847;
+  --lh-muted: #857764;
+  --lh-faint: #a99a84;
+  --lh-page: #f6f0e4;
+  --lh-page-start: #faf6ed;
+  --lh-page-end: #efe4d2;
+  --lh-body-accent-rgb: 185, 130, 46;
+  --lh-panel: #fffdf7;
+  --lh-panel-soft: #fbf4e9;
+  --lh-raised: #fffdf7;
+  --lh-surface: #fbf4e9;
+  --lh-surface-quiet: #f5ead8;
+  --lh-fog: #e5d0aa;
+  --lh-line: #dfcfb3;
+  --lh-line-strong: #c6aa78;
+  --lh-hairline: rgba(198, 170, 120, 0.62);
+  --lh-hairline-soft: rgba(223, 207, 179, 0.72);
+  --lh-primary: #8f6424;
+  --lh-primary-deep: #5f411d;
+  --lh-primary-soft: #f3dfbc;
+  --lh-signal: #b9822e;
+  --lh-signal-deep: #8f6424;
+  --lh-signal-soft: #fae7c4;
+  --lh-action: #d4a04a;
+  --lh-action-deep: #b77f2f;
+  --lh-chart: #f2e8d6;
+  --lh-chart-strong: #e5d0aa;
+  --lh-deck: #efe0c7;
+  --lh-deck-soft: #e5d0aa;
+  --lh-deck-text: #3e3326;
+  --lh-deck-text-soft: #635847;
+  --lh-deck-muted: #74624b;
+  --lh-deck-muted-strong: #4e402e;
+  --lh-deck-icon: #a36e1d;
+  --lh-deck-panel-bg: rgba(255, 253, 247, 0.35);
+  --lh-deck-panel-hover: rgba(255, 253, 247, 0.55);
+  --lh-deck-panel-active: rgba(255, 248, 235, 0.82);
+  --lh-deck-panel-border: rgba(128, 98, 52, 0.22);
+  --lh-deck-panel-active-border: rgba(210, 162, 78, 0.55);
+  --lh-brass: #b9822e;
+  --lh-brass-soft: #fae7c4;
+  --lh-success: #4f8061;
+  --lh-success-soft: #deefe4;
+  --lh-warning: #a86420;
+  --lh-warning-soft: #f6eadb;
+  --lh-danger: #a34a3d;
+  --lh-danger-soft: #f4dfd9;
+  --lh-info: #5c7f86;
+  --lh-info-soft: #e4ecec;
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 10px 22px rgba(82, 57, 22, 0.07);
+  --shadow-md: 0 1px 0 rgba(255, 255, 255, 0.88) inset, 0 26px 64px rgba(82, 57, 22, 0.12);
+  --shadow-deck: 0 28px 68px rgba(108, 78, 33, 0.16);
+  --shadow-focus: 0 0 0 3px rgba(185, 130, 46, 0.24);
 }
 
 @theme inline {
   --color-background: var(--color-page);
   --color-foreground: var(--color-ink);
   --color-page: var(--lh-page);
+  --color-page-start: var(--lh-page-start);
+  --color-page-end: var(--lh-page-end);
   --color-panel: var(--lh-panel);
+  --color-panel-soft: var(--lh-panel-soft);
   --color-raised: var(--lh-raised);
   --color-surface: var(--lh-surface);
   --color-surface-quiet: var(--lh-surface-quiet);
+  --color-chart: var(--lh-chart);
+  --color-chart-strong: var(--lh-chart-strong);
   --color-deck: var(--lh-deck);
   --color-deck-soft: var(--lh-deck-soft);
+  --color-deck-text: var(--lh-deck-text);
+  --color-deck-text-soft: var(--lh-deck-text-soft);
+  --color-deck-muted: var(--lh-deck-muted);
+  --color-deck-muted-strong: var(--lh-deck-muted-strong);
+  --color-deck-icon: var(--lh-deck-icon);
+  --color-brass: var(--lh-brass);
+  --color-brass-soft: var(--lh-brass-soft);
   --color-ink: var(--lh-ink);
   --color-ink-soft: var(--lh-ink-soft);
   --color-muted: var(--lh-muted);
@@ -96,6 +202,8 @@
   --color-signal: var(--lh-signal);
   --color-signal-deep: var(--lh-signal-deep);
   --color-signal-soft: var(--lh-signal-soft);
+  --color-action: var(--lh-action);
+  --color-action-deep: var(--lh-action-deep);
   --color-line: var(--lh-line);
   --color-line-strong: var(--lh-line-strong);
   --color-danger: var(--lh-danger);
@@ -107,12 +215,15 @@
   --color-info: var(--lh-info);
   --color-info-soft: var(--lh-info-soft);
   --color-paper: var(--lh-page);
+  --color-amber: var(--lh-signal);
   --font-sans: var(--font-sans-stack);
   --font-mono: var(--font-mono-stack);
   --font-noto: var(--font-sans-stack);
+  --container-lighthouse: var(--lh-max);
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
+  --radius-lg: 12px;
   --shadow-lh-sm: var(--shadow-sm);
   --shadow-lh-md: var(--shadow-md);
   --shadow-lh-deck: var(--shadow-deck);
@@ -131,7 +242,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(180deg, #f8fbfa 0%, var(--color-page) 58%, #eef6f3 100%);
+    linear-gradient(180deg, var(--color-page-start) 0%, var(--color-page) 58%, var(--color-page-end) 100%);
   background-size: auto;
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
@@ -150,7 +261,7 @@ body::before {
   pointer-events: none;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.74), transparent 300px),
-    linear-gradient(118deg, transparent 0 18%, rgba(40, 184, 199, 0.055) 18% 23%, transparent 23% 100%);
+    linear-gradient(118deg, transparent 0 18%, rgba(var(--lh-body-accent-rgb), 0.055) 18% 23%, transparent 23% 100%);
 }
 
 ::selection {

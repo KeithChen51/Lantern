@@ -11,6 +11,7 @@ import {
 } from "@/modules/workshop";
 import { AppError, toErrorResponse } from "@/shared/errors";
 import { optionalString, requireString } from "@/shared/validation";
+import { getWorkshopUnavailableMessage } from "./workshop-errors";
 
 const authService = createAuthService(authRepository);
 const tenantService = createTenantService(tenantRepository);
@@ -18,11 +19,7 @@ export const workshopService = createWorkshopService(workshopRepository);
 
 function assertDatabaseConfigured() {
   if (!process.env.DATABASE_URL) {
-    throw new AppError(
-      "bad_request",
-      "共创功能需要先配置 DATABASE_URL，并完成 MySQL 的 Prisma 迁移和种子数据。",
-      503,
-    );
+    throw new AppError("bad_request", getWorkshopUnavailableMessage(), 503);
   }
 }
 

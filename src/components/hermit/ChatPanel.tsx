@@ -49,7 +49,7 @@ export function ChatPanel() {
       <header className="border-b border-line bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface-quiet))] px-5 py-4 md:px-6">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary text-panel shadow-lh-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
               <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
             </span>
             <div className="min-w-0">
@@ -71,51 +71,85 @@ export function ChatPanel() {
 
       <main
         ref={scrollRef}
-        className="min-h-0 overflow-y-auto bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface)_62%,var(--color-surface-quiet))] px-4 py-6 md:px-6"
+        className="min-h-0 overflow-y-auto bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface)_62%,var(--color-surface-quiet))] px-4 py-5 md:px-6"
       >
-        <div className="mx-auto grid max-w-4xl gap-5">
-          {!hasMessages && <AssistantIntro />}
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
-          {isLoading && messages[messages.length - 1]?.role !== "assistant" && <TypingIndicator />}
-        </div>
-      </main>
-
-      <footer className="bg-surface-quiet px-4 py-4 md:px-6">
-        <div className="mx-auto max-w-4xl">
-          <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
-          {!hasMessages && (
+        <div
+          className={cn(
+            "mx-auto grid max-w-4xl gap-5",
+            !hasMessages && "min-h-full content-center py-5 md:py-8",
+          )}
+        >
+          {!hasMessages ? (
+            <EmptyChatStart
+              input={input}
+              isLoading={isLoading}
+              onInputChange={setInput}
+              onSubmit={handleSubmit}
+              onSuggestedQuestion={handleSuggestedQuestion}
+            />
+          ) : (
             <>
-              <SuggestedQuestions onSelect={handleSuggestedQuestion} disabled={isLoading} />
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold leading-5 text-muted">
-                <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
-                <span>路引不替代现场责任与最终决策。</span>
-              </div>
+              {messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              {isLoading && messages[messages.length - 1]?.role !== "assistant" && <TypingIndicator />}
             </>
           )}
         </div>
+      </main>
+
+      {hasMessages && (
+      <footer className="bg-surface-quiet px-4 py-4 md:px-6">
+        <div className="mx-auto max-w-4xl">
+          <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
+        </div>
       </footer>
+      )}
     </LhPanel>
   );
 }
 
-function AssistantIntro() {
+function EmptyChatStart({
+  input,
+  isLoading,
+  onInputChange,
+  onSubmit,
+  onSuggestedQuestion,
+}: {
+  input: string;
+  isLoading: boolean;
+  onInputChange: (value: string) => void;
+  onSubmit: () => void;
+  onSuggestedQuestion: (question: string) => void;
+}) {
   return (
-    <article className="mx-auto flex w-full max-w-2xl flex-col items-center px-3 py-8 text-center md:py-12">
-      <span className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary text-panel shadow-lh-sm">
-        <Icon icon={lighthouseIcons.hermit} className="h-6 w-6" />
-      </span>
-      <h2 className="mt-5 text-2xl font-extrabold leading-tight text-ink">把服务场景直接发给路引</h2>
-      <p className="mt-3 max-w-xl text-sm font-bold leading-7 text-ink-soft md:text-base md:leading-8">
-        不需要先选模块。说明客户状态、限制条件和你卡住的判断，路引会按事实、维度、依据和下一步动作来回应。
-      </p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2 text-xs font-extrabold text-muted">
-        <span className="rounded-sm border border-line bg-surface px-2.5 py-1">可追问</span>
-        <span className="rounded-sm border border-line bg-surface px-2.5 py-1">会标出证据不足</span>
-        <span className="rounded-sm border border-line bg-surface px-2.5 py-1">输出可执行动作</span>
+    <section className="grid gap-4">
+      <article className="grid gap-3 text-center">
+        <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
+          <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-2xl font-extrabold leading-tight text-ink">把服务场景直接发给路引</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm font-bold leading-7 text-ink-soft md:text-base">
+            说明客户状态、限制条件和你卡住的判断，路引会按事实、维度、依据和下一步动作回应。
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2 text-xs font-extrabold text-muted">
+          <span className="rounded-sm border border-line bg-surface px-2.5 py-1">可追问</span>
+          <span className="rounded-sm border border-line bg-surface px-2.5 py-1">会标出证据不足</span>
+          <span className="rounded-sm border border-line bg-surface px-2.5 py-1">输出可执行动作</span>
+        </div>
+      </article>
+
+      <div className="mx-auto w-full max-w-3xl">
+        <ChatInput value={input} onChange={onInputChange} onSubmit={onSubmit} isLoading={isLoading} />
+        <SuggestedQuestions onSelect={onSuggestedQuestion} disabled={isLoading} />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold leading-5 text-muted">
+          <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
+          <span>路引不替代现场责任与最终决策。</span>
+        </div>
       </div>
-    </article>
+    </section>
   );
 }
 

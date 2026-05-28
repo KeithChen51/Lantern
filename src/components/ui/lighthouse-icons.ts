@@ -1,31 +1,48 @@
+import type { IconifyIcon } from "@iconify/types";
+import { solarIconSet } from "./lighthouse-icon-data";
+
+type SolarIconName = keyof typeof solarIconSet.icons;
+
+function solarIcon(name: SolarIconName): IconifyIcon {
+  return {
+    width: 24,
+    height: 24,
+    ...solarIconSet.icons[name],
+  };
+}
+
 export const lighthouseIcons = {
-  logo: "solar:map-point-wave-bold",
-  heart: "solar:heart-bold",
-  mirror: "solar:book-2-bold",
-  action: "solar:bolt-bold",
-  workshop: "solar:clipboard-check-bold",
-  hermit: "solar:magic-stick-3-bold",
-  search: "solar:magnifer-linear",
-  send: "solar:plain-bold",
-  edit: "solar:pen-2-bold",
-  delete: "solar:trash-bin-trash-bold",
-  publish: "solar:upload-square-bold",
-  reject: "solar:undo-left-round-bold",
-  save: "solar:diskette-bold",
-  close: "solar:close-circle-bold",
-  pin: "solar:pin-bold",
-  unpin: "solar:pin-circle-bold",
-  menu: "solar:sidebar-minimalistic-bold",
-  bell: "solar:bell-bold",
-  more: "solar:menu-dots-bold",
-  refresh: "solar:refresh-bold",
-  add: "solar:add-circle-bold",
-  document: "solar:document-text-bold",
-  status: "solar:check-circle-bold",
-  warning: "solar:danger-triangle-bold",
-  info: "solar:info-circle-bold",
-  admin: "solar:shield-check-bold",
-  user: "solar:user-rounded-bold",
+  logo: solarIcon("map-point-wave-bold"),
+  heart: solarIcon("heart-bold"),
+  mirror: solarIcon("book-2-bold"),
+  action: solarIcon("bolt-bold"),
+  workshop: solarIcon("clipboard-check-bold"),
+  hermit: solarIcon("magic-stick-3-bold"),
+  search: solarIcon("magnifer-linear"),
+  send: solarIcon("plain-bold"),
+  edit: solarIcon("pen-2-bold"),
+  delete: solarIcon("trash-bin-trash-bold"),
+  publish: solarIcon("upload-square-bold"),
+  reject: solarIcon("undo-left-round-bold"),
+  save: solarIcon("diskette-bold"),
+  close: solarIcon("close-circle-bold"),
+  pin: solarIcon("pin-bold"),
+  unpin: solarIcon("pin-circle-bold"),
+  menu: solarIcon("sidebar-minimalistic-bold"),
+  bell: solarIcon("bell-bold"),
+  more: solarIcon("menu-dots-bold"),
+  refresh: solarIcon("refresh-bold"),
+  add: solarIcon("add-circle-bold"),
+  document: solarIcon("document-text-bold"),
+  status: solarIcon("check-circle-bold"),
+  warning: solarIcon("danger-triangle-bold"),
+  info: solarIcon("info-circle-bold"),
+  admin: solarIcon("shield-check-bold"),
+  user: solarIcon("user-rounded-bold"),
+  cupStar: solarIcon("cup-star-bold"),
+  arrowRightUp: solarIcon("arrow-right-up-bold"),
+  clock: solarIcon("clock-circle-bold"),
 } as const;
 
 export type LighthouseIconName = keyof typeof lighthouseIcons;
+export type LighthouseIcon = (typeof lighthouseIcons)[LighthouseIconName];

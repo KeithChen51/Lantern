@@ -3,24 +3,26 @@ import { ACTION_CASES, type ActionCase, getActionCaseBySlug } from "./action-cas
 
 describe("action cases", () => {
   it("stores Action cases with normalized maintenance dimensions", () => {
-    const actionCase = getActionCaseBySlug("substitute-vehicle-policy") as ActionCase | undefined;
+    const actionCase = getActionCaseBySlug("driver-partner-rest-area") as ActionCase | undefined;
 
     expect(actionCase?.schemaVersion).toBe(1);
-    expect(actionCase?.metadata.title).toBe("代用车政策演变中的权衡与认知冲突");
+    expect(actionCase?.metadata.title).toBe("是否为代驾司机设置合作伙伴休息区");
     expect(actionCase?.metadata.audience).toContain("门店伙伴");
-    expect(actionCase?.metadata.tags).toEqual(expect.arrayContaining(["客户体验", "门店能力", "政策权衡"]));
-    expect(actionCase?.brief.oneLine).toContain("客户体验");
-    expect(actionCase?.background.trigger).toContain("政策运行");
+    expect(actionCase?.metadata.tags).toEqual(expect.arrayContaining(["客户体验", "合作伙伴", "服务边界"]));
+    expect(actionCase?.brief.oneLine).toContain("长期口碑");
+    expect(actionCase?.brief.caseQuestion).toContain("合作伙伴休息区");
+    expect(actionCase?.background.trigger).toContain("店外阴凉处");
+    expect(actionCase?.caseBody.paragraphs.join("")).toContain("代驾司机是车主把车交给门店的最后一棒");
     expect(actionCase?.cognitiveFrames.map((frame: { label: string }) => frame.label)).toEqual([
+      "成本视角",
+      "边界视角",
       "客户视角",
-      "门店视角",
-      "政策视角",
-      "指标视角",
+      "网络视角",
     ]);
     expect(actionCase?.decisionNodes[0]).toEqual(
       expect.objectContaining({
-        title: "注册年限：从 12 个月到 15/18/24 个月",
-        finalChoice: expect.stringContaining("15"),
+        title: "现场选择：请进来坐，还是让他在店外等",
+        finalChoice: expect.stringContaining("选择A"),
         impacts: expect.objectContaining({
           customer: expect.any(String),
           store: expect.any(String),
@@ -30,8 +32,8 @@ describe("action cases", () => {
     );
     expect(actionCase?.storeTakeaways).toHaveLength(4);
     expect(actionCase?.evidence.sourceMaterials[0]).toEqual(
-      expect.objectContaining({ type: "访谈转写", visibility: "maintainer_only" }),
+      expect.objectContaining({ type: "润色稿", visibility: "maintainer_only" }),
     );
-    expect(ACTION_CASES.map((item) => item.slug)).toContain("substitute-vehicle-policy");
+    expect(ACTION_CASES.map((item) => item.slug)).toContain("driver-partner-rest-area");
   });
 });

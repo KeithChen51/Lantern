@@ -1,14 +1,11 @@
 import Link from "next/link";
-import { Icon } from "@iconify/react";
 import {
   LhCard,
   LhChip,
   LhDataTableShell,
   LhPageHero,
   LhSectionHeader,
-  LhStatusBadge,
 } from "@/components/ui/lighthouse-primitives";
-import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 
 const caseCards = [
   {
@@ -39,9 +36,6 @@ export default function MirrorPage() {
   return (
     <div className="space-y-8 pb-12">
       <LhPageHero
-        icon={<Icon icon={lighthouseIcons.mirror} className="h-4 w-4" />}
-        eyebrow="镜鉴"
-        meta={<LhStatusBadge tone="info">标杆知识库</LhStatusBadge>}
         title="在别人的灯火里，看见服务文化可以怎样成立。"
         description={
           <p>

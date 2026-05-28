@@ -14,16 +14,16 @@ import {
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { getActionCaseBySlug } from "../action-cases";
 
-const CASE_SLUG = "substitute-vehicle-policy";
+const CASE_SLUG = "driver-partner-rest-area";
 
-export default function SubstituteVehiclePolicyPage() {
+export default function DriverPartnerRestAreaPage() {
   const actionCase = getActionCaseBySlug(CASE_SLUG);
 
   if (!actionCase) {
     notFound();
   }
 
-  const { metadata, brief, background, evidence } = actionCase;
+  const { metadata, brief, background, caseBody, evidence } = actionCase;
 
   return (
     <article className="space-y-8 pb-12">
@@ -87,7 +87,7 @@ export default function SubstituteVehiclePolicyPage() {
       <ContentSection
         eyebrow="认知视角"
         title="先拆认知视角"
-        description="这个案例不是门店和总部之间的简单冲突，而是不同角色对“什么才算照顾好客户”的判断差异。"
+        description="这个案例不是简单的成本题，而是不同角色对服务边界、客户信任和长期口碑的判断差异。"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {actionCase.cognitiveFrames.map((frame) => (
@@ -101,9 +101,34 @@ export default function SubstituteVehiclePolicyPage() {
       </ContentSection>
 
       <ContentSection
+        eyebrow="案例正文"
+        title="从现场选择回到服务链条"
+        description={brief.caseQuestion}
+      >
+        <LhPanel className="space-y-5 p-5 md:p-6">
+          {caseBody.paragraphs.map((paragraph) => (
+            <p key={paragraph} className="text-sm leading-8 text-ink-soft">
+              {paragraph}
+            </p>
+          ))}
+          <div className="rounded-sm border border-line bg-surface-quiet p-5">
+            <p className="text-sm font-extrabold text-primary-deep">善意带来的正向结果</p>
+            <ul className="mt-4 grid gap-3">
+              {caseBody.positiveOutcomes.map((outcome) => (
+                <li key={outcome} className="grid grid-cols-[20px_minmax(0,1fr)] gap-3 text-sm leading-7 text-ink-soft">
+                  <Icon icon={lighthouseIcons.status} className="mt-1 h-4 w-4 text-success" />
+                  <span>{outcome}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </LhPanel>
+      </ContentSection>
+
+      <ContentSection
         eyebrow="关键节点"
         title="关键权衡"
-        description="每个节点都同时看客户体验、门店实际能力和政策执行风险。"
+        description="每个节点都同时看客户信任、门店投入和服务边界，避免把它简化成是否多花一点钱。"
       >
         <div className="space-y-6">
           {actionCase.decisionNodes.map((decision, index) => (
@@ -127,15 +152,15 @@ export default function SubstituteVehiclePolicyPage() {
                   </thead>
                   <tbody>
                     <tr>
-                      <td>客户体验</td>
+                      <td>客户信任</td>
                       <td>{decision.impacts.customer}</td>
                     </tr>
                     <tr>
-                      <td>门店能力</td>
+                      <td>门店投入</td>
                       <td>{decision.impacts.store}</td>
                     </tr>
                     <tr>
-                      <td>财务合规</td>
+                      <td>边界管理</td>
                       <td>{decision.impacts.compliance}</td>
                     </tr>
                   </tbody>
@@ -148,7 +173,7 @@ export default function SubstituteVehiclePolicyPage() {
                   <p className="mt-2 text-sm leading-7 text-ink-soft">{decision.finalChoice}</p>
                 </div>
                 <div className="rounded-sm border border-line bg-surface-quiet p-4">
-                  <p className="text-sm font-extrabold text-primary-deep">风险控制</p>
+                  <p className="text-sm font-extrabold text-primary-deep">落地边界</p>
                   <p className="mt-2 text-sm leading-7 text-ink-soft">{decision.riskControl}</p>
                 </div>
               </div>
@@ -251,7 +276,7 @@ export default function SubstituteVehiclePolicyPage() {
         <div>
           <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">后续用途</p>
           <p className="mt-2 text-sm leading-7 text-ink-soft">
-            这个案例后续可以拆成共创里的岗位应做/避免，也可以作为路引回答代用车、等待焦虑、政策弹性问题时的引用材料。
+            这个案例后续可以拆成行动指南里的岗位应做/避免，也可以作为路引回答取送车、合作伙伴体验和服务边界问题时的引用材料。
           </p>
         </div>
         <LhChip tone="neutral">转入共创与路引</LhChip>

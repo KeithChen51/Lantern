@@ -60,8 +60,8 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
           title={isLoading ? "正在生成" : "发送"}
           className={cn(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,color] duration-150",
-            "border-primary bg-primary text-panel shadow-[0_1px_2px_rgba(16,43,59,0.12),0_8px_18px_rgba(22,70,88,0.12)]",
-            "hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-55",
+            "border-action bg-action text-panel shadow-[0_1px_2px_rgba(82,57,22,0.12),0_8px_18px_rgba(185,130,46,0.16)]",
+            "hover:bg-action-deep disabled:cursor-not-allowed disabled:opacity-55",
           )}
         >
           <Icon icon={isLoading ? lighthouseIcons.refresh : lighthouseIcons.send} className={cn("h-5 w-5", isLoading && "animate-spin")} />

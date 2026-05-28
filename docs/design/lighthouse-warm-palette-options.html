@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse Warm Palette Options</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #2f2a23;
+      --ink-soft: #635847;
+      --muted: #857764;
+      --page: #f6f0e4;
+      --page-top: #faf6ed;
+      --page-bottom: #efe4d2;
+      --panel: #fffdf7;
+      --surface: #fbf4e9;
+      --surface-quiet: #f5ead8;
+      --line: #dfcfb3;
+      --line-strong: #c6aa78;
+      --primary: #8f6424;
+      --primary-deep: #5f411d;
+      --primary-soft: #f3dfbc;
+      --signal: #b9822e;
+      --signal-soft: #fae7c4;
+      --action-gold: #d4a04a;
+      --action-gold-deep: #b77f2f;
+      --success: #4f8061;
+      --success-soft: #deefe4;
+      --danger: #a34a3d;
+      --danger-soft: #f4dfd9;
+      --deck: #efe0c7;
+      --deck-soft: #e5d0aa;
+      --deck-ink: #3e3326;
+      --deck-muted: #74624b;
+      --deck-line: rgba(128, 98, 52, 0.24);
+      --deck-active: #fff8eb;
+      --deck-active-line: #d2a24e;
+      --deck-icon: #a36e1d;
+      --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.82) inset, 0 10px 22px rgba(82, 57, 22, 0.07);
+      --shadow-md: 0 1px 0 rgba(255, 255, 255, 0.88) inset, 0 26px 64px rgba(82, 57, 22, 0.12);
+      --shadow-deck: 0 28px 68px rgba(108, 78, 33, 0.16);
+      --focus: 0 0 0 3px rgba(185, 130, 46, 0.24);
+      --grid-rgb: 166, 122, 55;
+      --accent-rgb: 185, 130, 46;
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --font: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    body[data-theme="champagne"] {
+      --ink: #2f2a23;
+      --ink-soft: #635847;
+      --muted: #857764;
+      --page: #f6f0e4;
+      --page-top: #faf6ed;
+      --page-bottom: #efe4d2;
+      --panel: #fffdf7;
+      --surface: #fbf4e9;
+      --surface-quiet: #f5ead8;
+      --line: #dfcfb3;
+      --line-strong: #c6aa78;
+      --primary: #8f6424;
+      --primary-deep: #5f411d;
+      --primary-soft: #f3dfbc;
+      --signal: #b9822e;
+      --signal-soft: #fae7c4;
+      --action-gold: #d4a04a;
+      --action-gold-deep: #b77f2f;
+      --deck: #efe0c7;
+      --deck-soft: #e5d0aa;
+      --deck-ink: #3e3326;
+      --deck-muted: #74624b;
+      --deck-line: rgba(128, 98, 52, 0.24);
+      --deck-active: #fff8eb;
+      --deck-active-line: #d2a24e;
+      --deck-icon: #a36e1d;
+      --shadow-deck: 0 28px 68px rgba(108, 78, 33, 0.16);
+      --grid-rgb: 166, 122, 55;
+      --accent-rgb: 185, 130, 46;
+    }
+
+    body[data-theme="tea-copper"] {
+      --ink: #302b24;
+      --ink-soft: #5b5044;
+      --muted: #776d60;
+      --page: #f4efe6;
+      --page-top: #fbf7ef;
+      --page-bottom: #ebe1d3;
+      --panel: #fffdf8;
+      --surface: #f8f1e7;
+      --surface-quiet: #f0e5d6;
+      --line: #d8c7ad;
+      --line-strong: #b69a6f;
+      --primary: #7a5731;
+      --primary-deep: #4b3928;
+      --primary-soft: #ebdbc4;
+      --signal: #c08a3a;
+      --signal-soft: #f7e7ca;
+      --action-gold: #c08a3a;
+      --action-gold-deep: #7a5731;
+      --deck: #7a6a55;
+      --deck-soft: #6a5a47;
+      --deck-ink: #fff4df;
+      --deck-muted: #ead6b7;
+      --deck-line: rgba(255, 244, 223, 0.18);
+      --deck-active: rgba(255, 244, 223, 0.14);
+      --deck-active-line: #d6a253;
+      --deck-icon: #f3c985;
+      --shadow-deck: 0 30px 70px rgba(74, 56, 34, 0.18);
+      --grid-rgb: 121, 92, 54;
+      --accent-rgb: 192, 138, 58;
+    }
+
+    body[data-theme="jade-gilt"] {
+      --ink: #26342f;
+      --ink-soft: #4a5b52;
+      --muted: #69776d;
+      --page: #f2f0e7;
+      --page-top: #f9f7ef;
+      --page-bottom: #e7e3d7;
+      --panel: #fffdf6;
+      --surface: #f6f2e7;
+      --surface-quiet: #ebe7da;
+      --line: #d5cfbd;
+      --line-strong: #aaa891;
+      --primary: #5e7d6e;
+      --primary-deep: #39584b;
+      --primary-soft: #dce9df;
+      --signal: #b88a3d;
+      --signal-soft: #f5e6c7;
+      --action-gold: #b88a3d;
+      --action-gold-deep: #5e7d6e;
+      --deck: #e7e1d2;
+      --deck-soft: #d9d0be;
+      --deck-ink: #24362f;
+      --deck-muted: #5f7067;
+      --deck-line: rgba(90, 105, 92, 0.22);
+      --deck-active: #fbf8ee;
+      --deck-active-line: #b88a3d;
+      --deck-icon: #587866;
+      --shadow-deck: 0 28px 66px rgba(64, 82, 72, 0.14);
+      --grid-rgb: 94, 125, 110;
+      --accent-rgb: 184, 138, 61;
+    }
+
+    body[data-theme="graphite-gold"] {
+      --ink: #2b2925;
+      --ink-soft: #585249;
+      --muted: #7b7164;
+      --page: #f5efe4;
+      --page-top: #fbf6ed;
+      --page-bottom: #eadfce;
+      --panel: #fffdf7;
+      --surface: #f8f1e8;
+      --surface-quiet: #efe4d4;
+      --line: #dac7a9;
+      --line-strong: #b89c6d;
+      --primary: #6d5942;
+      --primary-deep: #3f3a32;
+      --primary-soft: #eadcc8;
+      --signal: #d3a253;
+      --signal-soft: #f7e7c8;
+      --action-gold: #d3a253;
+      --action-gold-deep: #6d5942;
+      --deck: #3f3a32;
+      --deck-soft: #4b4235;
+      --deck-ink: #f8efe1;
+      --deck-muted: #e7d3b4;
+      --deck-line: rgba(248, 239, 225, 0.18);
+      --deck-active: rgba(248, 239, 225, 0.12);
+      --deck-active-line: #e7c17a;
+      --deck-icon: #e2bd76;
+      --shadow-deck: 0 30px 72px rgba(42, 35, 26, 0.25);
+      --grid-rgb: 116, 90, 56;
+      --accent-rgb: 211, 162, 83;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(var(--grid-rgb), 0.028) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(0deg, rgba(var(--grid-rgb), 0.022) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(180deg, var(--page-top) 0%, var(--page) 58%, var(--page-bottom) 100%);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      font-kerning: normal;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .ui-icon {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      flex: none;
+      stroke-width: 2;
+    }
+
+    .theme-switcher {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      border-bottom: 1px solid rgba(var(--accent-rgb), 0.18);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 34px rgba(var(--grid-rgb), 0.08);
+    }
+
+    .theme-switcher-inner {
+      width: min(1380px, calc(100vw - 32px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      align-items: center;
+      gap: 20px;
+      padding: 12px 0;
+    }
+
+    .theme-summary {
+      min-width: 0;
+    }
+
+    .theme-kicker {
+      display: block;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .theme-summary strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .theme-summary p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .theme-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .theme-button {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      color: var(--ink-soft);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: var(--shadow-sm);
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .theme-button:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-1px);
+    }
+
+    .theme-button:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .theme-button[aria-pressed="true"] {
+      border-color: var(--signal);
+      background: var(--signal-soft);
+      color: var(--primary-deep);
+    }
+
+    .theme-dot {
+      width: 24px;
+      height: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, var(--dot-deck) 0 36%, var(--dot-panel) 36% 70%, var(--dot-signal) 70% 100%);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) inset;
+    }
+
+    .app-shell {
+      min-height: calc(100vh - 78px);
+      display: grid;
+      grid-template-columns: 256px minmax(0, 1fr);
+    }
+
+    .side-nav {
+      position: sticky;
+      top: 78px;
+      height: calc(100vh - 78px);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      border-right: 1px solid var(--deck-line);
+      background: linear-gradient(180deg, var(--deck), var(--deck-soft));
+      padding: 20px 16px;
+      color: var(--deck-ink);
+      box-shadow: var(--shadow-deck);
+    }
+
+    .brand {
+      display: grid;
+      min-height: 58px;
+      grid-template-columns: 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--deck-line);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.13);
+      padding: 8px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.28) inset;
+    }
+
+    .brand-icon,
+    .nav-icon,
+    .module-icon,
+    .send-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(180deg, var(--action-gold), var(--action-gold-deep));
+      color: var(--panel);
+      font-size: 24px;
+      box-shadow: 0 10px 24px rgba(var(--accent-rgb), 0.22);
+    }
+
+    .brand-title {
+      display: block;
+      color: var(--deck-ink);
+      font-size: 18px;
+      font-weight: 950;
+      line-height: 1.05;
+    }
+
+    .brand-subtitle {
+      display: block;
+      color: var(--deck-muted);
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-item {
+      position: relative;
+      display: grid;
+      min-height: 52px;
+      grid-template-columns: 26px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      color: var(--deck-muted);
+      font-weight: 900;
+    }
+
+    .nav-item.active {
+      border-color: var(--deck-line);
+      background: var(--deck-active);
+      color: var(--deck-ink);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 12px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    .nav-item.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      border-radius: 0 999px 999px 0;
+      background: var(--deck-active-line);
+    }
+
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      color: var(--deck-icon);
+      font-size: 20px;
+    }
+
+    .nav-copy strong,
+    .nav-copy span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-copy strong {
+      color: inherit;
+      font-size: 14px;
+      line-height: 1.15;
+    }
+
+    .nav-copy span {
+      margin-top: 2px;
+      color: color-mix(in srgb, var(--deck-muted) 85%, var(--deck-ink));
+      font-size: 12px;
+      line-height: 1.15;
+    }
+
+    .side-footer {
+      margin-top: auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .side-ghost {
+      min-height: 40px;
+      border: 1px solid var(--deck-line);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--deck-ink);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .content {
+      min-width: 0;
+      padding: 16px 28px 34px;
+    }
+
+    .topbar {
+      display: grid;
+      min-height: 68px;
+      grid-template-columns: minmax(280px, 440px) auto;
+      align-items: center;
+      gap: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--panel) 90%, transparent);
+      padding: 10px 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      color: var(--muted);
+      padding: 0 14px;
+      font-weight: 800;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      color: var(--primary);
+      font-size: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chat-panel {
+      margin-top: 32px;
+      min-height: calc(100vh - 188px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-md);
+      background: var(--panel);
+      box-shadow: var(--shadow-md);
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel), var(--surface));
+      padding: 22px 28px;
+    }
+
+    .module-title {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .module-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(180deg, var(--action-gold), var(--action-gold-deep));
+      color: var(--panel);
+      font-size: 24px;
+      box-shadow: 0 14px 28px rgba(var(--accent-rgb), 0.18);
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      color: var(--ink);
+      font-size: clamp(24px, 2.5vw, 34px);
+      font-weight: 950;
+      line-height: 1.1;
+    }
+
+    .module-title p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .badge {
+      display: inline-flex;
+      min-height: 30px;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid color-mix(in srgb, var(--success) 32%, transparent);
+      border-radius: 999px;
+      background: var(--success-soft);
+      color: var(--success);
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .chat-body {
+      display: grid;
+      align-content: center;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(var(--accent-rgb), 0.08), transparent 260px),
+        linear-gradient(180deg, var(--panel), var(--surface) 72%, var(--surface-quiet));
+      padding: 42px 34px;
+    }
+
+    .empty-state {
+      width: min(820px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+      text-align: center;
+    }
+
+    .empty-state .module-icon {
+      margin: 0 auto;
+      width: 52px;
+      height: 52px;
+    }
+
+    .empty-state h2 {
+      color: var(--ink);
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 950;
+      line-height: 1.12;
+    }
+
+    .empty-state p {
+      margin: 0 auto;
+      max-width: 640px;
+      color: var(--ink-soft);
+      font-size: 16px;
+      font-weight: 850;
+      line-height: 1.8;
+    }
+
+    .micro-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .micro-tag {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--panel) 86%, var(--surface));
+      color: var(--muted);
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .input-card {
+      margin-top: 8px;
+      display: grid;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .textarea-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: stretch;
+      gap: 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-md);
+      background: var(--panel);
+      padding: 12px;
+      box-shadow: 0 18px 46px rgba(var(--accent-rgb), 0.1);
+    }
+
+    .textarea-wrap textarea {
+      min-height: 72px;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+
+    .textarea-wrap textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .send-button {
+      width: 54px;
+      min-height: 54px;
+      border: 0;
+      background: linear-gradient(180deg, var(--action-gold), var(--action-gold-deep));
+      color: var(--panel);
+      font-size: 26px;
+      box-shadow: 0 14px 30px rgba(var(--accent-rgb), 0.22);
+    }
+
+    .suggestions {
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .suggestions-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .question-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 14px;
+    }
+
+    .question-grid button {
+      min-height: 38px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 10px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .question-grid button:hover {
+      border-color: var(--line);
+      background: var(--panel);
+      color: var(--primary-deep);
+    }
+
+    .design-notes {
+      width: min(1380px, calc(100vw - 32px));
+      margin: 28px auto 48px;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 18px;
+    }
+
+    .note-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .note-card h3 {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 950;
+    }
+
+    .note-card p {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.75;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .swatch {
+      min-height: 68px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .swatch span {
+      display: block;
+      height: 34px;
+      background: var(--swatch);
+    }
+
+    .swatch code {
+      display: block;
+      padding: 6px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1080px) {
+      .app-shell {
+        grid-template-columns: 88px minmax(0, 1fr);
+      }
+
+      .side-nav {
+        padding-inline: 12px;
+      }
+
+      .brand,
+      .nav-item {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .brand-title,
+      .brand-subtitle,
+      .nav-copy,
+      .side-ghost span {
+        display: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .theme-switcher-inner,
+      .design-notes {
+        grid-template-columns: 1fr;
+      }
+
+      .theme-options {
+        justify-content: flex-start;
+      }
+
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .side-nav {
+        position: relative;
+        top: auto;
+        height: auto;
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .content {
+        padding: 14px;
+      }
+
+      .topbar,
+      .chat-header,
+      .question-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body data-theme="champagne">
+  <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="i-lighthouse" viewBox="0 0 24 24">
+      <path d="M12 3.5a3.2 3.2 0 0 1 3.2 3.2c0 2.9-3.2 6.3-3.2 6.3S8.8 9.6 8.8 6.7A3.2 3.2 0 0 1 12 3.5Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="6.7" r="1.1" fill="currentColor"/>
+      <path d="M6.8 15.8c1.2 1.6 3 2.5 5.2 2.5s4-.9 5.2-2.5M5.5 19.9h13" fill="none" stroke="currentColor" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24">
+      <path d="M12 20s-7.2-4.1-8.7-8.8C2.3 8 4.3 5.2 7.4 5.2c1.8 0 3.2 1 4.1 2.2.9-1.2 2.3-2.2 4.1-2.2 3.1 0 5.1 2.8 4.1 6C19.2 15.9 12 20 12 20Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 24 24">
+      <path d="M6.2 5.1h8.1c1.9 0 3.5 1.6 3.5 3.5v10.3H8.7a2.5 2.5 0 0 0-2.5 2.5V5.1Z" fill="none" stroke="currentColor" stroke-linejoin="round"/>
+      <path d="M9.4 9h5.4M9.4 12.2h4.2" fill="none" stroke="currentColor" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24">
+      <path d="M13.4 2.9 5.8 13.1h5.4l-.8 8 7.8-10.5h-5.6l.8-7.7Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24">
+      <path d="M9 5.3h6M8.6 5.3c.1-1.2 1-2.1 2.2-2.1h2.4c1.2 0 2.1.9 2.2 2.1h2.1c1.1 0 2 .9 2 2v11.1c0 1.1-.9 2-2 2h-11c-1.1 0-2-.9-2-2V7.3c0-1.1.9-2 2-2h2.1Z" fill="none" stroke="currentColor" stroke-linejoin="round"/>
+      <path d="m8.8 13 2.1 2.1 4.5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-wand" viewBox="0 0 24 24">
+      <path d="m5 19 10.5-10.5M13.8 6.8l3.4 3.4M4.8 5.1l.6-1.6.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6ZM17.7 16.9l.5-1.3.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5ZM18.8 3.9l.5-1.2.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="10.7" cy="10.7" r="6.5" fill="none" stroke="currentColor"/>
+      <path d="m15.4 15.4 4.2 4.2" fill="none" stroke="currentColor" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24">
+      <path d="M6.8 10.4a5.2 5.2 0 0 1 10.4 0v3.5l1.5 2.5H5.3l1.5-2.5v-3.5Z" fill="currentColor"/>
+      <path d="M9.7 18.2a2.5 2.5 0 0 0 4.6 0" fill="none" stroke="currentColor" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24">
+      <path d="M20.5 3.8 3.8 10.6c-.8.3-.8 1.5.1 1.8l6.1 1.8 1.8 6.1c.3.9 1.5.9 1.8.1l6.8-16.7Z" fill="currentColor"/>
+      <path d="m10 14.2 4.6-4.6" fill="none" stroke="var(--panel)" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+  <header class="theme-switcher">
+    <div class="theme-switcher-inner">
+      <div class="theme-summary">
+        <span class="theme-kicker">Warm palette comparison</span>
+        <strong data-theme-title>方案 A · 象牙香槟金</strong>
+        <p data-theme-note>最接近“文化光辉、幸福温暖”的方向。大面积低饱和，金色只承担光和选中态。</p>
+      </div>
+      <div class="theme-options" aria-label="配色方案切换">
+        <button class="theme-button" type="button" data-theme-choice="champagne" aria-pressed="true">
+          <span class="theme-dot" style="--dot-deck:#efe0c7;--dot-panel:#fffdf7;--dot-signal:#b9822e"></span>
+          A 象牙香槟金
+        </button>
+        <button class="theme-button" type="button" data-theme-choice="tea-copper" aria-pressed="false">
+          <span class="theme-dot" style="--dot-deck:#7a6a55;--dot-panel:#fffdf8;--dot-signal:#c08a3a"></span>
+          B 茶灰铜金
+        </button>
+        <button class="theme-button" type="button" data-theme-choice="jade-gilt" aria-pressed="false">
+          <span class="theme-dot" style="--dot-deck:#e7e1d2;--dot-panel:#fffdf6;--dot-signal:#b88a3d"></span>
+          C 玉白鎏金
+        </button>
+        <button class="theme-button" type="button" data-theme-choice="graphite-gold" aria-pressed="false">
+          <span class="theme-dot" style="--dot-deck:#3f3a32;--dot-panel:#fffdf7;--dot-signal:#d3a253"></span>
+          D 暖石墨金
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="side-nav" aria-label="主导航">
+      <div class="brand">
+        <span class="brand-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-lighthouse"></use></svg></span>
+        <span>
+          <span class="brand-title">Lighthouse</span>
+          <span class="brand-subtitle">服务文化平台</span>
+        </span>
+      </div>
+
+      <nav class="nav-list" aria-label="栏目">
+        <div class="nav-item">
+          <span class="nav-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-heart"></use></svg></span>
+          <span class="nav-copy"><strong>本心</strong><span>价值起点</span></span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-book"></use></svg></span>
+          <span class="nav-copy"><strong>镜鉴</strong><span>外部标杆</span></span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-bolt"></use></svg></span>
+          <span class="nav-copy"><strong>笃行</strong><span>内部实践</span></span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-clipboard"></use></svg></span>
+          <span class="nav-copy"><strong>共创</strong><span>行动指南</span></span>
+        </div>
+        <div class="nav-item active">
+          <span class="nav-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-wand"></use></svg></span>
+          <span class="nav-copy"><strong>路引</strong><span>AI 问答</span></span>
+        </div>
+      </nav>
+
+      <div class="side-footer">
+        <button class="side-ghost" type="button">
+          <span>组件映射</span>
+        </button>
+        <button class="side-ghost" type="button">
+          <span>收起侧栏</span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="topbar">
+        <div class="search">
+          <svg class="ui-icon" aria-hidden="true"><use href="#i-search"></use></svg>
+          搜索：本心、镜鉴、笃行、行动指南
+        </div>
+        <div class="top-actions">
+          <button class="icon-button" type="button" aria-label="通知"><svg class="ui-icon" aria-hidden="true"><use href="#i-bell"></use></svg></button>
+        </div>
+      </div>
+
+      <section class="chat-panel" aria-label="路引 AI 对话">
+        <header class="chat-header">
+          <div class="module-title">
+            <span class="module-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-wand"></use></svg></span>
+            <div>
+              <h1>路引 AI 对话助手</h1>
+              <p>直接描述服务场景，路引会按事实、判断依据和下一步话术来回应。</p>
+            </div>
+          </div>
+          <span class="badge">知识已接入</span>
+        </header>
+
+        <div class="chat-body">
+          <section class="empty-state">
+            <span class="module-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-wand"></use></svg></span>
+            <div>
+              <h2>把服务场景直接发给路引</h2>
+              <p>说明客户状态、限制条件和你卡住的判断，路引会按事实、维度、依据和下一步动作回应。</p>
+            </div>
+            <div class="micro-tags">
+              <span class="micro-tag">可追问</span>
+              <span class="micro-tag">会标出证据不足</span>
+              <span class="micro-tag">输出可执行动作</span>
+            </div>
+
+            <div class="input-card">
+              <div class="textarea-wrap">
+                <textarea aria-label="向路引提问" placeholder="直接向路引提问，或描述一个具体服务场景..."></textarea>
+                <button class="send-button" type="button" aria-label="发送"><svg class="ui-icon" aria-hidden="true"><use href="#i-plane"></use></svg></button>
+              </div>
+
+              <section class="suggestions" aria-label="推荐问题">
+                <div class="suggestions-title">
+                  <svg class="ui-icon" aria-hidden="true"><use href="#i-plane"></use></svg>
+                  推荐问题
+                </div>
+                <div class="question-grid">
+                  <button type="button">客户一直追问交车时间，但车间还没有最终结论，服务顾问应该怎么回应？</button>
+                  <button type="button">一个案例里同时有真实告知、客户关怀和门店成本，主维度怎么判断？</button>
+                  <button type="button">客户利益和员工承压发生冲突时，如何区分善和爱？</button>
+                  <button type="button">如果证据不足，路引应该先向我追问哪些事实？</button>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <section class="design-notes">
+    <article class="note-card">
+      <h3 data-design-heading>方案判断</h3>
+      <p data-design-note>这组方案故意避免“大面积金色”。真正高级的金色通常是低饱和暖中性色上的少量光，而不是把主界面涂成金色。</p>
+    </article>
+    <article class="note-card">
+      <h3>核心色板</h3>
+      <div class="swatches">
+        <div class="swatch"><span style="--swatch:var(--page)"></span><code>page</code></div>
+        <div class="swatch"><span style="--swatch:var(--panel)"></span><code>panel</code></div>
+        <div class="swatch"><span style="--swatch:var(--deck)"></span><code>deck</code></div>
+        <div class="swatch"><span style="--swatch:var(--deck-soft)"></span><code>deck soft</code></div>
+        <div class="swatch"><span style="--swatch:var(--primary)"></span><code>primary</code></div>
+        <div class="swatch"><span style="--swatch:var(--signal)"></span><code>signal</code></div>
+      </div>
+    </article>
+  </section>
+
+  <script>
+    const themeMeta = {
+      champagne: {
+        title: "方案 A · 象牙香槟金",
+        note: "最接近“文化光辉、幸福温暖”的方向。大面积低饱和，金色只承担光和选中态。",
+        design: "侧栏改成浅香槟材质，页面更明亮，最适合作为新的默认暖色方向。风险是需要靠边框和投影建立层级。"
+      },
+      "tea-copper": {
+        title: "方案 B · 茶灰铜金",
+        note: "更稳、更企业化。侧栏是茶灰暖褐，金色只做点亮，避免土豪金。",
+        design: "适合团队担心 A 太轻时使用。它更像成熟 B 端系统，温暖但不甜。"
+      },
+      "jade-gilt": {
+        title: "方案 C · 玉白鎏金",
+        note: "用灰绿降低金色俗气，保留文化感和干净度。",
+        design: "更清雅，有文化馆和服务学院气质。适合需要兼顾 Lighthouse 原有清晰感时使用。"
+      },
+      "graphite-gold": {
+        title: "方案 D · 暖石墨金",
+        note: "仍保留深侧栏，但从棕金改成暖石墨，金色更干净。",
+        design: "最严肃、最高端服务后台感。缺点是幸福温暖弱一些，更偏管理系统。"
+      }
+    };
+
+    function applyTheme(theme) {
+      const nextTheme = themeMeta[theme] ? theme : "champagne";
+      document.body.dataset.theme = nextTheme;
+      document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.themeChoice === nextTheme));
+      });
+      document.querySelector("[data-theme-title]").textContent = themeMeta[nextTheme].title;
+      document.querySelector("[data-theme-note]").textContent = themeMeta[nextTheme].note;
+      document.querySelector("[data-design-note]").textContent = themeMeta[nextTheme].design;
+      localStorage.setItem("lighthouse-warm-palette-theme", nextTheme);
+    }
+
+    document.querySelectorAll("[data-theme-choice]").forEach((button) => {
+      button.addEventListener("click", () => applyTheme(button.dataset.themeChoice));
+    });
+
+    applyTheme(localStorage.getItem("lighthouse-warm-palette-theme") || "champagne");
+  </script>
+</body>
+</html>

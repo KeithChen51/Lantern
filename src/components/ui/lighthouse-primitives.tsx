@@ -5,7 +5,7 @@ import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 
 type ButtonVariant = "primary" | "signal" | "secondary" | "quiet" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
-type Tone = "neutral" | "primary" | "signal" | "success" | "warning" | "danger" | "info";
+type Tone = "neutral" | "primary" | "signal" | "success" | "warning" | "danger" | "info" | "brass";
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
@@ -36,6 +36,18 @@ const toneClasses: Record<Tone, string> = {
   warning: "border-warning/25 bg-warning-soft text-warning",
   danger: "border-danger/25 bg-danger-soft text-danger",
   info: "border-info/25 bg-info-soft text-info",
+  brass: "border-brass/25 bg-brass-soft text-brass",
+};
+
+const calloutToneClasses: Record<Tone, string> = {
+  neutral: "border-line bg-panel-soft text-ink-soft",
+  primary: "border-primary/25 bg-primary-soft text-primary-deep",
+  signal: "border-signal/25 bg-signal-soft text-signal-deep",
+  success: "border-success/25 bg-success-soft text-success",
+  warning: "border-warning/25 bg-warning-soft text-warning",
+  danger: "border-danger/25 bg-danger-soft text-danger",
+  info: "border-info/25 bg-info-soft text-info",
+  brass: "border-brass/25 bg-brass-soft text-brass",
 };
 
 export interface LhButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -116,7 +128,7 @@ export const LhCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     <article
       ref={ref}
       className={cn(
-        "relative overflow-hidden rounded-md border border-line bg-surface text-ink shadow-lh-sm before:absolute before:left-4 before:right-4 before:top-0 before:h-px before:bg-gradient-to-r before:from-primary/35 before:via-signal/20 before:to-transparent",
+        "relative overflow-hidden rounded-md border border-line bg-surface text-ink shadow-lh-sm",
         className,
       )}
       {...props}
@@ -276,14 +288,63 @@ export function LhSectionHeader({ className, eyebrow, title, description, action
   );
 }
 
+export interface LhCalloutProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+  tone?: Tone;
+  icon?: React.ReactNode;
+  title?: React.ReactNode;
+  action?: React.ReactNode;
+}
+
+export function LhCallout({ className, tone = "neutral", icon, title, action, children, ...props }: LhCalloutProps) {
+  return (
+    <aside
+      className={cn(
+        "grid gap-3 rounded-md border p-4 text-sm leading-6 shadow-lh-sm",
+        (icon || action) && "sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start",
+        calloutToneClasses[tone],
+        className,
+      )}
+      {...props}
+    >
+      {icon && <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-sm border border-current/20 bg-panel/40 text-base">{icon}</span>}
+      <span className="min-w-0">
+        {title && <strong className="block text-sm font-extrabold leading-6 text-ink">{title}</strong>}
+        {children && <span className="mt-1 block text-sm leading-6 text-ink-soft">{children}</span>}
+      </span>
+      {action}
+    </aside>
+  );
+}
+
+export interface LhMetricTileProps extends React.HTMLAttributes<HTMLDivElement> {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  description?: React.ReactNode;
+  trend?: React.ReactNode;
+  tone?: Tone;
+}
+
+export function LhMetricTile({ className, label, value, description, trend, tone = "neutral", ...props }: LhMetricTileProps) {
+  return (
+    <LhCard className={cn("grid gap-3 p-4", className)} {...props}>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted">{label}</p>
+        {trend && <LhChip tone={tone}>{trend}</LhChip>}
+      </div>
+      <strong className="text-3xl font-extrabold leading-none text-ink">{value}</strong>
+      {description && <p className="text-sm leading-6 text-ink-soft">{description}</p>}
+    </LhCard>
+  );
+}
+
 export interface LhPageHeroAsideItem {
   title: React.ReactNode;
   description?: React.ReactNode;
 }
 
 export interface LhPageHeroProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
-  icon: React.ReactNode;
-  eyebrow: React.ReactNode;
+  icon?: React.ReactNode;
+  eyebrow?: React.ReactNode;
   meta?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;
@@ -306,38 +367,42 @@ export function LhPageHero({
 }: LhPageHeroProps) {
   return (
     <LhPanel elevated className={cn("overflow-hidden", className)} {...props}>
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 p-6 md:p-8">
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="inline-flex min-h-9 items-center gap-2 rounded-sm bg-primary-deep px-3 text-sm font-extrabold text-panel">
-              {icon}
-              {eyebrow}
-            </span>
-            {meta}
-          </div>
-          <h1 className="max-w-4xl text-3xl font-extrabold leading-tight text-ink md:text-4xl">{title}</h1>
-          {description && <div className="mt-5 max-w-4xl space-y-3 text-base leading-8 text-ink-soft">{description}</div>}
+      <div className="grid xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 p-5 md:p-7">
+          {(eyebrow || meta) && (
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              {eyebrow && (
+                <span className="inline-flex min-h-9 items-center gap-2 rounded-sm bg-primary-deep px-3 text-sm font-extrabold text-panel">
+                  {icon}
+                  {eyebrow}
+                </span>
+              )}
+              {meta}
+            </div>
+          )}
+          <h1 className="max-w-4xl text-3xl font-extrabold leading-tight text-ink md:text-[2.45rem]">{title}</h1>
+          {description && <div className="mt-4 max-w-4xl space-y-3 text-base leading-8 text-ink-soft">{description}</div>}
         </div>
 
-        <aside className="relative overflow-hidden border-t border-primary/30 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-5 text-panel shadow-lh-deck xl:border-l xl:border-t-0 md:p-6">
-          <div className="absolute inset-x-5 top-0 h-0.5 bg-gradient-to-r from-signal via-primary-soft/60 to-transparent" />
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-panel/70">{asideTitle}</p>
-          <ol className="mt-5 grid gap-4">
+        <aside className="relative overflow-hidden border-t border-line-strong/70 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-5 text-[var(--color-deck-text)] shadow-lh-deck xl:border-l xl:border-t-0">
+          <div className="absolute inset-x-5 top-0 h-0.5 bg-gradient-to-r from-action via-signal-soft/70 to-transparent" />
+          <p className="text-xs font-extrabold text-[var(--color-deck-muted)]">{asideTitle}</p>
+          <ol className="mt-4 grid gap-3">
             {asideItems.map((item, index) => (
-              <li key={index} className="grid grid-cols-[34px_minmax(0,1fr)] gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-panel/20 bg-signal-soft/10 text-sm font-extrabold text-signal-soft">
+              <li key={index} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line/80 bg-panel/55 text-sm font-extrabold text-primary">
                   {index + 1}
                 </span>
                 <span className="min-w-0">
-                  <strong className="block text-sm font-extrabold leading-6 text-panel">{item.title}</strong>
-                  {item.description && <span className="mt-1 block text-sm leading-6 text-panel/70">{item.description}</span>}
+                  <strong className="block text-sm font-extrabold leading-6 text-[var(--color-deck-text)]">{item.title}</strong>
+                  {item.description && <span className="mt-1 block text-sm leading-6 text-[var(--color-deck-text-soft)]">{item.description}</span>}
                 </span>
               </li>
             ))}
           </ol>
         </aside>
       </div>
-      {footer && <div className="border-t border-line-strong bg-surface-quiet px-6 py-4 md:px-8">{footer}</div>}
+      {footer && <div className="border-t border-line bg-surface-quiet px-5 py-4 md:px-7">{footer}</div>}
     </LhPanel>
   );
 }

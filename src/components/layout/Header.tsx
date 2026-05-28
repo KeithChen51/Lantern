@@ -4,23 +4,16 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { PreviewIdentitySwitcher } from "@/components/layout/PreviewIdentitySwitcher";
+import { ThemeSwitcher } from "@/components/layout/ThemeSwitcher";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
-
-const SEARCH_TARGETS = [
-  { href: "/", label: "本心", keywords: ["heart", "本心", "首页", "价值观", "文化"] },
-  { href: "/mirror", label: "镜鉴", keywords: ["mirror", "镜鉴", "外部标杆", "标杆", "案例"] },
-  { href: "/action", label: "笃行", keywords: ["action", "笃行", "内部实践", "行动", "实践"] },
-  { href: "/workshop", label: "共创", keywords: ["workshop", "共创", "行动指南", "do", "dont", "指南", "提交"] },
-  { href: "/admin/workshop", label: "共创审核", keywords: ["admin", "审核", "管理", "发布"] },
-  { href: "/hermit", label: "路引", keywords: ["hermit", "路引", "AI问答", "ai问答", "问答", "决策", "对话"] },
-];
+import { getHeaderSearchMatches, resolveHeaderSearch } from "./header-search";
 
 const NOTIFICATIONS = [
-  "新视觉迁移中：先完成组件库，再替换原版页面。",
-  "当前重点：提高正文对比、状态可见性和操作层级。",
-  "Solar 图标体系已锁定，新增控件继续沿用同一图标集。",
+  "路引已可直接接收服务场景，并按事实、依据和下一步话术回应。",
+  "行动指南支持提交岗位应做/避免建议，审核后进入公共指南。",
+  "镜鉴与笃行分别用于外部标杆和内部实践复盘。",
 ];
 
 interface HeaderProps {
@@ -33,35 +26,52 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
   const pathname = usePathname();
   const [query, setQuery] = React.useState("");
   const [searchFeedback, setSearchFeedback] = React.useState("");
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
+  const searchMatches = React.useMemo(() => getHeaderSearchMatches(query, 6), [query]);
 
   React.useEffect(() => {
     setIsNotificationOpen(false);
     setSearchFeedback("");
+    setIsSearchOpen(false);
   }, [pathname]);
 
-  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-      setSearchFeedback("请输入关键词，例如：镜鉴、本心、笃行、共创、路引。");
+  const submitSearchQuery = (rawQuery: string) => {
+    const trimmedQuery = rawQuery.trim();
+    if (!trimmedQuery) {
+      setIsSearchOpen(true);
+      setSearchFeedback("请输入关键词，或从下方页面建议中选择。");
       return;
     }
 
-    const matchedTarget = SEARCH_TARGETS.find((target) =>
-      target.keywords.some((keyword) => {
-        const normalizedKeyword = keyword.toLowerCase();
-        return normalizedKeyword.includes(normalizedQuery) || normalizedQuery.includes(normalizedKeyword);
-      }),
-    );
+    const matchedTarget = resolveHeaderSearch(trimmedQuery);
 
     if (!matchedTarget) {
-      setSearchFeedback("未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 共创 / 审核 / 路引。");
+      setIsSearchOpen(true);
+      setSearchFeedback("未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 行动指南 / 路引。");
       return;
     }
 
     router.push(matchedTarget.href);
     setSearchFeedback(`已跳转到 ${matchedTarget.label}。`);
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submitSearchQuery(query);
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    submitSearchQuery(event.currentTarget.value);
+  };
+
+  const handleSearchTarget = (href: string, label: string) => {
+    setQuery("");
+    setIsSearchOpen(false);
+    setSearchFeedback(`已跳转到 ${label}。`);
+    router.push(href);
   };
 
   return (
@@ -89,23 +99,52 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
             />
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setSearchFeedback("");
+                setIsSearchOpen(true);
+              }}
+              onFocus={() => setIsSearchOpen(true)}
+              onKeyDown={handleSearchKeyDown}
               type="text"
-              placeholder="搜索页面：本心、镜鉴、行动指南、AI问答"
+              placeholder="搜索：本心、镜鉴、笃行、行动指南、路引"
               className="h-10 w-full rounded-sm border border-line bg-surface-quiet pl-10 pr-3 text-sm font-medium text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
             />
           </div>
-          {searchFeedback && (
-            <p
-              className="absolute left-0 top-full mt-2 w-min min-w-full max-w-[min(560px,calc(100vw-32px))] rounded-sm border border-line bg-panel px-3 py-2 text-xs font-bold leading-5 text-muted shadow-lh-sm"
-              aria-live="polite"
-            >
-              {searchFeedback}
-            </p>
+          {(isSearchOpen || searchFeedback) && (
+            <div className="absolute left-0 top-full mt-2 w-min min-w-full max-w-[min(560px,calc(100vw-32px))] overflow-hidden rounded-sm border border-line bg-panel text-sm shadow-lh-md">
+              {searchFeedback && (
+                <p className="border-b border-line bg-surface-quiet px-3 py-2 text-xs font-bold leading-5 text-muted" aria-live="polite">
+                  {searchFeedback}
+                </p>
+              )}
+              {searchMatches.length > 0 ? (
+                <div className="grid p-1" role="listbox" aria-label="搜索结果">
+                  {searchMatches.map((target) => (
+                    <button
+                      key={target.href}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handleSearchTarget(target.href, target.label)}
+                      className="grid gap-0.5 rounded-sm px-3 py-2 text-left transition-colors hover:bg-primary-soft focus:bg-primary-soft focus:outline-none"
+                    >
+                      <span className="text-sm font-extrabold text-ink">{target.label}</span>
+                      <span className="text-xs font-bold leading-5 text-muted">{target.description}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="px-3 py-3 text-xs font-bold leading-5 text-muted">没有匹配结果。</p>
+              )}
+            </div>
           )}
         </form>
 
         <div className="flex min-w-0 items-center justify-end gap-2">
+          <div className="hidden md:block">
+            <ThemeSwitcher />
+          </div>
+
           <div className="hidden lg:block">
             <PreviewIdentitySwitcher />
           </div>
@@ -122,7 +161,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
 
             {isNotificationOpen && (
               <div className="absolute right-0 top-12 w-[min(20rem,calc(100vw-32px))] rounded-md border border-line bg-panel p-4 text-sm text-ink-soft shadow-lh-md">
-                <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-primary-deep">通知</p>
+                <p className="mb-3 text-xs font-extrabold text-primary-deep">今日可处理</p>
                 <ul className="space-y-2">
                   {NOTIFICATIONS.map((item) => (
                     <li key={item} className="leading-6">
