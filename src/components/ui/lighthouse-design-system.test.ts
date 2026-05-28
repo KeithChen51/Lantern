@@ -47,6 +47,13 @@ describe("lighthouse design system contract", () => {
     expect(amberTheme).not.toContain("#0e334b");
   });
 
+  it("keeps inverse emphasis surfaces safe for light amber deck colors", () => {
+    const heartPage = readProjectFile("src/app/heart/page.tsx");
+
+    expect(heartPage).toContain("bg-[linear-gradient(135deg,var(--color-primary-deep),var(--color-primary))]");
+    expect(heartPage).not.toContain("bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-6 text-panel");
+  });
+
   it("wires the palette switcher into the app shell", () => {
     const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
     const header = readProjectFile("src/components/layout/Header.tsx");
