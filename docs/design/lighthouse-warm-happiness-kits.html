@@ -1,0 +1,2337 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse Five Value Color Kit</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-hei: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
+      --font-wenkai: "LXGW WenKai Screen", "LXGW WenKai", "霞鹜文楷", "KaiTi", "STKaiti", serif;
+      --font: var(--font-hei);
+      --font-display: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", Georgia, serif;
+      --page: #fff3e8;
+      --ink: #342f2b;
+      --muted: #75695f;
+      --line: #ead2b8;
+      --panel: #fffaf0;
+      --shadow: 0 28px 70px rgba(118, 92, 63, 0.12);
+      --shadow-tight: 0 16px 38px rgba(118, 92, 63, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      position: relative;
+      overflow-x: hidden;
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        repeating-linear-gradient(112deg, rgba(128, 108, 88, 0.036) 0 1px, transparent 1px 22px),
+        linear-gradient(90deg, rgba(114, 138, 105, 0.03) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(0deg, rgba(199, 79, 90, 0.025) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(180deg, #fffaf2 0%, var(--page) 54%, #f6e5d7 100%);
+      font-family: var(--font);
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      line-height: 1.6;
+    }
+
+    body[data-typeface="wenkai"] {
+      --font: var(--font-wenkai);
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.25) 0 1px, transparent 1px 5px),
+        linear-gradient(135deg, rgba(255, 248, 237, 0.75), rgba(237, 246, 242, 0.32));
+      content: "";
+      pointer-events: none;
+    }
+
+    .page {
+      width: min(1480px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 44px 0 88px;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .intro-main,
+    .intro-side,
+    .rule,
+    .palette {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 254, 249, 0.92), rgba(255, 247, 235, 0.9)),
+        var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .intro-main {
+      overflow: hidden;
+      padding: clamp(28px, 4vw, 58px);
+    }
+
+    .intro-main::after {
+      position: absolute;
+      right: 28px;
+      bottom: 22px;
+      width: min(40%, 420px);
+      height: 8px;
+      background: linear-gradient(90deg, transparent, #c74f5a, #f1a77d, transparent);
+      content: "";
+      opacity: 0.5;
+    }
+
+    .intro-side {
+      display: grid;
+      align-content: end;
+      padding: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #c74f5a;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    p {
+      margin-top: 0;
+      overflow-wrap: anywhere;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin-bottom: 16px;
+      font-family: var(--font-display);
+      font-size: clamp(42px, 6.2vw, 92px);
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 0.98;
+    }
+
+    h1 span {
+      display: inline;
+    }
+
+    h2,
+    h3 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .intro-main p,
+    .intro-side p {
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .intro-side strong {
+      display: block;
+      margin-bottom: 10px;
+      font-family: var(--font-display);
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .rule-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .rule {
+      min-height: 118px;
+      padding: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .review-frame {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 251, 0.94), rgba(255, 240, 218, 0.88)),
+        var(--panel);
+      box-shadow: var(--shadow);
+      margin-bottom: 38px;
+    }
+
+    .review-frame::before,
+    .palette-switcher::before,
+    .palette::before {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, var(--primary, #6ab0a5), var(--action, #e8c872), transparent 76%);
+      content: "";
+    }
+
+    .review-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: end;
+      border-bottom: 1px solid var(--line);
+      padding: 24px;
+    }
+
+    .review-head h2 {
+      margin-bottom: 0;
+      font-size: clamp(32px, 4.5vw, 54px);
+      line-height: 1.08;
+    }
+
+    .review-head p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      padding: 18px 22px;
+    }
+
+    .criterion {
+      min-height: 142px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 252, 0.9), rgba(255, 244, 225, 0.78)),
+        #fffdf7;
+      padding: 14px;
+    }
+
+    .criterion strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .criterion span,
+    .criterion em {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-style: normal;
+      line-height: 1.65;
+    }
+
+    .criterion em {
+      margin-top: 10px;
+      color: #b36f2f;
+      font-weight: 900;
+    }
+
+    .current-review {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 0 22px 22px;
+    }
+
+    .current-review > div {
+      min-height: 118px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 250, 0.88), rgba(255, 241, 217, 0.72));
+      padding: 14px;
+    }
+
+    .current-review strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .current-review span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 760;
+      line-height: 1.65;
+    }
+
+    .palette-switcher {
+      position: sticky;
+      top: 12px;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+      gap: 18px;
+      align-items: end;
+      margin: 42px 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 253, 247, 0.96), rgba(255, 244, 228, 0.94)),
+        var(--panel);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .switcher-copy h2 {
+      margin-bottom: 8px;
+      font-size: clamp(34px, 4.8vw, 62px);
+      line-height: 1;
+    }
+
+    .switcher-copy p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .typeface-switcher {
+      display: grid;
+      gap: 8px;
+      max-width: 520px;
+      margin-top: 18px;
+    }
+
+    .typeface-switcher > span {
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .typeface-buttons {
+      display: inline-flex;
+      width: fit-content;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf7;
+      padding: 4px;
+      box-shadow: var(--shadow-tight);
+    }
+
+    .typeface-choice {
+      min-width: 74px;
+      min-height: 34px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      padding: 0 11px;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+    }
+
+    .typeface-choice[data-typeface-choice="hei"] {
+      font-family: var(--font-hei);
+    }
+
+    .typeface-choice[data-typeface-choice="wenkai"] {
+      font-family: var(--font-wenkai);
+      font-weight: 700;
+    }
+
+    .typeface-choice[aria-pressed="true"] {
+      border-color: rgba(199, 79, 90, 0.22);
+      background: color-mix(in srgb, var(--page) 68%, white 32%);
+      color: var(--ink);
+    }
+
+    .typeface-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.65;
+    }
+
+    .switcher-options {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .palette-choice {
+      min-width: 0;
+      min-height: 76px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf7;
+      color: var(--ink);
+      padding: 11px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .palette-choice:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-tight);
+    }
+
+    .palette-choice:focus-visible {
+      outline: 3px solid rgba(199, 79, 90, 0.26);
+      outline-offset: 3px;
+    }
+
+    .palette-choice[aria-pressed="true"] {
+      border-color: var(--choice-primary, #c74f5a);
+      background: color-mix(in srgb, var(--choice-page, #fff8ed) 76%, white 24%);
+      box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--choice-primary, #c74f5a) 18%, transparent);
+    }
+
+    .choice-dot {
+      display: block;
+      height: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, var(--choice-page) 0 42%, var(--choice-primary) 42% 72%, var(--choice-action) 72% 100%);
+      margin-bottom: 10px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    }
+
+    .palette-choice strong,
+    .palette-choice span {
+      display: block;
+    }
+
+    .palette-choice strong {
+      font-size: 13px;
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .palette-choice span:last-child {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 780;
+      line-height: 1.45;
+    }
+
+    .palette-stack {
+      display: grid;
+      gap: 24px;
+    }
+
+    .palette-stack .palette {
+      display: none;
+    }
+
+    .palette-stack .palette.is-active {
+      display: block;
+    }
+
+    .palette {
+      --ink-local: #324a4e;
+      --ink-soft: #4b686c;
+      --muted-local: #66716c;
+      --faint: #9ab3ad;
+      --page-local: #f4f3ea;
+      --page-start: rgba(255, 252, 242, 0.76);
+      --page-end: rgba(221, 239, 230, 0.62);
+      --panel-local: rgba(255, 252, 242, 0.76);
+      --panel-soft: rgba(221, 239, 230, 0.62);
+      --raised: rgba(255, 252, 242, 0.9);
+      --surface: rgba(221, 239, 230, 0.62);
+      --surface-quiet: rgba(221, 239, 230, 0.46);
+      --line-local: rgba(106, 176, 165, 0.24);
+      --line-strong: #6ab0a5;
+      --primary: #6ab0a5;
+      --primary-deep: #407e78;
+      --primary-soft: rgba(221, 239, 230, 0.62);
+      --signal: #7ca7b8;
+      --signal-deep: #557e8e;
+      --signal-soft: rgba(221, 239, 230, 0.5);
+      --action: #e8c872;
+      --action-deep: #a9822d;
+      --deck: #f8f6ee;
+      --deck-soft: rgba(221, 239, 230, 0.62);
+      --deck-text: #324a4e;
+      --deck-text-soft: #55686a;
+      --deck-muted: #66716c;
+      --deck-icon: #6ab0a5;
+      --success: #6ab0a5;
+      --success-soft: rgba(221, 239, 230, 0.62);
+      --warning: #e8c872;
+      --warning-soft: #fff4ce;
+      --danger: #d48670;
+      --danger-soft: #f6ddd4;
+      --info: #7ca7b8;
+      --info-soft: rgba(221, 239, 230, 0.56);
+      --panel-bg: #f4f3ea;
+      --panel-surface: rgba(255, 252, 242, 0.76);
+      --panel-surface-2: rgba(221, 239, 230, 0.62);
+      --panel-ink: #324a4e;
+      --panel-muted: #66716c;
+      --panel-line: rgba(106, 176, 165, 0.24);
+      --panel-primary: #6ab0a5;
+      --panel-secondary: #7ca7b8;
+      --panel-accent: #e8c872;
+      --panel-accent-2: #d48670;
+      --panel-shadow: rgba(70, 132, 126, 0.16);
+      --panel-texture: linear-gradient(110deg, rgba(106,176,165,0.10), transparent 38%), repeating-linear-gradient(90deg, rgba(106,176,165,0.05) 0 1px, transparent 1px 34px);
+      --stage-texture: linear-gradient(110deg, rgba(124,167,184,0.18), transparent 40%), repeating-linear-gradient(90deg, rgba(106,176,165,0.08) 0 1px, transparent 1px 42px);
+      --material-overlay: linear-gradient(115deg, rgba(255,255,255,0.58), rgba(255,255,255,0.08) 42%, rgba(106,176,165,0.12)), repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 1px, transparent 1px 18px);
+      --ink-local: var(--panel-ink);
+      --muted-local: var(--panel-muted);
+      --page-local: var(--panel-bg);
+      --page-start: var(--panel-surface);
+      --page-end: var(--panel-surface-2);
+      --panel-local: var(--panel-surface);
+      --panel-soft: color-mix(in srgb, var(--panel-surface-2) 70%, var(--panel-surface) 30%);
+      --surface: var(--panel-surface-2);
+      --surface-quiet: color-mix(in srgb, var(--panel-surface-2) 86%, var(--panel-surface) 14%);
+      --line-local: var(--panel-line);
+      --line-strong: color-mix(in srgb, var(--panel-primary) 46%, var(--panel-line));
+      --primary: var(--panel-primary);
+      --signal: var(--panel-secondary);
+      --action: var(--panel-accent);
+      --danger: var(--panel-accent-2);
+      --success: var(--panel-primary);
+      --warning: var(--panel-accent);
+      --info: var(--panel-secondary);
+      overflow: hidden;
+      border-color: var(--panel-line);
+      background:
+        var(--panel-texture),
+        linear-gradient(135deg, color-mix(in srgb, var(--panel-bg) 94%, white 6%), var(--panel-bg));
+      box-shadow: 0 24px 68px var(--panel-shadow);
+      color: var(--panel-ink);
+    }
+
+    .palette-a2 {
+      --ink-local: #34352b;
+      --ink-soft: #575d4b;
+      --muted-local: #6b665b;
+      --faint: #aaa08e;
+      --page-local: #f8f0e4;
+      --page-start: #fffaf0;
+      --page-end: #e9dfd0;
+      --panel-local: #fffaf0;
+      --panel-soft: #f5ecdc;
+      --raised: #fffef7;
+      --surface: #f0e7d7;
+      --surface-quiet: #e9dfd0;
+      --line-local: #d7cfb9;
+      --line-strong: #aeb490;
+      --primary: #728a69;
+      --primary-deep: #4f644a;
+      --primary-soft: #e5ecd8;
+      --signal: #ceb26e;
+      --signal-deep: #9d7e37;
+      --signal-soft: #f2e9c9;
+      --action: #d99667;
+      --action-deep: #a8653c;
+      --deck: #f8f0e4;
+      --deck-soft: #e9dfd0;
+      --deck-text: #34352b;
+      --deck-text-soft: #646052;
+      --deck-muted: #827a6b;
+      --deck-icon: #728a69;
+      --success: #728a69;
+      --success-soft: #e5ecd8;
+      --warning: #ceb26e;
+      --warning-soft: #f2e9c9;
+      --danger: #b86d5a;
+      --danger-soft: #f3ded4;
+      --info: #d99667;
+      --info-soft: #f4dfcf;
+      --panel-bg: #f8f0e4;
+      --panel-surface: #fffaf0;
+      --panel-surface-2: #e9dfd0;
+      --panel-ink: #34352b;
+      --panel-muted: #6b665b;
+      --panel-line: rgba(111, 142, 115, 0.19);
+      --panel-primary: #728a69;
+      --panel-secondary: #ceb26e;
+      --panel-accent: #d99667;
+      --panel-accent-2: #b86d5a;
+      --panel-shadow: rgba(118, 101, 78, 0.12);
+      --panel-texture: linear-gradient(120deg, rgba(255,255,255,0.52), transparent 52%), repeating-linear-gradient(0deg, rgba(111,142,115,0.06) 0 1px, transparent 1px 28px);
+      --stage-texture: linear-gradient(120deg, rgba(255,255,255,0.45), transparent 44%), repeating-linear-gradient(0deg, rgba(111,142,115,0.08) 0 1px, transparent 1px 30px);
+      --material-overlay: linear-gradient(90deg, rgba(114,138,105,0.13) 0 9px, transparent 9px), repeating-linear-gradient(0deg, rgba(206,178,110,0.12) 0 1px, transparent 1px 28px);
+      --ink-local: var(--panel-ink);
+      --muted-local: var(--panel-muted);
+      --page-local: var(--panel-bg);
+      --page-start: var(--panel-surface);
+      --page-end: var(--panel-surface-2);
+      --panel-local: var(--panel-surface);
+      --panel-soft: color-mix(in srgb, var(--panel-surface-2) 70%, var(--panel-surface) 30%);
+      --surface: var(--panel-surface-2);
+      --surface-quiet: color-mix(in srgb, var(--panel-surface-2) 86%, var(--panel-surface) 14%);
+      --line-local: var(--panel-line);
+      --line-strong: color-mix(in srgb, var(--panel-primary) 46%, var(--panel-line));
+      --primary: var(--panel-primary);
+      --signal: var(--panel-secondary);
+      --action: var(--panel-accent);
+      --danger: var(--panel-accent-2);
+      --success: var(--panel-primary);
+      --warning: var(--panel-secondary);
+      --info: var(--panel-accent);
+    }
+
+    .palette-c1 {
+      --ink-local: #302a3c;
+      --ink-soft: #5a5364;
+      --muted-local: #756b70;
+      --faint: #a89ca4;
+      --page-local: #fff1e8;
+      --page-start: #fff9f2;
+      --page-end: #eadfd2;
+      --panel-local: #fff9f2;
+      --panel-soft: #f3e8dc;
+      --raised: #fffdf8;
+      --surface: #f0e4dc;
+      --surface-quiet: #eadfd2;
+      --line-local: #dcc8c1;
+      --line-strong: #bca2c7;
+      --primary: #806c9f;
+      --primary-deep: #5b4b77;
+      --primary-soft: #eadff0;
+      --signal: #d9a77e;
+      --signal-deep: #a8754f;
+      --signal-soft: #f3e2d3;
+      --action: #d76f85;
+      --action-deep: #a94e61;
+      --deck: #fff2e8;
+      --deck-soft: #eadfd2;
+      --deck-text: #302a3c;
+      --deck-text-soft: #655b66;
+      --deck-muted: #847a80;
+      --deck-icon: #806c9f;
+      --success: #c59a5f;
+      --success-soft: #f1e3c8;
+      --warning: #d9a77e;
+      --warning-soft: #f3e2d3;
+      --danger: #d76f85;
+      --danger-soft: #f3d5dc;
+      --info: #806c9f;
+      --info-soft: #eadff0;
+      --panel-bg: #fff1e8;
+      --panel-surface: #fff9f2;
+      --panel-surface-2: #eadfd2;
+      --panel-ink: #302a3c;
+      --panel-muted: #756b70;
+      --panel-line: rgba(128, 108, 159, 0.20);
+      --panel-primary: #806c9f;
+      --panel-secondary: #d9a77e;
+      --panel-accent: #d76f85;
+      --panel-accent-2: #c59a5f;
+      --panel-shadow: rgba(128, 108, 159, 0.14);
+      --panel-texture: linear-gradient(120deg, rgba(128,108,159,0.08), transparent 42%), repeating-linear-gradient(90deg, rgba(217,167,126,0.08) 0 1px, transparent 1px 52px);
+      --stage-texture: linear-gradient(120deg, rgba(128,108,159,0.12), transparent 40%);
+      --material-overlay: linear-gradient(115deg, rgba(255,255,255,0.52), transparent 44%), linear-gradient(90deg, transparent 0 calc(100% - 2px), rgba(217,167,126,0.44) calc(100% - 2px));
+      --ink-local: var(--panel-ink);
+      --muted-local: var(--panel-muted);
+      --page-local: var(--panel-bg);
+      --page-start: var(--panel-surface);
+      --page-end: var(--panel-surface-2);
+      --panel-local: var(--panel-surface);
+      --panel-soft: color-mix(in srgb, var(--panel-surface-2) 70%, var(--panel-surface) 30%);
+      --surface: var(--panel-surface-2);
+      --surface-quiet: color-mix(in srgb, var(--panel-surface-2) 86%, var(--panel-surface) 14%);
+      --line-local: var(--panel-line);
+      --line-strong: color-mix(in srgb, var(--panel-primary) 46%, var(--panel-line));
+      --primary: var(--panel-primary);
+      --signal: var(--panel-secondary);
+      --action: var(--panel-accent);
+      --danger: var(--panel-accent);
+      --success: var(--panel-accent-2);
+      --warning: var(--panel-secondary);
+      --info: var(--panel-primary);
+    }
+
+    .palette-c2 {
+      --ink-local: #392d2b;
+      --ink-soft: #604d49;
+      --muted-local: #74625c;
+      --faint: #b09388;
+      --page-local: #fff0e7;
+      --page-start: #fff8f0;
+      --page-end: #f7dfcd;
+      --panel-local: #fff8f0;
+      --panel-soft: #f9e9dc;
+      --raised: #fffdf7;
+      --surface: #f7dfcd;
+      --surface-quiet: #f2d4c3;
+      --line-local: #efc5bd;
+      --line-strong: #dc8f89;
+      --primary: #c74f5a;
+      --primary-deep: #8f3540;
+      --primary-soft: #f2d4d5;
+      --signal: #eaa46a;
+      --signal-deep: #b06b38;
+      --signal-soft: #f6dfc5;
+      --action: #f6c58e;
+      --action-deep: #aa7045;
+      --deck: #fff0e7;
+      --deck-soft: #f7dfcd;
+      --deck-text: #392d2b;
+      --deck-text-soft: #6a5650;
+      --deck-muted: #8a746d;
+      --deck-icon: #c74f5a;
+      --success: #eaa46a;
+      --success-soft: #f6dfc5;
+      --warning: #f6c58e;
+      --warning-soft: #fae6ca;
+      --danger: #c74f5a;
+      --danger-soft: #f2d4d5;
+      --info: #8f7164;
+      --info-soft: #eaded6;
+      --panel-bg: #fff0e7;
+      --panel-surface: #fff8f0;
+      --panel-surface-2: #f7dfcd;
+      --panel-ink: #392d2b;
+      --panel-muted: #74625c;
+      --panel-line: rgba(199, 79, 90, 0.20);
+      --panel-primary: #c74f5a;
+      --panel-secondary: #eaa46a;
+      --panel-accent: #f6c58e;
+      --panel-accent-2: #8f7164;
+      --panel-shadow: rgba(199, 79, 90, 0.13);
+      --panel-texture: repeating-linear-gradient(90deg, rgba(199,79,90,0.04) 0 1px, transparent 1px 10px), repeating-linear-gradient(0deg, rgba(234,164,106,0.05) 0 1px, transparent 1px 12px);
+      --stage-texture: repeating-linear-gradient(90deg, rgba(199,79,90,0.06) 0 1px, transparent 1px 10px), repeating-linear-gradient(0deg, rgba(234,164,106,0.07) 0 1px, transparent 1px 12px);
+      --material-overlay: linear-gradient(110deg, rgba(255,255,255,0.44), transparent 44%), repeating-linear-gradient(90deg, rgba(199,79,90,0.06) 0 1px, transparent 1px 9px);
+      --ink-local: var(--panel-ink);
+      --muted-local: var(--panel-muted);
+      --page-local: var(--panel-bg);
+      --page-start: var(--panel-surface);
+      --page-end: var(--panel-surface-2);
+      --panel-local: var(--panel-surface);
+      --panel-soft: color-mix(in srgb, var(--panel-surface-2) 70%, var(--panel-surface) 30%);
+      --surface: var(--panel-surface-2);
+      --surface-quiet: color-mix(in srgb, var(--panel-surface-2) 86%, var(--panel-surface) 14%);
+      --line-local: var(--panel-line);
+      --line-strong: color-mix(in srgb, var(--panel-primary) 46%, var(--panel-line));
+      --primary: var(--panel-primary);
+      --signal: var(--panel-secondary);
+      --action: var(--panel-accent);
+      --danger: var(--panel-primary);
+      --success: var(--panel-secondary);
+      --warning: var(--panel-accent);
+      --info: var(--panel-accent-2);
+    }
+
+    .palette-happiness {
+      --ink-local: #463026;
+      --ink-soft: #6d4f42;
+      --muted-local: #7a6254;
+      --faint: #b79c8d;
+      --page-local: #fff0df;
+      --page-start: #fff8ed;
+      --page-end: #f7d7bd;
+      --panel-local: #fff8ed;
+      --panel-soft: #f9e6d4;
+      --raised: #fffdf7;
+      --surface: #f7d7bd;
+      --surface-quiet: #f4ccb0;
+      --line-local: #f0c7b1;
+      --line-strong: #eba985;
+      --primary: #f1a77d;
+      --primary-deep: #b66d4e;
+      --primary-soft: #f8dfcf;
+      --signal: #f8c88e;
+      --signal-deep: #bb7d42;
+      --signal-soft: #fae7c8;
+      --action: #d86d62;
+      --action-deep: #9f4841;
+      --deck: #fff0df;
+      --deck-soft: #f7d7bd;
+      --deck-text: #463026;
+      --deck-text-soft: #755c4e;
+      --deck-muted: #8f7668;
+      --deck-icon: #f1a77d;
+      --success: #c6a069;
+      --success-soft: #f1e4c8;
+      --warning: #f8c88e;
+      --warning-soft: #fae7c8;
+      --danger: #d86d62;
+      --danger-soft: #f4d7d1;
+      --info: #f1a77d;
+      --info-soft: #f8dfcf;
+      --panel-bg: #fff0df;
+      --panel-surface: #fff8ed;
+      --panel-surface-2: #f7d7bd;
+      --panel-ink: #463026;
+      --panel-muted: #7a6254;
+      --panel-line: rgba(241, 167, 125, 0.25);
+      --panel-primary: #f1a77d;
+      --panel-secondary: #f8c88e;
+      --panel-accent: #d86d62;
+      --panel-accent-2: #c6a069;
+      --panel-shadow: rgba(241, 167, 125, 0.16);
+      --panel-texture: linear-gradient(120deg, rgba(241,167,125,0.20), transparent 42%), repeating-linear-gradient(0deg, rgba(248,200,142,0.10) 0 1px, transparent 1px 30px);
+      --stage-texture: linear-gradient(120deg, rgba(241,167,125,0.22), transparent 48%), repeating-linear-gradient(0deg, rgba(248,200,142,0.10) 0 1px, transparent 1px 34px);
+      --material-overlay: linear-gradient(120deg, rgba(255,255,255,0.46), transparent 44%), linear-gradient(180deg, rgba(248,200,142,0.24), transparent 70%);
+      --ink-local: var(--panel-ink);
+      --muted-local: var(--panel-muted);
+      --page-local: var(--panel-bg);
+      --page-start: var(--panel-surface);
+      --page-end: var(--panel-surface-2);
+      --panel-local: var(--panel-surface);
+      --panel-soft: color-mix(in srgb, var(--panel-surface-2) 70%, var(--panel-surface) 30%);
+      --surface: var(--panel-surface-2);
+      --surface-quiet: color-mix(in srgb, var(--panel-surface-2) 86%, var(--panel-surface) 14%);
+      --line-local: var(--panel-line);
+      --line-strong: color-mix(in srgb, var(--panel-primary) 46%, var(--panel-line));
+      --primary: var(--panel-primary);
+      --signal: var(--panel-secondary);
+      --action: var(--panel-accent);
+      --danger: var(--panel-accent);
+      --success: var(--panel-accent-2);
+      --warning: var(--panel-secondary);
+      --info: var(--panel-primary);
+    }
+
+    .palette {
+      --ink-soft: color-mix(in srgb, var(--panel-ink) 76%, var(--panel-muted));
+      --faint: color-mix(in srgb, var(--panel-muted) 58%, var(--panel-surface-2));
+      --raised: color-mix(in srgb, var(--panel-surface) 92%, white 8%);
+      --primary-deep: color-mix(in srgb, var(--panel-primary) 70%, var(--panel-ink));
+      --primary-soft: color-mix(in srgb, var(--panel-primary) 12%, var(--panel-surface));
+      --signal-deep: color-mix(in srgb, var(--panel-secondary) 70%, var(--panel-ink));
+      --signal-soft: color-mix(in srgb, var(--panel-secondary) 16%, var(--panel-surface));
+      --action-deep: color-mix(in srgb, var(--panel-accent) 70%, var(--panel-ink));
+      --success-soft: color-mix(in srgb, var(--success) 16%, var(--panel-surface));
+      --warning-soft: color-mix(in srgb, var(--warning) 18%, var(--panel-surface));
+      --danger-soft: color-mix(in srgb, var(--danger) 16%, var(--panel-surface));
+      --info-soft: color-mix(in srgb, var(--info) 14%, var(--panel-surface));
+      --deck: var(--panel-surface);
+      --deck-soft: var(--panel-surface-2);
+      --deck-text: var(--panel-ink);
+      --deck-text-soft: var(--panel-muted);
+      --deck-muted: var(--panel-muted);
+      --deck-icon: var(--panel-primary);
+    }
+
+    .palette-header {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.42fr) minmax(0, 0.58fr);
+      gap: clamp(20px, 4vw, 46px);
+      align-items: end;
+      border-bottom: 1px solid var(--panel-line);
+      background:
+        var(--panel-texture),
+        linear-gradient(135deg, color-mix(in srgb, var(--panel-bg) 94%, white 6%), var(--panel-bg));
+      padding: clamp(24px, 4vw, 42px);
+    }
+
+    .palette-title h3 {
+      margin: 12px 0 12px;
+      color: var(--ink-local);
+      font-size: clamp(38px, 6vw, 78px);
+      font-weight: 700;
+      line-height: 0.96;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 34%, var(--panel-line));
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface) 82%, transparent);
+      color: var(--panel-primary);
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .palette-title p,
+    .reason {
+      margin-bottom: 0;
+      color: var(--muted-local);
+      font-size: 15px;
+      line-height: 1.82;
+    }
+
+    .reason strong {
+      color: var(--ink-local);
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .swatch {
+      min-height: 104px;
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+      color: #fffef8;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.25;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .swatch.light {
+      color: var(--ink-local);
+    }
+
+    .swatch span {
+      display: block;
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      opacity: 0.78;
+    }
+
+    .palette-body {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.3fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 24px;
+    }
+
+    .token-table,
+    .preview {
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 72%, transparent), color-mix(in srgb, var(--panel-surface-2) 58%, transparent));
+      box-shadow: 0 16px 38px color-mix(in srgb, var(--panel-shadow) 76%, transparent);
+    }
+
+    .token-table {
+      overflow: hidden;
+    }
+
+    .token-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1fr);
+      gap: 10px;
+      border-bottom: 1px solid var(--line-local);
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .token-row:last-child {
+      border-bottom: 0;
+    }
+
+    .token-row b {
+      color: var(--ink-local);
+    }
+
+    .token-row span {
+      color: var(--muted-local);
+      font-weight: 800;
+    }
+
+    .preview {
+      overflow: hidden;
+      background:
+        var(--stage-texture),
+        linear-gradient(90deg, color-mix(in srgb, var(--panel-primary) 10%, transparent) 1px, transparent 1px) 0 0 / 52px 52px,
+        linear-gradient(0deg, color-mix(in srgb, var(--panel-primary) 8%, transparent) 1px, transparent 1px) 0 0 / 52px 52px,
+        linear-gradient(145deg, color-mix(in srgb, var(--panel-surface) 92%, white 8%), color-mix(in srgb, var(--panel-surface-2) 74%, white 26%));
+      padding: clamp(14px, 2vw, 20px);
+    }
+
+    .preview-shell {
+      position: relative;
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      overflow: hidden;
+      min-height: 760px;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 22%, var(--panel-line));
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 90%, transparent), color-mix(in srgb, var(--panel-surface) 70%, transparent));
+      box-shadow: 0 24px 54px color-mix(in srgb, var(--panel-shadow) 62%, transparent);
+    }
+
+    .preview-shell::before {
+      position: absolute;
+      inset: 0;
+      background: var(--material-overlay, linear-gradient(180deg, transparent, transparent));
+      content: "";
+      opacity: 0.72;
+      pointer-events: none;
+    }
+
+    .preview-shell > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .palette[data-material-type="porcelain"] .preview-shell {
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.46),
+        0 26px 56px var(--panel-shadow);
+    }
+
+    .palette[data-material-type="glass"] .preview-shell {
+      background: color-mix(in srgb, var(--panel-surface) 62%, transparent);
+      backdrop-filter: blur(16px) saturate(1.08);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+    }
+
+    .palette[data-material-type="glass"] .preview-shell::before {
+      mix-blend-mode: screen;
+    }
+
+    .palette[data-material-type="ledger"] .preview-shell::before,
+    .palette[data-material-type="cotton"] .preview-shell::before,
+    .palette[data-material-type="daybreak"] .preview-shell::before {
+      opacity: 0.82;
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--panel-line);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 76%, transparent), color-mix(in srgb, var(--panel-surface-2) 40%, transparent)),
+        repeating-linear-gradient(0deg, transparent 0 23px, color-mix(in srgb, var(--panel-line), transparent 72%) 23px 24px);
+      color: var(--panel-ink);
+      padding: 22px 18px;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .mark {
+      display: grid;
+      height: 42px;
+      place-items: center;
+      border: 2px solid var(--panel-primary);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--panel-accent) 56%, var(--panel-surface));
+      color: var(--panel-ink);
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 900;
+      transform: rotate(-3deg);
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--panel-primary) 10%, transparent);
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--panel-ink);
+      font-family: var(--font-display);
+      font-size: 21px;
+      line-height: 1.1;
+    }
+
+    .brand span span {
+      display: block;
+      margin-top: 2px;
+      color: var(--panel-muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-item {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 46px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--panel-muted);
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 900;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    .nav-item.active {
+      border-color: color-mix(in srgb, var(--panel-primary) 28%, var(--panel-line));
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--panel-surface) 86%, transparent), color-mix(in srgb, var(--panel-primary) 10%, var(--panel-surface)));
+      color: var(--panel-ink);
+      transform: translateX(3px);
+    }
+
+    .nav-icon {
+      display: grid;
+      height: 24px;
+      place-items: center;
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--panel-accent) 18%, var(--panel-surface));
+      color: var(--panel-primary);
+    }
+
+    .side-foot {
+      display: grid;
+      gap: 10px;
+      margin-top: auto;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface) 70%, transparent);
+      padding: 12px;
+      color: var(--panel-muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .pin-control {
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 34%, var(--panel-line));
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--panel-surface) 86%, transparent);
+      color: var(--panel-primary);
+      font-weight: 900;
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-line);
+      background: color-mix(in srgb, var(--panel-surface) 80%, transparent);
+      padding: 16px 18px;
+    }
+
+    .search {
+      min-height: 44px;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, var(--panel-surface), color-mix(in srgb, var(--panel-surface-2), white 24%));
+      color: var(--panel-muted);
+      padding: 11px 14px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .theme-toggle {
+      display: flex;
+      gap: 4px;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface-2) 62%, var(--panel-surface));
+      padding: 4px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .identity-pill,
+    .notice-dot {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface-2) 48%, var(--panel-surface));
+      color: var(--panel-muted);
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .notice-dot {
+      position: relative;
+      width: 40px;
+      padding: 0;
+      color: var(--panel-primary);
+    }
+
+    .notice-dot::after {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 7px;
+      height: 7px;
+      border: 1px solid var(--panel-surface);
+      border-radius: 50%;
+      background: var(--panel-accent);
+      content: "";
+    }
+
+    .theme-toggle span {
+      display: grid;
+      min-width: 32px;
+      height: 30px;
+      place-items: center;
+      border-radius: 4px;
+      color: var(--panel-muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .theme-toggle .active {
+      background: var(--panel-primary);
+      color: color-mix(in srgb, var(--panel-surface) 92%, white 8%);
+    }
+
+    .app-content {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      padding: 18px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 196px;
+      gap: 18px;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 22%, var(--panel-line));
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 86%, transparent), color-mix(in srgb, var(--panel-surface-2) 42%, transparent));
+      padding: clamp(20px, 3vw, 34px);
+      box-shadow: 0 18px 44px color-mix(in srgb, var(--panel-shadow) 86%, transparent);
+    }
+
+    .hero-copy {
+      min-width: 0;
+    }
+
+    .hero h4 {
+      max-width: 18ch;
+      margin: 0 0 12px;
+      color: var(--ink-local);
+      font-family: var(--font-display);
+      font-size: clamp(30px, 4vw, 48px);
+      font-weight: 700;
+      line-height: 1.06;
+    }
+
+    .hero p {
+      margin: 0 0 14px;
+      color: var(--ink-soft);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .mini-chip {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 24%, var(--panel-line));
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--panel-primary) 9%, var(--panel-surface));
+      color: var(--primary-deep);
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 42%, var(--panel-line));
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface) 86%, transparent);
+      color: var(--panel-primary);
+      padding: 0 13px;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--panel-primary), transparent 90%);
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px color-mix(in srgb, var(--panel-primary), transparent 82%);
+    }
+
+    .btn.primary {
+      border-color: color-mix(in srgb, var(--panel-primary) 58%, var(--panel-line));
+      background: var(--panel-primary);
+      color: color-mix(in srgb, var(--panel-surface) 92%, white 8%);
+    }
+
+    .hero-side {
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 72%, transparent), color-mix(in srgb, var(--panel-surface-2) 42%, transparent));
+      padding: 16px;
+    }
+
+    .hero-side-label {
+      margin-bottom: 10px;
+      color: var(--panel-muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero-side strong {
+      display: block;
+      color: var(--panel-primary);
+      font-family: var(--font-display);
+      font-size: 44px;
+      line-height: 1;
+    }
+
+    .hero-side span {
+      display: block;
+      margin-top: 8px;
+      color: var(--panel-muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .path-list {
+      display: grid;
+      gap: 9px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .path-list li {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .path-list b {
+      display: grid;
+      height: 24px;
+      place-items: center;
+      border: 1px solid var(--panel-line);
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--panel-surface) 72%, transparent);
+      color: var(--panel-primary);
+      font-size: 11px;
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 86%, transparent), color-mix(in srgb, var(--panel-surface-2) 42%, transparent));
+      padding: 16px;
+    }
+
+    .metric-card {
+      display: grid;
+      gap: 10px;
+      min-height: 152px;
+    }
+
+    .metric-label {
+      color: var(--panel-muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      color: var(--panel-ink);
+      font-family: var(--font-display);
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .card h4 {
+      margin: 0 0 10px;
+      color: var(--ink-local);
+      font-family: var(--font);
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .card p,
+    .card li {
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .card p {
+      margin: 0;
+    }
+
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      border-top: 1px solid var(--panel-line);
+      padding-top: 16px;
+    }
+
+    .section-head span {
+      color: var(--panel-primary);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .section-head strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--panel-ink);
+      font-size: 21px;
+      line-height: 1.24;
+    }
+
+    .section-head em {
+      color: var(--panel-muted);
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 12px;
+    }
+
+    .detail-grid .card {
+      min-height: 188px;
+    }
+
+    .wide-card {
+      grid-row: span 2;
+    }
+
+    .workflow-list,
+    .insight-stack,
+    .chat-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .workflow-step {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .workflow-step b {
+      display: grid;
+      height: 28px;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--panel-primary);
+      color: color-mix(in srgb, var(--panel-surface) 92%, white 8%);
+      font-size: 12px;
+    }
+
+    .workflow-step strong,
+    .insight-row strong,
+    .chat-line strong {
+      display: block;
+      color: var(--panel-ink);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .workflow-step span,
+    .insight-row span,
+    .chat-line span {
+      display: block;
+      margin-top: 2px;
+      color: var(--panel-muted);
+      font-size: 12px;
+      font-weight: 780;
+      line-height: 1.55;
+    }
+
+    .insight-row,
+    .chat-line {
+      border: 1px solid color-mix(in srgb, var(--panel-line) 76%, transparent);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface) 72%, transparent);
+      padding: 10px;
+    }
+
+    .chat-line.reply {
+      margin-left: 18px;
+      border-color: color-mix(in srgb, var(--panel-primary) 34%, var(--panel-line));
+      background: color-mix(in srgb, var(--panel-primary) 10%, var(--panel-surface));
+    }
+
+    .review-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 20px 24px 0;
+    }
+
+    .review-metric {
+      min-height: 132px;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 86%, transparent), color-mix(in srgb, var(--panel-primary) 9%, var(--panel-surface)));
+      padding: 14px;
+    }
+
+    .review-metric strong {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--ink-local);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .review-metric b {
+      border-radius: 8px;
+      background: var(--primary-soft);
+      color: var(--primary-deep);
+      padding: 2px 7px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .review-metric span {
+      display: block;
+      color: var(--muted-local);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.62;
+    }
+
+    .status-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: 12px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 34px;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .dot {
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 4px var(--success-soft);
+    }
+
+    .dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 0 4px var(--warning-soft);
+    }
+
+    .dot.danger {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px var(--danger-soft);
+    }
+
+    .callout {
+      border: 1px solid color-mix(in srgb, var(--panel-accent) 44%, var(--panel-line));
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--panel-accent) 18%, var(--panel-surface)), color-mix(in srgb, var(--panel-surface-2) 42%, transparent));
+      color: var(--panel-ink);
+      padding: 14px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.65;
+    }
+
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      border-bottom: 1px solid var(--panel-line);
+      padding: 7px 6px;
+      text-align: left;
+    }
+
+    .mini-table th {
+      color: var(--muted-local);
+      font-weight: 900;
+    }
+
+    .mini-table td {
+      color: var(--ink-soft);
+      font-weight: 800;
+    }
+
+    .bar-chart {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .bar span:last-child {
+      height: 12px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, var(--primary), var(--action));
+    }
+
+    .notes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 0 24px 24px;
+    }
+
+    .note {
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 86%, transparent), color-mix(in srgb, var(--panel-surface-2) 42%, transparent));
+      padding: 14px;
+      color: var(--muted-local);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink-local);
+    }
+
+    @media (max-width: 1160px) {
+      .intro,
+      .review-head,
+      .palette-switcher,
+      .palette-header,
+      .palette-body,
+      .preview-shell,
+      .hero,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        border-right: 0;
+        border-bottom: 1px solid var(--panel-line);
+      }
+
+      .switcher-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .wide-card {
+        grid-row: auto;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: calc(100vw - 48px);
+        max-width: 1480px;
+        padding-top: 24px;
+      }
+
+      .intro-main,
+      .intro-side,
+      .review-head,
+      .palette-switcher,
+      .palette-header,
+      .palette-body {
+        padding: 18px;
+      }
+
+      .palette-switcher {
+        position: static;
+      }
+
+      .rule-row,
+      .criteria-grid,
+      .review-strip,
+      .current-review,
+      .switcher-options,
+      .swatches,
+      .component-grid,
+      .notes,
+      .toolbar,
+      .section-head {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar-actions {
+        justify-content: stretch;
+      }
+
+      .toolbar-actions > * {
+        flex: 1;
+      }
+
+      .preview {
+        order: -1;
+      }
+
+      h1 {
+        font-size: 36px;
+        line-height: 1.06;
+      }
+
+      h1 span {
+        display: block;
+      }
+
+      .palette-title h3,
+      .switcher-copy h2 {
+        font-size: 38px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="palette-switcher" aria-label="颜色方案切换">
+      <div class="switcher-copy">
+        <p class="eyebrow">Value theme switcher</p>
+        <h2 data-current-title>Glass Lab</h2>
+        <p data-current-note>求真主题。浅色玻璃层让证据、解释和结论彼此可见，避免脏渐变和冷科技感。</p>
+        <div class="typeface-switcher" aria-label="正文和界面字体切换">
+          <span>Body typeface</span>
+          <div class="typeface-buttons">
+            <button class="typeface-choice" type="button" data-typeface-choice="hei" aria-pressed="true">黑体</button>
+            <button class="typeface-choice" type="button" data-typeface-choice="wenkai" aria-pressed="false">文楷</button>
+          </div>
+          <p class="typeface-note" data-typeface-note>黑体模式更像稳定产品界面；切到文楷后可以观察正文是否更温暖，但操作区会更松。</p>
+        </div>
+      </div>
+      <div class="switcher-options">
+        <button class="palette-choice" type="button" data-palette-choice="truth" aria-pressed="true">
+          <span class="choice-dot" style="--choice-page:#f4f3ea;--choice-primary:#6ab0a5;--choice-action:#e8c872"></span>
+          <strong>求真 Glass Lab</strong>
+        </button>
+        <button class="palette-choice" type="button" data-palette-choice="goodness" aria-pressed="false">
+          <span class="choice-dot" style="--choice-page:#f8f0e4;--choice-primary:#728a69;--choice-action:#d99667"></span>
+          <strong>尽善 Willow Ledger</strong>
+        </button>
+        <button class="palette-choice" type="button" data-palette-choice="beauty" aria-pressed="false">
+          <span class="choice-dot" style="--choice-page:#fff1e8;--choice-primary:#806c9f;--choice-action:#d76f85"></span>
+          <strong>致美 Porcelain Iris</strong>
+        </button>
+        <button class="palette-choice" type="button" data-palette-choice="love" aria-pressed="false">
+          <span class="choice-dot" style="--choice-page:#fff0e7;--choice-primary:#c74f5a;--choice-action:#f6c58e"></span>
+          <strong>大爱 Pomegranate</strong>
+        </button>
+        <button class="palette-choice" type="button" data-palette-choice="happiness" aria-pressed="false">
+          <span class="choice-dot" style="--choice-page:#fff0df;--choice-primary:#f1a77d;--choice-action:#d86d62"></span>
+          <strong>幸福 Daybreak Peach</strong>
+        </button>
+      </div>
+    </section>
+
+    <section class="palette-stack" id="palette-stage" aria-live="polite">
+      <article class="palette palette-a1 is-active" data-palette="truth" data-material-type="glass">
+        <header class="palette-header">
+          <div class="palette-title">
+            <span class="tag">求真 / Glass Lab</span>
+            <h3>Glass Lab</h3>
+            <p>浅色玻璃实验台，让证据层、解释层和结论层彼此可见。</p>
+          </div>
+          <div>
+            <p class="reason"><strong>色彩逻辑：</strong>Milk glass 做大面积底色，Lab glass 和 Pale stone 承担半透明层级，Label gold 只标出关键判断，深墨只留给文字。</p>
+            <div class="swatches">
+              <div class="swatch light" style="background:var(--page-local)">Page<span>#f4f3ea</span></div>
+              <div class="swatch light" style="background:#f8f6ee">Milk<span>#f8f6ee</span></div>
+              <div class="swatch" style="background:var(--primary)">Lab glass<span>#6ab0a5</span></div>
+              <div class="swatch" style="background:var(--signal)">Pale stone<span>#7ca7b8</span></div>
+              <div class="swatch light" style="background:var(--action)">Label<span>#e8c872</span></div>
+              <div class="swatch" style="background:var(--danger)">Edge<span>#d48670</span></div>
+            </div>
+          </div>
+        </header>
+        <div class="review-strip" aria-label="Truth review">
+          <div class="review-metric"><strong>情绪 <b>轻</b></strong><span>像浅色玻璃实验台，透明但不霓虹。</span></div>
+          <div class="review-metric"><strong>层次 <b>透</b></strong><span>证据、解释、结论通过叠层关系被看见。</span></div>
+          <div class="review-metric"><strong>可读 <b>清</b></strong><span>深墨只用于文字和关键标签，避免蓝绿变脏。</span></div>
+          <div class="review-metric"><strong>状态 <b>试</b></strong><span>当前求真主题已切到 C 方案试看。</span></div>
+        </div>
+        <div class="palette-body">
+          <div class="token-table">
+            <div class="token-row"><b>ink / muted</b><span>#324a4e / #66716c</span></div>
+            <div class="token-row"><b>page</b><span>#f4f3ea, rgba(255,252,242,.76), rgba(221,239,230,.62)</span></div>
+            <div class="token-row"><b>panel</b><span>milk glass rgba(255,252,242,.76)</span></div>
+            <div class="token-row"><b>line</b><span>rgba(106,176,165,.24) / #6ab0a5</span></div>
+            <div class="token-row"><b>primary</b><span>#6ab0a5 / #407e78</span></div>
+            <div class="token-row"><b>action</b><span>#e8c872 / #a9822d</span></div>
+            <div class="token-row"><b>deck</b><span>#f8f6ee / rgba(221,239,230,.62)</span></div>
+            <div class="token-row"><b>semantic</b><span>positive #6ab0a5, warning #e8c872, danger #d48670, info #7ca7b8</span></div>
+          </div>
+          <div class="preview">
+            <div class="preview-shell">
+              <aside class="side">
+                <div class="brand"><span class="mark">L</span><span><strong>Lighthouse</strong><span>服务文化平台</span></span></div>
+                <nav class="nav">
+                  <div class="nav-item active"><span class="nav-icon">心</span>本心 · 价值起点</div>
+                  <div class="nav-item"><span class="nav-icon">鉴</span>镜鉴 · 外部标杆</div>
+                  <div class="nav-item"><span class="nav-icon">行</span>笃行 · 内部实践</div>
+                  <div class="nav-item"><span class="nav-icon">共</span>共创 · 行动指南</div>
+                  <div class="nav-item"><span class="nav-icon">问</span>路引 · AI问答</div>
+                </nav>
+                <div class="side-foot"><span class="pin-control">收起侧栏</span><span>框架对应 AppShell / Navigation，主题只替换 token。</span></div>
+              </aside>
+              <section class="main">
+                <div class="toolbar"><div class="search">搜索：本心、镜鉴、笃行、行动指南、路引</div><div class="toolbar-actions"><div class="theme-toggle"><span>蓝绿</span><span class="active">求真</span></div><span class="identity-pill">经销商预览</span><span class="notice-dot">铃</span></div></div>
+                <div class="app-content">
+                  <div class="hero">
+                    <div class="hero-copy"><span class="tag">透明推理</span><h4>让证据层、解释层、结论层彼此可见。</h4><p>适合浮层、引用卡和审阅侧栏，视觉轻但信息关系清楚。</p><div class="hero-meta"><span class="mini-chip">LhPageHero</span><span class="mini-chip">LhCard</span><span class="mini-chip">LhDataTableShell</span></div><div class="actions"><span class="btn primary">抬起玻璃层</span><span class="btn">查看引用卡</span></div></div>
+                    <aside class="hero-side"><div class="hero-side-label">阅读路径</div><strong>3</strong><span>可见层级。</span><ol class="path-list"><li><b>1</b><span>事实和来源先进入证据层。</span></li><li><b>2</b><span>解释层标出推理依据。</span></li><li><b>3</b><span>结论层保持可回看。</span></li></ol></aside>
+                  </div>
+                  <div class="component-grid">
+                    <article class="card metric-card"><span class="metric-label">Evidence</span><strong class="metric-value">12</strong><p>引用片段已归档，供 Hermit 回答时回指。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Review</span><strong class="metric-value">0</strong><p>遮挡冲突，玻璃层只用于解释关系。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Status</span><div class="status-list"><div class="status"><span class="dot"></span><span>可复核结论</span><b>6</b></div><div class="status"><span class="dot warning"></span><span>需补充来源</span><b>2</b></div><div class="status"><span class="dot danger"></span><span>风险断言</span><b>0</b></div></div></article>
+                  </div>
+                  <div class="section-head"><div><span>Workspace</span><strong>按现有前端组件展开预览</strong></div><em>AppShell / Header / Primitives</em></div>
+                  <div class="detail-grid">
+                    <article class="card wide-card"><h4>路引判断流</h4><div class="workflow-list"><div class="workflow-step"><b>1</b><span><strong>输入服务场景</strong><span>费用、车况、进度和风险先被拆成事实字段。</span></span></div><div class="workflow-step"><b>2</b><span><strong>引用知识片段</strong><span>镜鉴案例、本心价值和共创指南作为透明依据。</span></span></div><div class="workflow-step"><b>3</b><span><strong>输出可复核建议</strong><span>结论落到下一步话术和判断边界，不只给口号。</span></span></div></div></article>
+                    <article class="card"><h4>审核表</h4><table class="mini-table"><thead><tr><th>模块</th><th>状态</th></tr></thead><tbody><tr><td>证据层</td><td>已引用</td></tr><tr><td>解释层</td><td>待复核</td></tr><tr><td>结论层</td><td>可发布</td></tr></tbody></table></article>
+                    <article class="card"><h4>Hermit 面板</h4><div class="chat-stack"><div class="chat-line"><strong>用户</strong><span>客户质疑费用是否必要，如何解释？</span></div><div class="chat-line reply"><strong>路引</strong><span>先列明事实、检测依据和可选方案，再给出推荐理由。</span></div></div></article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="notes"><div class="note"><strong>试用</strong>求真 C / Glass Lab。</div><div class="note"><strong>适合</strong>浮层、引用卡、审阅侧栏、判断台。</div><div class="note"><strong>注意</strong>保持浅色玻璃感，不走霓虹科技感。</div></div>
+      </article>
+
+      <article class="palette palette-a2" data-palette="goodness" data-material-type="ledger">
+        <header class="palette-header">
+          <div class="palette-title">
+            <span class="tag">尽善 / Willow Porcelain Ledger</span>
+            <h3>Willow Porcelain Ledger</h3>
+            <p>保留柳叶账本的准则感，但底色改成瓷白：温和、稳定、有分寸。</p>
+          </div>
+          <div>
+            <p class="reason"><strong>色彩逻辑：</strong>Porcelain 负责面积，Willow rule 负责秩序，Rule gold 提示边界，Soft apricot 留住服务温度。</p>
+            <div class="swatches">
+              <div class="swatch light" style="background:var(--page-local)">Page<span>#f8f0e4</span></div>
+              <div class="swatch light" style="background:var(--panel-local)">Porcelain<span>#fffaf0</span></div>
+              <div class="swatch" style="background:var(--primary)">Willow<span>#728a69</span></div>
+              <div class="swatch light" style="background:var(--signal)">Rule<span>#ceb26e</span></div>
+              <div class="swatch" style="background:var(--action)">Warmth<span>#d99667</span></div>
+              <div class="swatch" style="background:var(--danger)">Boundary<span>#b86d5a</span></div>
+            </div>
+          </div>
+        </header>
+        <div class="review-strip" aria-label="Goodness review">
+          <div class="review-metric"><strong>情绪 <b>稳</b></strong><span>善意被写成可执行边界。</span></div>
+          <div class="review-metric"><strong>底色 <b>瓷</b></strong><span>大面积瓷白，降低制度压迫感。</span></div>
+          <div class="review-metric"><strong>可读 <b>强</b></strong><span>适合准则、流程、Do / Don’t。</span></div>
+          <div class="review-metric"><strong>状态 <b>定</b></strong><span>当前主题已定稿。</span></div>
+        </div>
+        <div class="palette-body">
+          <div class="token-table">
+            <div class="token-row"><b>ink / soft</b><span>#34352b / #575d4b</span></div>
+            <div class="token-row"><b>page</b><span>#f8f0e4, #fffaf0, #e9dfd0</span></div>
+            <div class="token-row"><b>panel</b><span>#fffaf0 / #f5ecdc</span></div>
+            <div class="token-row"><b>line</b><span>#d7cfb9 / #aeb490</span></div>
+            <div class="token-row"><b>primary</b><span>#728a69 / #4f644a</span></div>
+            <div class="token-row"><b>action</b><span>#d99667 / #a8653c</span></div>
+            <div class="token-row"><b>deck</b><span>#f8f0e4 / #e9dfd0</span></div>
+            <div class="token-row"><b>semantic</b><span>positive #728a69, warning #ceb26e, danger #b86d5a, info #d99667</span></div>
+          </div>
+          <div class="preview">
+            <div class="preview-shell">
+              <aside class="side">
+                <div class="brand"><span class="mark">L</span><span><strong>Lighthouse</strong><span>服务文化平台</span></span></div>
+                <nav class="nav">
+                  <div class="nav-item active"><span class="nav-icon">心</span>本心 · 价值起点</div>
+                  <div class="nav-item"><span class="nav-icon">鉴</span>镜鉴 · 外部标杆</div>
+                  <div class="nav-item"><span class="nav-icon">行</span>笃行 · 内部实践</div>
+                  <div class="nav-item"><span class="nav-icon">共</span>共创 · 行动指南</div>
+                  <div class="nav-item"><span class="nav-icon">问</span>路引 · AI问答</div>
+                </nav>
+                <div class="side-foot"><span class="pin-control">收起侧栏</span><span>框架对应 AppShell / Navigation，主题只替换 token。</span></div>
+              </aside>
+              <section class="main">
+                <div class="toolbar"><div class="search">搜索：准则、边界、下一步</div><div class="toolbar-actions"><div class="theme-toggle"><span>蓝绿</span><span class="active">尽善</span></div><span class="identity-pill">门店主管</span><span class="notice-dot">铃</span></div></div>
+                <div class="app-content">
+                  <div class="hero">
+                    <div class="hero-copy"><span class="tag">服务准则</span><h4>把善意写成可以执行的边界。</h4><p>温和不是模糊，而是让人知道什么时候该做、什么时候停。</p><div class="hero-meta"><span class="mini-chip">LhCallout</span><span class="mini-chip">LhStatusBadge</span><span class="mini-chip">Do / Don’t</span></div><div class="actions"><span class="btn primary">压实边界</span><span class="btn">查看流程</span></div></div>
+                    <aside class="hero-side"><div class="hero-side-label">执行路径</div><strong>24h</strong><span>跟进窗口。</span><ol class="path-list"><li><b>1</b><span>先确认客户处境和事实。</span></li><li><b>2</b><span>再判断是否可转为规则。</span></li><li><b>3</b><span>最后给一线明确边界。</span></li></ol></aside>
+                  </div>
+                  <div class="component-grid">
+                    <article class="card metric-card"><span class="metric-label">SOP</span><strong class="metric-value">8</strong><p>共创建议已整理为可执行准则。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Boundary</span><strong class="metric-value">3</strong><p>需要管理员确认的灰区判断。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Status</span><div class="status-list"><div class="status"><span class="dot"></span><span>可发布指南</span><b>4</b></div><div class="status"><span class="dot warning"></span><span>需补充依据</span><b>3</b></div><div class="status"><span class="dot danger"></span><span>需介入风险</span><b>1</b></div></div></article>
+                  </div>
+                  <div class="section-head"><div><span>Workshop</span><strong>从善意到可执行规则</strong></div><em>共创 / 审核 / 发布</em></div>
+                  <div class="detail-grid">
+                    <article class="card wide-card"><h4>共创审核流</h4><div class="workflow-list"><div class="workflow-step"><b>1</b><span><strong>收集一线建议</strong><span>员工提交应做和避免事项，保留真实语境。</span></span></div><div class="workflow-step"><b>2</b><span><strong>补齐事实依据</strong><span>管理员确认成本、责任和客户影响。</span></span></div><div class="workflow-step"><b>3</b><span><strong>发布为行动指南</strong><span>准则落到岗位语言，避免只留下态度表达。</span></span></div></div></article>
+                    <article class="card"><h4>Do / Don’t</h4><table class="mini-table"><thead><tr><th>场景</th><th>状态</th></tr></thead><tbody><tr><td>费用解释</td><td>可发布</td></tr><tr><td>返修沟通</td><td>复核中</td></tr><tr><td>超时交付</td><td>需补充</td></tr></tbody></table></article>
+                    <article class="card"><h4>边界提示</h4><div class="insight-stack"><div class="insight-row"><strong>可以多帮一步</strong><span>但不承诺无法保证的时效和结果。</span></div><div class="insight-row"><strong>可以表达歉意</strong><span>但要同步说明事实、方案和责任边界。</span></div></div></article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="notes"><div class="note"><strong>定稿</strong>尽善 A / Willow Porcelain Ledger。</div><div class="note"><strong>适合</strong>服务准则、流程判断、内部 SOP。</div><div class="note"><strong>注意</strong>瓷白占面积，柳绿只做秩序线。</div></div>
+      </article>
+      <article class="palette palette-c1" data-palette="beauty" data-material-type="porcelain">
+        <header class="palette-header">
+          <div class="palette-title">
+            <span class="tag">致美 / Porcelain Iris</span>
+            <h3>Porcelain Iris</h3>
+            <p>瓷白、鸢尾、玫瑰金和留白共同承担美感，适合品牌表达和编辑排版。</p>
+          </div>
+          <div>
+            <p class="reason"><strong>色彩逻辑：</strong>Porcelain 做空间，Iris 负责识别，Rose gold 和 Petal mark 提供精致完成度。</p>
+            <div class="swatches">
+              <div class="swatch light" style="background:var(--page-local)">Page<span>#fff1e8</span></div>
+              <div class="swatch light" style="background:var(--panel-local)">Porcelain<span>#fff9f2</span></div>
+              <div class="swatch" style="background:var(--primary)">Iris<span>#806c9f</span></div>
+              <div class="swatch light" style="background:var(--signal)">Rose gold<span>#d9a77e</span></div>
+              <div class="swatch" style="background:var(--action)">Petal<span>#d76f85</span></div>
+              <div class="swatch" style="background:var(--success)">Finish<span>#c59a5f</span></div>
+            </div>
+          </div>
+        </header>
+        <div class="review-strip" aria-label="Beauty review">
+          <div class="review-metric"><strong>情绪 <b>雅</b></strong><span>靠留白和细线显得体面。</span></div>
+          <div class="review-metric"><strong>色彩 <b>精</b></strong><span>鸢尾紫只做识别和编辑部气质。</span></div>
+          <div class="review-metric"><strong>可读 <b>强</b></strong><span>瓷白空间适合案例和文化内容。</span></div>
+          <div class="review-metric"><strong>状态 <b>定</b></strong><span>当前主题已定稿。</span></div>
+        </div>
+        <div class="palette-body">
+          <div class="token-table">
+            <div class="token-row"><b>ink / soft</b><span>#302a3c / #5a5364</span></div>
+            <div class="token-row"><b>page</b><span>#fff1e8, #fff9f2, #eadfd2</span></div>
+            <div class="token-row"><b>panel</b><span>#fff9f2 / #f3e8dc</span></div>
+            <div class="token-row"><b>line</b><span>#dcc8c1 / #bca2c7</span></div>
+            <div class="token-row"><b>primary</b><span>#806c9f / #5b4b77</span></div>
+            <div class="token-row"><b>action</b><span>#d76f85 / #a94e61</span></div>
+            <div class="token-row"><b>deck</b><span>#fff2e8 / #eadfd2</span></div>
+            <div class="token-row"><b>semantic</b><span>positive #c59a5f, warning #d9a77e, danger #d76f85, info #806c9f</span></div>
+          </div>
+          <div class="preview">
+            <div class="preview-shell">
+              <aside class="side">
+                <div class="brand"><span class="mark">L</span><span><strong>Lighthouse</strong><span>服务文化平台</span></span></div>
+                <nav class="nav">
+                  <div class="nav-item"><span class="nav-icon">心</span>本心 · 价值起点</div>
+                  <div class="nav-item active"><span class="nav-icon">鉴</span>镜鉴 · 外部标杆</div>
+                  <div class="nav-item"><span class="nav-icon">行</span>笃行 · 内部实践</div>
+                  <div class="nav-item"><span class="nav-icon">共</span>共创 · 行动指南</div>
+                  <div class="nav-item"><span class="nav-icon">问</span>路引 · AI问答</div>
+                </nav>
+                <div class="side-foot"><span class="pin-control">收起侧栏</span><span>框架对应 AppShell / Navigation，主题只替换 token。</span></div>
+              </aside>
+              <section class="main">
+                <div class="toolbar"><div class="search">搜索：案例、留白、品牌表达</div><div class="toolbar-actions"><div class="theme-toggle"><span>蓝绿</span><span class="active">致美</span></div><span class="identity-pill">内容编辑</span><span class="notice-dot">铃</span></div></div>
+                <div class="app-content">
+                  <div class="hero">
+                    <div class="hero-copy"><span class="tag">编辑部</span><h4>先整理秩序，再让美感出现。</h4><p>案例、文化内容和品牌表达通过留白、细线和瓷面建立体面感。</p><div class="hero-meta"><span class="mini-chip">LhSectionHeader</span><span class="mini-chip">LhCard</span><span class="mini-chip">案例页</span></div><div class="actions"><span class="btn primary">收拢留白</span><span class="btn">查看案例</span></div></div>
+                    <aside class="hero-side"><div class="hero-side-label">编辑秩序</div><strong>64</strong><span>字/行控制。</span><ol class="path-list"><li><b>1</b><span>标题先明确对象和价值。</span></li><li><b>2</b><span>案例正文保持稳定节奏。</span></li><li><b>3</b><span>行动总结落到现场语言。</span></li></ol></aside>
+                  </div>
+                  <div class="component-grid">
+                    <article class="card metric-card"><span class="metric-label">Case</span><strong class="metric-value">6</strong><p>案例模块用瓷白承载，鸢尾色只做编辑识别。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Spacing</span><strong class="metric-value">3</strong><p>标题、正文、结论三段留白被固定。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Status</span><div class="status-list"><div class="status"><span class="dot"></span><span>可发布故事</span><b>4</b></div><div class="status"><span class="dot warning"></span><span>需补充图片</span><b>2</b></div><div class="status"><span class="dot danger"></span><span>表达过满</span><b>1</b></div></div></article>
+                  </div>
+                  <div class="section-head"><div><span>Mirror</span><strong>把案例做成可阅读的品牌内容</strong></div><em>镜鉴 / 案例 / 品牌页</em></div>
+                  <div class="detail-grid">
+                    <article class="card wide-card"><h4>编辑工作流</h4><div class="workflow-list"><div class="workflow-step"><b>1</b><span><strong>标注服务冲突</strong><span>先找案例中的主要矛盾，不急着美化文字。</span></span></div><div class="workflow-step"><b>2</b><span><strong>建立版面秩序</strong><span>使用标题、摘要、段落和引用形成节奏。</span></span></div><div class="workflow-step"><b>3</b><span><strong>沉淀可复用表达</strong><span>把好的做法转为可复用的服务语言。</span></span></div></div></article>
+                    <article class="card"><h4>内容表</h4><table class="mini-table"><thead><tr><th>内容</th><th>处理</th></tr></thead><tbody><tr><td>标杆案例</td><td>编辑中</td></tr><tr><td>品牌页摘要</td><td>可发布</td></tr><tr><td>文化注释</td><td>留白复核</td></tr></tbody></table></article>
+                    <article class="card"><h4>排版提示</h4><div class="insight-stack"><div class="insight-row"><strong>留白是秩序</strong><span>不要用大块粉色替代内容层级。</span></div><div class="insight-row"><strong>鸢尾是标记</strong><span>只用于栏目识别、引用边界和重点动线。</span></div></div></article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="notes"><div class="note"><strong>定稿</strong>致美 A / Porcelain Iris。</div><div class="note"><strong>适合</strong>案例、文化内容、品牌页。</div><div class="note"><strong>注意</strong>美感来自留白和细线，不靠大面积粉色。</div></div>
+      </article>
+
+      <article class="palette palette-c2" data-palette="love" data-material-type="cotton">
+        <header class="palette-header">
+          <div class="palette-title">
+            <span class="tag">大爱 / Pomegranate Cotton</span>
+            <h3>Pomegranate Cotton</h3>
+            <p>棉布白、石榴红和杏色光感，像可接近、可依靠的服务空间。</p>
+          </div>
+          <div>
+            <p class="reason"><strong>色彩逻辑：</strong>Cotton 做面积，Pomegranate 提供人情温度，Apricot care 和 Soft light 让照护感更软。</p>
+            <div class="swatches">
+              <div class="swatch light" style="background:var(--page-local)">Page<span>#fff0e7</span></div>
+              <div class="swatch light" style="background:var(--panel-local)">Cotton<span>#fff8f0</span></div>
+              <div class="swatch" style="background:var(--primary)">Pomegranate<span>#c74f5a</span></div>
+              <div class="swatch" style="background:var(--signal)">Apricot<span>#eaa46a</span></div>
+              <div class="swatch light" style="background:var(--action)">Soft light<span>#f6c58e</span></div>
+              <div class="swatch" style="background:var(--info)">Human ink<span>#8f7164</span></div>
+            </div>
+          </div>
+        </header>
+        <div class="review-strip" aria-label="Love review">
+          <div class="review-metric"><strong>情绪 <b>近</b></strong><span>大爱不是符号，而是更近的阅读距离。</span></div>
+          <div class="review-metric"><strong>材质 <b>棉</b></strong><span>棉白细纹让照护感自然出现。</span></div>
+          <div class="review-metric"><strong>可读 <b>强</b></strong><span>石榴红控制为重点，不铺满。</span></div>
+          <div class="review-metric"><strong>状态 <b>定</b></strong><span>当前主题已定稿。</span></div>
+        </div>
+        <div class="palette-body">
+          <div class="token-table">
+            <div class="token-row"><b>ink / soft</b><span>#392d2b / #604d49</span></div>
+            <div class="token-row"><b>page</b><span>#fff0e7, #fff8f0, #f7dfcd</span></div>
+            <div class="token-row"><b>panel</b><span>#fff8f0 / #f9e9dc</span></div>
+            <div class="token-row"><b>line</b><span>#efc5bd / #dc8f89</span></div>
+            <div class="token-row"><b>primary</b><span>#c74f5a / #8f3540</span></div>
+            <div class="token-row"><b>action</b><span>#f6c58e / #aa7045</span></div>
+            <div class="token-row"><b>deck</b><span>#fff0e7 / #f7dfcd</span></div>
+            <div class="token-row"><b>semantic</b><span>positive #eaa46a, warning #f6c58e, danger #c74f5a, info #8f7164</span></div>
+          </div>
+          <div class="preview">
+            <div class="preview-shell">
+              <aside class="side">
+                <div class="brand"><span class="mark">L</span><span><strong>Lighthouse</strong><span>服务文化平台</span></span></div>
+                <nav class="nav">
+                  <div class="nav-item"><span class="nav-icon">心</span>本心 · 价值起点</div>
+                  <div class="nav-item"><span class="nav-icon">鉴</span>镜鉴 · 外部标杆</div>
+                  <div class="nav-item active"><span class="nav-icon">行</span>笃行 · 内部实践</div>
+                  <div class="nav-item"><span class="nav-icon">共</span>共创 · 行动指南</div>
+                  <div class="nav-item"><span class="nav-icon">问</span>路引 · AI问答</div>
+                </nav>
+                <div class="side-foot"><span class="pin-control">收起侧栏</span><span>框架对应 AppShell / Navigation，主题只替换 token。</span></div>
+              </aside>
+              <section class="main">
+                <div class="toolbar"><div class="search">搜索：处境、照护、关系维护</div><div class="toolbar-actions"><div class="theme-toggle"><span>蓝绿</span><span class="active">大爱</span></div><span class="identity-pill">服务顾问</span><span class="notice-dot">铃</span></div></div>
+                <div class="app-content">
+                  <div class="hero">
+                    <div class="hero-copy"><span class="tag">照护台</span><h4>先看见人，再处理事。</h4><p>客户和员工处境先出现，系统动作延后半拍，形成可依靠的照护感。</p><div class="hero-meta"><span class="mini-chip">LhCallout</span><span class="mini-chip">回访记录</span><span class="mini-chip">处境卡</span></div><div class="actions"><span class="btn primary">靠近处境</span><span class="btn">记录关怀</span></div></div>
+                    <aside class="hero-side"><div class="hero-side-label">照护路径</div><strong>4</strong><span>处境线索。</span><ol class="path-list"><li><b>1</b><span>先记录人的处境和压力。</span></li><li><b>2</b><span>再确认流程能否支持。</span></li><li><b>3</b><span>最后选择更有人味的动作。</span></li></ol></aside>
+                  </div>
+                  <div class="component-grid">
+                    <article class="card metric-card"><span class="metric-label">Care</span><strong class="metric-value">7</strong><p>回访、解释、安抚和内部支持线索。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Risk</span><strong class="metric-value">1</strong><p>需要主管介入的尊严和安全问题。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Status</span><div class="status-list"><div class="status"><span class="dot"></span><span>已回应处境</span><b>5</b></div><div class="status"><span class="dot warning"></span><span>待二次回访</span><b>2</b></div><div class="status"><span class="dot danger"></span><span>需介入支持</span><b>1</b></div></div></article>
+                  </div>
+                  <div class="section-head"><div><span>Action</span><strong>让照护变成可跟进的内部实践</strong></div><em>笃行 / 回访 / 支持</em></div>
+                  <div class="detail-grid">
+                    <article class="card wide-card"><h4>处境响应流</h4><div class="workflow-list"><div class="workflow-step"><b>1</b><span><strong>识别处境</strong><span>标出客户焦虑、员工压力和安全边界。</span></span></div><div class="workflow-step"><b>2</b><span><strong>分配支持</strong><span>把照护动作落到负责人和时间窗口。</span></span></div><div class="workflow-step"><b>3</b><span><strong>复盘关系</strong><span>记录长期关系是否被修复，而不只看单次处理。</span></span></div></div></article>
+                    <article class="card"><h4>处境表</h4><table class="mini-table"><thead><tr><th>对象</th><th>动作</th></tr></thead><tbody><tr><td>客户</td><td>回访说明</td></tr><tr><td>员工</td><td>主管支持</td></tr><tr><td>门店</td><td>风险复盘</td></tr></tbody></table></article>
+                    <article class="card"><h4>照护提示</h4><div class="insight-stack"><div class="insight-row"><strong>先接住情绪</strong><span>但不要替代事实确认和责任判断。</span></div><div class="insight-row"><strong>动作要可跟进</strong><span>照护不是口号，要有时间、负责人和回访。</span></div></div></article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="notes"><div class="note"><strong>定稿</strong>大爱 A / Pomegranate Cotton。</div><div class="note"><strong>适合</strong>客户/员工处境、回访、关系维护。</div><div class="note"><strong>注意</strong>石榴红只做靠近和照护重点。</div></div>
+      </article>
+
+      <article class="palette palette-happiness" data-palette="happiness" data-material-type="daybreak">
+        <header class="palette-header">
+          <div class="palette-title">
+            <span class="tag">幸福 / Daybreak Peach</span>
+            <h3>Daybreak Peach</h3>
+            <p>桃色黎明和米白空气感，适合家庭感、日常陪伴和柔和反馈。</p>
+          </div>
+          <div>
+            <p class="reason"><strong>色彩逻辑：</strong>Rice white 是空气层，Daybreak peach 是温度，Morning mist 提供柔光，Wish red 只做愿景和祝福重点。</p>
+            <div class="swatches">
+              <div class="swatch light" style="background:var(--page-local)">Page<span>#fff0df</span></div>
+              <div class="swatch light" style="background:var(--panel-local)">Rice white<span>#fff8ed</span></div>
+              <div class="swatch" style="background:var(--primary)">Peach<span>#f1a77d</span></div>
+              <div class="swatch light" style="background:var(--signal)">Mist<span>#f8c88e</span></div>
+              <div class="swatch" style="background:var(--action)">Wish<span>#d86d62</span></div>
+              <div class="swatch" style="background:var(--success)">Home gold<span>#c6a069</span></div>
+            </div>
+          </div>
+        </header>
+        <div class="review-strip" aria-label="Happiness review">
+          <div class="review-metric"><strong>情绪 <b>轻</b></strong><span>幸福不是爆发，而是每天轻一点。</span></div>
+          <div class="review-metric"><strong>色彩 <b>柔</b></strong><span>桃色和米白形成日常柔光。</span></div>
+          <div class="review-metric"><strong>可读 <b>强</b></strong><span>浅底和暖墨适合长期阅读。</span></div>
+          <div class="review-metric"><strong>状态 <b>定</b></strong><span>当前主题已定稿。</span></div>
+        </div>
+        <div class="palette-body">
+          <div class="token-table">
+            <div class="token-row"><b>ink / soft</b><span>#463026 / #6d4f42</span></div>
+            <div class="token-row"><b>page</b><span>#fff0df, #fff8ed, #f7d7bd</span></div>
+            <div class="token-row"><b>panel</b><span>#fff8ed / #f9e6d4</span></div>
+            <div class="token-row"><b>line</b><span>#f0c7b1 / #eba985</span></div>
+            <div class="token-row"><b>primary</b><span>#f1a77d / #b66d4e</span></div>
+            <div class="token-row"><b>action</b><span>#d86d62 / #9f4841</span></div>
+            <div class="token-row"><b>deck</b><span>#fff0df / #f7d7bd</span></div>
+            <div class="token-row"><b>semantic</b><span>positive #c6a069, warning #f8c88e, danger #d86d62, info #f1a77d</span></div>
+          </div>
+          <div class="preview">
+            <div class="preview-shell">
+              <aside class="side">
+                <div class="brand"><span class="mark">L</span><span><strong>Lighthouse</strong><span>服务文化平台</span></span></div>
+                <nav class="nav">
+                  <div class="nav-item active"><span class="nav-icon">心</span>本心 · 价值起点</div>
+                  <div class="nav-item"><span class="nav-icon">鉴</span>镜鉴 · 外部标杆</div>
+                  <div class="nav-item"><span class="nav-icon">行</span>笃行 · 内部实践</div>
+                  <div class="nav-item"><span class="nav-icon">共</span>共创 · 行动指南</div>
+                  <div class="nav-item"><span class="nav-icon">问</span>路引 · AI问答</div>
+                </nav>
+                <div class="side-foot"><span class="pin-control">收起侧栏</span><span>框架对应 AppShell / Navigation，主题只替换 token。</span></div>
+              </aside>
+              <section class="main">
+                <div class="toolbar"><div class="search">搜索：愿景、反馈、家庭感</div><div class="toolbar-actions"><div class="theme-toggle"><span>蓝绿</span><span class="active">幸福</span></div><span class="identity-pill">员工视角</span><span class="notice-dot">铃</span></div></div>
+                <div class="app-content">
+                  <div class="hero">
+                    <div class="hero-copy"><span class="tag">正向反馈</span><h4>幸福不是爆发，而是每天都轻一点。</h4><p>它适合家庭感、员工日常和服务回访，比柑橘方向少一些跳跃，多一些陪伴。</p><div class="hero-meta"><span class="mini-chip">LhMetricTile</span><span class="mini-chip">反馈回声</span><span class="mini-chip">愿景页</span></div><div class="actions"><span class="btn primary">浮起回应</span><span class="btn">记录愿景</span></div></div>
+                    <aside class="hero-side"><div class="hero-side-label">反馈路径</div><strong>9</strong><span>温暖反馈。</span><ol class="path-list"><li><b>1</b><span>先记录一个具体进步。</span></li><li><b>2</b><span>再连接客户和员工感受。</span></li><li><b>3</b><span>最后沉淀成日常愿景。</span></li></ol></aside>
+                  </div>
+                  <div class="component-grid">
+                    <article class="card metric-card"><span class="metric-label">Feedback</span><strong class="metric-value">9</strong><p>正向反馈保持轻盈，不做奖励墙。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Home</span><strong class="metric-value">3</strong><p>家庭感线索用于长期关系，而非煽情表达。</p></article>
+                    <article class="card metric-card"><span class="metric-label">Status</span><div class="status-list"><div class="status"><span class="dot"></span><span>温暖反馈</span><b>9</b></div><div class="status"><span class="dot warning"></span><span>家庭线索</span><b>3</b></div><div class="status"><span class="dot danger"></span><span>待回应</span><b>1</b></div></div></article>
+                  </div>
+                  <div class="section-head"><div><span>Heart</span><strong>把幸福落成日常反馈和愿景回声</strong></div><em>本心 / 愿景 / 回访</em></div>
+                  <div class="detail-grid">
+                    <article class="card wide-card"><h4>反馈沉淀流</h4><div class="workflow-list"><div class="workflow-step"><b>1</b><span><strong>记录微小完成</strong><span>把客户安心、员工被支持的瞬间写下来。</span></span></div><div class="workflow-step"><b>2</b><span><strong>连接价值路径</strong><span>标注它来自求真、尽善、致美或大爱中的哪一步。</span></span></div><div class="workflow-step"><b>3</b><span><strong>回到共同愿景</strong><span>让幸福成为长期状态，而不是一次性表扬。</span></span></div></div></article>
+                    <article class="card"><h4>反馈表</h4><table class="mini-table"><thead><tr><th>来源</th><th>回声</th></tr></thead><tbody><tr><td>客户回访</td><td>安心</td></tr><tr><td>员工复盘</td><td>被支持</td></tr><tr><td>门店共创</td><td>有方向</td></tr></tbody></table></article>
+                    <article class="card"><h4>陪伴提示</h4><div class="insight-stack"><div class="insight-row"><strong>轻一点</strong><span>幸福主题避免过亮、过甜和过度庆祝。</span></div><div class="insight-row"><strong>长期一点</strong><span>反馈要连接日常陪伴，而不只是一次表扬。</span></div></div></article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="notes"><div class="note"><strong>定稿</strong>幸福 B / Daybreak Peach。</div><div class="note"><strong>适合</strong>愿景、日常反馈、家庭感内容。</div><div class="note"><strong>注意</strong>保持柔光和陪伴，不做糖果色。</div></div>
+      </article>
+    </section>
+  </main>
+  <script>
+    const warmPaletteReviews = {
+      truth: {
+        title: "Glass Lab",
+        note: "求真主题。浅色玻璃层让证据、解释和结论彼此可见，避免脏渐变和冷科技感。",
+        name: "求真 / Glass Lab",
+        emotion: "透明、清晰、轻。",
+        fit: "浮层、引用卡、审阅侧栏、判断台。",
+        verdict: "试用 C 方案。"
+      },
+      goodness: {
+        title: "Willow Porcelain Ledger",
+        note: "尽善主题。瓷白底承载柳叶账本，温和但有边界，适合准则和流程。",
+        name: "尽善 / Willow Porcelain Ledger",
+        emotion: "稳妥、有益、克制。",
+        fit: "服务准则、流程判断、内部 SOP。",
+        verdict: "已定稿。"
+      },
+      beauty: {
+        title: "Porcelain Iris",
+        note: "致美主题。瓷白、鸢尾、玫瑰金和留白共同承担美感。",
+        name: "致美 / Porcelain Iris",
+        emotion: "体面、秩序、美感。",
+        fit: "案例、文化内容、品牌页。",
+        verdict: "已定稿。"
+      },
+      love: {
+        title: "Pomegranate Cotton",
+        note: "大爱主题。棉白、石榴红和杏色光感，让照护感更靠近人。",
+        name: "大爱 / Pomegranate Cotton",
+        emotion: "包容、靠近、看见人。",
+        fit: "客户/员工处境、回访、关系维护。",
+        verdict: "已定稿。"
+      },
+      happiness: {
+        title: "Daybreak Peach",
+        note: "幸福主题。桃色黎明和米白空气感，适合日常陪伴和柔和反馈。",
+        name: "幸福 / Daybreak Peach",
+        emotion: "明亮、温暖、轻盈。",
+        fit: "愿景、日常反馈、家庭感内容。",
+        verdict: "已定稿。"
+      }
+    };
+
+    const setText = (selector, text) => {
+      const node = document.querySelector(selector);
+      if (node) node.textContent = text;
+    };
+
+    const applyWarmPalette = (paletteName) => {
+      const activeName = warmPaletteReviews[paletteName] ? paletteName : "truth";
+      const review = warmPaletteReviews[activeName];
+
+      document.querySelectorAll("[data-palette-choice]").forEach((button) => {
+        const isActive = button.dataset.paletteChoice === activeName;
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+
+      document.querySelectorAll("[data-palette]").forEach((panel) => {
+        const isActive = panel.dataset.palette === activeName;
+        panel.classList.toggle("is-active", isActive);
+      });
+
+      setText("[data-current-title]", review.title);
+      setText("[data-current-note]", review.note);
+      setText("[data-current-name]", review.name);
+      setText("[data-current-emotion]", review.emotion);
+      setText("[data-current-fit]", review.fit);
+      setText("[data-current-verdict]", review.verdict);
+
+      localStorage.setItem("lighthouse-value-color-kit-v1", activeName);
+    };
+
+    document.querySelectorAll("[data-palette-choice]").forEach((button) => {
+      button.addEventListener("click", () => applyWarmPalette(button.dataset.paletteChoice));
+    });
+
+    const typefaceNotes = {
+      hei: "黑体模式更像稳定产品界面；切到文楷后可以观察正文是否更温暖，但操作区会更松。",
+      wenkai: "文楷模式更有手写温度，适合观察大爱和幸福气质；如果高密度表格显松，正文不宜全局替换。"
+    };
+
+    const applyTypeface = (typefaceName) => {
+      const activeName = typefaceName === "wenkai" ? "wenkai" : "hei";
+
+      document.body.dataset.typeface = activeName;
+      document.querySelectorAll("[data-typeface-choice]").forEach((button) => {
+        const isActive = button.dataset.typefaceChoice === activeName;
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+
+      setText("[data-typeface-note]", typefaceNotes[activeName]);
+      localStorage.setItem("lighthouse-value-typeface-v1", activeName);
+    };
+
+    document.querySelectorAll("[data-typeface-choice]").forEach((button) => {
+      button.addEventListener("click", () => applyTypeface(button.dataset.typefaceChoice));
+    });
+
+    const requestedPalette = new URLSearchParams(window.location.search).get("palette");
+    const requestedTypeface = new URLSearchParams(window.location.search).get("typeface");
+    applyWarmPalette(requestedPalette || localStorage.getItem("lighthouse-value-color-kit-v1") || "truth");
+    applyTypeface(requestedTypeface || localStorage.getItem("lighthouse-value-typeface-v1") || "hei");
+  </script>
+</body>
+</html>

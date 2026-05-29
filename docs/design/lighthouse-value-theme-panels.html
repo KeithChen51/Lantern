@@ -1,0 +1,1922 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse Five Value Theme Panels</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --font: Aptos, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif;
+      --font-display: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", Georgia, serif;
+      --page: #fff6ea;
+      --page-2: #ffe9cd;
+      --ink: #342f2b;
+      --muted: #756a5f;
+      --line: rgba(121, 87, 45, 0.18);
+      --paper: #fffaf2;
+      --shadow: 0 26px 72px rgba(137, 93, 43, 0.13);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        repeating-linear-gradient(90deg, rgba(144, 98, 45, 0.035) 0 1px, transparent 1px 44px),
+        repeating-linear-gradient(0deg, rgba(144, 98, 45, 0.03) 0 1px, transparent 1px 44px),
+        linear-gradient(180deg, #fffaf3 0%, var(--page) 52%, var(--page-2) 100%);
+      font-family: var(--font);
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1420px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 84px;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 30px;
+      padding: clamp(24px, 4vw, 52px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(120deg, rgba(255, 255, 250, 0.86), rgba(255, 239, 214, 0.78)),
+        var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #a35f36;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      color: #37312b;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 6vw, 78px);
+      font-weight: 650;
+      letter-spacing: 0;
+      line-height: 1.04;
+    }
+
+    .intro-copy {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: #685d52;
+      font-size: clamp(16px, 1.5vw, 19px);
+    }
+
+    .intro-note {
+      border-left: 1px solid rgba(163, 95, 54, 0.28);
+      padding-left: 22px;
+      color: #6d6257;
+    }
+
+    .intro-note strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #40372e;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .stack {
+      display: grid;
+      gap: 28px;
+    }
+
+    .theme-panel {
+      --panel-bg: #f5f3e9;
+      --panel-surface: #fffaf0;
+      --panel-surface-2: #f4e4cc;
+      --panel-ink: #2f302c;
+      --panel-muted: #6d6960;
+      --panel-line: rgba(70, 60, 44, 0.16);
+      --panel-primary: #1f6e82;
+      --panel-secondary: #5e9a7b;
+      --panel-accent: #e5ad4f;
+      --panel-accent-2: #cc6e5e;
+      --panel-shadow: rgba(74, 64, 48, 0.14);
+      --panel-texture: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent);
+      display: grid;
+      grid-template-columns: minmax(330px, 0.95fr) minmax(460px, 1.25fr);
+      gap: clamp(20px, 3vw, 34px);
+      align-items: stretch;
+      overflow: hidden;
+      padding: clamp(20px, 3.2vw, 36px);
+      border: 1px solid var(--panel-line);
+      border-radius: var(--radius);
+      background:
+        var(--panel-texture),
+        linear-gradient(135deg, color-mix(in srgb, var(--panel-bg) 94%, white 6%), var(--panel-bg));
+      box-shadow: 0 24px 68px var(--panel-shadow);
+      color: var(--panel-ink);
+      transition: background 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+    }
+
+    .panel-copy {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-width: 0;
+    }
+
+    .panel-kicker {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+      color: var(--panel-primary);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .panel-kicker::before {
+      width: 42px;
+      height: 2px;
+      background: var(--panel-primary);
+      content: "";
+    }
+
+    h2 {
+      margin: 0;
+      color: var(--panel-ink);
+      font-family: var(--font-display);
+      font-size: clamp(30px, 4.1vw, 56px);
+      font-weight: 650;
+      letter-spacing: 0;
+      line-height: 1.08;
+    }
+
+    .value-line {
+      margin: 10px 0 20px;
+      color: var(--panel-muted);
+      font-size: 15px;
+    }
+
+    .review-status {
+      display: inline-flex;
+      max-width: 100%;
+      margin: 0 0 16px;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 24%, var(--panel-line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel-surface) 78%, transparent);
+      color: var(--panel-ink);
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .variant-switch {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .variant-switch button {
+      display: grid;
+      min-height: 64px;
+      gap: 4px;
+      align-content: center;
+      justify-items: start;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--panel-surface) 86%, transparent);
+      color: var(--panel-ink);
+      padding: 10px 12px;
+      text-align: left;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .variant-switch button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--panel-primary) 46%, var(--panel-line));
+      background: color-mix(in srgb, var(--panel-surface) 94%, var(--panel-primary) 6%);
+    }
+
+    .variant-switch button[aria-pressed="true"] {
+      border-color: color-mix(in srgb, var(--panel-primary) 62%, var(--panel-line));
+      background: color-mix(in srgb, var(--panel-primary) 12%, var(--panel-surface));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--panel-primary) 20%, transparent);
+    }
+
+    .variant-switch span {
+      color: var(--panel-primary);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+    }
+
+    .variant-switch b {
+      min-width: 0;
+      color: var(--panel-ink);
+      font-size: clamp(13px, 1.1vw, 15px);
+      font-weight: 760;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .panel-facts {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .fact-block {
+      border: 1px solid var(--panel-line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel-surface) 84%, transparent);
+      padding: 16px;
+    }
+
+    .fact-block h3 {
+      margin: 0 0 8px;
+      color: var(--panel-primary);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .fact-block p {
+      margin: 0;
+      color: var(--panel-muted);
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .swatch {
+      min-width: 0;
+    }
+
+    .swatch-chip {
+      height: 42px;
+      border: 1px solid rgba(55, 46, 35, 0.12);
+      border-radius: 7px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .swatch-name {
+      margin-top: 6px;
+      color: var(--panel-ink);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .swatch-value {
+      color: var(--panel-muted);
+      font-size: 11px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .token-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .token-row span {
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 22%, var(--panel-line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel-primary) 9%, var(--panel-surface));
+      color: var(--panel-ink);
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .panel-preview {
+      min-width: 0;
+      border: 1px solid color-mix(in srgb, var(--panel-line) 76%, transparent);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 72%, transparent), color-mix(in srgb, var(--panel-surface-2) 58%, transparent));
+      padding: clamp(14px, 2vw, 20px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    }
+
+    .sample-stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 100%;
+      border: 1px solid var(--panel-line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--panel-primary) 10%, transparent) 1px, transparent 1px) 0 0 / 52px 52px,
+        linear-gradient(0deg, color-mix(in srgb, var(--panel-primary) 8%, transparent) 1px, transparent 1px) 0 0 / 52px 52px,
+        linear-gradient(145deg, color-mix(in srgb, var(--panel-surface) 92%, white 8%), color-mix(in srgb, var(--panel-surface-2) 74%, white 26%));
+      padding: clamp(16px, 2.6vw, 28px);
+    }
+
+    .sample-stage::before {
+      position: absolute;
+      inset: 0;
+      background: var(--stage-texture, linear-gradient(180deg, transparent, transparent));
+      content: "";
+      pointer-events: none;
+      opacity: 0.72;
+    }
+
+    .sample-shell {
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      min-height: 520px;
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 22%, var(--panel-line));
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 90%, transparent), color-mix(in srgb, var(--panel-surface) 70%, transparent));
+      box-shadow: 0 24px 54px color-mix(in srgb, var(--panel-shadow) 62%, transparent);
+      transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    }
+
+    .sample-shell[data-engaged="true"] {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--panel-accent) 60%, var(--panel-primary));
+      box-shadow: 0 30px 70px color-mix(in srgb, var(--panel-shadow) 76%, transparent);
+    }
+
+    .sample-shell::before {
+      position: absolute;
+      inset: 0;
+      background: var(--material-overlay, linear-gradient(180deg, transparent, transparent));
+      content: "";
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .sample-shell[data-engaged="true"]::before {
+      opacity: 0.86;
+      transform: translateY(-6px);
+    }
+
+    .sample-topbar {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-line);
+      padding: 14px 16px;
+      background: color-mix(in srgb, var(--panel-surface) 76%, transparent);
+    }
+
+    .sample-mark {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      min-width: 0;
+      color: var(--panel-ink);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sample-mark::before {
+      width: 13px;
+      height: 13px;
+      border: 2px solid var(--panel-primary);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--panel-accent) 56%, var(--panel-surface));
+      content: "";
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--panel-primary) 10%, transparent);
+    }
+
+    .sample-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      justify-content: flex-end;
+    }
+
+    .sample-meta span {
+      border: 1px solid color-mix(in srgb, var(--panel-secondary) 32%, var(--panel-line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel-surface) 78%, transparent);
+      color: var(--panel-ink);
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .preview-body {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(170px, 0.42fr);
+      gap: 16px;
+      padding: clamp(18px, 2.4vw, 28px);
+    }
+
+    .preview-main {
+      min-width: 0;
+    }
+
+    .preview-kicker {
+      margin: 0 0 8px;
+      color: var(--panel-primary);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .preview-title {
+      max-width: 520px;
+      margin: 0;
+      color: var(--panel-ink);
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.2vw, 44px);
+      font-weight: 660;
+      letter-spacing: 0;
+      line-height: 1.08;
+    }
+
+    .preview-copy {
+      max-width: 560px;
+      margin: 14px 0 0;
+      color: var(--panel-muted);
+      font-size: 15px;
+    }
+
+    .preview-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 24px;
+    }
+
+    .sample-action {
+      border: 1px solid color-mix(in srgb, var(--panel-primary) 58%, var(--panel-line));
+      border-radius: 999px;
+      background: var(--panel-primary);
+      color: color-mix(in srgb, var(--panel-surface) 92%, white 8%);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 850;
+      box-shadow: 0 12px 24px color-mix(in srgb, var(--panel-primary) 24%, transparent);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .sample-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px color-mix(in srgb, var(--panel-primary) 30%, transparent);
+    }
+
+    .sample-feedback {
+      color: var(--panel-muted);
+      font-size: 13px;
+      font-weight: 720;
+    }
+
+    .chip-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .chip-line span {
+      border: 1px solid color-mix(in srgb, var(--panel-accent) 44%, var(--panel-line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel-accent) 18%, var(--panel-surface));
+      color: var(--panel-ink);
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .preview-side {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-width: 0;
+    }
+
+    .mini-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--panel-line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel-surface) 72%, transparent);
+      padding: 12px;
+    }
+
+    .mini-card strong {
+      display: block;
+      color: var(--panel-ink);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .mini-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--panel-muted);
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .mini-card::after {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 36%;
+      height: 3px;
+      background: var(--panel-accent);
+      content: "";
+    }
+
+    .preview-strip {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 1fr;
+      gap: 8px;
+      border-top: 1px solid var(--panel-line);
+      padding: 14px 16px 16px;
+    }
+
+    .strip-cell {
+      min-height: 74px;
+      border: 1px solid color-mix(in srgb, var(--panel-line) 78%, transparent);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel-surface) 86%, transparent), color-mix(in srgb, var(--panel-surface-2) 42%, transparent));
+      padding: 10px;
+    }
+
+    .strip-cell b {
+      display: block;
+      color: var(--panel-primary);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .strip-cell span {
+      display: block;
+      margin-top: 8px;
+      color: var(--panel-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .theme-panel[data-material-type="glass"] .sample-shell {
+      background: color-mix(in srgb, var(--panel-surface) 62%, transparent);
+      backdrop-filter: blur(16px) saturate(1.08);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+    }
+
+    .theme-panel[data-material-type="glass"] .sample-shell::before,
+    .theme-panel[data-material-type="embrace"] .sample-shell::before {
+      mix-blend-mode: screen;
+    }
+
+    .theme-panel[data-material-type="porcelain"] .sample-shell,
+    .theme-panel[data-material-type="gallery"] .sample-shell {
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.46),
+        0 26px 56px var(--panel-shadow);
+    }
+
+    .theme-panel[data-material-type="silk"] .sample-shell::before {
+      background-size: 120px 120px, auto;
+    }
+
+    .theme-panel[data-material-type="lamp"] .sample-stage {
+      background:
+        linear-gradient(110deg, color-mix(in srgb, var(--panel-accent) 14%, transparent), transparent 40%),
+        repeating-linear-gradient(0deg, color-mix(in srgb, var(--panel-accent) 10%, transparent) 0 2px, transparent 2px 18px),
+        linear-gradient(145deg, color-mix(in srgb, var(--panel-surface) 90%, white 10%), color-mix(in srgb, var(--panel-surface-2) 74%, white 26%));
+    }
+
+    @media (max-width: 1040px) {
+      .intro,
+      .theme-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .intro-note {
+        border-left: 0;
+        border-top: 1px solid rgba(163, 95, 54, 0.22);
+        padding: 18px 0 0;
+      }
+
+      .panel-copy {
+        grid-template-rows: auto;
+      }
+
+      .sample-shell {
+        min-height: 480px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 24px, 1420px);
+        padding: 24px 0 56px;
+      }
+
+      .intro,
+      .theme-panel {
+        padding: 18px;
+      }
+
+      .variant-switch {
+        grid-template-columns: 1fr;
+      }
+
+      .palette-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .preview-body {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .sample-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div>
+        <p class="eyebrow">Lighthouse value theme preview</p>
+        <h1>五个价值主题的最终组合：AAAAB</h1>
+        <p class="intro-copy">最终选定：求真 A、尽善 A、致美 A、大爱 A、幸福 B。页面保留各主题的切换入口作为备选记录，但默认展示和状态说明都以这组定稿为准。</p>
+      </div>
+      <aside class="intro-note">
+        <strong>Final selection</strong>
+        <p>AAAAB 作为本轮视觉主题基准：前四个价值统一落在 A 方案，幸福使用 B 的柔和日常感。后续字体、文字风格和界面细节都从这组组合继续展开。</p>
+      </aside>
+    </header>
+
+    <div class="stack">
+      <section class="theme-panel" data-theme-id="truth" data-active="a">
+        <div class="panel-copy">
+          <div>
+            <div class="panel-kicker">01 / value</div>
+            <h2>求真</h2>
+            <p class="value-line">清晰、证据、判断。原蓝绿可以成为这里的理性母题，但用法更像坐标和信号，而不是科技冷色。</p>
+            <p class="review-status">最终选择：A / Harbor Signal。</p>
+            <div class="variant-switch" role="group" aria-label="求真主题切换">
+              <button type="button" data-variant-choice="a" aria-pressed="true"><span>A</span><b></b></button>
+              <button type="button" data-variant-choice="b" aria-pressed="false"><span>B</span><b></b></button>
+              <button type="button" data-variant-choice="c" aria-pressed="false"><span>C</span><b></b></button>
+            </div>
+          </div>
+          <div class="panel-facts">
+            <div class="fact-block">
+              <h3>Intent</h3>
+              <p data-field="intent"></p>
+            </div>
+            <div class="fact-block">
+              <h3>Palette</h3>
+              <p data-field="paletteNote"></p>
+              <div class="palette-grid" data-field="palette"></div>
+            </div>
+            <div class="fact-block">
+              <h3>Material / Interaction</h3>
+              <p data-field="material"></p>
+              <div class="token-row" data-field="tokens"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-preview" aria-label="求真预览面板">
+          <div class="sample-stage">
+            <article class="sample-shell">
+              <div class="sample-topbar">
+                <div class="sample-mark" data-field="previewMark"></div>
+                <div class="sample-meta" data-field="meta"></div>
+              </div>
+              <div class="preview-body">
+                <div class="preview-main">
+                  <p class="preview-kicker" data-field="previewKicker"></p>
+                  <h3 class="preview-title" data-field="previewTitle"></h3>
+                  <p class="preview-copy" data-field="previewCopy"></p>
+                  <div class="chip-line" data-field="chips"></div>
+                  <div class="preview-actions">
+                    <button type="button" class="sample-action" data-field="action"></button>
+                    <span class="sample-feedback" data-field="feedback"></span>
+                  </div>
+                </div>
+                <aside class="preview-side" data-field="metrics"></aside>
+              </div>
+              <div class="preview-strip">
+                <div class="strip-cell"><b>Source</b><span data-field="stripOne"></span></div>
+                <div class="strip-cell"><b>Signal</b><span data-field="stripTwo"></span></div>
+                <div class="strip-cell"><b>Decision</b><span data-field="stripThree"></span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="theme-panel" data-theme-id="goodness" data-active="a">
+        <div class="panel-copy">
+          <div>
+            <div class="panel-kicker">02 / value</div>
+            <h2>尽善</h2>
+            <p class="value-line">稳妥、有益、克制。重点不是甜，而是有边界的照护，把服务准则做得温和但可执行。</p>
+            <p class="review-status">最终选择：A / Willow Porcelain Ledger。</p>
+            <div class="variant-switch" role="group" aria-label="尽善主题切换">
+              <button type="button" data-variant-choice="a" aria-pressed="true"><span>A</span><b></b></button>
+              <button type="button" data-variant-choice="b" aria-pressed="false"><span>B</span><b></b></button>
+              <button type="button" data-variant-choice="c" aria-pressed="false"><span>C</span><b></b></button>
+            </div>
+          </div>
+          <div class="panel-facts">
+            <div class="fact-block">
+              <h3>Intent</h3>
+              <p data-field="intent"></p>
+            </div>
+            <div class="fact-block">
+              <h3>Palette</h3>
+              <p data-field="paletteNote"></p>
+              <div class="palette-grid" data-field="palette"></div>
+            </div>
+            <div class="fact-block">
+              <h3>Material / Interaction</h3>
+              <p data-field="material"></p>
+              <div class="token-row" data-field="tokens"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-preview" aria-label="尽善预览面板">
+          <div class="sample-stage">
+            <article class="sample-shell">
+              <div class="sample-topbar">
+                <div class="sample-mark" data-field="previewMark"></div>
+                <div class="sample-meta" data-field="meta"></div>
+              </div>
+              <div class="preview-body">
+                <div class="preview-main">
+                  <p class="preview-kicker" data-field="previewKicker"></p>
+                  <h3 class="preview-title" data-field="previewTitle"></h3>
+                  <p class="preview-copy" data-field="previewCopy"></p>
+                  <div class="chip-line" data-field="chips"></div>
+                  <div class="preview-actions">
+                    <button type="button" class="sample-action" data-field="action"></button>
+                    <span class="sample-feedback" data-field="feedback"></span>
+                  </div>
+                </div>
+                <aside class="preview-side" data-field="metrics"></aside>
+              </div>
+              <div class="preview-strip">
+                <div class="strip-cell"><b>Do</b><span data-field="stripOne"></span></div>
+                <div class="strip-cell"><b>Don't</b><span data-field="stripTwo"></span></div>
+                <div class="strip-cell"><b>Boundary</b><span data-field="stripThree"></span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="theme-panel" data-theme-id="beauty" data-active="a">
+        <div class="panel-copy">
+          <div>
+            <div class="panel-kicker">03 / value</div>
+            <h2>致美</h2>
+            <p class="value-line">体面、秩序、美感。更接近编辑部和展陈系统，让留白、排版、质感承担美，而不是只靠粉色。</p>
+            <p class="review-status">最终选择：A / Porcelain Iris。</p>
+            <div class="variant-switch" role="group" aria-label="致美主题切换">
+              <button type="button" data-variant-choice="a" aria-pressed="true"><span>A</span><b></b></button>
+              <button type="button" data-variant-choice="b" aria-pressed="false"><span>B</span><b></b></button>
+              <button type="button" data-variant-choice="c" aria-pressed="false"><span>C</span><b></b></button>
+              <button type="button" data-variant-choice="d" aria-pressed="false"><span>D</span><b></b></button>
+              <button type="button" data-variant-choice="e" aria-pressed="false"><span>E</span><b></b></button>
+              <button type="button" data-variant-choice="f" aria-pressed="false"><span>F</span><b></b></button>
+            </div>
+          </div>
+          <div class="panel-facts">
+            <div class="fact-block">
+              <h3>Intent</h3>
+              <p data-field="intent"></p>
+            </div>
+            <div class="fact-block">
+              <h3>Palette</h3>
+              <p data-field="paletteNote"></p>
+              <div class="palette-grid" data-field="palette"></div>
+            </div>
+            <div class="fact-block">
+              <h3>Material / Interaction</h3>
+              <p data-field="material"></p>
+              <div class="token-row" data-field="tokens"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-preview" aria-label="致美预览面板">
+          <div class="sample-stage">
+            <article class="sample-shell">
+              <div class="sample-topbar">
+                <div class="sample-mark" data-field="previewMark"></div>
+                <div class="sample-meta" data-field="meta"></div>
+              </div>
+              <div class="preview-body">
+                <div class="preview-main">
+                  <p class="preview-kicker" data-field="previewKicker"></p>
+                  <h3 class="preview-title" data-field="previewTitle"></h3>
+                  <p class="preview-copy" data-field="previewCopy"></p>
+                  <div class="chip-line" data-field="chips"></div>
+                  <div class="preview-actions">
+                    <button type="button" class="sample-action" data-field="action"></button>
+                    <span class="sample-feedback" data-field="feedback"></span>
+                  </div>
+                </div>
+                <aside class="preview-side" data-field="metrics"></aside>
+              </div>
+              <div class="preview-strip">
+                <div class="strip-cell"><b>Layout</b><span data-field="stripOne"></span></div>
+                <div class="strip-cell"><b>Voice</b><span data-field="stripTwo"></span></div>
+                <div class="strip-cell"><b>Finish</b><span data-field="stripThree"></span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="theme-panel" data-theme-id="love" data-active="a">
+        <div class="panel-copy">
+          <div>
+            <div class="panel-kicker">04 / value</div>
+            <h2>大爱</h2>
+            <p class="value-line">包容、靠近、看见人。避免幼稚心形，把“爱”做成柔软的距离、真实的处境和可被依靠的照护。</p>
+            <p class="review-status">最终选择：A / Pomegranate Cotton。</p>
+            <div class="variant-switch" role="group" aria-label="大爱主题切换">
+              <button type="button" data-variant-choice="a" aria-pressed="true"><span>A</span><b></b></button>
+              <button type="button" data-variant-choice="b" aria-pressed="false"><span>B</span><b></b></button>
+              <button type="button" data-variant-choice="c" aria-pressed="false"><span>C</span><b></b></button>
+            </div>
+          </div>
+          <div class="panel-facts">
+            <div class="fact-block">
+              <h3>Intent</h3>
+              <p data-field="intent"></p>
+            </div>
+            <div class="fact-block">
+              <h3>Palette</h3>
+              <p data-field="paletteNote"></p>
+              <div class="palette-grid" data-field="palette"></div>
+            </div>
+            <div class="fact-block">
+              <h3>Material / Interaction</h3>
+              <p data-field="material"></p>
+              <div class="token-row" data-field="tokens"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-preview" aria-label="大爱预览面板">
+          <div class="sample-stage">
+            <article class="sample-shell">
+              <div class="sample-topbar">
+                <div class="sample-mark" data-field="previewMark"></div>
+                <div class="sample-meta" data-field="meta"></div>
+              </div>
+              <div class="preview-body">
+                <div class="preview-main">
+                  <p class="preview-kicker" data-field="previewKicker"></p>
+                  <h3 class="preview-title" data-field="previewTitle"></h3>
+                  <p class="preview-copy" data-field="previewCopy"></p>
+                  <div class="chip-line" data-field="chips"></div>
+                  <div class="preview-actions">
+                    <button type="button" class="sample-action" data-field="action"></button>
+                    <span class="sample-feedback" data-field="feedback"></span>
+                  </div>
+                </div>
+                <aside class="preview-side" data-field="metrics"></aside>
+              </div>
+              <div class="preview-strip">
+                <div class="strip-cell"><b>Person</b><span data-field="stripOne"></span></div>
+                <div class="strip-cell"><b>Context</b><span data-field="stripTwo"></span></div>
+                <div class="strip-cell"><b>Care</b><span data-field="stripThree"></span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="theme-panel" data-theme-id="happiness" data-active="b">
+        <div class="panel-copy">
+          <div>
+            <div class="panel-kicker">05 / value</div>
+            <h2>幸福</h2>
+            <p class="value-line">明亮、温暖、轻盈。它不是儿童糖果感，而是持续的正反馈、日光和家庭感。</p>
+            <p class="review-status">最终选择：B / Daybreak Peach。</p>
+            <div class="variant-switch" role="group" aria-label="幸福主题切换">
+              <button type="button" data-variant-choice="a" aria-pressed="false"><span>A</span><b></b></button>
+              <button type="button" data-variant-choice="b" aria-pressed="true"><span>B</span><b></b></button>
+              <button type="button" data-variant-choice="c" aria-pressed="false"><span>C</span><b></b></button>
+            </div>
+          </div>
+          <div class="panel-facts">
+            <div class="fact-block">
+              <h3>Intent</h3>
+              <p data-field="intent"></p>
+            </div>
+            <div class="fact-block">
+              <h3>Palette</h3>
+              <p data-field="paletteNote"></p>
+              <div class="palette-grid" data-field="palette"></div>
+            </div>
+            <div class="fact-block">
+              <h3>Material / Interaction</h3>
+              <p data-field="material"></p>
+              <div class="token-row" data-field="tokens"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-preview" aria-label="幸福预览面板">
+          <div class="sample-stage">
+            <article class="sample-shell">
+              <div class="sample-topbar">
+                <div class="sample-mark" data-field="previewMark"></div>
+                <div class="sample-meta" data-field="meta"></div>
+              </div>
+              <div class="preview-body">
+                <div class="preview-main">
+                  <p class="preview-kicker" data-field="previewKicker"></p>
+                  <h3 class="preview-title" data-field="previewTitle"></h3>
+                  <p class="preview-copy" data-field="previewCopy"></p>
+                  <div class="chip-line" data-field="chips"></div>
+                  <div class="preview-actions">
+                    <button type="button" class="sample-action" data-field="action"></button>
+                    <span class="sample-feedback" data-field="feedback"></span>
+                  </div>
+                </div>
+                <aside class="preview-side" data-field="metrics"></aside>
+              </div>
+              <div class="preview-strip">
+                <div class="strip-cell"><b>Light</b><span data-field="stripOne"></span></div>
+                <div class="strip-cell"><b>Growth</b><span data-field="stripTwo"></span></div>
+                <div class="strip-cell"><b>Home</b><span data-field="stripThree"></span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const themeData = {
+      truth: {
+        variants: {
+          a: {
+            label: "Harbor Signal",
+            materialType: "chart",
+            intent: "把原蓝绿从“冷科技”转成“港口信号”：清晰、克制、可校准。适合证据、来源、判断链路，蓝绿只做坐标和状态，不铺成大冷色背景。",
+            paletteNote: "蓝绿是主线，蜂蜜金只给关键判断打点，暖白纸面保证不冷。",
+            material: "坐标纸纹理、细线框和半透明信号层。点击预览按钮时，证据层会抬高，模拟“把判断放到台面上校准”。",
+            tokens: ["坐标", "证据", "信号层", "置信度", "来源"],
+            vars: {
+              "--panel-bg": "#edf6f2",
+              "--panel-surface": "#fffdf3",
+              "--panel-surface-2": "#dfeee8",
+              "--panel-ink": "#163246",
+              "--panel-muted": "#576e6e",
+              "--panel-line": "rgba(31, 110, 130, 0.20)",
+              "--panel-primary": "#1f6e82",
+              "--panel-secondary": "#5e9a7b",
+              "--panel-accent": "#e7b451",
+              "--panel-accent-2": "#cc6e5e",
+              "--panel-shadow": "rgba(31, 110, 130, 0.15)",
+              "--panel-texture": "repeating-linear-gradient(90deg, rgba(31,110,130,0.05) 0 1px, transparent 1px 36px), repeating-linear-gradient(0deg, rgba(31,110,130,0.04) 0 1px, transparent 1px 36px)",
+              "--stage-texture": "repeating-linear-gradient(90deg, rgba(31,110,130,0.08) 0 1px, transparent 1px 52px), repeating-linear-gradient(0deg, rgba(31,110,130,0.06) 0 1px, transparent 1px 52px)",
+              "--material-overlay": "linear-gradient(110deg, rgba(255,255,255,0.34), transparent 42%), repeating-linear-gradient(90deg, rgba(31,110,130,0.08) 0 1px, transparent 1px 18px)"
+            },
+            palette: [
+              ["Warm paper", "#fffdf3"],
+              ["Harbor", "#1f6e82"],
+              ["Tide green", "#5e9a7b"],
+              ["Signal gold", "#e7b451"],
+              ["Evidence ink", "#163246"]
+            ],
+            previewMark: "Truth desk",
+            meta: ["verified", "source", "judge"],
+            previewKicker: "Evidence calibration",
+            previewTitle: "把判断放在光下，而不是放在口号里",
+            previewCopy: "界面像一个服务判断台：来源、证据、置信度被放在同一坐标系里，用户可以快速看见依据。",
+            chips: ["证据链", "来源标注", "置信度", "可追溯"],
+            action: "校准证据",
+            feedbackOff: "等待校准",
+            feedbackOn: "证据层已上浮",
+            metrics: [["92", "来源完整度"], ["4", "待复核点"], ["A-", "判断清晰度"]],
+            strip: ["引用、访谈、案例被放在同一证据层。", "蓝绿线条负责状态，金色只提示关键变化。", "先显示依据，再给结论。"]
+          },
+          b: {
+            label: "Observatory Ink",
+            materialType: "observatory",
+            intent: "更像观测台而不是实验室：深蓝墨色作为少量文字和刻度，暖雾纸面承托判断。适合更严肃的研究、搜索、审阅场景。",
+            paletteNote: "墨蓝很少用在大块，只做标题、刻度和坐标；雾米色负责面积。",
+            material: "观测玻璃、星图刻度、细密校准线。点击后预览里的刻度会更明显，表现“观测到证据后再判断”。",
+            tokens: ["观测", "星图", "墨蓝", "暖雾", "复核"],
+            vars: {
+              "--panel-bg": "#f4efe4",
+              "--panel-surface": "#fff8ea",
+              "--panel-surface-2": "#e9dfcd",
+              "--panel-ink": "#263958",
+              "--panel-muted": "#6d6c64",
+              "--panel-line": "rgba(49, 74, 112, 0.20)",
+              "--panel-primary": "#314a70",
+              "--panel-secondary": "#7e8f99",
+              "--panel-accent": "#d9b763",
+              "--panel-accent-2": "#b35a4b",
+              "--panel-shadow": "rgba(49, 74, 112, 0.14)",
+              "--panel-texture": "repeating-linear-gradient(112deg, rgba(49,74,112,0.05) 0 1px, transparent 1px 24px), linear-gradient(180deg, rgba(255,255,255,0.34), transparent)",
+              "--stage-texture": "repeating-linear-gradient(90deg, rgba(49,74,112,0.07) 0 1px, transparent 1px 44px), repeating-linear-gradient(0deg, rgba(49,74,112,0.05) 0 1px, transparent 1px 44px)",
+              "--material-overlay": "linear-gradient(115deg, rgba(255,255,255,0.42), transparent 36%), linear-gradient(165deg, transparent 0 58%, rgba(217,183,99,0.18) 58% 61%, transparent 61%)"
+            },
+            palette: [
+              ["Warm fog", "#f4efe4"],
+              ["Observatory", "#314a70"],
+              ["Stone blue", "#7e8f99"],
+              ["Brass mark", "#d9b763"],
+              ["Review red", "#b35a4b"]
+            ],
+            previewMark: "Observatory",
+            meta: ["audit", "search", "review"],
+            previewKicker: "Structured observation",
+            previewTitle: "先观测，再命名；先确认，再判断",
+            previewCopy: "适合把 Hermit、依据、审核放进一个偏研究型的工作台，让“求真”更沉稳但不压暗。",
+            chips: ["审阅", "搜索", "依据", "线索"],
+            action: "标记观测",
+            feedbackOff: "观测层待激活",
+            feedbackOn: "刻度已点亮",
+            metrics: [["18", "可用线索"], ["7", "交叉验证"], ["96%", "来源可信"]],
+            strip: ["数据像星图点位，等待聚类。", "金色仅标出关键发现，避免喧宾夺主。", "结论保持可回看、可复核。"]
+          },
+          c: {
+            label: "Glass Lab",
+            materialType: "glass",
+            intent: "做成浅色玻璃实验台：透明层让证据、解释、结论彼此可见。它更轻、更现代，但不走霓虹科技感。",
+            paletteNote: "玻璃青和浅石蓝作为半透明层，金色是实验标签，深墨仅用于文字。",
+            material: "半透玻璃、背景网格和叠层模糊。点击按钮后玻璃层抬升，能看到背后的坐标纹理透出来。",
+            tokens: ["半透玻璃", "叠层", "实验标签", "可见性", "轻科技"],
+            vars: {
+              "--panel-bg": "#f4f3ea",
+              "--panel-surface": "rgba(255, 252, 242, 0.76)",
+              "--panel-surface-2": "rgba(221, 239, 230, 0.62)",
+              "--panel-ink": "#324a4e",
+              "--panel-muted": "#66716c",
+              "--panel-line": "rgba(106, 176, 165, 0.24)",
+              "--panel-primary": "#6ab0a5",
+              "--panel-secondary": "#7ca7b8",
+              "--panel-accent": "#e8c872",
+              "--panel-accent-2": "#d48670",
+              "--panel-shadow": "rgba(70, 132, 126, 0.16)",
+              "--panel-texture": "linear-gradient(110deg, rgba(106,176,165,0.10), transparent 38%), repeating-linear-gradient(90deg, rgba(106,176,165,0.05) 0 1px, transparent 1px 34px)",
+              "--stage-texture": "linear-gradient(110deg, rgba(124,167,184,0.18), transparent 40%), repeating-linear-gradient(90deg, rgba(106,176,165,0.08) 0 1px, transparent 1px 42px)",
+              "--material-overlay": "linear-gradient(115deg, rgba(255,255,255,0.58), rgba(255,255,255,0.08) 42%, rgba(106,176,165,0.12)), repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 1px, transparent 1px 18px)"
+            },
+            palette: [
+              ["Milk glass", "#f8f6ee"],
+              ["Lab glass", "#6ab0a5"],
+              ["Pale stone", "#7ca7b8"],
+              ["Label gold", "#e8c872"],
+              ["Ink green", "#324a4e"]
+            ],
+            previewMark: "Glass lab",
+            meta: ["layer", "trace", "clear"],
+            previewKicker: "Transparent reasoning",
+            previewTitle: "让证据层、解释层、结论层彼此可见",
+            previewCopy: "更适合新版 UI 中的浮层、引用卡、审阅侧栏，视觉轻但信息关系清楚。",
+            chips: ["玻璃层", "解释层", "引用卡", "判断台"],
+            action: "抬起玻璃层",
+            feedbackOff: "玻璃层静置",
+            feedbackOn: "背景坐标已透出",
+            metrics: [["3", "可见层级"], ["12", "引用片段"], ["0", "遮挡冲突"]],
+            strip: ["背后网格隐约可见。", "透明层只用于解释关系，不到处泛用。", "结论仍落在实色按钮上。"]
+          }
+        }
+      },
+      goodness: {
+        variants: {
+          a: {
+            label: "Willow Porcelain Ledger",
+            materialType: "ledger",
+            intent: "保留 A 的柳叶账本逻辑，但把底色换成 B 的瓷白基底：更干净、更稳妥，也更像可执行的服务准则。",
+            paletteNote: "瓷白做面积，柳绿做秩序，细金做准则，少量杏色承担温度。",
+            material: "瓷白账本纸、浅横线和准则条。点击后边界条收紧，表现从善意到可执行规则的落地。",
+            tokens: ["瓷白账本", "准则", "边界", "流程", "稳妥"],
+            vars: {
+              "--panel-bg": "#f8f0e4",
+              "--panel-surface": "#fffaf0",
+              "--panel-surface-2": "#e9dfd0",
+              "--panel-ink": "#34352b",
+              "--panel-muted": "#6b665b",
+              "--panel-line": "rgba(111, 142, 115, 0.19)",
+              "--panel-primary": "#728a69",
+              "--panel-secondary": "#ceb26e",
+              "--panel-accent": "#d99667",
+              "--panel-accent-2": "#b86d5a",
+              "--panel-shadow": "rgba(118, 101, 78, 0.12)",
+              "--panel-texture": "linear-gradient(120deg, rgba(255,255,255,0.52), transparent 52%), repeating-linear-gradient(0deg, rgba(111,142,115,0.06) 0 1px, transparent 1px 28px)",
+              "--stage-texture": "linear-gradient(120deg, rgba(255,255,255,0.45), transparent 44%), repeating-linear-gradient(0deg, rgba(111,142,115,0.08) 0 1px, transparent 1px 30px)",
+              "--material-overlay": "linear-gradient(90deg, rgba(114,138,105,0.13) 0 9px, transparent 9px), repeating-linear-gradient(0deg, rgba(206,178,110,0.12) 0 1px, transparent 1px 28px)"
+            },
+            palette: [
+              ["Porcelain", "#fffaf0"],
+              ["Willow rule", "#728a69"],
+              ["Rule gold", "#ceb26e"],
+              ["Soft apricot", "#d99667"],
+              ["Olive ink", "#34352b"]
+            ],
+            previewMark: "Good ledger",
+            meta: ["do", "don't", "flow"],
+            previewKicker: "Service rule board",
+            previewTitle: "把善意写成可以执行的边界",
+            previewCopy: "适合服务准则、判断流程和内部 SOP。温和不是模糊，而是让人知道什么时候该做、什么时候停。",
+            chips: ["服务准则", "流程判断", "执行边界", "稳妥"],
+            action: "压实边界",
+            feedbackOff: "规则待确认",
+            feedbackOn: "边界条已收紧",
+            metrics: [["8", "准则条目"], ["3", "风险边界"], ["24h", "跟进窗口"]],
+            strip: ["明确可做事项。", "列出不该越界的动作。", "用细金线提示判断阈值。"]
+          },
+          b: {
+            label: "Balanced Porcelain",
+            materialType: "porcelain",
+            intent: "用瓷白和暖石色做出公允、平衡、安静的服务判断界面。它比柳绿色更克制，适合制度、审核、合规语境。",
+            paletteNote: "瓷白占面积，石灰线做结构，橄榄和珊瑚只承担状态。",
+            material: "温润瓷面、细边和低饱和状态片。点击后状态片轻微上浮，表现流程被确认。",
+            tokens: ["瓷面", "平衡", "低饱和", "审核", "稳态"],
+            vars: {
+              "--panel-bg": "#f8f0e4",
+              "--panel-surface": "#fffaf0",
+              "--panel-surface-2": "#e9dfd0",
+              "--panel-ink": "#3a332a",
+              "--panel-muted": "#6f665b",
+              "--panel-line": "rgba(127, 138, 104, 0.20)",
+              "--panel-primary": "#7f8a68",
+              "--panel-secondary": "#d8cdb8",
+              "--panel-accent": "#c9735a",
+              "--panel-accent-2": "#d9a65f",
+              "--panel-shadow": "rgba(118, 101, 78, 0.12)",
+              "--panel-texture": "linear-gradient(120deg, rgba(255,255,255,0.52), transparent 52%), repeating-linear-gradient(90deg, rgba(127,138,104,0.05) 0 1px, transparent 1px 46px)",
+              "--stage-texture": "linear-gradient(120deg, rgba(255,255,255,0.45), transparent 44%)",
+              "--material-overlay": "linear-gradient(135deg, rgba(255,255,255,0.44), transparent 48%), linear-gradient(0deg, rgba(216,205,184,0.20), transparent)"
+            },
+            palette: [
+              ["Porcelain", "#fffaf0"],
+              ["Warm stone", "#d8cdb8"],
+              ["Olive rule", "#7f8a68"],
+              ["Coral alert", "#c9735a"],
+              ["Quiet ink", "#3a332a"]
+            ],
+            previewMark: "Balance board",
+            meta: ["policy", "audit", "care"],
+            previewKicker: "Measured service",
+            previewTitle: "先把尺度放平，再决定如何帮",
+            previewCopy: "它适合需要稳重的内部工具：不冷、不黑、不花，所有颜色都服务于“可判断”。",
+            chips: ["公允", "审核", "克制", "风险提示"],
+            action: "确认尺度",
+            feedbackOff: "尺度待校准",
+            feedbackOn: "状态片已确认",
+            metrics: [["5", "审核项"], ["2", "例外情况"], ["OK", "准则适配"]],
+            strip: ["可做事项不抢眼但清楚。", "风险提醒用珊瑚点到为止。", "瓷白面让规则不显得压迫。"]
+          },
+          c: {
+            label: "Saffron Rule",
+            materialType: "rule",
+            intent: "更有行动感的尽善：藏红花色不是热闹，而是执行力。适合任务流、服务动作、下一步判断。",
+            paletteNote: "藏红花作为主动作色，米白铺底，灰橄榄平衡热度。",
+            material: "温暖规则签、窄色带、动作确认反馈。点击后动作色带推进，表现服务从判断进入执行。",
+            tokens: ["动作色", "准则签", "执行", "下一步", "节制"],
+            vars: {
+              "--panel-bg": "#fff0d4",
+              "--panel-surface": "#fff8e7",
+              "--panel-surface-2": "#f2ddb9",
+              "--panel-ink": "#3b3023",
+              "--panel-muted": "#75614c",
+              "--panel-line": "rgba(216, 147, 39, 0.22)",
+              "--panel-primary": "#d89327",
+              "--panel-secondary": "#a2a769",
+              "--panel-accent": "#e46e56",
+              "--panel-accent-2": "#8d8f5a",
+              "--panel-shadow": "rgba(216, 147, 39, 0.16)",
+              "--panel-texture": "linear-gradient(90deg, rgba(216,147,39,0.12) 0 8px, transparent 8px), repeating-linear-gradient(0deg, rgba(216,147,39,0.05) 0 1px, transparent 1px 34px)",
+              "--stage-texture": "linear-gradient(90deg, rgba(216,147,39,0.16) 0 10px, transparent 10px), repeating-linear-gradient(0deg, rgba(162,167,105,0.08) 0 1px, transparent 1px 30px)",
+              "--material-overlay": "linear-gradient(90deg, rgba(216,147,39,0.22) 0 14px, transparent 14px), linear-gradient(105deg, rgba(255,255,255,0.34), transparent 38%)"
+            },
+            palette: [
+              ["Cream rule", "#fff8e7"],
+              ["Saffron", "#d89327"],
+              ["Grey olive", "#a2a769"],
+              ["Action coral", "#e46e56"],
+              ["Warm ink", "#3b3023"]
+            ],
+            previewMark: "Rule action",
+            meta: ["next", "limit", "done"],
+            previewKicker: "Executable kindness",
+            previewTitle: "善意不是停在态度，而是变成下一步",
+            previewCopy: "这套更适合操作台和流程页。温暖但有推进力，适合需要明确按钮和任务完成感的地方。",
+            chips: ["下一步", "可执行", "服务动作", "完成反馈"],
+            action: "推进准则",
+            feedbackOff: "动作待触发",
+            feedbackOn: "动作色带已推进",
+            metrics: [["12", "待处理"], ["6", "已完成"], ["1", "需暂停"]],
+            strip: ["行动建议清楚。", "不要越界的动作同样清楚。", "色带只推进一小段，避免压迫。"]
+          }
+        }
+      },
+      beauty: {
+        variants: {
+          a: {
+            label: "Porcelain Iris",
+            materialType: "porcelain",
+            intent: "致美不是粉色，而是像瓷器和鸢尾一样有留白、有秩序、有一点精致的冷暖对比。适合品牌表达和编辑排版。",
+            paletteNote: "瓷白做空间，鸢尾紫负责识别，玫瑰金和杏色负责温度。",
+            material: "瓷面、细金线、展签式留白。点击后细线收束，表现版式被整理完成。",
+            tokens: ["瓷白", "鸢尾", "细金线", "留白", "编辑"],
+            vars: {
+              "--panel-bg": "#fff1e8",
+              "--panel-surface": "#fff9f2",
+              "--panel-surface-2": "#eadfd2",
+              "--panel-ink": "#302a3c",
+              "--panel-muted": "#756b70",
+              "--panel-line": "rgba(128, 108, 159, 0.20)",
+              "--panel-primary": "#806c9f",
+              "--panel-secondary": "#d9a77e",
+              "--panel-accent": "#d76f85",
+              "--panel-accent-2": "#c59a5f",
+              "--panel-shadow": "rgba(128, 108, 159, 0.14)",
+              "--panel-texture": "linear-gradient(120deg, rgba(128,108,159,0.08), transparent 42%), repeating-linear-gradient(90deg, rgba(217,167,126,0.08) 0 1px, transparent 1px 52px)",
+              "--stage-texture": "linear-gradient(120deg, rgba(128,108,159,0.12), transparent 40%)",
+              "--material-overlay": "linear-gradient(115deg, rgba(255,255,255,0.52), transparent 44%), linear-gradient(90deg, transparent 0 calc(100% - 2px), rgba(217,167,126,0.44) calc(100% - 2px))"
+            },
+            palette: [
+              ["Porcelain", "#fff9f2"],
+              ["Iris", "#806c9f"],
+              ["Rose gold", "#d9a77e"],
+              ["Petal mark", "#d76f85"],
+              ["Gallery ink", "#302a3c"]
+            ],
+            previewMark: "Beauty edit",
+            meta: ["layout", "tone", "craft"],
+            previewKicker: "Editorial refinement",
+            previewTitle: "先整理秩序，再让美感出现",
+            previewCopy: "适合案例、文化内容、品牌页。它通过留白和细线显得体面，而不是用装饰堆出漂亮。",
+            chips: ["版式", "留白", "文化表达", "精致线条"],
+            action: "收拢留白",
+            feedbackOff: "版式待整理",
+            feedbackOn: "细线已收束",
+            metrics: [["64", "字/行控制"], ["3", "层级"], ["12px", "细线间距"]],
+            strip: ["用窄列和留白建立节奏。", "文字气质更像编辑部，不像营销页。", "玫瑰金只做完成度提示。"]
+          },
+          b: {
+            label: "Museum Paper",
+            materialType: "gallery",
+            intent: "把致美做成博物馆纸面：庄重、可阅读、有展陈感。适合案例陈列、作品集、品牌论述。",
+            paletteNote: "米纸与墨线做主体，石榴红只做展签或重点标记。",
+            material: "展签纸、竖向挂线和版面网格。点击后展签轻移，像重新挂正一张说明牌。",
+            tokens: ["展签", "纸面", "挂线", "陈列", "阅读"],
+            vars: {
+              "--panel-bg": "#f8eee0",
+              "--panel-surface": "#fff7ea",
+              "--panel-surface-2": "#e9ddca",
+              "--panel-ink": "#383027",
+              "--panel-muted": "#71685f",
+              "--panel-line": "rgba(47, 56, 67, 0.18)",
+              "--panel-primary": "#2f3843",
+              "--panel-secondary": "#c7a85d",
+              "--panel-accent": "#c4534c",
+              "--panel-accent-2": "#9b7f52",
+              "--panel-shadow": "rgba(86, 69, 49, 0.13)",
+              "--panel-texture": "repeating-linear-gradient(0deg, rgba(47,56,67,0.05) 0 1px, transparent 1px 46px), linear-gradient(90deg, rgba(196,83,76,0.08), transparent 22%)",
+              "--stage-texture": "repeating-linear-gradient(90deg, rgba(47,56,67,0.06) 0 1px, transparent 1px 74px), repeating-linear-gradient(0deg, rgba(199,168,93,0.08) 0 1px, transparent 1px 38px)",
+              "--material-overlay": "linear-gradient(90deg, rgba(47,56,67,0.18) 0 1px, transparent 1px 88px), linear-gradient(180deg, rgba(255,255,255,0.36), transparent)"
+            },
+            palette: [
+              ["Museum paper", "#fff7ea"],
+              ["Ink line", "#2f3843"],
+              ["Brass label", "#c7a85d"],
+              ["Pomegranate", "#c4534c"],
+              ["Warm charcoal", "#383027"]
+            ],
+            previewMark: "Museum note",
+            meta: ["case", "caption", "brand"],
+            previewKicker: "Curated expression",
+            previewTitle: "让内容像被认真陈列，而不是随手摆放",
+            previewCopy: "这套更成熟，也更适合长文、案例和文化页。红色不是主色，而是展签上的一点重点。",
+            chips: ["案例陈列", "展签", "长文", "品牌论述"],
+            action: "挂正展签",
+            feedbackOff: "展签待定位",
+            feedbackOn: "展签已挂正",
+            metrics: [["5", "案例组"], ["2", "重点段"], ["1", "主展签"]],
+            strip: ["版面像展墙，元素有位置感。", "用克制语言表达高级感。", "小面积红色提示重点。"]
+          },
+          c: {
+            label: "Silk Apricot",
+            materialType: "silk",
+            intent: "更温柔的致美：杏色丝面带一点光泽，适合更亲近的品牌表达、祝福感、服务故事。",
+            paletteNote: "杏色是主体，胭脂和铅灰帮助它不变甜腻。",
+            material: "丝绸斜纹、柔光切面、轻微表面流动。点击后丝面高光移动，表现视觉被抚平。",
+            tokens: ["丝面", "杏色", "柔光", "故事感", "细腻"],
+            vars: {
+              "--panel-bg": "#ffefe0",
+              "--panel-surface": "#fff7ed",
+              "--panel-surface-2": "#f1dcc9",
+              "--panel-ink": "#372c29",
+              "--panel-muted": "#756861",
+              "--panel-line": "rgba(227, 162, 107, 0.24)",
+              "--panel-primary": "#e3a26b",
+              "--panel-secondary": "#8c7a65",
+              "--panel-accent": "#b75c72",
+              "--panel-accent-2": "#d2b06e",
+              "--panel-shadow": "rgba(183, 92, 114, 0.12)",
+              "--panel-texture": "repeating-linear-gradient(125deg, rgba(227,162,107,0.08) 0 1px, transparent 1px 16px), linear-gradient(110deg, rgba(183,92,114,0.08), transparent 36%)",
+              "--stage-texture": "repeating-linear-gradient(125deg, rgba(227,162,107,0.10) 0 1px, transparent 1px 14px)",
+              "--material-overlay": "linear-gradient(115deg, rgba(255,255,255,0.55), transparent 34%, rgba(183,92,114,0.08) 54%, transparent 72%), repeating-linear-gradient(125deg, rgba(227,162,107,0.12) 0 1px, transparent 1px 16px)"
+            },
+            palette: [
+              ["Silk base", "#fff7ed"],
+              ["Apricot", "#e3a26b"],
+              ["Lead grey", "#8c7a65"],
+              ["Rouge", "#b75c72"],
+              ["Soft ink", "#372c29"]
+            ],
+            previewMark: "Silk edit",
+            meta: ["story", "soft", "craft"],
+            previewKicker: "Softly finished",
+            previewTitle: "让表达有触感，而不是只有排版",
+            previewCopy: "适合人文故事和服务品牌内容。它比博物馆纸面更轻，更像把内容包上一层细腻材质。",
+            chips: ["服务故事", "柔光", "触感", "祝福感"],
+            action: "移动高光",
+            feedbackOff: "丝面静置",
+            feedbackOn: "高光已滑过",
+            metrics: [["3", "故事段"], ["8", "图文留白"], ["柔", "主气质"]],
+            strip: ["斜纹提供微妙秩序。", "文字更温柔，但仍保持克制。", "胭脂色只做情绪重点。"]
+          },
+          d: {
+            label: "Pearl Vermilion",
+            materialType: "porcelain",
+            intent: "把致美做成珍珠白与朱砂线的精工方向：更东方、更有手作完成度，但避免大面积红色和暗色。",
+            paletteNote: "珍珠白负责面积，朱砂只走细线和重点，浅金负责完成度，暖灰保持安静。",
+            material: "珍珠瓷面、朱砂细线、浅金边。点击后细线点亮，像作品被最后一道工序确认。",
+            tokens: ["珍珠白", "朱砂线", "浅金边", "精工", "东方"],
+            vars: {
+              "--panel-bg": "#fff0e7",
+              "--panel-surface": "#fff8f1",
+              "--panel-surface-2": "#eddccd",
+              "--panel-ink": "#3b2d2a",
+              "--panel-muted": "#746761",
+              "--panel-line": "rgba(207, 92, 73, 0.20)",
+              "--panel-primary": "#cf5c49",
+              "--panel-secondary": "#d9b46d",
+              "--panel-accent": "#e7a176",
+              "--panel-accent-2": "#8d8376",
+              "--panel-shadow": "rgba(207, 92, 73, 0.12)",
+              "--panel-texture": "linear-gradient(115deg, rgba(255,255,255,0.52), transparent 44%), repeating-linear-gradient(90deg, rgba(207,92,73,0.06) 0 1px, transparent 1px 54px)",
+              "--stage-texture": "repeating-linear-gradient(90deg, rgba(207,92,73,0.08) 0 1px, transparent 1px 62px), linear-gradient(115deg, rgba(217,180,109,0.12), transparent 44%)",
+              "--material-overlay": "linear-gradient(90deg, rgba(207,92,73,0.24) 0 1px, transparent 1px 82px), linear-gradient(115deg, rgba(255,255,255,0.54), transparent 44%)"
+            },
+            palette: [
+              ["Pearl", "#fff8f1"],
+              ["Vermilion", "#cf5c49"],
+              ["Soft gold", "#d9b46d"],
+              ["Apricot glaze", "#e7a176"],
+              ["Warm grey", "#8d8376"]
+            ],
+            previewMark: "Pearl craft",
+            meta: ["craft", "line", "finish"],
+            previewKicker: "Finishing line",
+            previewTitle: "让美感像最后一道手工细线",
+            previewCopy: "适合需要更有识别度的品牌表达。朱砂不是铺满的热闹，而是精准的完成线。",
+            chips: ["精工", "朱砂细线", "品牌表达", "完成度"],
+            action: "点亮细线",
+            feedbackOff: "细线待确认",
+            feedbackOn: "朱砂线已点亮",
+            metrics: [["1px", "朱砂线"], ["4", "留白区"], ["亮", "完成信号"]],
+            strip: ["用细线而不是大色块表达东方感。", "文案可以更凝练、更像作品说明。", "浅金边只提示最后完成。"]
+          },
+          e: {
+            label: "Laurel Atelier",
+            materialType: "gallery",
+            intent: "一个更温暖的工作室方向：桂冠绿偏橄榄而不冷，配合象牙纸和金色工具线，让致美更像专业创作现场。",
+            paletteNote: "象牙白占面积，桂冠绿做秩序，金色和陶粉给温度。",
+            material: "工作室纸面、裁切线、工具标尺。点击后标尺轻移，表现排版被认真校准。",
+            tokens: ["工作室", "桂冠", "裁切线", "标尺", "专业"],
+            vars: {
+              "--panel-bg": "#fff2df",
+              "--panel-surface": "#fff9ec",
+              "--panel-surface-2": "#ebddc2",
+              "--panel-ink": "#333327",
+              "--panel-muted": "#6d6859",
+              "--panel-line": "rgba(133, 145, 91, 0.22)",
+              "--panel-primary": "#85915b",
+              "--panel-secondary": "#d7a95d",
+              "--panel-accent": "#d88472",
+              "--panel-accent-2": "#b9a778",
+              "--panel-shadow": "rgba(133, 145, 91, 0.13)",
+              "--panel-texture": "repeating-linear-gradient(90deg, rgba(133,145,91,0.06) 0 1px, transparent 1px 48px), linear-gradient(120deg, rgba(216,132,114,0.08), transparent 38%)",
+              "--stage-texture": "repeating-linear-gradient(90deg, rgba(133,145,91,0.08) 0 1px, transparent 1px 56px), repeating-linear-gradient(0deg, rgba(215,169,93,0.08) 0 1px, transparent 1px 34px)",
+              "--material-overlay": "linear-gradient(90deg, rgba(133,145,91,0.16) 0 7px, transparent 7px), linear-gradient(115deg, rgba(255,255,255,0.42), transparent 42%)"
+            },
+            palette: [
+              ["Ivory paper", "#fff9ec"],
+              ["Laurel", "#85915b"],
+              ["Tool gold", "#d7a95d"],
+              ["Clay rose", "#d88472"],
+              ["Atelier ink", "#333327"]
+            ],
+            previewMark: "Atelier grid",
+            meta: ["measure", "edit", "craft"],
+            previewKicker: "Measured beauty",
+            previewTitle: "美感来自反复校准后的自然",
+            previewCopy: "这套没有明显粉感，更适合专业、可靠、长期使用的品牌系统。它像编辑部和工作室的中间状态。",
+            chips: ["专业美感", "标尺", "编辑", "长期耐看"],
+            action: "移动标尺",
+            feedbackOff: "标尺待校准",
+            feedbackOn: "标尺已校准",
+            metrics: [["12", "排版线"], ["3", "校准点"], ["稳", "专业感"]],
+            strip: ["工作室标尺建立秩序。", "文字可以更专业、更少形容词。", "陶粉只给内容一点温度。"]
+          },
+          f: {
+            label: "Peony Wash",
+            materialType: "paper",
+            intent: "更柔软也更有文化感的致美：牡丹色被水洗到很轻，保留温度和诗意，但不走甜腻路线。",
+            paletteNote: "米纸是主体，牡丹色只做水洗层，杏金和暖灰稳住画面。",
+            material: "水洗纸面、浅色叠印、柔和纸纹。点击后叠印层轻浮，表现内容被温柔展开。",
+            tokens: ["水洗纸", "牡丹", "叠印", "诗意", "柔秩序"],
+            vars: {
+              "--panel-bg": "#fff0e8",
+              "--panel-surface": "#fff7ee",
+              "--panel-surface-2": "#efdacb",
+              "--panel-ink": "#3c2c32",
+              "--panel-muted": "#74656a",
+              "--panel-line": "rgba(190, 98, 126, 0.20)",
+              "--panel-primary": "#be627e",
+              "--panel-secondary": "#e1ad74",
+              "--panel-accent": "#e7c19c",
+              "--panel-accent-2": "#8c8174",
+              "--panel-shadow": "rgba(190, 98, 126, 0.12)",
+              "--panel-texture": "linear-gradient(115deg, rgba(190,98,126,0.12), transparent 42%), repeating-linear-gradient(0deg, rgba(225,173,116,0.08) 0 1px, transparent 1px 30px)",
+              "--stage-texture": "linear-gradient(115deg, rgba(190,98,126,0.14), transparent 44%), repeating-linear-gradient(0deg, rgba(225,173,116,0.09) 0 1px, transparent 1px 34px)",
+              "--material-overlay": "linear-gradient(115deg, rgba(255,255,255,0.48), transparent 36%, rgba(190,98,126,0.10) 58%, transparent 76%)"
+            },
+            palette: [
+              ["Rice paper", "#fff7ee"],
+              ["Peony wash", "#be627e"],
+              ["Apricot gold", "#e1ad74"],
+              ["Light peach", "#e7c19c"],
+              ["Poem ink", "#3c2c32"]
+            ],
+            previewMark: "Peony note",
+            meta: ["poem", "paper", "soft"],
+            previewKicker: "Washed expression",
+            previewTitle: "把诗意洗淡，只留下耐看的温度",
+            previewCopy: "适合文化内容、品牌故事、祝福感页面。它比 Silk Apricot 更有东方色彩，但仍然轻。",
+            chips: ["文化内容", "水洗层", "品牌故事", "柔秩序"],
+            action: "浮起叠印",
+            feedbackOff: "叠印层待展开",
+            feedbackOn: "叠印层已展开",
+            metrics: [["2", "叠印层"], ["柔", "诗意浓度"], ["5", "留白段"]],
+            strip: ["米纸托住水洗色。", "文字可以更有诗意，但不泛滥。", "叠印层只在重点内容出现。"]
+          }
+        }
+      },
+      love: {
+        variants: {
+          a: {
+            label: "Pomegranate Cotton",
+            materialType: "cotton",
+            intent: "把大爱从符号转成真实照护：棉布白、石榴红和杏色光感，像可接近、可依靠的服务空间。",
+            paletteNote: "棉白做大面积，石榴红提供人情温度，杏色让整体更软。",
+            material: "棉布细纹、软边界和贴近式浮层。点击后照护卡片靠近主内容，表现“先看见人”。",
+            tokens: ["棉布", "靠近", "照护", "人情", "处境"],
+            vars: {
+              "--panel-bg": "#fff0e7",
+              "--panel-surface": "#fff8f0",
+              "--panel-surface-2": "#f7dfcd",
+              "--panel-ink": "#392d2b",
+              "--panel-muted": "#74625c",
+              "--panel-line": "rgba(199, 79, 90, 0.20)",
+              "--panel-primary": "#c74f5a",
+              "--panel-secondary": "#eaa46a",
+              "--panel-accent": "#f6c58e",
+              "--panel-accent-2": "#8f7164",
+              "--panel-shadow": "rgba(199, 79, 90, 0.13)",
+              "--panel-texture": "repeating-linear-gradient(90deg, rgba(199,79,90,0.04) 0 1px, transparent 1px 10px), repeating-linear-gradient(0deg, rgba(234,164,106,0.05) 0 1px, transparent 1px 12px)",
+              "--stage-texture": "repeating-linear-gradient(90deg, rgba(199,79,90,0.06) 0 1px, transparent 1px 10px), repeating-linear-gradient(0deg, rgba(234,164,106,0.07) 0 1px, transparent 1px 12px)",
+              "--material-overlay": "linear-gradient(110deg, rgba(255,255,255,0.44), transparent 44%), repeating-linear-gradient(90deg, rgba(199,79,90,0.06) 0 1px, transparent 1px 9px)"
+            },
+            palette: [
+              ["Cotton", "#fff8f0"],
+              ["Pomegranate", "#c74f5a"],
+              ["Apricot care", "#eaa46a"],
+              ["Soft light", "#f6c58e"],
+              ["Human ink", "#392d2b"]
+            ],
+            previewMark: "Care table",
+            meta: ["heart", "context", "support"],
+            previewKicker: "Human-first service",
+            previewTitle: "先看见人，再处理事",
+            previewCopy: "适合客户/员工处境、服务回访、关系维护。大爱在这里不是口号，而是一个更近的阅读距离。",
+            chips: ["本心", "处境", "靠近", "照护"],
+            action: "靠近处境",
+            feedbackOff: "照护卡片待靠近",
+            feedbackOn: "照护卡片已靠近",
+            metrics: [["4", "处境线索"], ["2", "情绪风险"], ["1", "照护建议"]],
+            strip: ["人的处境先出现。", "系统动作延后半拍。", "温暖来自距离，而不是符号。"]
+          },
+          b: {
+            label: "Evening Lamp",
+            materialType: "lamp",
+            intent: "更成熟的大爱：像傍晚灯下的服务台，有包容感但不幼稚。适合员工关怀、客户关系、长期陪伴。",
+            paletteNote: "灯光琥珀和奶油白构成面积，软红只作为情绪点。",
+            material: "灯罩式暖光带、半透明面板、分层阴影。点击后灯光带变亮，表现“被照见”。",
+            tokens: ["灯光", "陪伴", "被照见", "暖层", "安定"],
+            vars: {
+              "--panel-bg": "#fff0dd",
+              "--panel-surface": "#fff7e9",
+              "--panel-surface-2": "#f1d3ac",
+              "--panel-ink": "#372b23",
+              "--panel-muted": "#746150",
+              "--panel-line": "rgba(217, 133, 53, 0.24)",
+              "--panel-primary": "#d98535",
+              "--panel-secondary": "#f3c67d",
+              "--panel-accent": "#bd5b4f",
+              "--panel-accent-2": "#9a7a5a",
+              "--panel-shadow": "rgba(217, 133, 53, 0.16)",
+              "--panel-texture": "linear-gradient(110deg, rgba(217,133,53,0.18), transparent 38%), repeating-linear-gradient(0deg, rgba(217,133,53,0.06) 0 1px, transparent 1px 28px)",
+              "--stage-texture": "linear-gradient(110deg, rgba(217,133,53,0.20), transparent 46%), repeating-linear-gradient(0deg, rgba(243,198,125,0.12) 0 2px, transparent 2px 18px)",
+              "--material-overlay": "linear-gradient(110deg, rgba(243,198,125,0.35), transparent 44%), linear-gradient(180deg, rgba(255,255,255,0.34), transparent)"
+            },
+            palette: [
+              ["Lamp cream", "#fff7e9"],
+              ["Amber lamp", "#d98535"],
+              ["Warm shade", "#f3c67d"],
+              ["Soft red", "#bd5b4f"],
+              ["Evening ink", "#372b23"]
+            ],
+            previewMark: "Lamp room",
+            meta: ["listen", "hold", "follow"],
+            previewKicker: "Being seen",
+            previewTitle: "让用户感觉自己被照见，而不是被处理",
+            previewCopy: "适合更情感化但仍专业的服务界面。灯光材质可以用于回访、反馈、关系修复等场景。",
+            chips: ["倾听", "陪伴", "关系修复", "长期关怀"],
+            action: "点亮照护",
+            feedbackOff: "灯光待点亮",
+            feedbackOn: "暖光带已点亮",
+            metrics: [["7d", "回访周期"], ["3", "关怀动作"], ["暖", "关系温度"]],
+            strip: ["人在灯下被看见。", "处境被耐心保留。", "系统动作像递一盏灯。"]
+          },
+          c: {
+            label: "Mauve Embrace",
+            materialType: "embrace",
+            intent: "用暖紫灰表达包容，不用甜红。它更适合心理安全、团队文化、员工关怀这类需要柔软边界的场景。",
+            paletteNote: "暖紫灰和奶白让情绪安静下来，珊瑚只做少量回应点。",
+            material: "半透明拥抱层、柔边框、贴合式反馈。点击后透明层覆盖更近，表现“接住而不吞没”。",
+            tokens: ["暖紫灰", "半透明层", "包容", "柔边界", "安全感"],
+            vars: {
+              "--panel-bg": "#fff0ec",
+              "--panel-surface": "rgba(255, 248, 241, 0.82)",
+              "--panel-surface-2": "rgba(242, 204, 172, 0.58)",
+              "--panel-ink": "#3a2b32",
+              "--panel-muted": "#74616b",
+              "--panel-line": "rgba(184, 109, 122, 0.22)",
+              "--panel-primary": "#b86d7a",
+              "--panel-secondary": "#d79586",
+              "--panel-accent": "#f2ccac",
+              "--panel-accent-2": "#c95f5c",
+              "--panel-shadow": "rgba(184, 109, 122, 0.14)",
+              "--panel-texture": "linear-gradient(115deg, rgba(184,109,122,0.14), transparent 42%), repeating-linear-gradient(90deg, rgba(184,109,122,0.04) 0 1px, transparent 1px 34px)",
+              "--stage-texture": "linear-gradient(115deg, rgba(184,109,122,0.15), transparent 46%), repeating-linear-gradient(90deg, rgba(215,149,134,0.07) 0 1px, transparent 1px 28px)",
+              "--material-overlay": "linear-gradient(120deg, rgba(255,255,255,0.52), rgba(184,109,122,0.10) 48%, transparent 72%)"
+            },
+            palette: [
+              ["Milk veil", "#fff8f1"],
+              ["Warm mauve", "#b86d7a"],
+              ["Clay rose", "#d79586"],
+              ["Soft peach", "#f2ccac"],
+              ["Kind ink", "#3a2b32"]
+            ],
+            previewMark: "Embrace layer",
+            meta: ["safe", "near", "seen"],
+            previewKicker: "Soft boundary",
+            previewTitle: "接住一个人，但不替他失去边界",
+            previewCopy: "适合文化、关怀、复盘等页面。半透明层让包容感可见，但仍保留清楚的信息结构。",
+            chips: ["心理安全", "包容", "柔边界", "员工关怀"],
+            action: "覆盖拥抱层",
+            feedbackOff: "透明层待靠近",
+            feedbackOn: "拥抱层已靠近",
+            metrics: [["6", "关怀信号"], ["2", "脆弱点"], ["清", "边界状态"]],
+            strip: ["看见人的真实状态。", "不急于贴标签。", "照护层靠近但不遮住信息。"]
+          }
+        }
+      },
+      happiness: {
+        variants: {
+          a: {
+            label: "Citrus Morning",
+            materialType: "citrus",
+            intent: "更有生命力的幸福：柑橘晨光、柠檬奶油、少量果酱红。明亮但不幼稚，适合成就、反馈、愿景。",
+            paletteNote: "柑橘是主动作，奶油黄做背景，红色只用于快乐的小确认点。",
+            material: "晨光条纹、细点阵和轻快确认反馈。点击后确认点亮起，像早晨第一束光照到结果。",
+            tokens: ["柑橘", "晨光", "正反馈", "轻盈", "成果"],
+            vars: {
+              "--panel-bg": "#fff3d2",
+              "--panel-surface": "#fff9df",
+              "--panel-surface-2": "#f7dda6",
+              "--panel-ink": "#3a3022",
+              "--panel-muted": "#74634d",
+              "--panel-line": "rgba(242, 165, 65, 0.24)",
+              "--panel-primary": "#f2a541",
+              "--panel-secondary": "#e7c859",
+              "--panel-accent": "#e76f51",
+              "--panel-accent-2": "#82a06b",
+              "--panel-shadow": "rgba(242, 165, 65, 0.17)",
+              "--panel-texture": "linear-gradient(105deg, rgba(242,165,65,0.18), transparent 38%), repeating-linear-gradient(90deg, transparent 0 22px, rgba(231,111,81,0.10) 22px 24px, transparent 24px 48px)",
+              "--stage-texture": "linear-gradient(105deg, rgba(242,165,65,0.22), transparent 45%), repeating-linear-gradient(90deg, transparent 0 20px, rgba(231,111,81,0.12) 20px 22px, transparent 22px 44px)",
+              "--material-overlay": "linear-gradient(105deg, rgba(255,255,255,0.48), transparent 44%), repeating-linear-gradient(90deg, transparent 0 22px, rgba(231,111,81,0.16) 22px 24px, transparent 24px 48px)"
+            },
+            palette: [
+              ["Lemon cream", "#fff9df"],
+              ["Citrus", "#f2a541"],
+              ["Sun yellow", "#e7c859"],
+              ["Jam dot", "#e76f51"],
+              ["Warm ink", "#3a3022"]
+            ],
+            previewMark: "Morning wall",
+            meta: ["win", "wish", "grow"],
+            previewKicker: "Positive feedback",
+            previewTitle: "让小小的完成感被认真看见",
+            previewCopy: "适合正向反馈、成就墙、愿景页。它明亮、轻、愉悦，但仍有可持续的服务感。",
+            chips: ["成就", "愿景", "反馈", "轻盈"],
+            action: "点亮反馈",
+            feedbackOff: "反馈点待点亮",
+            feedbackOn: "确认点已亮起",
+            metrics: [["16", "正反馈"], ["4", "愿景项"], ["1", "今日完成"]],
+            strip: ["日光感来自斜向暖带。", "成长用温和黄色，不用荧光色。", "红点只表示被看见的瞬间。"]
+          },
+          b: {
+            label: "Daybreak Peach",
+            materialType: "daybreak",
+            intent: "更柔软的幸福：桃色黎明和米白空气感，适合家庭感、日常陪伴、柔和反馈。",
+            paletteNote: "桃色是温度，米白是空气，柔红仅给愿景和祝福做重点。",
+            material: "黎明渐层、浅雾面、缓慢浮起的回应卡。点击后卡片上浮，表现一天开始时的轻盈感。",
+            tokens: ["黎明", "桃色", "空气感", "家庭", "柔反馈"],
+            vars: {
+              "--panel-bg": "#fff0df",
+              "--panel-surface": "#fff8ed",
+              "--panel-surface-2": "#f7d7bd",
+              "--panel-ink": "#463026",
+              "--panel-muted": "#7a6254",
+              "--panel-line": "rgba(241, 167, 125, 0.25)",
+              "--panel-primary": "#f1a77d",
+              "--panel-secondary": "#f8c88e",
+              "--panel-accent": "#d86d62",
+              "--panel-accent-2": "#c6a069",
+              "--panel-shadow": "rgba(241, 167, 125, 0.16)",
+              "--panel-texture": "linear-gradient(120deg, rgba(241,167,125,0.20), transparent 42%), repeating-linear-gradient(0deg, rgba(248,200,142,0.10) 0 1px, transparent 1px 30px)",
+              "--stage-texture": "linear-gradient(120deg, rgba(241,167,125,0.22), transparent 48%), repeating-linear-gradient(0deg, rgba(248,200,142,0.10) 0 1px, transparent 1px 34px)",
+              "--material-overlay": "linear-gradient(120deg, rgba(255,255,255,0.46), transparent 44%), linear-gradient(180deg, rgba(248,200,142,0.24), transparent 70%)"
+            },
+            palette: [
+              ["Rice white", "#fff8ed"],
+              ["Daybreak peach", "#f1a77d"],
+              ["Morning mist", "#f8c88e"],
+              ["Wish red", "#d86d62"],
+              ["Warm ink", "#463026"]
+            ],
+            previewMark: "Daybreak",
+            meta: ["home", "soft", "daily"],
+            previewKicker: "Everyday warmth",
+            previewTitle: "幸福不是爆发，而是每天都轻一点",
+            previewCopy: "适合家庭感、员工日常、服务回访。它更柔和，比 Citrus Morning 少一些跳跃，多一些陪伴。",
+            chips: ["家庭感", "日常", "陪伴", "愿景"],
+            action: "浮起回应",
+            feedbackOff: "回应卡待浮起",
+            feedbackOn: "回应卡已上浮",
+            metrics: [["9", "温暖反馈"], ["3", "家庭线索"], ["轻", "当前语气"]],
+            strip: ["光线像清晨展开。", "成长不是冲刺，是日常变好。", "家感来自米白空气层。"]
+          },
+          c: {
+            label: "Champagne Home",
+            materialType: "champagne",
+            intent: "更成熟的幸福：香槟白、浅金和桃影，像家里一张被阳光照亮的餐桌。适合高端但温暖的服务品牌感。",
+            paletteNote: "香槟白占面积，浅金负责光泽，桃影保留温度。",
+            material: "香槟纸面、细金属边、柔和餐桌式分区。点击后金边亮起，表现成就被温柔确认。",
+            tokens: ["香槟白", "浅金", "家感", "成熟", "确认"],
+            vars: {
+              "--panel-bg": "#fff5e5",
+              "--panel-surface": "#fffaf0",
+              "--panel-surface-2": "#f4dfbd",
+              "--panel-ink": "#393025",
+              "--panel-muted": "#746453",
+              "--panel-line": "rgba(217, 170, 85, 0.25)",
+              "--panel-primary": "#d9aa55",
+              "--panel-secondary": "#f2c99d",
+              "--panel-accent": "#e17865",
+              "--panel-accent-2": "#a99160",
+              "--panel-shadow": "rgba(217, 170, 85, 0.16)",
+              "--panel-texture": "repeating-linear-gradient(115deg, rgba(217,170,85,0.10) 0 1px, transparent 1px 26px), linear-gradient(120deg, rgba(255,255,255,0.48), transparent 44%)",
+              "--stage-texture": "repeating-linear-gradient(115deg, rgba(217,170,85,0.12) 0 1px, transparent 1px 26px), linear-gradient(120deg, rgba(255,255,255,0.44), transparent 44%)",
+              "--material-overlay": "linear-gradient(90deg, rgba(217,170,85,0.24) 0 1px, transparent 1px 72px), linear-gradient(120deg, rgba(255,255,255,0.50), transparent 46%)"
+            },
+            palette: [
+              ["Champagne", "#fffaf0"],
+              ["Soft gold", "#d9aa55"],
+              ["Peach shadow", "#f2c99d"],
+              ["Warm coral", "#e17865"],
+              ["Home ink", "#393025"]
+            ],
+            previewMark: "Home table",
+            meta: ["warm", "done", "wish"],
+            previewKicker: "Mature happiness",
+            previewTitle: "让成就像家里的光一样落下来",
+            previewCopy: "适合更高端的幸福感表达。它不鲜艳，却有光泽；不煽情，但有被认真庆祝的感觉。",
+            chips: ["家庭感", "成就确认", "温柔高端", "愿景页"],
+            action: "点亮金边",
+            feedbackOff: "金边待确认",
+            feedbackOn: "金边已亮起",
+            metrics: [["21", "感谢记录"], ["5", "愿景节点"], ["稳", "成熟度"]],
+            strip: ["光泽来自细金边而非大面积金色。", "成长感放慢，显得更耐看。", "家感通过桌面分区建立。"]
+          }
+        }
+      }
+    };
+
+    const storageKey = (id) => `lighthouse-value-theme-v3-${id}`;
+
+    const setText = (panel, field, value) => {
+      const node = panel.querySelector(`[data-field="${field}"]`);
+      if (node) node.textContent = value;
+    };
+
+    const renderList = (panel, field, items, mapper) => {
+      const node = panel.querySelector(`[data-field="${field}"]`);
+      if (!node) return;
+      node.replaceChildren(...items.map(mapper));
+    };
+
+    const makeSpan = (text) => {
+      const span = document.createElement("span");
+      span.textContent = text;
+      return span;
+    };
+
+    const applyVariant = (panel, key) => {
+      const id = panel.dataset.themeId;
+      const theme = themeData[id];
+      const variant = theme.variants[key];
+      if (!variant) return;
+
+      panel.dataset.active = key;
+      panel.dataset.materialType = variant.materialType;
+      Object.entries(variant.vars).forEach(([name, value]) => {
+        panel.style.setProperty(name, value);
+      });
+
+      panel.querySelectorAll("[data-variant-choice]").forEach((button) => {
+        const choice = button.dataset.variantChoice;
+        const label = theme.variants[choice].label;
+        button.setAttribute("aria-pressed", String(choice === key));
+        button.querySelector("b").textContent = label;
+      });
+
+      setText(panel, "intent", variant.intent);
+      setText(panel, "paletteNote", variant.paletteNote);
+      setText(panel, "material", variant.material);
+      setText(panel, "previewMark", variant.previewMark);
+      setText(panel, "previewKicker", variant.previewKicker);
+      setText(panel, "previewTitle", variant.previewTitle);
+      setText(panel, "previewCopy", variant.previewCopy);
+      setText(panel, "action", variant.action);
+      setText(panel, "feedback", variant.feedbackOff);
+      setText(panel, "stripOne", variant.strip[0]);
+      setText(panel, "stripTwo", variant.strip[1]);
+      setText(panel, "stripThree", variant.strip[2]);
+
+      renderList(panel, "tokens", variant.tokens, makeSpan);
+      renderList(panel, "chips", variant.chips, makeSpan);
+      renderList(panel, "meta", variant.meta, makeSpan);
+      renderList(panel, "palette", variant.palette, ([name, value]) => {
+        const swatch = document.createElement("div");
+        swatch.className = "swatch";
+        swatch.innerHTML = `
+          <div class="swatch-chip" style="background:${value}"></div>
+          <div class="swatch-name"></div>
+          <div class="swatch-value"></div>
+        `;
+        swatch.querySelector(".swatch-name").textContent = name;
+        swatch.querySelector(".swatch-value").textContent = value;
+        return swatch;
+      });
+      renderList(panel, "metrics", variant.metrics, ([value, label]) => {
+        const card = document.createElement("div");
+        card.className = "mini-card";
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        const span = document.createElement("span");
+        span.textContent = label;
+        card.append(strong, span);
+        return card;
+      });
+
+      const shell = panel.querySelector(".sample-shell");
+      if (shell) shell.dataset.engaged = "false";
+
+      try {
+        localStorage.setItem(storageKey(id), key);
+      } catch (error) {
+        // Local file previews can block storage in some browser modes.
+      }
+    };
+
+    document.querySelectorAll(".theme-panel").forEach((panel) => {
+      const id = panel.dataset.themeId;
+      const stored = (() => {
+        try {
+          return localStorage.getItem(storageKey(id));
+        } catch (error) {
+          return null;
+        }
+      })();
+      const initial = stored && themeData[id].variants[stored] ? stored : panel.dataset.active || "a";
+      applyVariant(panel, initial);
+
+      panel.querySelectorAll("[data-variant-choice]").forEach((button) => {
+        button.addEventListener("click", () => applyVariant(panel, button.dataset.variantChoice));
+      });
+
+      const action = panel.querySelector(".sample-action");
+      const shell = panel.querySelector(".sample-shell");
+      const feedback = panel.querySelector('[data-field="feedback"]');
+      action.addEventListener("click", () => {
+        const activeKey = panel.dataset.active;
+        const variant = themeData[id].variants[activeKey];
+        const nextState = shell.dataset.engaged !== "true";
+        shell.dataset.engaged = String(nextState);
+        feedback.textContent = nextState ? variant.feedbackOn : variant.feedbackOff;
+      });
+    });
+  </script>
+</body>
+</html>
