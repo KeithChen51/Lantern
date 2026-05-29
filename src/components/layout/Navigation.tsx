@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@iconify/react";
+import { ThemeSwitcher } from "@/components/layout/ThemeSwitcher";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
@@ -150,6 +151,10 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
 
           <div className="mt-8 flex flex-1 flex-col gap-2">
             <NavLinks isExpanded pathname={pathname} onNavigate={onMobileClose} />
+          </div>
+
+          <div className="mb-12 mt-6">
+            <ThemeSwitcher />
           </div>
         </nav>
       </div>
