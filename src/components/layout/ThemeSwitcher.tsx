@@ -9,11 +9,11 @@ const THEME_DATA_ATTRIBUTE = "data-lighthouse-theme";
 const TYPEFACE_DATA_ATTRIBUTE = "data-lighthouse-typeface";
 
 const THEMES = [
-  { id: "truth", label: "求真", shortLabel: "求", title: "求真 · Glass Lab", swatch: "#2f7d80" },
-  { id: "goodness", label: "尽善", shortLabel: "善", title: "尽善 · Willow Porcelain", swatch: "#647d5d" },
+  { id: "truth", label: "求真", shortLabel: "求", title: "求真 · Glass Lab", swatch: "#6ab0a5" },
+  { id: "goodness", label: "尽善", shortLabel: "善", title: "尽善 · Willow Porcelain", swatch: "#728a69" },
   { id: "beauty", label: "致美", shortLabel: "美", title: "致美 · Porcelain Iris", swatch: "#806c9f" },
   { id: "love", label: "大爱", shortLabel: "爱", title: "大爱 · Pomegranate Cotton", swatch: "#c74f5a" },
-  { id: "happiness", label: "幸福", shortLabel: "幸", title: "幸福 · Daybreak Peach", swatch: "#d97957" },
+  { id: "happiness", label: "幸福", shortLabel: "幸", title: "幸福 · Daybreak Peach", swatch: "#f1a77d" },
 ] as const;
 
 const TYPEFACES = [

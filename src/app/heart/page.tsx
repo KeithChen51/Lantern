@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@iconify/react";
+import type { CSSProperties } from "react";
 import {
   LhCard,
   LhChip,
@@ -8,6 +9,52 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+
+type ValueToneStyle = CSSProperties & {
+  "--value-color": string;
+  "--value-soft": string;
+  "--value-wash": string;
+  "--value-line": string;
+  "--value-text": string;
+};
+
+const valueToneStyles = [
+  {
+    "--value-color": "#6ab0a5",
+    "--value-soft": "color-mix(in srgb, #6ab0a5 13%, var(--color-panel))",
+    "--value-wash": "color-mix(in srgb, #6ab0a5 8%, var(--color-raised))",
+    "--value-line": "color-mix(in srgb, #6ab0a5 38%, var(--color-line))",
+    "--value-text": "color-mix(in srgb, #6ab0a5 58%, var(--color-ink))",
+  },
+  {
+    "--value-color": "#728a69",
+    "--value-soft": "color-mix(in srgb, #728a69 13%, var(--color-panel))",
+    "--value-wash": "color-mix(in srgb, #728a69 8%, var(--color-raised))",
+    "--value-line": "color-mix(in srgb, #728a69 38%, var(--color-line))",
+    "--value-text": "color-mix(in srgb, #728a69 58%, var(--color-ink))",
+  },
+  {
+    "--value-color": "#806c9f",
+    "--value-soft": "color-mix(in srgb, #806c9f 13%, var(--color-panel))",
+    "--value-wash": "color-mix(in srgb, #806c9f 8%, var(--color-raised))",
+    "--value-line": "color-mix(in srgb, #806c9f 38%, var(--color-line))",
+    "--value-text": "color-mix(in srgb, #806c9f 58%, var(--color-ink))",
+  },
+  {
+    "--value-color": "#c74f5a",
+    "--value-soft": "color-mix(in srgb, #c74f5a 13%, var(--color-panel))",
+    "--value-wash": "color-mix(in srgb, #c74f5a 8%, var(--color-raised))",
+    "--value-line": "color-mix(in srgb, #c74f5a 38%, var(--color-line))",
+    "--value-text": "color-mix(in srgb, #c74f5a 58%, var(--color-ink))",
+  },
+  {
+    "--value-color": "#f1a77d",
+    "--value-soft": "color-mix(in srgb, #f1a77d 14%, var(--color-panel))",
+    "--value-wash": "color-mix(in srgb, #f1a77d 9%, var(--color-raised))",
+    "--value-line": "color-mix(in srgb, #f1a77d 42%, var(--color-line))",
+    "--value-text": "color-mix(in srgb, #f1a77d 62%, var(--color-ink))",
+  },
+] satisfies ValueToneStyle[];
 
 const valueSections = [
   {
@@ -172,31 +219,81 @@ export default function HeartPage() {
         </div>
 
         <div className="grid gap-5">
-          {valueSections.map((value) => (
-            <LhCard key={value.title} className="grid gap-5 p-5 lg:grid-cols-[190px_minmax(0,1fr)]">
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 min-w-14 items-center justify-center whitespace-nowrap rounded-sm border border-line bg-surface-quiet px-3 text-lg font-extrabold text-primary-deep">
-                    {value.title}
-                  </span>
-                  <div>
-                    <p className="text-sm font-extrabold text-primary-deep">{value.focus}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted">{value.summary}</p>
+          {valueSections.map((value, index) => {
+            const toneStyle = valueToneStyles[index % valueToneStyles.length];
+
+            return (
+              <LhCard
+                key={value.title}
+                className="grid gap-0 p-0 shadow-lh-md lg:grid-cols-[250px_minmax(0,1fr)]"
+                style={{
+                  ...toneStyle,
+                  borderColor: "var(--value-line)",
+                  background: "color-mix(in srgb, var(--value-wash) 46%, var(--color-raised))",
+                }}
+              >
+                <div
+                  className="relative min-w-0 border-b p-5 sm:p-6 lg:border-b-0 lg:border-r"
+                  style={{
+                    borderColor: "var(--value-line)",
+                    background: "color-mix(in srgb, var(--value-soft) 72%, var(--color-panel))",
+                  }}
+                >
+                  <span
+                    className="pointer-events-none absolute inset-y-6 left-0 w-1 rounded-r-full"
+                    style={{ background: "var(--value-color)" }}
+                  />
+                  <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)] lg:grid-cols-1">
+                    <span
+                      className="flex h-14 w-[72px] items-center justify-center rounded-sm border text-xl font-extrabold shadow-[0_1px_0_rgba(255,255,255,0.72)_inset]"
+                      style={{
+                        borderColor: "var(--value-line)",
+                        background: "color-mix(in srgb, var(--value-soft) 68%, var(--color-panel))",
+                        color: "var(--value-text)",
+                      }}
+                    >
+                      {value.title}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
+                        {value.focus}
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-ink-soft">{value.summary}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-sm border border-line bg-surface-quiet p-4">
-                  <p className="text-sm font-extrabold text-primary-deep">面对客户</p>
-                  <p className="mt-2 text-sm leading-7 text-ink-soft">{value.customer}</p>
+
+                <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-2">
+                  <div
+                    className="rounded-sm border p-4 sm:p-5"
+                    style={{
+                      borderColor: "var(--value-line)",
+                      background: "color-mix(in srgb, var(--value-soft) 54%, var(--color-panel) 46%)",
+                    }}
+                  >
+                    <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
+                      <span className="h-2 w-2 rounded-full" style={{ background: "var(--value-color)" }} />
+                      面对客户
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-ink-soft">{value.customer}</p>
+                  </div>
+                  <div
+                    className="rounded-sm border p-4 sm:p-5"
+                    style={{
+                      borderColor: "color-mix(in srgb, var(--value-line) 64%, var(--color-line))",
+                      background: "color-mix(in srgb, var(--value-soft) 22%, var(--color-panel) 78%)",
+                    }}
+                  >
+                    <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
+                      <span className="h-2 w-2 rounded-full border" style={{ borderColor: "var(--value-color)" }} />
+                      面对员工
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-ink-soft">{value.employee}</p>
+                  </div>
                 </div>
-                <div className="rounded-sm border border-line bg-surface-quiet p-4">
-                  <p className="text-sm font-extrabold text-primary-deep">面对员工</p>
-                  <p className="mt-2 text-sm leading-7 text-ink-soft">{value.employee}</p>
-                </div>
-              </div>
-            </LhCard>
-          ))}
+              </LhCard>
+            );
+          })}
         </div>
       </section>
 
