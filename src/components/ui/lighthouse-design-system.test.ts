@@ -183,6 +183,8 @@ describe("lighthouse design system contract", () => {
 
     expect(themeSwitcher).not.toContain('"harbor"');
     expect(themeSwitcher).not.toContain('"amber"');
+    expect(themeSwitcher).toContain('isActive ? "border-panel/75 bg-panel');
+    expect(themeSwitcher).toContain('border-line bg-[var(--theme-swatch)]');
     expect(header).toContain("<ThemeSwitcher />");
     expect(navigation).toContain("<ThemeSwitcher />");
     expect(layout).toContain('data-lighthouse-theme="truth"');

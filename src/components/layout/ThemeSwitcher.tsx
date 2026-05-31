@@ -91,7 +91,13 @@ export function ThemeSwitcher() {
                 isActive ? "bg-primary text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
               )}
             >
-              <span className="h-2 w-2 rounded-full border border-line bg-[var(--theme-swatch)]" style={{ "--theme-swatch": option.swatch } as React.CSSProperties} />
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full border",
+                  isActive ? "border-panel/75 bg-panel shadow-[0_0_0_1px_rgba(255,255,255,0.34)]" : "border-line bg-[var(--theme-swatch)]",
+                )}
+                style={{ "--theme-swatch": option.swatch } as React.CSSProperties}
+              />
               <span className="xl:hidden">{option.shortLabel}</span>
               <span className="hidden xl:inline">{option.label}</span>
             </button>

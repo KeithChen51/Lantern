@@ -126,6 +126,14 @@ enum VectorProvider {
   @@map("vector_provider")
 }
 
+enum ChatMessageRole {
+  USER      @map("user")
+  ASSISTANT @map("assistant")
+  SYSTEM    @map("system")
+
+  @@map("chat_message_role")
+}
+
 model Brand {
   id        String       @id @default(cuid())
   code      String       @unique
@@ -144,6 +152,7 @@ model Brand {
   publishedGuides     PublishedGuide[]
   contributionStats   ContributionStat[]
   knowledgeDocuments  KnowledgeDocument[]
+  chatSessions        ChatSession[]
 
   @@map("brands")
 }
@@ -167,6 +176,7 @@ model Region {
   publishedGuides     PublishedGuide[]
   contributionStats   ContributionStat[]
   knowledgeDocuments  KnowledgeDocument[]
+  chatSessions        ChatSession[]
 
   @@unique([brandId, code])
   @@map("regions")
@@ -192,6 +202,7 @@ model Dealer {
   publishedGuides     PublishedGuide[]
   contributionStats   ContributionStat[]
   knowledgeDocuments  KnowledgeDocument[]
+  chatSessions        ChatSession[]
 
   @@unique([brandId, code])
   @@index([regionId])
@@ -220,6 +231,7 @@ model Store {
   publishedGuides     PublishedGuide[]
   contributionStats   ContributionStat[]
   knowledgeDocuments  KnowledgeDocument[]
+  chatSessions        ChatSession[]
 
   @@unique([brandId, code])
   @@index([brandId, regionId, dealerId])
@@ -254,6 +266,7 @@ model User {
   workshopReviewEvents WorkshopReviewEvent[] @relation("WorkshopReviewActor")
   publishedGuides      PublishedGuide[]      @relation("PublishedGuidePublisher")
   contributionStats    ContributionStat[]
+  chatSessions         ChatSession[]         @relation("UserChatSessions")
 
   @@index([primaryStoreId])
   @@map("users")
@@ -518,4 +531,61 @@ model KnowledgeChunk {
   @@unique([knowledgeDocumentId, chunkNo])
   @@index([externalVectorId])
   @@map("knowledge_chunks")
+}
+
+model ChatSession {
+  id        String   @id
+  userId    String?  @map("user_id")
+  brandId   String?  @map("brand_id")
+  regionId  String?  @map("region_id")
+  dealerId  String?  @map("dealer_id")
+  storeId   String?  @map("store_id")
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User?         @relation("UserChatSessions", fields: [userId], references: [id], onDelete: SetNull)
+  brand    Brand?        @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  region   Region?       @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  dealer   Dealer?       @relation(fields: [dealerId], references: [id], onDelete: SetNull)
+  store    Store?        @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+
+  @@index([userId, createdAt])
+  @@index([brandId, regionId, dealerId, storeId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id                String          @id @default(cuid())
+  sessionId         String          @map("session_id")
+  externalMessageId String          @map("external_message_id")
+  role              ChatMessageRole
+  content           String          @db.LongText
+  modelName         String?         @map("model_name")
+  metadataJson      Json?           @map("metadata_json")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  session         ChatSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  retrievalTraces RetrievalTrace[]
+
+  @@unique([sessionId, externalMessageId])
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
+model RetrievalTrace {
+  id                 String   @id @default(cuid())
+  chatMessageId      String   @map("chat_message_id")
+  query              String   @db.Text
+  contextText        String   @map("context_text") @db.LongText
+  topK               Int      @map("top_k")
+  sourceSnapshotJson Json?    @map("source_snapshot_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  chatMessage ChatMessage @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+
+  @@index([chatMessageId, createdAt])
+  @@map("retrieval_traces")
 }
