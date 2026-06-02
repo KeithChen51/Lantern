@@ -216,6 +216,7 @@ describe("lighthouse design system contract", () => {
 
   it("keeps reusable primitives broad enough for page-level refactors", () => {
     const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const featureCard = readProjectFile("src/components/ui/FeatureCard.tsx");
 
     [
       "LhButton",
@@ -234,5 +235,11 @@ describe("lighthouse design system contract", () => {
     ].forEach((componentName) => {
       expect(primitives).toMatch(new RegExp(`export (?:const|function) ${componentName}\\b`));
     });
+
+    expect(primitives).toContain("rounded-[var(--lh-card-radius)]");
+    expect(primitives).toContain("shadow-[var(--lh-card-shadow)]");
+    expect(primitives).toContain("rounded-[var(--lh-control-radius)]");
+    expect(featureCard).toContain("aspect-[1.618/1]");
+    expect(featureCard).toContain("rounded-[var(--lh-card-radius)]");
   });
 });

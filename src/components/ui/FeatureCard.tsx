@@ -1,13 +1,13 @@
-import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { LhCard, LhChip } from "@/components/ui/lighthouse-primitives";
+import { cn } from "@/lib/utils";
+import { LhChip } from "@/components/ui/lighthouse-primitives";
 
 interface FeatureCardProps {
-    title: string;
-    description: string;
-    date: string;
-    imageUrl?: string;
-    className?: string;
+  title: string;
+  description: string;
+  date: string;
+  imageUrl?: string;
+  className?: string;
 }
 
 export function FeatureCard({
@@ -18,9 +18,9 @@ export function FeatureCard({
   className,
 }: FeatureCardProps) {
   return (
-    <LhCard
+    <article
       className={cn(
-        "group grid min-h-[240px] overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-lh-md md:grid-cols-[minmax(0,1.16fr)_minmax(260px,0.84fr)]",
+        "group relative grid overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)] transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--lh-card-hover-shadow)] md:aspect-[1.618/1] md:grid-cols-[61.8%_minmax(0,1fr)]",
         className,
       )}
     >
@@ -30,8 +30,8 @@ export function FeatureCard({
             src={imageUrl}
             alt={title}
             fill
-            sizes="(max-width: 768px) 100vw, 55vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+            sizes="(max-width: 768px) 100vw, 60vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex h-full min-h-[190px] items-center justify-center bg-surface-quiet text-sm font-bold text-primary-deep">
@@ -40,20 +40,20 @@ export function FeatureCard({
         )}
       </div>
 
-      <div className="grid min-w-0 grid-rows-[1fr_auto] gap-5 p-5">
+      <div className="grid min-w-0 grid-rows-[1fr_auto] gap-4 p-5">
         <div className="min-w-0 space-y-3">
           <LhChip tone="primary">{date}</LhChip>
-          <h3 className="line-clamp-2 text-xl font-extrabold leading-tight text-ink transition-colors group-hover:text-primary-deep">
+          <h3 className="line-clamp-2 text-lg font-extrabold leading-tight text-ink transition-colors group-hover:text-primary-deep">
             {title}
           </h3>
-          <p className="line-clamp-4 text-sm leading-7 text-muted">{description}</p>
+          <p className="line-clamp-4 text-sm leading-6 text-muted">{description}</p>
         </div>
 
-        <div className="flex items-center justify-between border-t border-line pt-4 text-sm font-bold text-primary-deep">
+        <div className="flex items-center justify-between border-t border-line pt-3 text-xs font-bold uppercase tracking-[0.14em] text-primary-deep">
           <span>查看案例</span>
           <span aria-hidden="true" className="h-px w-8 bg-primary transition-[width] duration-200 group-hover:w-12" />
         </div>
       </div>
-    </LhCard>
+    </article>
   );
 }

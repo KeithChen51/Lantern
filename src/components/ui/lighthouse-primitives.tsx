@@ -62,7 +62,7 @@ export const LhButton = React.forwardRef<HTMLButtonElement, LhButtonProps>(
     <button
       ref={ref}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-2 rounded-sm border font-bold leading-none transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--lh-control-radius)] border font-bold leading-none transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -91,7 +91,7 @@ export const LhIconButton = React.forwardRef<HTMLButtonElement, LhIconButtonProp
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
+        "inline-flex shrink-0 items-center justify-center rounded-[var(--lh-control-radius)] border font-bold transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
         size === "sm" ? "h-9 w-9 text-sm" : "h-11 w-11 text-base",
         buttonVariants[variant],
         className,
@@ -113,8 +113,8 @@ export const LhPanel = React.forwardRef<HTMLDivElement, LhPanelProps>(
     <section
       ref={ref}
       className={cn(
-        "rounded-md border border-line bg-surface text-ink",
-        elevated ? "border-line-strong bg-surface shadow-lh-md" : "shadow-lh-sm",
+        "rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)]",
+        elevated && "border-line-strong bg-surface shadow-[var(--lh-card-hover-shadow)]",
         className,
       )}
       {...props}
@@ -128,7 +128,7 @@ export const LhCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     <article
       ref={ref}
       className={cn(
-        "relative overflow-hidden rounded-md border border-line bg-surface text-ink shadow-lh-sm",
+        "relative overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)]",
         className,
       )}
       {...props}
@@ -145,7 +145,7 @@ export function LhChip({ className, tone = "neutral", ...props }: LhChipProps) {
   return (
     <span
       className={cn(
-        "inline-flex min-h-6 items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-bold leading-none",
+        "inline-flex min-h-6 items-center gap-1.5 rounded-[var(--lh-control-radius)] border px-2.5 py-1 text-xs font-bold leading-none",
         toneClasses[tone],
         className,
       )}
@@ -163,7 +163,7 @@ export function LhStatusBadge({ className, tone = "neutral", withDot = true, chi
   return (
     <span
       className={cn(
-        "inline-flex min-h-7 items-center gap-2 rounded-sm border px-2.5 py-1 text-xs font-bold leading-none",
+        "inline-flex min-h-7 items-center gap-2 rounded-[var(--lh-control-radius)] border px-2.5 py-1 text-xs font-bold leading-none",
         toneClasses[tone],
         className,
       )}
@@ -214,7 +214,7 @@ export const LhTextField = React.forwardRef<HTMLInputElement, LhTextFieldProps>(
           id={id}
           aria-invalid={Boolean(error)}
           className={cn(
-            "min-h-12 w-full rounded-sm border border-line-strong bg-panel px-4 text-base text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted focus:border-signal",
+            "min-h-12 w-full rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-4 text-base text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted focus:border-signal",
             leftIcon && "pl-10",
             error && "border-danger text-danger focus:border-danger",
             className,
@@ -241,7 +241,7 @@ export const LhTextArea = React.forwardRef<HTMLTextAreaElement, LhTextAreaProps>
         id={id}
         aria-invalid={Boolean(error)}
         className={cn(
-          "min-h-32 w-full resize-y rounded-sm border border-line-strong bg-panel px-4 py-3 text-base leading-7 text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted focus:border-signal",
+          "min-h-32 w-full resize-y rounded-[var(--lh-card-radius)] border border-line-strong bg-panel px-4 py-3 text-base leading-7 text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted focus:border-signal",
           error && "border-danger text-danger focus:border-danger",
           className,
         )}
@@ -276,7 +276,7 @@ export function LhSectionHeader({ className, eyebrow, title, description, action
     <div className={cn("grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
       <div className="min-w-0">
         {eyebrow && (
-          <p className="mb-3 inline-flex min-h-6 items-center rounded-sm border border-primary/20 bg-primary-soft px-2.5 text-xs font-extrabold uppercase tracking-[0.12em] text-primary-deep">
+          <p className="mb-3 inline-flex min-h-6 items-center rounded-[var(--lh-control-radius)] border border-primary/20 bg-primary-soft px-2.5 text-xs font-extrabold uppercase tracking-[0.12em] text-primary-deep">
             {eyebrow}
           </p>
         )}
@@ -299,14 +299,14 @@ export function LhCallout({ className, tone = "neutral", icon, title, action, ch
   return (
     <aside
       className={cn(
-        "grid gap-3 rounded-md border p-4 text-sm leading-6 shadow-lh-sm",
+        "grid gap-3 rounded-[var(--lh-card-radius)] border p-4 text-sm leading-6 shadow-[var(--lh-card-shadow)]",
         (icon || action) && "sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start",
         calloutToneClasses[tone],
         className,
       )}
       {...props}
     >
-      {icon && <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-sm border border-current/20 bg-panel/40 text-base">{icon}</span>}
+      {icon && <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-[var(--lh-control-radius)] border border-current/20 bg-panel/40 text-base">{icon}</span>}
       <span className="min-w-0">
         {title && <strong className="block text-sm font-extrabold leading-6 text-ink">{title}</strong>}
         {children && <span className="mt-1 block text-sm leading-6 text-ink-soft">{children}</span>}
@@ -372,7 +372,7 @@ export function LhPageHero({
           {(eyebrow || meta) && (
             <div className="mb-5 flex flex-wrap items-center gap-2">
               {eyebrow && (
-                <span className="inline-flex min-h-9 items-center gap-2 rounded-sm bg-primary-deep px-3 text-sm font-extrabold text-panel">
+                <span className="inline-flex min-h-9 items-center gap-2 rounded-[var(--lh-control-radius)] bg-primary-deep px-3 text-sm font-extrabold text-panel">
                   {icon}
                   {eyebrow}
                 </span>
@@ -390,7 +390,7 @@ export function LhPageHero({
           <ol className="mt-4 grid gap-3">
             {asideItems.map((item, index) => (
               <li key={index} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line/80 bg-panel/55 text-sm font-extrabold text-primary">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[var(--lh-control-radius)] border border-line/80 bg-panel/55 text-sm font-extrabold text-primary">
                   {index + 1}
                 </span>
                 <span className="min-w-0">
@@ -411,7 +411,7 @@ export function LhDataTableShell({ className, ...props }: React.HTMLAttributes<H
   return (
     <div
       className={cn(
-        "overflow-x-auto rounded-sm border border-line bg-panel shadow-lh-sm [&_table]:w-full [&_td]:border-t [&_td]:border-line [&_td]:px-4 [&_td]:py-3 [&_td]:text-sm [&_td]:text-ink-soft [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:uppercase [&_th]:tracking-[0.12em] [&_th]:text-muted",
+        "overflow-x-auto rounded-[var(--lh-card-radius)] border border-line bg-panel shadow-[var(--lh-card-shadow)] [&_table]:w-full [&_td]:border-t [&_td]:border-line [&_td]:px-4 [&_td]:py-3 [&_td]:text-sm [&_td]:text-ink-soft [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:uppercase [&_th]:tracking-[0.12em] [&_th]:text-muted",
         className,
       )}
       {...props}
