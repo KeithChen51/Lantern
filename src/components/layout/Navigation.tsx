@@ -28,12 +28,12 @@ function Logo({ isExpanded }: { isExpanded: boolean }) {
     <Link
       href="/"
       className={cn(
-        "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-md border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-lh-sm transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]",
+        "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]",
         !isExpanded && "grid-cols-1 justify-items-center",
       )}
       aria-label="Lighthouse 首页"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
+      <span className="flex h-10 w-10 items-center justify-center rounded-[var(--lh-control-radius)] bg-action text-panel shadow-[var(--lh-card-shadow)]">
         <Icon icon={lighthouseIcons.logo} className="h-5 w-5" />
       </span>
       {isExpanded && (
@@ -64,10 +64,10 @@ function NavLinks({
         href={item.href}
         onClick={onNavigate}
         className={cn(
-          "group relative grid min-h-12 items-center rounded-sm border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
+          "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
-            ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-lh-sm"
+            ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
             : "border-transparent text-[var(--color-deck-text-soft)] hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
         )}
         title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
@@ -98,7 +98,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
     <>
       <nav
         style={{ width: isExpanded ? "256px" : "88px" }}
-        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-lh-deck transition-[width] duration-200 ease-out md:flex"
+        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-200 ease-out md:flex"
         aria-label="主导航"
       >
         <Logo isExpanded={isExpanded} />
@@ -112,7 +112,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
             type="button"
             onClick={onTogglePin}
             className={cn(
-              "grid min-h-11 items-center rounded-sm border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] px-3 py-2 text-sm font-bold text-[var(--color-deck-text-soft)] shadow-lh-sm transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
+              "grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] px-3 py-2 text-sm font-bold text-[var(--color-deck-text-soft)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
               isExpanded ? "grid-cols-[20px_minmax(0,1fr)] gap-3" : "justify-items-center",
             )}
             aria-label={isPinned ? "收起侧栏" : "固定侧栏"}
@@ -132,7 +132,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
         <button type="button" onClick={onMobileClose} aria-label="关闭导航菜单" className="absolute inset-0" />
         <nav
           className={cn(
-            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-lh-deck transition-transform duration-200 ease-out",
+            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] transition-transform duration-200 ease-out [backdrop-filter:var(--lh-shell-blur)]",
             isMobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
           aria-label="移动端主导航"

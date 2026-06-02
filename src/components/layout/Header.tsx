@@ -77,11 +77,11 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
   return (
     <header
       className={cn(
-        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 px-4 pt-3 transition-[padding] duration-200 ease-out md:px-6",
+        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 bg-gradient-to-b from-page via-page/85 to-transparent px-4 pt-3 transition-[padding] duration-200 ease-out md:px-6",
         isSidebarPinned ? "md:pl-[272px]" : "md:pl-[104px]",
       )}
     >
-      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1680px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-sm border border-line bg-panel/95 px-3 shadow-lh-sm">
+      <div className="pointer-events-auto mx-auto grid h-14 w-full max-w-[1680px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[var(--lh-card-radius)] border border-line bg-panel/95 px-3 shadow-[var(--lh-card-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
         <LhIconButton
           type="button"
           label="打开导航菜单"
@@ -108,11 +108,11 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
               onKeyDown={handleSearchKeyDown}
               type="text"
               placeholder="搜索：本心、镜鉴、笃行、行动指南、路引"
-              className="h-10 w-full rounded-sm border border-line bg-surface-quiet pl-10 pr-3 text-sm font-medium text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
+              className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-10 pr-3 text-sm font-medium text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
             />
           </div>
           {(isSearchOpen || searchFeedback) && (
-            <div className="absolute left-0 top-full mt-2 w-min min-w-full max-w-[min(560px,calc(100vw-32px))] overflow-hidden rounded-sm border border-line bg-panel text-sm shadow-lh-md">
+            <div className="absolute left-0 top-full mt-2 w-min min-w-full max-w-[min(560px,calc(100vw-32px))] overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-panel text-sm shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
               {searchFeedback && (
                 <p className="border-b border-line bg-surface-quiet px-3 py-2 text-xs font-bold leading-5 text-muted" aria-live="polite">
                   {searchFeedback}
@@ -126,7 +126,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => handleSearchTarget(target.href, target.label)}
-                      className="grid gap-0.5 rounded-sm px-3 py-2 text-left transition-colors hover:bg-primary-soft focus:bg-primary-soft focus:outline-none"
+                      className="grid gap-0.5 rounded-[var(--lh-control-radius)] px-3 py-2 text-left transition-colors hover:bg-primary-soft focus:bg-primary-soft focus:outline-none"
                     >
                       <span className="text-sm font-extrabold text-ink">{target.label}</span>
                       <span className="text-xs font-bold leading-5 text-muted">{target.description}</span>
@@ -160,7 +160,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />
 
             {isNotificationOpen && (
-              <div className="absolute right-0 top-12 w-[min(20rem,calc(100vw-32px))] rounded-md border border-line bg-panel p-4 text-sm text-ink-soft shadow-lh-md">
+              <div className="absolute right-0 top-12 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-sm text-ink-soft shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
                 <p className="mb-3 text-xs font-extrabold text-primary-deep">今日可处理</p>
                 <ul className="space-y-2">
                   {NOTIFICATIONS.map((item) => (

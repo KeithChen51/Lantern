@@ -35,7 +35,7 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-ink font-sans selection:bg-signal-soft selection:text-ink">
+    <div className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink">
       <Navigation
         isPinned={isSidebarPinned}
         onTogglePin={handleTogglePin}
