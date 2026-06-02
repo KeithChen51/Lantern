@@ -159,6 +159,7 @@ describe("lighthouse design system contract", () => {
 
   it("wires the value theme and typeface switcher into the app shell", () => {
     const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
+    const appearanceMode = readProjectFile("src/components/layout/appearance-mode.ts");
     const header = readProjectFile("src/components/layout/Header.tsx");
     const navigation = readProjectFile("src/components/layout/Navigation.tsx");
     const layout = readProjectFile("src/app/layout.tsx");
@@ -171,14 +172,25 @@ describe("lighthouse design system contract", () => {
       '"happiness"',
       '"hei"',
       '"wenkai"',
-      "lighthouse-app-theme-v2",
-      "lighthouse-app-typeface",
-      "data-lighthouse-theme",
-      "data-lighthouse-typeface",
+      "INTERFACE_MODES",
       "data-theme-choice",
       "data-typeface-choice",
+      "data-interface-choice",
     ].forEach((token) => {
       expect(themeSwitcher).toContain(token);
+    });
+
+    [
+      "lighthouse-app-theme-v2",
+      "lighthouse-app-typeface",
+      "lighthouse-app-interface",
+      "data-lighthouse-theme",
+      "data-lighthouse-typeface",
+      "data-lighthouse-interface",
+      '"modern"',
+      '"classic"',
+    ].forEach((token) => {
+      expect(appearanceMode).toContain(token);
     });
 
     expect(themeSwitcher).not.toContain('"harbor"');
@@ -189,6 +201,7 @@ describe("lighthouse design system contract", () => {
     expect(navigation).toContain("<ThemeSwitcher />");
     expect(layout).toContain('data-lighthouse-theme="truth"');
     expect(layout).toContain('data-lighthouse-typeface="hei"');
+    expect(layout).toContain('data-lighthouse-interface="modern"');
   });
 
   it("keeps reusable primitives broad enough for page-level refactors", () => {

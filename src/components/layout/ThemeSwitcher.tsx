@@ -1,19 +1,25 @@
 "use client";
 
 import * as React from "react";
+import {
+  INTERFACE_DATA_ATTRIBUTE,
+  INTERFACE_MODES,
+  INTERFACE_STORAGE_KEY,
+  THEME_DATA_ATTRIBUTE,
+  THEME_STORAGE_KEY,
+  TYPEFACE_DATA_ATTRIBUTE,
+  TYPEFACE_STORAGE_KEY,
+  isLighthouseInterface,
+  type LighthouseInterface,
+} from "@/components/layout/appearance-mode";
 import { cn } from "@/lib/utils";
 
-const THEME_STORAGE_KEY = "lighthouse-app-theme-v2";
-const TYPEFACE_STORAGE_KEY = "lighthouse-app-typeface";
-const THEME_DATA_ATTRIBUTE = "data-lighthouse-theme";
-const TYPEFACE_DATA_ATTRIBUTE = "data-lighthouse-typeface";
-
 const THEMES = [
-  { id: "truth", label: "求真", shortLabel: "求", title: "求真 · Glass Lab", swatch: "#6ab0a5" },
+  { id: "truth", label: "求真", shortLabel: "真", title: "求真 · Glass Lab", swatch: "#6ab0a5" },
   { id: "goodness", label: "尽善", shortLabel: "善", title: "尽善 · Willow Porcelain", swatch: "#728a69" },
   { id: "beauty", label: "致美", shortLabel: "美", title: "致美 · Porcelain Iris", swatch: "#806c9f" },
   { id: "love", label: "大爱", shortLabel: "爱", title: "大爱 · Pomegranate Cotton", swatch: "#c74f5a" },
-  { id: "happiness", label: "幸福", shortLabel: "幸", title: "幸福 · Daybreak Peach", swatch: "#f1a77d" },
+  { id: "happiness", label: "幸福", shortLabel: "福", title: "幸福 · Daybreak Peach", swatch: "#f1a77d" },
 ] as const;
 
 const TYPEFACES = [
@@ -42,9 +48,15 @@ function applyTypeface(typeface: LighthouseTypeface) {
   localStorage.setItem(TYPEFACE_STORAGE_KEY, typeface);
 }
 
+function applyInterfaceMode(mode: LighthouseInterface) {
+  document.documentElement.setAttribute(INTERFACE_DATA_ATTRIBUTE, mode);
+  localStorage.setItem(INTERFACE_STORAGE_KEY, mode);
+}
+
 export function ThemeSwitcher() {
   const [theme, setTheme] = React.useState<LighthouseTheme>("truth");
   const [typeface, setTypeface] = React.useState<LighthouseTypeface>("hei");
+  const [interfaceMode, setInterfaceMode] = React.useState<LighthouseInterface>("modern");
 
   React.useEffect(() => {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -63,15 +75,28 @@ export function ThemeSwitcher() {
         ? currentTypeface
         : "hei";
 
+    const storedInterfaceMode = localStorage.getItem(INTERFACE_STORAGE_KEY);
+    const currentInterfaceMode = document.documentElement.getAttribute(INTERFACE_DATA_ATTRIBUTE);
+    const nextInterfaceMode = isLighthouseInterface(storedInterfaceMode)
+      ? storedInterfaceMode
+      : isLighthouseInterface(currentInterfaceMode)
+        ? currentInterfaceMode
+        : "modern";
+
     localStorage.removeItem("lighthouse-app-theme");
     applyTheme(nextTheme);
     applyTypeface(nextTypeface);
+    applyInterfaceMode(nextInterfaceMode);
     setTheme(nextTheme);
     setTypeface(nextTypeface);
+    setInterfaceMode(nextInterfaceMode);
   }, []);
 
   return (
-    <div className="flex shrink-0 items-center gap-1 rounded-sm border border-line bg-surface-quiet p-1 shadow-lh-sm" aria-label="主题与字体">
+    <div
+      className="flex shrink-0 items-center gap-1 rounded-sm border border-line bg-surface-quiet p-1 shadow-lh-sm"
+      aria-label="主题、字体与界面"
+    >
       <div className="flex items-center gap-0.5" role="group" aria-label="价值主题">
         {THEMES.map((option) => {
           const isActive = theme === option.id;
@@ -124,6 +149,34 @@ export function ThemeSwitcher() {
               className={cn(
                 "inline-flex h-8 min-w-8 items-center justify-center rounded-xs px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
                 isActive ? "bg-ink text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
+              )}
+            >
+              <span className="xl:hidden">{option.shortLabel}</span>
+              <span className="hidden xl:inline">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <span className="mx-0.5 h-5 w-px bg-line" aria-hidden="true" />
+
+      <div className="flex items-center gap-0.5" role="group" aria-label="界面模式">
+        {INTERFACE_MODES.map((option) => {
+          const isActive = interfaceMode === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              data-interface-choice={option.id}
+              title={option.title}
+              aria-pressed={isActive}
+              onClick={() => {
+                applyInterfaceMode(option.id);
+                setInterfaceMode(option.id);
+              }}
+              className={cn(
+                "inline-flex h-8 min-w-8 items-center justify-center rounded-xs px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
+                isActive ? "bg-action text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
               )}
             >
               <span className="xl:hidden">{option.shortLabel}</span>

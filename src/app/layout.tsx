@@ -13,7 +13,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" data-lighthouse-theme="truth" data-lighthouse-typeface="hei" suppressHydrationWarning>
+    <html
+      lang="zh-CN"
+      data-lighthouse-theme="truth"
+      data-lighthouse-typeface="hei"
+      data-lighthouse-interface="modern"
+      suppressHydrationWarning
+    >
       <body className="antialiased" suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
