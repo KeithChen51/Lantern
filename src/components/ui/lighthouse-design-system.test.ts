@@ -109,6 +109,16 @@ describe("lighthouse design system contract", () => {
     expect(globals).not.toContain("--color-amber");
   });
 
+  it("defines Classic Amber as a separate interface layer", () => {
+    const globals = readProjectFile("src/app/globals.css");
+
+    expect(globals).toContain('html[data-lighthouse-interface="classic"]');
+    expect(globals).toContain("--lh-classic-amber");
+    expect(globals).toContain('html[data-lighthouse-interface="classic"] body::before');
+    expect(globals).toContain("--lh-card-radius");
+    expect(globals).toContain("--lh-card-shadow");
+  });
+
   it("defines both body typeface modes", () => {
     const globals = readProjectFile("src/app/globals.css");
     const heiBlock = extractTypefaceBlock(globals, "hei");
