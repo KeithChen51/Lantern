@@ -1,0 +1,40 @@
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+
+function readProjectFile(relativePath: string) {
+  return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+}
+
+describe("classic interface content guardrails", () => {
+  it("keeps the current Heart value structure", () => {
+    const heartPage = readProjectFile("src/app/heart/page.tsx");
+
+    expect(heartPage).toContain("求真、尽善、致美、大爱、幸福");
+    expect(heartPage).toContain("幸福是最终检验");
+  });
+
+  it("keeps the current Action case instead of restoring backup branch content", () => {
+    const cases = readProjectFile("src/app/action/action-cases.ts");
+
+    expect(cases).toContain("driver-partner-rest-area");
+    expect(cases).toContain("是否为代驾司机设置合作伙伴休息区");
+    expect(cases).not.toContain("substitute-vehicle-policy");
+  });
+
+  it("keeps current Hermit persistence modules", () => {
+    expect(fs.existsSync(path.join(process.cwd(), "src/modules/hermit/service.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(process.cwd(), "src/modules/hermit/repository.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(process.cwd(), "src/modules/hermit/types.ts"))).toBe(true);
+  });
+
+  it("keeps Workshop sections in the current role-aware structure", () => {
+    const workshopSections = readProjectFile("src/app/workshop/workshop-sections.ts");
+
+    expect(workshopSections).toContain('export type WorkshopSectionId = "public" | "submit" | "personal" | "review"');
+    expect(workshopSections).toContain('{ id: "public"');
+    expect(workshopSections).toContain('{ id: "submit"');
+    expect(workshopSections).toContain('{ id: "personal"');
+    expect(workshopSections).toContain('{ id: "review"');
+  });
+});
