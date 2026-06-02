@@ -94,7 +94,7 @@ export function ThemeSwitcher() {
 
   return (
     <div
-      className="flex shrink-0 items-center gap-1 rounded-sm border border-line bg-surface-quiet p-1 shadow-lh-sm"
+      className="flex shrink-0 flex-wrap items-center gap-1 rounded-[var(--lh-card-radius)] border border-line bg-surface-quiet p-1 shadow-[var(--lh-card-shadow)]"
       aria-label="主题、字体与界面"
     >
       <div className="flex items-center gap-0.5" role="group" aria-label="价值主题">
@@ -112,8 +112,8 @@ export function ThemeSwitcher() {
                 setTheme(option.id);
               }}
               className={cn(
-                "inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-xs px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
-                isActive ? "bg-primary text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
+                "inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-[var(--lh-control-radius)] px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
+                isActive ? "bg-primary text-panel shadow-[var(--lh-card-shadow)]" : "text-muted hover:bg-panel hover:text-ink",
               )}
             >
               <span
@@ -147,8 +147,8 @@ export function ThemeSwitcher() {
                 setTypeface(option.id);
               }}
               className={cn(
-                "inline-flex h-8 min-w-8 items-center justify-center rounded-xs px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
-                isActive ? "bg-ink text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
+                "inline-flex h-8 min-w-8 items-center justify-center rounded-[var(--lh-control-radius)] px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
+                isActive ? "bg-ink text-panel shadow-[var(--lh-card-shadow)]" : "text-muted hover:bg-panel hover:text-ink",
               )}
             >
               <span className="xl:hidden">{option.shortLabel}</span>
@@ -175,8 +175,8 @@ export function ThemeSwitcher() {
                 setInterfaceMode(option.id);
               }}
               className={cn(
-                "inline-flex h-8 min-w-8 items-center justify-center rounded-xs px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
-                isActive ? "bg-action text-panel shadow-lh-sm" : "text-muted hover:bg-panel hover:text-ink",
+                "inline-flex h-8 min-w-8 items-center justify-center rounded-[var(--lh-control-radius)] px-1.5 text-xs font-bold transition-[background,color,box-shadow] xl:px-2",
+                isActive ? "bg-action text-panel shadow-[var(--lh-card-shadow)]" : "text-muted hover:bg-panel hover:text-ink",
               )}
             >
               <span className="xl:hidden">{option.shortLabel}</span>

@@ -113,7 +113,10 @@ describe("lighthouse design system contract", () => {
     const globals = readProjectFile("src/app/globals.css");
 
     expect(globals).toContain('html[data-lighthouse-interface="classic"]');
+    expect(globals).toContain('html[data-lighthouse-interface="classic"][data-lighthouse-theme]');
     expect(globals).toContain("--lh-classic-amber");
+    expect(globals).toContain("--lh-primary: var(--lh-classic-amber);");
+    expect(globals).toContain("--lh-action: var(--lh-classic-amber);");
     expect(globals).toContain('html[data-lighthouse-interface="classic"] body::before');
     expect(globals).toContain("--lh-card-radius");
     expect(globals).toContain("--lh-card-shadow");
@@ -186,6 +189,8 @@ describe("lighthouse design system contract", () => {
       "data-theme-choice",
       "data-typeface-choice",
       "data-interface-choice",
+      "rounded-[var(--lh-card-radius)]",
+      "rounded-[var(--lh-control-radius)]",
     ].forEach((token) => {
       expect(themeSwitcher).toContain(token);
     });

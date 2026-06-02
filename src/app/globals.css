@@ -351,7 +351,7 @@ html[data-lighthouse-theme="happiness"] {
   --shadow-focus: 0 0 0 3px rgba(241, 167, 125, 0.24);
 }
 
-html[data-lighthouse-interface="classic"] {
+html[data-lighthouse-interface="classic"][data-lighthouse-theme] {
   --lh-ink: #2c2c2c;
   --lh-ink-soft: color-mix(in srgb, #2c2c2c 74%, white);
   --lh-muted: color-mix(in srgb, #2c2c2c 58%, white);
@@ -369,6 +369,14 @@ html[data-lighthouse-interface="classic"] {
   --lh-line-strong: rgba(217, 119, 6, 0.28);
   --lh-hairline: rgba(44, 44, 44, 0.08);
   --lh-hairline-soft: rgba(44, 44, 44, 0.05);
+  --lh-primary: var(--lh-classic-amber);
+  --lh-primary-deep: color-mix(in srgb, var(--lh-classic-amber) 76%, #2c2c2c);
+  --lh-primary-soft: rgba(217, 119, 6, 0.1);
+  --lh-signal: #9b7a4c;
+  --lh-signal-deep: color-mix(in srgb, #9b7a4c 76%, #2c2c2c);
+  --lh-signal-soft: rgba(155, 122, 76, 0.14);
+  --lh-action: var(--lh-classic-amber);
+  --lh-action-deep: color-mix(in srgb, var(--lh-classic-amber) 72%, #2c2c2c);
   --lh-deck: #f3efe0;
   --lh-deck-soft: color-mix(in srgb, white 22%, #f3efe0);
   --lh-deck-text: #2c2c2c;
