@@ -24,7 +24,7 @@ function isEvidenceInsufficient(text: string) {
 
 function AssistantAvatar() {
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary text-panel shadow-lh-sm">
+    <span data-lh-message-avatar className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary text-panel shadow-lh-sm">
       <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
     </span>
   );
@@ -32,7 +32,7 @@ function AssistantAvatar() {
 
 function UserAvatar() {
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-line-strong bg-panel text-primary-deep shadow-lh-sm">
+    <span data-lh-message-avatar className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-line-strong bg-panel text-primary-deep shadow-lh-sm">
       <Icon icon={lighthouseIcons.user} className="h-5 w-5" />
     </span>
   );
@@ -44,9 +44,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   if (isUser) {
     return (
-      <article className="grid grid-cols-[minmax(0,1fr)_36px] gap-3">
+      <article data-lh-message-row data-role={message.role} className="grid grid-cols-[minmax(0,1fr)_36px] gap-3">
         <div className="flex justify-end">
-          <div className="max-w-[min(720px,86%)] rounded-md border border-primary-deep bg-primary px-4 py-3 text-sm font-bold leading-7 text-panel shadow-lh-sm">
+          <div data-lh-message-bubble className="max-w-[min(720px,86%)] rounded-md border border-primary-deep bg-primary px-4 py-3 text-sm font-bold leading-7 text-panel shadow-lh-sm">
             <div className="mb-1 text-xs font-extrabold text-panel/70">你</div>
             <p className="whitespace-pre-wrap">{text}</p>
           </div>
@@ -59,9 +59,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const needsEvidence = isEvidenceInsufficient(text);
 
   return (
-    <article className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
+    <article data-lh-message-row data-role={message.role} className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
       <AssistantAvatar />
-      <div className="min-w-0 rounded-md border border-line bg-panel p-5 text-ink shadow-lh-sm">
+      <div data-lh-message-bubble className="min-w-0 rounded-md border border-line bg-panel p-5 text-ink shadow-lh-sm">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <strong className="text-sm font-extrabold text-ink">路引</strong>
           <LhChip tone="neutral">AI 回答</LhChip>
@@ -97,9 +97,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
 export function TypingIndicator() {
   return (
-    <article className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
+    <article data-lh-message-row data-role="assistant" className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
       <AssistantAvatar />
-      <div className="w-fit rounded-md border border-line bg-panel px-4 py-3 text-sm font-bold leading-6 text-muted shadow-lh-sm">
+      <div data-lh-message-bubble className="w-fit rounded-md border border-line bg-panel px-4 py-3 text-sm font-bold leading-6 text-muted shadow-lh-sm">
         <span className="inline-flex items-center gap-2">
           <Icon icon={lighthouseIcons.refresh} className={cn("h-4 w-4 animate-spin text-primary")} />
           路引正在整理事实和依据

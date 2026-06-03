@@ -45,8 +45,8 @@ export function ChatPanel() {
   }
 
   return (
-    <LhPanel elevated className="grid w-full overflow-hidden border-line-strong bg-panel lg:h-[calc(100vh-104px)] lg:min-h-[620px] lg:grid-rows-[auto_minmax(0,1fr)_auto]">
-      <header className="border-b border-line bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface-quiet))] px-5 py-4 md:px-6">
+    <LhPanel data-lh-hermit-panel elevated className="grid w-full overflow-hidden border-line-strong bg-panel lg:h-[calc(100vh-104px)] lg:min-h-[620px] lg:grid-rows-[auto_minmax(0,1fr)_auto]">
+      <header data-lh-hermit-panel-header className="border-b border-line bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface-quiet))] px-5 py-4 md:px-6">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
@@ -70,6 +70,7 @@ export function ChatPanel() {
       </header>
 
       <main
+        data-lh-hermit-main
         ref={scrollRef}
         className="min-h-0 overflow-y-auto bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface)_62%,var(--color-surface-quiet))] px-4 py-5 md:px-6"
       >
@@ -99,7 +100,7 @@ export function ChatPanel() {
       </main>
 
       {hasMessages && (
-      <footer className="bg-surface-quiet px-4 py-4 md:px-6">
+      <footer data-lh-hermit-footer className="bg-surface-quiet px-4 py-4 md:px-6">
         <div className="mx-auto max-w-4xl">
           <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
         </div>
@@ -123,9 +124,9 @@ function EmptyChatStart({
   onSuggestedQuestion: (question: string) => void;
 }) {
   return (
-    <section className="grid gap-4">
-      <article className="grid gap-3 text-center">
-        <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
+    <section data-lh-hermit-empty className="grid gap-4">
+      <article data-lh-hermit-empty-copy className="grid gap-3 text-center">
+        <span data-lh-hermit-empty-icon className="mx-auto flex h-11 w-11 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
           <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
         </span>
         <div>
@@ -134,7 +135,7 @@ function EmptyChatStart({
             说明客户状态、限制条件和你卡住的判断，路引会按事实、维度、依据和下一步动作回应。
           </p>
         </div>
-        <div className="flex flex-wrap justify-center gap-2 text-xs font-extrabold text-muted">
+        <div data-lh-hermit-empty-tags className="flex flex-wrap justify-center gap-2 text-xs font-extrabold text-muted">
           <span className="rounded-sm border border-line bg-surface px-2.5 py-1">可追问</span>
           <span className="rounded-sm border border-line bg-surface px-2.5 py-1">会标出证据不足</span>
           <span className="rounded-sm border border-line bg-surface px-2.5 py-1">输出可执行动作</span>
@@ -155,7 +156,7 @@ function EmptyChatStart({
 
 function SuggestedQuestions({ onSelect, disabled }: { onSelect: (question: string) => void; disabled: boolean }) {
   return (
-    <section className="mt-3" aria-label="推荐问题">
+    <section data-lh-hermit-suggestions className="mt-3" aria-label="推荐问题">
       <div className="mb-2 flex items-center gap-2 text-xs font-extrabold text-muted">
         <Icon icon={lighthouseIcons.send} className="h-3.5 w-3.5 text-primary" />
         推荐问题
@@ -163,6 +164,7 @@ function SuggestedQuestions({ onSelect, disabled }: { onSelect: (question: strin
       <div className="flex flex-wrap gap-x-3 gap-y-1.5">
         {SUGGESTED_QUESTIONS.map((question) => (
           <button
+            data-lh-hermit-suggested-question
             key={question}
             type="button"
             onClick={() => onSelect(question)}

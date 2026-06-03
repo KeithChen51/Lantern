@@ -38,11 +38,20 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-md border border-line-strong bg-panel p-3 shadow-lh-md transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[var(--shadow-focus)]">
+    <form
+      data-lh-chat-input
+      onSubmit={handleSubmit}
+      style={{
+        borderColor: "var(--lh-chat-input-border, var(--color-line-strong))",
+        boxShadow: "var(--lh-chat-input-shadow, var(--shadow-card))",
+      }}
+      className="rounded-md border border-line-strong bg-panel p-3 shadow-lh-md"
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
         <label className="min-w-0">
           <span className="sr-only">向路引提问</span>
           <textarea
+            data-lh-chat-textarea
             ref={textareaRef}
             value={value}
             onChange={(event) => onChange(event.target.value)}
@@ -54,10 +63,17 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
           />
         </label>
         <button
+          data-lh-chat-submit
           type="submit"
           disabled={!value.trim() || isLoading}
           aria-label={isLoading ? "正在生成" : "发送"}
           title={isLoading ? "正在生成" : "发送"}
+          style={{
+            background: "var(--lh-chat-submit-bg, var(--color-action))",
+            borderColor: "var(--lh-chat-submit-border, var(--color-action))",
+            boxShadow: "var(--lh-chat-submit-shadow, 0 1px 2px rgba(82, 57, 22, 0.12), 0 8px 18px rgba(185, 130, 46, 0.16))",
+            color: "var(--lh-chat-submit-color, var(--color-panel))",
+          }}
           className={cn(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border font-bold transition-[background,border-color,color] duration-150",
             "border-action bg-action text-panel shadow-[0_1px_2px_rgba(82,57,22,0.12),0_8px_18px_rgba(185,130,46,0.16)]",

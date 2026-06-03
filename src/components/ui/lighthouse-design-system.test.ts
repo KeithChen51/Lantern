@@ -122,6 +122,114 @@ describe("lighthouse design system contract", () => {
     expect(globals).toContain("--lh-card-shadow");
   });
 
+  it("gives Classic Amber a legacy shell instead of only modern token tweaks", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const appShell = readProjectFile("src/components/layout/AppShell.tsx");
+    const header = readProjectFile("src/components/layout/Header.tsx");
+    const navigation = readProjectFile("src/components/layout/Navigation.tsx");
+    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
+
+    [
+      "--font-serif-stack",
+      "--lh-classic-sidebar-width: 240px;",
+      "--lh-classic-sidebar-collapsed-width: 80px;",
+      'html[data-lighthouse-interface="classic"] [data-lh-shell]',
+      'html[data-lighthouse-interface="classic"] [data-lh-header-bar]',
+      'html[data-lighthouse-interface="classic"] [data-lh-sidebar]',
+      'html[data-lighthouse-interface="classic"] [data-lh-nav-link]',
+      'html[data-lighthouse-interface="classic"] [data-lh-page-hero]',
+      'html[data-lighthouse-interface="classic"] [data-lh-card]',
+      'html[data-lighthouse-interface="classic"] [data-lh-theme-switcher]',
+      "font-family: var(--font-serif-stack);",
+      "background: rgba(255, 255, 255, 0.4);",
+      "box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);",
+      "drop-shadow(0 0 8px rgba(217, 119, 6, 0.5))",
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+
+    [
+      "data-lh-shell",
+      "data-lh-main",
+      "data-lh-main-frame",
+      "md:pl-[var(--lh-classic-main-offset)]",
+      "md:pl-[var(--lh-classic-main-collapsed-offset)]",
+    ].forEach((token) => {
+      expect(appShell).toContain(token);
+    });
+
+    ["data-lh-header", "data-lh-header-bar"].forEach((token) => {
+      expect(header).toContain(token);
+    });
+
+    ["data-lh-sidebar", "data-lh-logo", "data-lh-nav-link", "data-lh-sidebar-toggle"].forEach((token) => {
+      expect(navigation).toContain(token);
+    });
+
+    ["data-lh-panel", "data-lh-card", "data-lh-chip", "data-lh-page-hero"].forEach((token) => {
+      expect(primitives).toContain(token);
+    });
+
+    expect(themeSwitcher).toContain("data-lh-theme-switcher");
+  });
+
+  it("lets Hermit inherit the Classic editorial chat layout", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const hermitPage = readProjectFile("src/app/hermit/page.tsx");
+    const chatPanel = readProjectFile("src/components/hermit/ChatPanel.tsx");
+    const chatInput = readProjectFile("src/components/hermit/ChatInput.tsx");
+    const messageBubble = readProjectFile("src/components/hermit/MessageBubble.tsx");
+
+    [
+      "data-lh-hermit-page",
+      "data-lh-hermit-intro",
+      "data-lh-hermit-title",
+      "data-lh-hermit-title-cn",
+      "data-lh-hermit-title-en",
+      "data-lh-hermit-description",
+      "data-lh-hermit-chat-frame",
+    ].forEach((token) => {
+      expect(hermitPage).toContain(token);
+    });
+
+    [
+      "data-lh-hermit-panel",
+      "data-lh-hermit-panel-header",
+      "data-lh-hermit-main",
+      "data-lh-hermit-empty",
+      "data-lh-hermit-suggested-question",
+      "data-lh-hermit-footer",
+    ].forEach((token) => {
+      expect(chatPanel).toContain(token);
+    });
+
+    ["data-lh-chat-input", "data-lh-chat-textarea", "data-lh-chat-submit"].forEach((token) => {
+      expect(chatInput).toContain(token);
+    });
+
+    ["data-lh-message-row", "data-lh-message-avatar", "data-lh-message-bubble"].forEach((token) => {
+      expect(messageBubble).toContain(token);
+    });
+
+    [
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-page]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-panel][data-lh-panel]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-panel-header]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-main]',
+      'html[data-lighthouse-interface="classic"] [data-lh-chat-input]',
+      'html[data-lighthouse-interface="classic"] [data-lh-message-bubble]',
+      "--font-noto-stack:",
+      "--font-noto: var(--font-noto-stack);",
+      "font-family: var(--font-noto-stack);",
+      "box-shadow: none;",
+      "display: none;",
+      "background: transparent;",
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+  });
+
   it("defines both body typeface modes", () => {
     const globals = readProjectFile("src/app/globals.css");
     const heiBlock = extractTypefaceBlock(globals, "hei");

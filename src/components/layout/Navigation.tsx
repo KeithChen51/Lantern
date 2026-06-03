@@ -26,6 +26,7 @@ function isItemActive(pathname: string, href: string) {
 function Logo({ isExpanded }: { isExpanded: boolean }) {
   return (
     <Link
+      data-lh-logo
       href="/"
       className={cn(
         "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]",
@@ -33,13 +34,13 @@ function Logo({ isExpanded }: { isExpanded: boolean }) {
       )}
       aria-label="Lighthouse 首页"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-[var(--lh-control-radius)] bg-action text-panel shadow-[var(--lh-card-shadow)]">
-        <Icon icon={lighthouseIcons.logo} className="h-5 w-5" />
+      <span data-lh-logo-mark className="flex h-10 w-10 items-center justify-center rounded-[var(--lh-control-radius)] bg-action text-panel shadow-[var(--lh-card-shadow)]">
+        <Icon data-lh-logo-icon icon={lighthouseIcons.logo} className="h-5 w-5" />
       </span>
       {isExpanded && (
-        <span className="min-w-0">
-          <span className="block text-lg font-extrabold leading-tight text-[var(--color-deck-text)]">Lighthouse</span>
-          <span className="block text-xs font-bold leading-tight text-[var(--color-deck-muted-strong)]">服务文化平台</span>
+        <span data-lh-logo-copy className="min-w-0">
+          <span data-lh-logo-title className="block text-lg font-extrabold leading-tight text-[var(--color-deck-text)]">Lighthouse</span>
+          <span data-lh-logo-subtitle className="block text-xs font-bold leading-tight text-[var(--color-deck-muted-strong)]">服务文化平台</span>
         </span>
       )}
     </Link>
@@ -60,6 +61,8 @@ function NavLinks({
 
     return (
       <Link
+        data-lh-nav-link
+        data-active={isActive ? "true" : "false"}
         key={item.label}
         href={item.href}
         onClick={onNavigate}
@@ -72,15 +75,16 @@ function NavLinks({
         )}
         title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
       >
-        {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-action" />}
+        {isActive && <span data-lh-nav-active-marker className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-action" />}
         <Icon
+          data-lh-nav-icon
           icon={item.icon}
           className={cn("h-5 w-5", isActive ? "text-action" : "text-[var(--color-deck-icon)] group-hover:text-action")}
         />
         {isExpanded && (
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
-            <span className={cn("block truncate text-xs font-bold leading-tight", isActive ? "text-[var(--color-deck-muted-strong)]" : "text-[var(--color-deck-muted)]")}>
+          <span data-lh-nav-copy className="min-w-0">
+            <span data-lh-nav-sub-label className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
+            <span data-lh-nav-label className={cn("block truncate text-xs font-bold leading-tight", isActive ? "text-[var(--color-deck-muted-strong)]" : "text-[var(--color-deck-muted)]")}>
               {item.label}
             </span>
           </span>
@@ -97,7 +101,9 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
   return (
     <>
       <nav
-        style={{ width: isExpanded ? "256px" : "88px" }}
+        data-lh-sidebar
+        data-expanded={isExpanded ? "true" : "false"}
+        style={{ width: isExpanded ? "var(--lh-classic-sidebar-width)" : "var(--lh-classic-sidebar-collapsed-width)" }}
         className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-200 ease-out md:flex"
         aria-label="主导航"
       >
@@ -109,6 +115,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
 
         <div className="mt-6 grid gap-3">
           <button
+            data-lh-sidebar-toggle
             type="button"
             onClick={onTogglePin}
             className={cn(
@@ -131,6 +138,8 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
       >
         <button type="button" onClick={onMobileClose} aria-label="关闭导航菜单" className="absolute inset-0" />
         <nav
+          data-lh-sidebar
+          data-mobile="true"
           className={cn(
             "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] transition-transform duration-200 ease-out [backdrop-filter:var(--lh-shell-blur)]",
             isMobileOpen ? "translate-x-0" : "-translate-x-full",

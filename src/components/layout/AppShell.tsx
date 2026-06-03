@@ -35,7 +35,7 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink">
+    <div data-lh-shell className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink">
       <Navigation
         isPinned={isSidebarPinned}
         onTogglePin={handleTogglePin}
@@ -48,12 +48,14 @@ export function AppShell({ children }: AppShellProps) {
       />
 
       <main
+        data-lh-main
+        data-sidebar-pinned={isSidebarPinned ? "true" : "false"}
         className={cn(
           "min-h-screen px-4 pb-8 pt-24 transition-[padding] duration-200 ease-out md:px-6",
-          isSidebarPinned ? "md:pl-[272px]" : "md:pl-[104px]",
+          isSidebarPinned ? "md:pl-[var(--lh-classic-main-offset)]" : "md:pl-[var(--lh-classic-main-collapsed-offset)]",
         )}
       >
-        <div className="mx-auto w-full max-w-[1680px]">{children}</div>
+        <div data-lh-main-frame className="mx-auto w-full max-w-[1680px]">{children}</div>
       </main>
     </div>
   );

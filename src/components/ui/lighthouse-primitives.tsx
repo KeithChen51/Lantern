@@ -60,6 +60,7 @@ export interface LhButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElem
 export const LhButton = React.forwardRef<HTMLButtonElement, LhButtonProps>(
   ({ className, variant = "secondary", size = "md", icon, iconRight, children, ...props }, ref) => (
     <button
+      data-lh-button
       ref={ref}
       className={cn(
         "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--lh-control-radius)] border font-bold leading-none transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
@@ -87,6 +88,7 @@ export interface LhIconButtonProps extends React.ButtonHTMLAttributes<HTMLButton
 export const LhIconButton = React.forwardRef<HTMLButtonElement, LhIconButtonProps>(
   ({ className, label, icon, variant = "quiet", size = "md", ...props }, ref) => (
     <button
+      data-lh-icon-button
       ref={ref}
       aria-label={label}
       title={label}
@@ -111,6 +113,7 @@ export interface LhPanelProps extends React.HTMLAttributes<HTMLDivElement> {
 export const LhPanel = React.forwardRef<HTMLDivElement, LhPanelProps>(
   ({ className, elevated = false, ...props }, ref) => (
     <section
+      data-lh-panel
       ref={ref}
       className={cn(
         "rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)]",
@@ -126,6 +129,7 @@ LhPanel.displayName = "LhPanel";
 export const LhCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <article
+      data-lh-card
       ref={ref}
       className={cn(
         "relative overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)]",
@@ -144,6 +148,7 @@ export interface LhChipProps extends React.HTMLAttributes<HTMLSpanElement> {
 export function LhChip({ className, tone = "neutral", ...props }: LhChipProps) {
   return (
     <span
+      data-lh-chip
       className={cn(
         "inline-flex min-h-6 items-center gap-1.5 rounded-[var(--lh-control-radius)] border px-2.5 py-1 text-xs font-bold leading-none",
         toneClasses[tone],
@@ -162,6 +167,7 @@ export interface LhStatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement
 export function LhStatusBadge({ className, tone = "neutral", withDot = true, children, ...props }: LhStatusBadgeProps) {
   return (
     <span
+      data-lh-status-badge
       className={cn(
         "inline-flex min-h-7 items-center gap-2 rounded-[var(--lh-control-radius)] border px-2.5 py-1 text-xs font-bold leading-none",
         toneClasses[tone],
@@ -273,7 +279,7 @@ export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivE
 
 export function LhSectionHeader({ className, eyebrow, title, description, action, ...props }: LhSectionHeaderProps) {
   return (
-    <div className={cn("grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
+    <div data-lh-section-header className={cn("grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
       <div className="min-w-0">
         {eyebrow && (
           <p className="mb-3 inline-flex min-h-6 items-center rounded-[var(--lh-control-radius)] border border-primary/20 bg-primary-soft px-2.5 text-xs font-extrabold uppercase tracking-[0.12em] text-primary-deep">
@@ -298,6 +304,7 @@ export interface LhCalloutProps extends Omit<React.HTMLAttributes<HTMLDivElement
 export function LhCallout({ className, tone = "neutral", icon, title, action, children, ...props }: LhCalloutProps) {
   return (
     <aside
+      data-lh-callout
       className={cn(
         "grid gap-3 rounded-[var(--lh-card-radius)] border p-4 text-sm leading-6 shadow-[var(--lh-card-shadow)]",
         (icon || action) && "sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start",
@@ -366,9 +373,9 @@ export function LhPageHero({
   ...props
 }: LhPageHeroProps) {
   return (
-    <LhPanel elevated className={cn("overflow-hidden", className)} {...props}>
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 p-5 md:p-7">
+    <LhPanel data-lh-page-hero elevated className={cn("overflow-hidden", className)} {...props}>
+      <div data-lh-page-hero-grid className="grid xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div data-lh-page-hero-body className="min-w-0 p-5 md:p-7">
           {(eyebrow || meta) && (
             <div className="mb-5 flex flex-wrap items-center gap-2">
               {eyebrow && (
@@ -380,11 +387,11 @@ export function LhPageHero({
               {meta}
             </div>
           )}
-          <h1 className="max-w-4xl text-3xl font-extrabold leading-tight text-ink md:text-[2.45rem]">{title}</h1>
+          <h1 data-lh-page-title className="max-w-4xl text-3xl font-extrabold leading-tight text-ink md:text-[2.45rem]">{title}</h1>
           {description && <div className="mt-4 max-w-4xl space-y-3 text-base leading-8 text-ink-soft">{description}</div>}
         </div>
 
-        <aside className="relative overflow-hidden border-t border-line-strong/70 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-5 text-[var(--color-deck-text)] shadow-lh-deck xl:border-l xl:border-t-0">
+        <aside data-lh-page-hero-aside className="relative overflow-hidden border-t border-line-strong/70 bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-5 text-[var(--color-deck-text)] shadow-lh-deck xl:border-l xl:border-t-0">
           <div className="absolute inset-x-5 top-0 h-0.5 bg-gradient-to-r from-action via-signal-soft/70 to-transparent" />
           <p className="text-xs font-extrabold text-[var(--color-deck-muted)]">{asideTitle}</p>
           <ol className="mt-4 grid gap-3">
@@ -402,7 +409,7 @@ export function LhPageHero({
           </ol>
         </aside>
       </div>
-      {footer && <div className="border-t border-line bg-surface-quiet px-5 py-4 md:px-7">{footer}</div>}
+      {footer && <div data-lh-page-hero-footer className="border-t border-line bg-surface-quiet px-5 py-4 md:px-7">{footer}</div>}
     </LhPanel>
   );
 }
@@ -410,6 +417,7 @@ export function LhPageHero({
 export function LhDataTableShell({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      data-lh-data-table-shell
       className={cn(
         "overflow-x-auto rounded-[var(--lh-card-radius)] border border-line bg-panel shadow-[var(--lh-card-shadow)] [&_table]:w-full [&_td]:border-t [&_td]:border-line [&_td]:px-4 [&_td]:py-3 [&_td]:text-sm [&_td]:text-ink-soft [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-extrabold [&_th]:uppercase [&_th]:tracking-[0.12em] [&_th]:text-muted",
         className,

@@ -94,6 +94,7 @@ export function ThemeSwitcher() {
 
   return (
     <div
+      data-lh-theme-switcher
       className="flex shrink-0 flex-wrap items-center gap-1 rounded-[var(--lh-card-radius)] border border-line bg-surface-quiet p-1 shadow-[var(--lh-card-shadow)]"
       aria-label="主题、字体与界面"
     >
@@ -104,6 +105,7 @@ export function ThemeSwitcher() {
             <button
               key={option.id}
               type="button"
+              data-lh-switcher-button
               data-theme-choice={option.id}
               title={option.title}
               aria-pressed={isActive}
@@ -139,6 +141,7 @@ export function ThemeSwitcher() {
             <button
               key={option.id}
               type="button"
+              data-lh-switcher-button
               data-typeface-choice={option.id}
               title={option.title}
               aria-pressed={isActive}
@@ -167,6 +170,7 @@ export function ThemeSwitcher() {
             <button
               key={option.id}
               type="button"
+              data-lh-switcher-button
               data-interface-choice={option.id}
               title={option.title}
               aria-pressed={isActive}
