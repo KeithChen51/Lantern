@@ -15,9 +15,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      data-lighthouse-theme="truth"
-      data-lighthouse-typeface="hei"
-      data-lighthouse-interface="modern"
+      data-lighthouse-interface="classic"
       suppressHydrationWarning
     >
       <body className="antialiased" suppressHydrationWarning>

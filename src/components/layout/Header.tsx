@@ -4,7 +4,6 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { PreviewIdentitySwitcher } from "@/components/layout/PreviewIdentitySwitcher";
-import { ThemeSwitcher } from "@/components/layout/ThemeSwitcher";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
@@ -147,10 +146,6 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
         </form>
 
         <div className="flex min-w-0 items-center justify-end gap-2">
-          <div className="hidden md:block">
-            <ThemeSwitcher />
-          </div>
-
           <div className="hidden lg:block">
             <PreviewIdentitySwitcher />
           </div>

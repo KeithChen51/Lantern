@@ -11,7 +11,8 @@ describe("classic interface content guardrails", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
 
     expect(heartPage).toContain("求真、尽善、致美、大爱、幸福");
-    expect(heartPage).toContain("幸福是最终检验");
+    expect(heartPage).toContain("长期经营的分水岭在哪里？");
+    expect(heartPage).toContain("致美，是让工艺、流程、秩序和体面真正抵达体验。");
   });
 
   it("keeps the current Action case instead of restoring backup branch content", () => {

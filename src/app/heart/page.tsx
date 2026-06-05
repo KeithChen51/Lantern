@@ -56,121 +56,154 @@ const valueToneStyles = [
   },
 ] satisfies ValueToneStyle[];
 
+const upgradeReasons = [
+  {
+    title: "把信任看作核心资产",
+    description:
+      "信任不是服务之后的自然结果，而是需要被经营的核心资产。它不可透支，无法速成，只能在长期交付中被积累、被验证、被兑现。",
+  },
+  {
+    title: "从服务走向关系",
+    description:
+      "功能型服务关注车辆有没有修好、需求有没有被响应；价值型关系关注客户是否安心、员工是否有尊严、组织是否可持续。",
+  },
+  {
+    title: "让员工成为价值承担者",
+    description:
+      "员工不是被动承压的执行端。组织需要给出支持、授权、协作、复盘和保障，让好服务成为可以稳定兑现的能力。",
+  },
+];
+
 const valueSections = [
   {
     title: "求真",
     focus: "回到事实",
-    summary: "求真，是把判断建立在事实、规律和真实处境之上。",
+    summary: "求真，是尊重事实、规律和真实处境。",
     customer:
-      "面对客户，求真意味着如实说明车况、费用、进度、风险和不确定性。不夸大问题，不隐瞒失误，不用信息差诱导消费。",
+      "面对客户，求真意味着如实说明车况、费用、依据、进度、风险和不确定性。不夸大问题，不隐瞒失误，不让客户事后才知道关键事实。",
     employee:
-      "面对员工，求真意味着清楚说明目标、规则、评价标准和经营压力。让一线知道为什么这样做，也知道边界在哪里。",
+      "面对员工，求真意味着讲清目标、规则、评价标准。组织不能用模糊承诺管理团队，也不能把流程、资源和管理问题简单归结为员工个人问题。",
+    actions: ["能确认的事实，当场讲清楚。", "不能确认的事项，明确下一步和责任人。", "对客户不制造信息差，对员工不制造规则差。"],
   },
   {
     title: "尽善",
     focus: "选择有益",
-    summary: "尽善，是在规则、成本和效率之间，尽可能选择更有益于人的做法。",
+    summary: "尽善，是在规则、成本、效率和资源约束之间，尽可能选择更有益于人、也更有利于形成长期信任的做法。",
     customer:
-      "面对客户，尽善不是无原则让利，也不是一味迁就，而是在灰色地带里多解释一步、多帮一步，同时守住合理边界。",
+      "面对客户，尽善不是无原则让利，也不是一味迁就，而是在标准允许的范围内多解释一步、多协调一步、多减少一次等待，同时守住合理边界。",
     employee:
-      "面对员工，尽善意味着不把客户满意建立在员工单方面牺牲上。当一线面对投诉、加班和复杂问题时，组织要给出支持、授权和复盘。",
+      "面对员工，尽善意味着不把客户满意建立在员工单方面牺牲上。当一线面对投诉、加班、复杂问题和情绪压力时，组织要给出支持、授权和复盘，而不是只在结果不好时追责。",
+    actions: [
+      "不把“流程规定”当成推诿理由。",
+      "不把“客户满意”变成员工无边界付出的理由。",
+      "在现实约束中，选择更能保护长期信任的做法。",
+    ],
   },
   {
     title: "致美",
     focus: "抵达体验",
-    summary: "致美，是让专业、秩序和体面真正抵达服务体验。",
+    summary: "致美，是让工艺、流程、秩序和体面真正抵达体验。",
     customer:
-      "面对客户，致美体现在清楚的流程、整洁的环境、克制的表达和稳定的交付中。客户不需要反复解释同一个问题，也不该在混乱等待中消耗耐心。",
+      "面对客户，致美体现在清晰有效的流程、整洁有序的现场、准确克制的表达和稳定可追踪的交付中；也体现在钣喷、维修等高专业度场景里，从破损到修复、从混乱到秩序的工艺之美。",
     employee:
-      "面对员工，致美体现在更清楚的工具、更合理的排班、更顺畅的协作和更专业的现场管理中。减少混乱、内耗和低质量重复劳动，本身就是尊重。",
+      "面对员工，致美体现在整齐的服务工具、合理的排班、顺畅的协作和专业的现场管理中。流程清楚，工序衔接顺畅，标准被认真执行，员工才更容易把专业做出来。",
+    actions: ["把流程、进度和责任讲清楚。", "把现场、工具、工序和协作整理到位。", "让客户看见专业，让员工做出专业，让交付更稳定、更体面。"],
   },
   {
     title: "大爱",
     focus: "看见人",
-    summary: "大爱，是在交易与流程之外，看见人的处境、尊严、安全和长期关系。",
+    summary: "大爱，是在规则和流程之内，看见人的处境、尊严、安全和长期关系。",
     customer:
-      "面对客户，大爱体现在对处境的体察。遇到特殊困难、紧急场景、长期关系和安全问题时，服务不能只剩下条款和流程。",
+      "面对客户，大爱体现在对具体处境的体察。客户遇到事故、返修、异地用车、家庭出行、安全风险或长期信任受挫时，服务不能只剩条款和话术。先理解他的担心、损失和不便，再回到规则中寻找可承担、可交代的解法。",
     employee:
-      "面对员工，大爱体现在对安全、尊严、成长和承压状态的关心。它不等于要求员工无限付出，也不是用情怀替代管理责任。",
+      "面对员工，大爱体现在对安全、尊严、成长和承压状态的关心。员工面对客户情绪、复杂工单、加班压力和跨部门协作时，组织不能只要求“扛住”，而要给出支持、授权、复盘和保护。",
+    actions: ["先看见人的处境，再回到规则中找解法。", "对客户有温度，对员工有支持、有边界、有保护。", "不用情怀替代管理责任，也不让个人独自承担系统问题。"],
   },
   {
     title: "幸福",
     focus: "共同归处",
-    summary: "幸福，是求真、尽善、致美、大爱最终要抵达的状态。",
+    summary:
+      "幸福，是求真、尽善、致美、大爱最终要抵达的状态。",
     customer:
-      "面对客户，幸福意味着安心、清楚、被尊重，愿意信任这家店，也愿意把下一次托付交给我们。",
+      "面对客户，幸福不是简单的满意评分，而是安心、被尊重，愿意继续托付。",
     employee:
-      "面对员工，幸福意味着被真实对待、获得支持、保有尊严，并能在长期工作中看到成长和价值。",
+      "面对员工，幸福是在真实压力中仍然被支持、被尊重、能成长。员工知道标准在哪里，资源从哪里来，问题可以如何被复盘，而不是把所有压力都变成个人承担。",
+    organization:
+      "面对组织，幸福意味着服务体系可持续，经营结果建立在真实价值、稳定交付和长期关系之上。",
+    actions: ["用客户是否更安心来检验服务。", "用员工是否更有尊严、更有支持来检验管理。", "用组织是否更可持续来检验经营。"],
   },
 ];
 
 const dimensionNotes = [
   {
-    title: "五个词不是五格",
+    title: "五个词是一条路径",
     description:
-      "真实案例里，求真、尽善、致美、大爱常常同时出现。分析时不必强行单选，而是先看主要矛盾，再标注主维度与关联维度。",
+      "求真立事实，尽善定取舍，致美见专业，大爱看见人，幸福验结果。",
   },
   {
-    title: "幸福是最终检验",
+    title: "价值要进入组织能力",
     description:
-      "幸福不只是情绪表达，而是检验结果：客户是否更安心，员工是否更有尊严，组织是否能长期、稳健地提供好服务。",
+      "这套路径不止面向客户，也面向员工。价值观要进入流程、授权、协作、复盘和保障机制，成为组织可以稳定兑现的服务能力。",
   },
   {
-    title: "尽善与大爱怎样区分",
+    title: "回到真实场景",
     description:
-      "尽善更偏向“选择”，看我们是否在现实约束中选择了更有益于人的做法；大爱更偏向“看见”，看我们是否体察到处境、压力、尊严和安全。",
+      "接下来的案例、实践、共创和问答，不是把价值观停留在概念里，而是把它放回日常动作和共同规范中。",
   },
 ];
 
 const guideSections = [
   {
-    title: "镜鉴",
+    title: "外部学习案例",
     label: "镜鉴",
     href: "/mirror",
     icon: lighthouseIcons.mirror,
-    description: "看外部有什么可参考：行业观察、标杆企业和服务案例，帮助大家打开服务想象力，而不是简单照搬。",
+    description: "整理外部值得参考的服务案例，看别人如何把理念变成体验。",
   },
   {
-    title: "笃行",
+    title: "内部行动参悟",
     label: "笃行",
     href: "/action",
     icon: lighthouseIcons.action,
-    description: "看我们已经做出了什么：沉淀内部真实实践，让一线的好做法被看见，也让可复用的方法留在组织里。",
+    description: "回到我们自己的服务现场，复盘过去在哪些判断路口犹豫过、选择过、承担过。",
   },
   {
-    title: "共创",
+    title: "基于共创的执行清单",
     label: "共创",
     href: "/workshop",
     icon: lighthouseIcons.workshop,
-    description: "把理念变成动作：围绕不同岗位和服务场景，共创鼓励与禁止事项，让价值观进入日常工作。",
+    description: "由一线和内部团队共同补充 Do & Don't，让规范从真实场景里长出来。",
   },
   {
-    title: "路引",
+    title: "常见问题与讨论",
     label: "路引",
     href: "/hermit",
     icon: lighthouseIcons.hermit,
-    description: "遇到问题时去提问：把具体场景带回来，辨析求真、尽善、致美、大爱与幸福之间的关系，获得理念依据和下一步建议。",
+    description: "把执行中的疑问、边界和不同看法说出来，帮助大家持续校准。",
   },
 ];
 
 const readingPath = [
-  "先理解“精诚服务”的五个价值词",
-  "再看它们如何同时约束客户服务与员工管理",
-  "最后进入案例、共创和路引，把价值转成现场判断",
+  "先理解为什么要持续经营客户信任",
+  "再看求真、尽善、致美、大爱、幸福如何进入服务体系",
+  "最后进入案例、实践、共创和问答，回到具体场景中判断",
 ];
 
 export default function HeartPage() {
   return (
     <div className="space-y-8 pb-12">
       <LhPageHero
-        title="于此，回答“精诚服务”到底相信什么。"
+        title="于此，回答“精诚服务”为什么再次出发。"
         description={
           <>
             <p>
-              客户把车交给我们，交出的不只是一次维修或保养需求，也是一份信任。员工站在一线，面对的也不只是流程、指标和投诉，而是真实的人、真实的压力，以及每天必须作出的判断。
+              汽车后市场服务日趋同质化，竞争加剧，服务和价格再难形成长期护城河。客户关系的经营质量，正在成为长期经营的分水岭。
             </p>
             <p>
-              “本心”讨论的正是这些判断背后的标准。我们用求真、尽善、致美、大爱、幸福来理解“精诚服务”：它既是对客户的承诺，也是经销商对员工、组织对一线的要求。
+              “本心”讨论的，正是精诚服务如何持续经营客户信任：从提供功能型服务，走向建立价值型关系。
+            </p>
+            <p>
+              先理解求真、尽善、致美、大爱、幸福，再去看案例、实践、共创和问答，后面的内容才有共同的出发点。
             </p>
           </>
         }
@@ -178,25 +211,41 @@ export default function HeartPage() {
         asideItems={readingPath.map((item) => ({ title: item }))}
       />
 
+      <section className="space-y-5">
+        <LhSectionHeader
+          eyebrow="升级背景"
+          title="长期经营的分水岭在哪里？"
+          description="一个经营命题必须直面：如何让每一次服务不止于交付结果，还能沉淀复购、转介绍、协作效率和组织士气？关键在于持续经营客户信任。"
+        />
+        <div className="grid gap-4 md:grid-cols-3">
+          {upgradeReasons.map((reason) => (
+            <LhCard key={reason.title} className="p-5">
+              <h3 className="text-lg font-extrabold text-ink">{reason.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-ink-soft">{reason.description}</p>
+            </LhCard>
+          ))}
+        </div>
+      </section>
+
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
         <LhCard className="border-primary-deep/35 bg-[linear-gradient(135deg,var(--color-primary-deep),var(--color-primary))] p-6 text-panel shadow-lh-deck">
           <p className="text-xs font-extrabold tracking-[0.14em] text-panel/65">核心</p>
           <h2 className="mt-3 text-2xl font-extrabold text-panel">精诚服务的核心</h2>
           <p className="mt-4 text-base leading-8 text-panel/80">
-            本心，是灯塔的起点。先把我们共同相信的价值讲清楚，再去看案例、做实践、共创规范、提出问题，后面的内容才有共同的出发点。
+            新的服务价值框架并非对“精诚”的重写，而是把“精于勤，诚于心”的朴素共识进一步转化为可理解、可判断、可执行的价值路径。
           </p>
         </LhCard>
         <div className="grid gap-5 md:grid-cols-2">
           <LhCard className="p-6">
             <h3 className="text-xl font-extrabold text-ink">精</h3>
             <p className="mt-4 text-sm leading-7 text-ink-soft">
-              精，是把事情做好。它要求专业、认真、持续改善，也要求我们尊重服务行业的基本规律，不用粗糙的方式处理人的问题。
+              精，代表极致的追求与行动。专业判断、认真执行、持续改善，最终体现在清楚的流程、合理的排产、顺畅的协作和稳定的交付上。
             </p>
           </LhCard>
           <LhCard className="p-6">
             <h3 className="text-xl font-extrabold text-ink">诚</h3>
             <p className="mt-4 text-sm leading-7 text-ink-soft">
-              诚，是我们对人的态度。它体现在求真、尽善、致美、大爱之中，并最终指向客户、员工与组织共同的幸福。
+              诚，代表内在的价值与品格。真实、善意、秩序和关怀，不停留在态度上，而体现在客户关系、员工支持和组织管理里。
             </p>
           </LhCard>
         </div>
@@ -206,7 +255,7 @@ export default function HeartPage() {
         <LhSectionHeader
           eyebrow="价值路径"
           title="求真、尽善、致美、大爱、幸福"
-          description="它既适用于客户，也适用于员工。经销商怎样对待员工，最终会影响员工怎样对待客户。"
+          description="求真立事实，尽善定取舍，致美见专业，大爱看见人，幸福验结果。"
         />
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -290,6 +339,40 @@ export default function HeartPage() {
                     </p>
                     <p className="mt-3 text-sm leading-7 text-ink-soft">{value.employee}</p>
                   </div>
+                  {"organization" in value && value.organization ? (
+                    <div
+                      className="rounded-sm border p-4 sm:p-5 md:col-span-2"
+                      style={{
+                        borderColor: "color-mix(in srgb, var(--value-line) 56%, var(--color-line))",
+                        background: "color-mix(in srgb, var(--value-soft) 18%, var(--color-panel) 82%)",
+                      }}
+                    >
+                      <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
+                        <span className="h-2 w-2 rounded-full border" style={{ borderColor: "var(--value-color)" }} />
+                        面对组织
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-ink-soft">{value.organization}</p>
+                    </div>
+                  ) : null}
+                  <div
+                    className="rounded-sm border p-4 sm:p-5 md:col-span-2"
+                    style={{
+                      borderColor: "color-mix(in srgb, var(--value-line) 68%, var(--color-line))",
+                      background: "color-mix(in srgb, var(--value-soft) 28%, var(--color-panel) 72%)",
+                    }}
+                  >
+                    <p className="text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
+                      行动提示
+                    </p>
+                    <ul className="mt-3 grid gap-2 text-sm leading-7 text-ink-soft sm:grid-cols-3">
+                      {value.actions.map((action) => (
+                        <li key={action} className="flex gap-2">
+                          <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--value-color)" }} />
+                          <span>{action}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </LhCard>
             );
@@ -300,8 +383,8 @@ export default function HeartPage() {
       <section className="space-y-6">
         <LhSectionHeader
           eyebrow="后续入口"
-          title="接下来去哪里"
-          description="本心不是资料库的终点，而是进入灯塔的起点。先理解我们相信什么，再进入不同工作区。"
+          title="接下来怎么看这套内容"
+          description="这个框架是“精诚服务”的价值底座。接下来的内容，会帮助大家把它放回真实场景、日常动作和共同规范中。"
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {guideSections.map((section) => (
@@ -336,8 +419,8 @@ export default function HeartPage() {
           <tbody>
             <tr>
               <td>求真、尽善、致美、大爱、幸福</td>
-              <td>作为判断服务和管理是否站得住的价值路径。</td>
-              <td>用于路引问答与岗位应做/避免共创。</td>
+              <td>作为从功能型服务走向价值型关系的判断路径。</td>
+              <td>用于案例复盘、路引问答与岗位 Do &amp; Don&apos;t 共创。</td>
             </tr>
             <tr>
               <td>客户与员工双视角</td>
@@ -347,6 +430,12 @@ export default function HeartPage() {
           </tbody>
         </table>
       </LhDataTableShell>
+
+      <section className="border-t border-line pt-6">
+        <p className="max-w-4xl text-lg font-extrabold leading-9 text-ink">
+          愿求真不虚，尽善不空，致美不浮，大爱不泛，让幸福从愿景进入每一次服务。
+        </p>
+      </section>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -34,27 +34,18 @@ function extractCssBlock(source: string, selector: string, mustContain?: string)
   return block ?? "";
 }
 
-function extractCssVariables(block: string) {
-  return Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((match) => [match[1], match[2].trim()]));
-}
-
-function extractTypefaceBlock(globals: string, typeface: string) {
-  const block = globals.match(new RegExp(`html\\[data-lighthouse-typeface="${typeface}"\\]\\s*{([\\s\\S]*?)\\n}`))?.[1] ?? "";
-  expect(block).not.toBe("");
-  return block;
-}
-
 describe("lighthouse design system contract", () => {
-  it("exposes the selected truth theme through globals and Tailwind aliases", () => {
+  it("exposes Classic Amber as the only runtime theme through globals and Tailwind aliases", () => {
     const globals = readProjectFile("src/app/globals.css");
+    const layout = readProjectFile("src/app/layout.tsx");
 
     [
-      "--lh-page: #f4f3ea;",
-      "--lh-ink: #324a4e;",
-      "--lh-primary: #6ab0a5;",
-      "--lh-signal: #7ca7b8;",
-      "--lh-action: #e8c872;",
-      "--lh-deck: #f8f6ee;",
+      "--lh-page: #f3efe0;",
+      "--lh-ink: #2c2c2c;",
+      "--lh-classic-amber: #d97706;",
+      "--lh-primary: var(--lh-classic-amber);",
+      "--lh-action: var(--lh-classic-amber);",
+      "--lh-deck: var(--lh-page);",
       "--lh-max: 1220px;",
       "--color-panel-soft: var(--lh-panel-soft);",
       "--color-chart: var(--lh-chart);",
@@ -65,55 +56,32 @@ describe("lighthouse design system contract", () => {
     ].forEach((token) => {
       expect(globals).toContain(token);
     });
-  });
 
-  it("keeps runtime value-theme core colors aligned with the kit", () => {
-    const kit = readProjectFile("docs/design/lighthouse-warm-happiness-kits.html");
-    const globals = readProjectFile("src/app/globals.css");
-    const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
-
-    const contracts = [
-      { theme: "truth", kitSelector: ".palette", kitMustContain: "--panel-bg", runtimeSelector: ":root" },
-      { theme: "goodness", kitSelector: ".palette-a2", runtimeSelector: 'html[data-lighthouse-theme="goodness"]' },
-      { theme: "beauty", kitSelector: ".palette-c1", runtimeSelector: 'html[data-lighthouse-theme="beauty"]' },
-      { theme: "love", kitSelector: ".palette-c2", runtimeSelector: 'html[data-lighthouse-theme="love"]' },
-      { theme: "happiness", kitSelector: ".palette-happiness", runtimeSelector: 'html[data-lighthouse-theme="happiness"]' },
-    ];
-
-    const tokenMap = [
-      ["--panel-bg", "--lh-page"],
-      ["--panel-surface", "--lh-panel"],
-      ["--panel-surface-2", "--lh-fog"],
-      ["--panel-ink", "--lh-ink"],
-      ["--panel-muted", "--lh-muted"],
-      ["--panel-primary", "--lh-primary"],
-      ["--panel-secondary", "--lh-signal"],
-      ["--panel-accent", "--lh-action"],
-      ["--panel-accent-2", "--lh-brass"],
-    ];
-
-    contracts.forEach((contract) => {
-      const kitVars = extractCssVariables(extractCssBlock(kit, contract.kitSelector, contract.kitMustContain));
-      const runtimeVars = extractCssVariables(extractCssBlock(globals, contract.runtimeSelector));
-      const swatch = themeSwitcher.match(new RegExp(`\\{ id: "${contract.theme}"[^}]+swatch: "([^"]+)"`))?.[1];
-
-      tokenMap.forEach(([kitToken, runtimeToken]) => {
-        expect(runtimeVars[runtimeToken], `${contract.theme} ${runtimeToken}`).toBe(kitVars[kitToken]);
-      });
-      expect(swatch, `${contract.theme} switcher swatch`).toBe(kitVars["--panel-primary"]);
-      expect(runtimeVars["--lh-deck"], `${contract.theme} deck must stay light`).not.toBe("#0e334b");
+    [
+      'data-lighthouse-theme="truth"',
+      'data-lighthouse-typeface="hei"',
+      'data-lighthouse-interface="modern"',
+      'html[data-lighthouse-theme="goodness"]',
+      'html[data-lighthouse-theme="beauty"]',
+      'html[data-lighthouse-theme="love"]',
+      'html[data-lighthouse-theme="happiness"]',
+      'html[data-lighthouse-typeface="hei"]',
+      'html[data-lighthouse-typeface="wenkai"]',
+    ].forEach((token) => {
+      expect(globals + layout).not.toContain(token);
     });
 
-    expect(globals).not.toContain('data-lighthouse-theme="harbor"');
-    expect(globals).not.toContain('data-lighthouse-theme="amber"');
+    expect(layout).toContain('data-lighthouse-interface="classic"');
+    expect(layout).not.toContain("data-lighthouse-theme=");
+    expect(layout).not.toContain("data-lighthouse-typeface=");
     expect(globals).not.toContain("--color-amber");
   });
 
-  it("defines Classic Amber as a separate interface layer", () => {
+  it("defines Classic Amber as the fixed interface layer", () => {
     const globals = readProjectFile("src/app/globals.css");
 
     expect(globals).toContain('html[data-lighthouse-interface="classic"]');
-    expect(globals).toContain('html[data-lighthouse-interface="classic"][data-lighthouse-theme]');
+    expect(globals).not.toContain('html[data-lighthouse-interface="classic"][data-lighthouse-theme]');
     expect(globals).toContain("--lh-classic-amber");
     expect(globals).toContain("--lh-primary: var(--lh-classic-amber);");
     expect(globals).toContain("--lh-action: var(--lh-classic-amber);");
@@ -128,7 +96,6 @@ describe("lighthouse design system contract", () => {
     const header = readProjectFile("src/components/layout/Header.tsx");
     const navigation = readProjectFile("src/components/layout/Navigation.tsx");
     const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
-    const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
 
     [
       "--font-serif-stack",
@@ -140,7 +107,6 @@ describe("lighthouse design system contract", () => {
       'html[data-lighthouse-interface="classic"] [data-lh-nav-link]',
       'html[data-lighthouse-interface="classic"] [data-lh-page-hero]',
       'html[data-lighthouse-interface="classic"] [data-lh-card]',
-      'html[data-lighthouse-interface="classic"] [data-lh-theme-switcher]',
       "font-family: var(--font-serif-stack);",
       "background: rgba(255, 255, 255, 0.4);",
       "box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);",
@@ -171,7 +137,8 @@ describe("lighthouse design system contract", () => {
       expect(primitives).toContain(token);
     });
 
-    expect(themeSwitcher).toContain("data-lh-theme-switcher");
+    expect(header).not.toContain("<ThemeSwitcher");
+    expect(navigation).not.toContain("<ThemeSwitcher");
   });
 
   it("lets Hermit inherit the Classic editorial chat layout", () => {
@@ -230,17 +197,16 @@ describe("lighthouse design system contract", () => {
     });
   });
 
-  it("defines both body typeface modes", () => {
+  it("keeps a fixed body typeface without runtime typeface switching", () => {
     const globals = readProjectFile("src/app/globals.css");
-    const heiBlock = extractTypefaceBlock(globals, "hei");
-    const wenkaiBlock = extractTypefaceBlock(globals, "wenkai");
 
     expect(globals).toContain("--font-hei-stack:");
-    expect(globals).toContain("--font-wenkai-stack:");
-    expect(globals).toContain("LXGW WenKai");
-    expect(globals).toContain("霞鹜文楷");
-    expect(heiBlock).toContain("--font-sans-stack: var(--font-hei-stack);");
-    expect(wenkaiBlock).toContain("--font-sans-stack: var(--font-wenkai-stack);");
+    expect(globals).toContain("--font-sans-stack: var(--font-hei-stack);");
+    expect(globals).not.toContain("--font-wenkai-stack:");
+    expect(globals).not.toContain("LXGW WenKai");
+    expect(globals).not.toContain("霞鹜文楷");
+    expect(globals).not.toContain('html[data-lighthouse-typeface="hei"]');
+    expect(globals).not.toContain('html[data-lighthouse-typeface="wenkai"]');
   });
 
   it("keeps the page background flat so long pages do not darken at the bottom", () => {
@@ -264,11 +230,9 @@ describe("lighthouse design system contract", () => {
 
   it("uses the selected value-theme accents to layer the heart value rows", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
-    const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
-    const switcherSwatches = [...themeSwitcher.matchAll(/swatch: "(#[0-9a-f]{6})"/g)].map((match) => match[1]);
     const valueRowColors = [...heartPage.matchAll(/"--value-color": "(#[0-9a-f]{6})"/g)].map((match) => match[1]);
 
-    expect(valueRowColors).toEqual(switcherSwatches);
+    expect(valueRowColors).toEqual(["#6ab0a5", "#728a69", "#806c9f", "#c74f5a", "#f1a77d"]);
     expect(heartPage).toContain("valueToneStyles");
     expect(heartPage).toContain("lg:grid-cols-[250px_minmax(0,1fr)]");
     expect(heartPage).toContain("color-mix(in srgb, var(--value-soft) 54%");
@@ -278,53 +242,29 @@ describe("lighthouse design system contract", () => {
     expect(heartPage).not.toContain("linear-gradient(145deg");
   });
 
-  it("wires the value theme and typeface switcher into the app shell", () => {
-    const themeSwitcher = readProjectFile("src/components/layout/ThemeSwitcher.tsx");
-    const appearanceMode = readProjectFile("src/components/layout/appearance-mode.ts");
+  it("does not mount runtime theme or typeface switching in the app shell", () => {
+    const appearanceModePath = join(process.cwd(), "src/components/layout/appearance-mode.ts");
     const header = readProjectFile("src/components/layout/Header.tsx");
     const navigation = readProjectFile("src/components/layout/Navigation.tsx");
     const layout = readProjectFile("src/app/layout.tsx");
+    const appShell = header + navigation + layout;
 
     [
-      '"truth"',
-      '"goodness"',
-      '"beauty"',
-      '"love"',
-      '"happiness"',
-      '"hei"',
-      '"wenkai"',
-      "INTERFACE_MODES",
       "data-theme-choice",
       "data-typeface-choice",
       "data-interface-choice",
-      "rounded-[var(--lh-card-radius)]",
-      "rounded-[var(--lh-control-radius)]",
+      "THEME_STORAGE_KEY",
+      "TYPEFACE_STORAGE_KEY",
+      "INTERFACE_STORAGE_KEY",
+      "INTERFACE_MODES",
     ].forEach((token) => {
-      expect(themeSwitcher).toContain(token);
+      expect(appShell).not.toContain(token);
     });
 
-    [
-      "lighthouse-app-theme-v2",
-      "lighthouse-app-typeface",
-      "lighthouse-app-interface",
-      "data-lighthouse-theme",
-      "data-lighthouse-typeface",
-      "data-lighthouse-interface",
-      '"modern"',
-      '"classic"',
-    ].forEach((token) => {
-      expect(appearanceMode).toContain(token);
-    });
-
-    expect(themeSwitcher).not.toContain('"harbor"');
-    expect(themeSwitcher).not.toContain('"amber"');
-    expect(themeSwitcher).toContain('isActive ? "border-panel/75 bg-panel');
-    expect(themeSwitcher).toContain('border-line bg-[var(--theme-swatch)]');
-    expect(header).toContain("<ThemeSwitcher />");
-    expect(navigation).toContain("<ThemeSwitcher />");
-    expect(layout).toContain('data-lighthouse-theme="truth"');
-    expect(layout).toContain('data-lighthouse-typeface="hei"');
-    expect(layout).toContain('data-lighthouse-interface="modern"');
+    expect(existsSync(appearanceModePath)).toBe(false);
+    expect(layout).toContain('data-lighthouse-interface="classic"');
+    expect(header).not.toContain("@/components/layout/ThemeSwitcher");
+    expect(navigation).not.toContain("@/components/layout/ThemeSwitcher");
   });
 
   it("keeps reusable primitives broad enough for page-level refactors", () => {
