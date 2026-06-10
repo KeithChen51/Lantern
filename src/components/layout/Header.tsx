@@ -6,14 +6,22 @@ import { Icon } from "@iconify/react";
 import { PreviewIdentitySwitcher } from "@/components/layout/PreviewIdentitySwitcher";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { isPublicWorkshopEnabled } from "@/config/features";
 import { cn } from "@/lib/utils";
 import { getHeaderSearchMatches, resolveHeaderSearch } from "./header-search";
 
+const WORKSHOP_IS_PUBLIC = isPublicWorkshopEnabled();
+
 const NOTIFICATIONS = [
   "路引已可直接接收服务场景，并按事实、依据和下一步话术回应。",
-  "行动指南支持提交岗位应做/避免建议，审核后进入公共指南。",
+  ...(WORKSHOP_IS_PUBLIC ? ["行动指南支持提交岗位应做/避免建议，审核后进入公共指南。"] : []),
   "镜鉴与笃行分别用于外部标杆和内部实践复盘。",
 ];
+
+const SEARCH_PLACEHOLDER = WORKSHOP_IS_PUBLIC ? "搜索：本心、镜鉴、笃行、行动指南、路引" : "搜索：本心、镜鉴、笃行、路引";
+const SEARCH_FALLBACK_HINT = WORKSHOP_IS_PUBLIC
+  ? "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 行动指南 / 路引。"
+  : "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 路引。";
 
 interface HeaderProps {
   isSidebarPinned: boolean;
@@ -47,7 +55,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
 
     if (!matchedTarget) {
       setIsSearchOpen(true);
-      setSearchFeedback("未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 行动指南 / 路引。");
+      setSearchFeedback(SEARCH_FALLBACK_HINT);
       return;
     }
 
@@ -112,7 +120,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
               onFocus={() => setIsSearchOpen(true)}
               onKeyDown={handleSearchKeyDown}
               type="text"
-              placeholder="搜索：本心、镜鉴、笃行、行动指南、路引"
+              placeholder={SEARCH_PLACEHOLDER}
               className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-10 pr-3 text-sm font-medium text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
             />
           </div>

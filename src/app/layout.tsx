@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { isPublicWorkshopEnabled } from "@/config/features";
 
 export const metadata: Metadata = {
   title: "Lantern | Lighthouse",
-  description: "服务品牌升级内部展示平台：本心、镜鉴、笃行、共创、路引。",
+  description: isPublicWorkshopEnabled()
+    ? "服务品牌升级内部展示平台：本心、镜鉴、笃行、共创、路引。"
+    : "服务品牌升级内部展示平台：本心、镜鉴、笃行、路引。",
 };
 
 export default function RootLayout({

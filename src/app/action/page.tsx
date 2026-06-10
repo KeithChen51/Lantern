@@ -8,7 +8,10 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { isPublicWorkshopEnabled } from "@/config/features";
 import { getPublicActionCaseSummaries } from "./public-action-cases";
+
+const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const trainingSteps = [
   "先读清楚客户问题和触发条件",
@@ -134,7 +137,11 @@ export default async function ActionPage() {
             <tr>
               <td>后续承接</td>
               <td>详情页连接最终做法、门店启示和可复用原则。</td>
-              <td>把案例沉淀成笃行与共创可复用材料。</td>
+              <td>
+                {PUBLIC_WORKSHOP_ENABLED
+                  ? "把案例沉淀成笃行与共创可复用材料。"
+                  : "把案例沉淀成笃行与路引可复用材料。"}
+              </td>
             </tr>
           </tbody>
         </table>

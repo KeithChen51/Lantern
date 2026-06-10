@@ -1,4 +1,5 @@
 import { lighthouseIcons, type LighthouseIcon } from "@/components/ui/lighthouse-icons";
+import { isPublicWorkshopEnabled } from "@/config/features";
 
 export type NavItem = {
   label: string;
@@ -17,5 +18,5 @@ export const NAV_ITEMS: NavItem[] = [
 
 export function getVisibleNavItems(role?: "normal_user" | "highest_admin" | null) {
   void role;
-  return NAV_ITEMS;
+  return NAV_ITEMS.filter((item) => item.href !== "/workshop" || isPublicWorkshopEnabled());
 }

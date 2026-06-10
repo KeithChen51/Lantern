@@ -9,6 +9,7 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { isPublicWorkshopEnabled } from "@/config/features";
 
 type ValueToneStyle = CSSProperties & {
   "--value-color": string;
@@ -17,6 +18,8 @@ type ValueToneStyle = CSSProperties & {
   "--value-line": string;
   "--value-text": string;
 };
+
+const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const valueToneStyles = [
   {
@@ -148,7 +151,9 @@ const dimensionNotes = [
   {
     title: "回到真实场景",
     description:
-      "接下来的案例、实践、共创和问答，不是把价值观停留在概念里，而是把它放回日常动作和共同规范中。",
+      PUBLIC_WORKSHOP_ENABLED
+        ? "接下来的案例、实践、共创和问答，不是把价值观停留在概念里，而是把它放回日常动作和共同规范中。"
+        : "接下来的案例、实践和问答，不是把价值观停留在概念里，而是把它放回日常动作和具体场景中。",
   },
 ];
 
@@ -186,8 +191,12 @@ const guideSections = [
 const readingPath = [
   "先理解为什么要持续经营客户信任",
   "再看求真、尽善、致美、大爱、幸福如何进入服务体系",
-  "最后进入案例、实践、共创和问答，回到具体场景中判断",
+  PUBLIC_WORKSHOP_ENABLED
+    ? "最后进入案例、实践、共创和问答，回到具体场景中判断"
+    : "最后进入案例、实践和问答，回到具体场景中判断",
 ];
+
+const visibleGuideSections = guideSections.filter((section) => section.href !== "/workshop" || PUBLIC_WORKSHOP_ENABLED);
 
 export default function HeartPage() {
   return (
@@ -203,7 +212,9 @@ export default function HeartPage() {
               “本心”讨论的，正是精诚服务如何持续经营客户信任：从提供功能型服务，走向建立价值型关系。
             </p>
             <p>
-              先理解求真、尽善、致美、大爱、幸福，再去看案例、实践、共创和问答，后面的内容才有共同的出发点。
+              {PUBLIC_WORKSHOP_ENABLED
+                ? "先理解求真、尽善、致美、大爱、幸福，再去看案例、实践、共创和问答，后面的内容才有共同的出发点。"
+                : "先理解求真、尽善、致美、大爱、幸福，再去看案例、实践和问答，后面的内容才有共同的出发点。"}
             </p>
           </>
         }
@@ -387,7 +398,7 @@ export default function HeartPage() {
           description="这个框架是“精诚服务”的价值底座。接下来的内容，会帮助大家把它放回真实场景、日常动作和共同规范中。"
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {guideSections.map((section) => (
+          {visibleGuideSections.map((section) => (
             <Link key={section.title} href={section.href} className="group block">
               <LhCard className="grid min-h-52 grid-rows-[auto_1fr_auto] gap-4 p-5 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md">
                 <div className="flex items-center justify-between gap-3">
@@ -420,7 +431,7 @@ export default function HeartPage() {
             <tr>
               <td>求真、尽善、致美、大爱、幸福</td>
               <td>作为从功能型服务走向价值型关系的判断路径。</td>
-              <td>用于案例复盘、路引问答与岗位 Do &amp; Don&apos;t 共创。</td>
+              <td>{PUBLIC_WORKSHOP_ENABLED ? "用于案例复盘、路引问答与岗位 Do & Don't 共创。" : "用于案例复盘、路引问答与后续岗位 Do & Don't 梳理。"}</td>
             </tr>
             <tr>
               <td>客户与员工双视角</td>

@@ -6,6 +6,9 @@ import {
   LhPageHero,
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
+import { isPublicWorkshopEnabled } from "@/config/features";
+
+const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const caseCards = [
   {
@@ -29,7 +32,11 @@ const caseCards = [
 const compareRows = [
   ["案例来源", "外部企业公开材料、行业观察、媒体报道", "帮助团队形成可讨论的参考对象"],
   ["阅读目标", "提取服务文化、组织管理和动作设计", "避免简单赞美或机械照搬"],
-  ["迁移方式", "先识别原则，再看本地服务场景是否成立", "连接笃行、共创与路引"],
+  [
+    "迁移方式",
+    "先识别原则，再看本地服务场景是否成立",
+    PUBLIC_WORKSHOP_ENABLED ? "连接笃行、共创与路引" : "连接笃行与路引",
+  ],
 ];
 
 export default function MirrorPage() {
@@ -54,7 +61,11 @@ export default function MirrorPage() {
         <LhSectionHeader
           eyebrow="案例目录"
           title="标杆案例"
-          description="每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或共创。"
+          description={
+            PUBLIC_WORKSHOP_ENABLED
+              ? "每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或共创。"
+              : "每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或路引。"
+          }
         />
 
         <div className="grid gap-5 lg:grid-cols-2">
