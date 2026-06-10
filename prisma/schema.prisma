@@ -330,32 +330,39 @@ model UserRole {
 }
 
 model ContentItem {
-  id               String            @id @default(cuid())
-  contentType      ContentType       @map("content_type")
-  title            String
-  summary          String?           @db.Text
-  status           ContentStatus     @default(DRAFT)
-  visibilityScope  VisibilityScope   @default(GLOBAL) @map("visibility_scope")
-  brandId          String?           @map("brand_id")
-  regionId         String?           @map("region_id")
-  dealerId         String?           @map("dealer_id")
-  storeId          String?           @map("store_id")
-  sourceType       ContentSourceType @default(MANUAL) @map("source_type")
-  currentVersionId String?           @map("current_version_id")
-  publishedAt      DateTime?         @map("published_at")
-  createdById      String?           @map("created_by")
-  updatedById      String?           @map("updated_by")
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
+  id                 String            @id @default(cuid())
+  contentType        ContentType       @map("content_type")
+  slug               String?
+  title              String
+  summary            String?           @db.Text
+  status             ContentStatus     @default(DRAFT)
+  visibilityScope    VisibilityScope   @default(GLOBAL) @map("visibility_scope")
+  brandId            String?           @map("brand_id")
+  regionId           String?           @map("region_id")
+  dealerId           String?           @map("dealer_id")
+  storeId            String?           @map("store_id")
+  sourceType         ContentSourceType @default(MANUAL) @map("source_type")
+  currentVersionId   String?           @map("current_version_id")
+  publishedVersionId String?           @map("published_version_id")
+  publishedSlug      String?           @map("published_slug")
+  metadataJson       Json?             @map("metadata_json")
+  publishedAt        DateTime?         @map("published_at")
+  createdById        String?           @map("created_by")
+  updatedById        String?           @map("updated_by")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
 
-  brand          Brand?           @relation(fields: [brandId], references: [id])
-  region         Region?          @relation(fields: [regionId], references: [id])
-  dealer         Dealer?          @relation(fields: [dealerId], references: [id])
-  store          Store?           @relation(fields: [storeId], references: [id])
-  versions       ContentVersion[] @relation("ContentItemVersions")
-  currentVersion ContentVersion?  @relation("CurrentContentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
-  publishedGuide PublishedGuide?
+  brand            Brand?           @relation(fields: [brandId], references: [id])
+  region           Region?          @relation(fields: [regionId], references: [id])
+  dealer           Dealer?          @relation(fields: [dealerId], references: [id])
+  store            Store?           @relation(fields: [storeId], references: [id])
+  versions         ContentVersion[] @relation("ContentItemVersions")
+  currentVersion   ContentVersion?  @relation("CurrentContentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+  publishedVersion ContentVersion?  @relation("PublishedContentVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  publishedGuide   PublishedGuide?
 
+  @@unique([contentType, slug])
+  @@unique([contentType, publishedSlug])
   @@index([contentType, status, visibilityScope])
   @@index([brandId, regionId, dealerId, storeId])
   @@map("content_items")
@@ -372,8 +379,9 @@ model ContentVersion {
   createdById   String?  @map("created_by")
   createdAt     DateTime @default(now()) @map("created_at")
 
-  contentItem       ContentItem   @relation("ContentItemVersions", fields: [contentItemId], references: [id])
-  currentForContent ContentItem[] @relation("CurrentContentVersion")
+  contentItem         ContentItem   @relation("ContentItemVersions", fields: [contentItemId], references: [id])
+  currentForContent   ContentItem[] @relation("CurrentContentVersion")
+  publishedForContent ContentItem[] @relation("PublishedContentVersion")
 
   @@unique([contentItemId, versionNo])
   @@map("content_versions")

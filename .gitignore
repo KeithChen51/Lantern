@@ -44,5 +44,8 @@ next-env.d.ts
 # Hermit knowledge base vectors (generated)
 knowledge-vectors.json
 
+# Runtime uploads
+/storage/uploads/
+
 # Local Netlify folder
 .netlify
