@@ -8,7 +8,7 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { ACTION_CASES } from "./action-cases";
+import { getPublicActionCaseSummaries } from "./public-action-cases";
 
 const trainingSteps = [
   "先读清楚客户问题和触发条件",
@@ -16,7 +16,11 @@ const trainingSteps = [
   "最后判断最终做法是否守住客户价值",
 ];
 
-export default function ActionPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ActionPage() {
+  const actionCases = await getPublicActionCaseSummaries();
+
   return (
     <div className="space-y-8 pb-12">
       <LhPageHero
@@ -38,16 +42,16 @@ export default function ActionPage() {
         />
 
         <div className="grid gap-5">
-          {ACTION_CASES.map((actionCase) => (
+          {actionCases.map((actionCase) => (
             <Link key={actionCase.slug} href={actionCase.href} className="group block">
               <LhCard className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="grid min-w-0 grid-rows-[auto_1fr_auto] gap-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <LhChip tone="primary">{actionCase.metadata.date}</LhChip>
-                    <LhChip tone={actionCase.metadata.status === "published" ? "success" : "warning"}>
-                      {actionCase.metadata.status === "published" ? "已发布" : "草稿"}
+                    <LhChip tone="primary">{actionCase.date}</LhChip>
+                    <LhChip tone={actionCase.status === "published" ? "success" : "warning"}>
+                      {actionCase.status === "published" ? "已发布" : "草稿"}
                     </LhChip>
-                    {actionCase.metadata.tags.slice(0, 3).map((tag) => (
+                    {actionCase.tags.slice(0, 3).map((tag) => (
                       <LhChip key={tag} tone="neutral">
                         {tag}
                       </LhChip>
@@ -56,12 +60,12 @@ export default function ActionPage() {
 
                   <div>
                     <h2 className="max-w-4xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
-                      {actionCase.metadata.title}
+                      {actionCase.title}
                     </h2>
-                    <p className="mt-5 max-w-3xl text-base leading-8 text-ink-soft">{actionCase.brief.oneLine}</p>
+                    <p className="mt-5 max-w-3xl text-base leading-8 text-ink-soft">{actionCase.summary}</p>
                     <div className="mt-5 rounded-sm border border-line bg-surface-quiet p-4">
                       <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例问题</p>
-                      <p className="mt-2 text-sm leading-7 text-ink-soft">{actionCase.brief.caseQuestion}</p>
+                      <p className="mt-2 text-sm leading-7 text-ink-soft">{actionCase.question}</p>
                     </div>
                   </div>
 
@@ -77,12 +81,12 @@ export default function ActionPage() {
                 <aside className="rounded-sm border border-line bg-surface-quiet p-5">
                   <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">关键节点</p>
                   <ol className="mt-4 grid gap-3">
-                    {actionCase.decisionNodes.map((decision, index) => (
-                      <li key={decision.title} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-sm leading-6 text-ink-soft">
+                    {actionCase.highlights.map((highlight, index) => (
+                      <li key={highlight} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-sm leading-6 text-ink-soft">
                         <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line bg-panel text-xs font-extrabold text-primary-deep">
                           {index + 1}
                         </span>
-                        <span>{decision.title}</span>
+                        <span>{highlight}</span>
                       </li>
                     ))}
                   </ol>

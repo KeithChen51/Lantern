@@ -12,6 +12,7 @@ import {
 import { AppError, toErrorResponse } from "@/shared/errors";
 import { optionalString, requireString } from "@/shared/validation";
 import { getWorkshopUnavailableMessage } from "./workshop-errors";
+import { getAdminPortalWorkshopAdminFromHeaders } from "./_admin";
 
 const authService = createAuthService(authRepository);
 const tenantService = createTenantService(tenantRepository);
@@ -40,15 +41,9 @@ export async function getCurrentWorkshopUser(): Promise<WorkshopUser> {
 export async function getCurrentWorkshopAdmin(): Promise<WorkshopUser> {
   assertDatabaseConfigured();
   const requestHeaders = await headers();
-  const user = await authService.getCurrentAdmin({ headers: requestHeaders });
-  const scope = await tenantService.getUserOrgScope(user.id);
-
-  return {
-    id: user.id,
-    displayName: user.displayName,
-    role: "highest_admin",
-    scope,
-  };
+  const portalAdmin = await getAdminPortalWorkshopAdminFromHeaders(requestHeaders);
+  if (portalAdmin) return portalAdmin;
+  throw new AppError("forbidden", "请输入管理密码后再访问后台。", 403);
 }
 
 export async function readDraftInput(request: Request, user: WorkshopUser): Promise<CreateWorkshopDraftInput> {
