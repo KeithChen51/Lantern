@@ -1,0 +1,42 @@
+
+> lantern-app@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3000
+
+▲ Next.js 16.1.1 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 2.2s
+ GET / 200 in 2.0s (compile: 1300ms, render: 702ms)
+ GET /api/preview-identity 500 in 197ms (compile: 148ms, render: 50ms)
+ GET /action 200 in 806ms (compile: 485ms, render: 321ms)
+ GET /api/preview-identity 500 in 28ms (compile: 4ms, render: 25ms)
+ GET / 200 in 500ms (compile: 11ms, render: 489ms)
+ GET /api/preview-identity 500 in 38ms (compile: 6ms, render: 31ms)
+○ Compiling /action/driver-partner-rest-area ...
+ GET /mirror 200 in 316ms (compile: 191ms, render: 125ms)
+ GET /action 200 in 87ms (compile: 10ms, render: 78ms)
+ GET /workshop 200 in 225ms (compile: 180ms, render: 45ms)
+ GET /api/preview-identity 500 in 46ms (compile: 12ms, render: 34ms)
+ GET /api/preview-identity 500 in 57ms (compile: 22ms, render: 35ms)
+ GET /api/workshop/guides 503 in 409ms (compile: 396ms, render: 14ms)
+ GET /api/workshop/guides 503 in 379ms (compile: 369ms, render: 10ms)
+ GET /api/workshop/submissions 503 in 485ms (compile: 473ms, render: 12ms)
+ GET /api/workshop/submissions 503 in 430ms (compile: 417ms, render: 13ms)
+ GET /api/workshop/leaderboard 503 in 592ms (compile: 582ms, render: 10ms)
+ GET /api/workshop/leaderboard 503 in 541ms (compile: 534ms, render: 7ms)
+ GET /admi 404 in 1904ms (compile: 1760ms, render: 144ms)
+ GET /api/preview-identity 500 in 27ms (compile: 8ms, render: 20ms)
+ GET /workshop 200 in 85ms (compile: 11ms, render: 74ms)
+ GET /api/workshop/guides 503 in 32ms (compile: 21ms, render: 11ms)
+ GET /api/workshop/leaderboard 503 in 38ms (compile: 28ms, render: 10ms)
+ GET /api/workshop/submissions 503 in 53ms (compile: 43ms, render: 9ms)
+ GET /api/preview-identity 500 in 85ms (compile: 11ms, render: 74ms)
+ GET /api/preview-identity 500 in 78ms (compile: 51ms, render: 27ms)
+ GET /api/workshop/guides 503 in 27ms (compile: 18ms, render: 8ms)
+ GET /api/workshop/leaderboard 503 in 39ms (compile: 30ms, render: 9ms)
+ GET /api/workshop/submissions 503 in 45ms (compile: 32ms, render: 13ms)
+ GET / 200 in 470ms (compile: 7ms, render: 463ms)
+ GET /action 200 in 138ms (compile: 6ms, render: 132ms)

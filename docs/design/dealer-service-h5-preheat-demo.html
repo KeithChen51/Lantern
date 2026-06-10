@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>精诚服务 H5 预热 Demo</title>
+  <title>精诚服务 H5 手机端预览</title>
   <style>
     :root {
       color-scheme: light;
@@ -74,6 +74,22 @@
       width: min(1480px, calc(100% - 40px));
       margin: 0 auto;
       padding: 40px 0 76px;
+    }
+
+    .mobile-preview-page {
+      display: grid;
+      place-items: center;
+      width: min(100%, 560px);
+      min-height: 100svh;
+      margin: 0 auto;
+      padding: clamp(10px, 2.8vw, 24px);
+    }
+
+    .mobile-preview-page .phone-wrap {
+      position: relative;
+      top: auto;
+      width: min(100%, 390px);
+      max-width: 390px;
     }
 
     .hero {
@@ -644,9 +660,18 @@
       transform: none;
     }
 
+    .option.dimmed {
+      opacity: 0.54;
+    }
+
+    .option.dimmed:hover {
+      opacity: 0.82;
+    }
+
     .option.selected {
-      border-color: rgba(31, 109, 122, 0.55);
-      background: rgba(231, 242, 237, 0.9);
+      border-color: rgba(36, 63, 70, 0.52);
+      background: rgba(255, 250, 241, 0.96);
+      box-shadow: inset 0 0 0 2px rgba(36, 63, 70, 0.08), 0 10px 22px rgba(91, 69, 44, 0.08);
       opacity: 1;
     }
 
@@ -845,123 +870,7 @@
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="hero" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">Dealer Annual Meeting Preheat H5</p>
-        <h1 id="page-title">一次服务里的五个判断</h1>
-        <p class="hero-copy">这是一个面向经销商年会前传播的 H5 demo。它不把“精诚服务”做成知识答题，而是让用户进入等待、报价、延期、交车、投诉这些真实售后场景，通过选择生成自己的服务判断画像。</p>
-      </div>
-      <aside class="hero-brief" aria-label="方案摘要">
-        <span class="brief-number">05</span>
-        <span class="brief-label">个真实服务路口</span>
-        <ul class="brief-list">
-          <li>2-3 分钟完成互动</li>
-          <li>每题给出理念反馈</li>
-          <li>最终生成关键词海报</li>
-        </ul>
-      </aside>
-    </section>
-
-    <div class="layout">
-      <div class="strategy">
-        <section class="section" aria-labelledby="strategy-title">
-          <p class="eyebrow">H5 Strategy</p>
-          <h2 id="strategy-title">方案定位</h2>
-          <p>会前年会预热的重点不是提前讲完理念，而是让经销商先感到“这和我的门店有关”。因此 H5 用服务判断画像进入：用户不背概念、不答标准题，而是在真实场景中做选择，看到选择背后的价值倾向。</p>
-          <div class="plan-grid">
-            <article class="plan-item">
-              <strong>传播目的</strong>
-              <p>提前激活年会主题，让经销商知道这次升级不是多一套表达，而是把日常服务判断做得更稳。</p>
-            </article>
-            <article class="plan-item">
-              <strong>互动机制</strong>
-              <p>5 个服务场景，每题 3 个选项。选择后即时反馈理念，不做对错批改，降低考试感。</p>
-            </article>
-            <article class="plan-item">
-              <strong>传播结果</strong>
-              <p>生成“精诚服务关键词”海报，可用于年会前转发、门店群预热和报名确认。</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="section" aria-labelledby="flow-title">
-          <p class="eyebrow">Experience Flow</p>
-          <h2 id="flow-title">体验流程</h2>
-          <div class="flow">
-            <div class="flow-step">
-              <b>01</b>
-              <div>
-                <strong>开场提问</strong>
-                <p>“一位客户进店后，服务从哪一刻开始？”用问题把用户带入服务现场，而不是直接抛理念。</p>
-              </div>
-            </div>
-            <div class="flow-step">
-              <b>02</b>
-              <div>
-                <strong>场景选择</strong>
-                <p>等待超时、费用质疑、维修延期、交车细节、投诉升级。每个场景都来自售后高频判断路口。</p>
-              </div>
-            </div>
-            <div class="flow-step">
-              <b>03</b>
-              <div>
-                <strong>理念反馈</strong>
-                <p>反馈用“更接近哪一种服务判断”来表达，避免“你选错了”的培训感。</p>
-              </div>
-            </div>
-            <div class="flow-step">
-              <b>04</b>
-              <div>
-                <strong>结果画像</strong>
-                <p>根据最高倾向生成关键词。若两个维度接近，可生成“求真 x 大爱”这样的复合结果。</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" aria-labelledby="content-title">
-          <p class="eyebrow">Content Matrix</p>
-          <h2 id="content-title">五个场景与反馈口径</h2>
-          <table class="scenario-table">
-            <thead>
-              <tr>
-                <th>场景</th>
-                <th>互动重点</th>
-                <th>理念反馈</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>等待超时</strong></td>
-                <td>客户已经问了两次“还要多久”，服务顾问如何回应。</td>
-                <td>求真：讲清事实、原因、时间和可选择方案。</td>
-              </tr>
-              <tr>
-                <td><strong>费用质疑</strong></td>
-                <td>客户质疑报价是否必要，门店如何解释取舍。</td>
-                <td>尽善：不是强推，也不是无原则删减，而是帮助客户理解风险和选择。</td>
-              </tr>
-              <tr>
-                <td><strong>维修延期</strong></td>
-                <td>承诺当天交车但可能延期，客户晚上有重要用车安排。</td>
-                <td>求真 x 大爱：事实要早说，人的处境也要被看见。</td>
-              </tr>
-              <tr>
-                <td><strong>交车细节</strong></td>
-                <td>客户着急离店，是否还要说明维修结果和关键注意事项。</td>
-                <td>致美：专业体现在流程、秩序和体面交付中。</td>
-              </tr>
-              <tr>
-                <td><strong>投诉升级</strong></td>
-                <td>客户情绪激动并要求负责人处理，现场如何接住问题。</td>
-                <td>大爱：先看见处境和尊严，再回到事实、规则和解决路径。</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </div>
-
+  <main class="mobile-preview-page" aria-label="手机端 H5 预览">
       <aside class="phone-wrap" aria-label="H5 demo">
         <div class="phone">
           <div class="screen">
@@ -976,18 +885,18 @@
                   <span class="cover-badge">服务理念关键词</span>
                 </div>
                 <div class="meta-line">
-                  <span class="pill">年会前互动</span>
-                  <span class="pill">2-3 分钟</span>
+                  <span class="pill">参悟案例</span>
+                  <span class="pill">5 个判断</span>
                 </div>
-                <h2>一位客户进店后，服务从哪一刻开始？</h2>
-                <p>不是从工单开始，也不是从交车结束。每一次解释、等待、协调和补救，都是信任被建立或被消耗的时刻。</p>
+                <h2>一单养护，怎样做成长期信任？</h2>
+                <p>客户不是不接受服务，而是不接受被推销。真正难的是：把该推荐的讲清楚，把不该赚的钱停下来。</p>
               </section>
 
               <section class="view" id="question-view" aria-live="polite">
                 <div class="progress">
                   <div class="progress-row">
                     <span id="step-label">01 / 05</span>
-                    <span>服务判断画像</span>
+                    <span>诚信经营参悟</span>
                   </div>
                   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
                 </div>
@@ -1004,7 +913,7 @@
               </section>
 
               <div class="actions">
-                <button class="primary" id="primary-action">开始我的服务判断</button>
+                <button class="primary" id="primary-action">开始诚信经营参悟</button>
                 <div class="result-actions" id="result-actions" hidden>
                   <button class="result-action primary-save" id="save-poster-action" type="button">保存服务关键词海报</button>
                   <a class="result-action secondary-link" id="whitepaper-action" href="../brand/精诚服务品牌价值观纲领白皮书.md" target="_blank" rel="noopener">查看服务理念升级白皮书</a>
@@ -1013,9 +922,7 @@
             </div>
           </div>
         </div>
-        <p class="phone-caption">右侧是可点击 demo：完成 5 道场景选择后，结果页会直接生成一张完整海报图。正式开发时可以接入姓名、门店、分享图下载和埋点。</p>
       </aside>
-    </div>
   </main>
 
   <script>
@@ -1074,107 +981,107 @@
 
     const questions = [
       {
-        title: "等待超时",
-        question: "客户按预约时间到店，保养可能还要多等 40 分钟。他已经问了两次：还要多久？",
+        title: "接车第一步",
+        question: "张先生的车已经 8 万公里。顾问小王觉得可能需要三元催化清洗。如果只能先抓一个重点，你会优先把哪件事放在前面？",
         options: [
           {
-            label: "先安抚客户：马上好了，您再稍等一下。",
-            values: ["love"],
-            feedback: "这个选择有安抚意识，但如果没有真实进度支撑，客户的不确定感可能继续累积。"
+            label: "先核对检测数据、用车环境和具体症状，把是否适用判断清楚。",
+            values: ["truth", "beauty"],
+            feedback: "你的优先级更偏向先把依据立住：用事实、症状和流程记录，给后续沟通一个清楚起点。"
           },
           {
-            label: "主动说明真实进度、原因和新的预计时间，并提供可选择方案。",
-            values: ["truth", "goodness"],
-            feedback: "更接近求真：把事实、原因、时间和选择讲清楚。客户可以接受等待，但不应该在不确定里消耗信任。"
+            label: "先听客户对动力、油耗、年审或预算的担心，确认他最想解决的问题。",
+            values: ["love", "goodness"],
+            feedback: "你的优先级更偏向先听见客户：把客户真实顾虑听完整，再决定后面怎样解释和推荐。"
           },
           {
-            label: "先去车间催一下，等有明确结果后再回复客户。",
-            values: ["beauty"],
-            feedback: "这个选择重视内部协同，但客户已经在等待中，外部回应不能被内部确认无限推迟。"
+            label: "先把可做、可观察、可分阶段处理的路径讲明，让客户知道有选择。",
+            values: ["goodness", "happiness"],
+            feedback: "你的优先级更偏向先给客户选择感：把路径讲清楚，让客户在可理解、可承担的状态里进入判断。"
           }
         ]
       },
       {
-        title: "费用质疑",
-        question: "客户看到维修报价后说：怎么这么贵？是不是有些项目没必要？",
+        title: "客户提出质疑",
+        question: "张先生问：“你们是不是为了多收钱才推荐？”面对这类质疑，你会优先用哪种方式回应？",
         options: [
           {
-            label: "强调这是厂家标准价格，建议客户直接确认。",
+            label: "把检测依据、适用条件、作用边界、费用和可选方案讲清楚，由客户决定。",
+            values: ["truth", "beauty"],
+            feedback: "你的优先级更偏向用透明信息回应质疑：客户能看到依据、边界和选择权，信任就有了承接点。"
+          },
+          {
+            label: "先承认客户的担心，再把“必须做、建议做、可以先观察”分开说明。",
+            values: ["love", "goodness"],
+            feedback: "你的优先级更偏向先接住客户情绪：把压力降下来，再一起看什么是必要、什么是可选。"
+          },
+          {
+            label: "用官方验证、案例记录和价格清单做支撑，让客户知道推荐不是临场话术。",
+            values: ["truth", "happiness"],
+            feedback: "你的优先级更偏向把信任做成长期资产：让客户看到门店背后有标准、有记录、有持续负责的态度。"
+          }
+        ]
+      },
+      {
+        title: "团队怎么执行",
+        question: "门店有产值压力，也重视客户信任。作为服务经理，你会优先把哪条要求讲给团队？",
+        options: [
+          {
+            label: "推荐前必须有检测依据、适用条件和说明记录。",
+            values: ["beauty", "truth"],
+            feedback: "你的优先级更偏向把标准落到动作里：每一次推荐都能回到证据、流程和记录。"
+          },
+          {
+            label: "客户犹豫时，先给充分解释和决定时间，再谈是否成交。",
+            values: ["goodness", "love"],
+            feedback: "你的优先级更偏向在经营压力中保留善意：把决定权交还客户，也让顾问的推荐更稳。"
+          },
+          {
+            label: "复盘时同时看复购、投诉、解释到位率和团队执行一致性。",
+            values: ["happiness", "beauty"],
+            feedback: "你的优先级更偏向用长期结果校准团队：不仅看这单是否成交，也看服务体系是否越来越稳。"
+          }
+        ]
+      },
+      {
+        title: "怎么讲才不焦虑",
+        question: "客户确实符合三元催化清洗适用条件。小王准备推荐时，你认为沟通优先级是什么？",
+        options: [
+          {
+            label: "先讲车况表现、清洗作用边界，以及做与不做分别意味着什么。",
             values: ["truth"],
-            feedback: "标准很重要，但只强调标准，客户可能仍然不理解必要性和风险。"
+            feedback: "你的优先级更偏向把事实讲透：客户先理解情况，再判断这项服务对自己是否有价值。"
           },
           {
-            label: "拆开说明每个项目的必要性、风险和可选项，让客户理解取舍。",
-            values: ["goodness", "truth"],
-            feedback: "更接近尽善：不是强推，也不是无原则删减，而是在规则和客户利益之间给出清楚判断。"
+            label: "先讲客户选择权、预算安排，以及是否可以分阶段处理。",
+            values: ["goodness", "love"],
+            feedback: "你的优先级更偏向把客户放在可承受的位置：让客户知道可以选择，也知道每种选择的边界。"
           },
           {
-            label: "为了避免争执，直接建议客户删掉几个项目。",
-            values: ["love"],
-            feedback: "这个选择想减少冲突，但如果没有说明风险，短期轻松可能换来长期不信任。"
+            label: "先讲服务流程、耗时、价格、交付标准和后续确认方式。",
+            values: ["beauty"],
+            feedback: "你的优先级更偏向让专业可感知：流程清楚、价格清楚、交付清楚，客户更容易安心。"
           }
         ]
       },
       {
-        title: "维修延期",
-        question: "车辆原本承诺当天交付，但因为配件和工序问题需要延期。客户晚上有重要用车安排。",
+        title: "这单之后看什么",
+        question: "这次客户最终选择做清洗。除了本单产值，你希望团队最先复盘哪件事？",
         options: [
           {
-            label: "等客户来问时再解释，避免提前制造不满。",
-            values: ["happiness"],
-            feedback: "想减少情绪波动可以理解，但延迟告知会让客户失去安排时间。"
+            label: "客户是否理解为什么做，交车后是否安心。",
+            values: ["happiness", "truth"],
+            feedback: "你的优先级更偏向用安心检验服务：客户理解了、安心了，这次推荐才真正留下信任。"
           },
           {
-            label: "第一时间告知延期原因、影响和补救方案。",
-            values: ["truth", "love"],
-            feedback: "更接近求真 x 大爱：事实要早说，人的处境也要被看见。客户真正需要的是可安排、可交代的方案。"
-          },
-          {
-            label: "先内部协调，看能不能赶出来，实在不行再说。",
+            label: "顾问是否按同一套诊断、说明、确认流程执行。",
             values: ["beauty", "goodness"],
-            feedback: "内部协调很必要，但当客户的安排会被影响时，透明沟通也要同步发生。"
-          }
-        ]
-      },
-      {
-        title: "交车细节",
-        question: "车辆修好后准备交付，客户比较着急，只想快点走。",
-        options: [
-          {
-            label: "尽快交车，少打扰客户。",
-            values: ["love"],
-            feedback: "尊重客户时间是好的，但关键事项如果没有交代清楚，服务还没有真正完成。"
+            feedback: "你的优先级更偏向让服务稳定复制：把个人经验变成团队动作，门店才有持续交付能力。"
           },
           {
-            label: "快速但完整地说明维修结果、注意事项和关键工序，让客户安心离店。",
-            values: ["beauty", "happiness"],
-            feedback: "更接近致美：专业不是多说，而是把流程、秩序、结果和体面交付出来。"
-          },
-          {
-            label: "把材料给客户，让客户回去自己看。",
-            values: ["truth"],
-            feedback: "材料可以留痕，但客户需要被清楚交付，而不是被动接收一份文件。"
-          }
-        ]
-      },
-      {
-        title: "投诉升级",
-        question: "客户因为上次体验不满，进店后情绪激动，要求负责人立刻处理。",
-        options: [
-          {
-            label: "先解释门店流程，让客户按投诉流程走。",
-            values: ["beauty"],
-            feedback: "流程需要被尊重，但情绪和损失没有被接住时，客户很难进入理性流程。"
-          },
-          {
-            label: "先接住情绪和具体损失，再回到事实、规则和解决路径。",
-            values: ["love", "truth"],
-            feedback: "更接近大爱：不是脱离规则的讨好，而是在规则之内看见人的处境、尊严和长期关系。"
-          },
-          {
-            label: "尽快给补偿，先把事情压下来。",
-            values: ["goodness"],
-            feedback: "补偿可能是方案的一部分，但如果跳过事实复盘，类似问题还会再次出现。"
+            label: "这次服务是否让客户愿意再回店、愿意继续把车交给我们。",
+            values: ["love", "happiness"],
+            feedback: "你的优先级更偏向长期关系：一次服务的完成，是下一次信任的开始。"
           }
         ]
       }
@@ -1182,6 +1089,7 @@
 
     let step = 0;
     let selected = false;
+    const answers = Array(questions.length).fill(null);
     let scores = Object.keys(principles).reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
 
     const coverView = document.getElementById("cover-view");
@@ -1199,7 +1107,7 @@
     }
 
     function renderQuestion() {
-      selected = false;
+      selected = Boolean(answers[step]);
       const current = questions[step];
       document.getElementById("step-label").textContent = `${String(step + 1).padStart(2, "0")} / 05`;
       document.getElementById("progress-fill").style.width = `${((step + 1) / questions.length) * 100}%`;
@@ -1207,8 +1115,10 @@
       document.getElementById("question-text").textContent = current.question;
       document.getElementById("feedback").classList.remove("visible");
       document.getElementById("feedback").innerHTML = "";
-      primaryAction.textContent = "请选择一种处理方式";
-      primaryAction.disabled = true;
+      primaryAction.textContent = selected
+        ? (step === questions.length - 1 ? "查看我的服务关键词" : "进入下一题")
+        : "选择你更优先的判断";
+      primaryAction.disabled = !selected;
 
       const options = document.getElementById("options");
       options.innerHTML = "";
@@ -1218,26 +1128,45 @@
         button.type = "button";
         button.innerHTML = `<span>${String.fromCharCode(65 + index)}</span><span>${option.label}</span>`;
         button.addEventListener("click", () => selectOption(button, option));
+        if (answers[step] === option) {
+          button.classList.add("selected");
+          renderFeedback(option);
+        } else if (selected) {
+          button.classList.add("dimmed");
+        }
         options.appendChild(button);
       });
     }
 
+    function renderFeedback(option) {
+      const feedback = document.getElementById("feedback");
+      const labels = option.values.map((value) => principles[value].label).join(" x ");
+      feedback.style.borderLeftColor = principles[option.values[0]].hex;
+      feedback.innerHTML = `<strong>${labels}</strong>${option.feedback}`;
+      feedback.classList.add("visible");
+    }
+
     function selectOption(button, option) {
-      if (selected) return;
+      const previous = answers[step];
+      if (previous === option) return;
+      if (previous) {
+        previous.values.forEach((value) => {
+          scores[value] -= 1;
+        });
+      }
       selected = true;
+      answers[step] = option;
       option.values.forEach((value) => {
         scores[value] += 1;
       });
       document.querySelectorAll(".option").forEach((item) => {
-        item.disabled = true;
         item.classList.remove("selected");
+        item.classList.add("dimmed");
       });
       button.classList.add("selected");
+      button.classList.remove("dimmed");
 
-      const feedback = document.getElementById("feedback");
-      const labels = option.values.map((value) => principles[value].label).join(" x ");
-      feedback.innerHTML = `<strong>${labels}</strong>${option.feedback}`;
-      feedback.classList.add("visible");
+      renderFeedback(option);
       primaryAction.disabled = false;
       primaryAction.textContent = step === questions.length - 1 ? "查看我的服务关键词" : "进入下一题";
     }
@@ -1295,13 +1224,13 @@
       const ctx = canvas.getContext("2d");
       const main = principles[top[0]];
       const copy = top.length > 1
-        ? "既把事实讲清，也看见人的处境，让每一次处理都更稳。"
+        ? "把真实价值、专业边界和长期信任一起看见。"
         : main.poster;
       const interpretationTitle = top.length > 1
-        ? `${labels}：把事实与处境一起看见`
+        ? `${labels}：把真实价值与长期信任一起看见`
         : main.interpretTitle;
       const interpretation = top.length > 1
-        ? "既讲清事实、依据和不确定性，也照顾客户当下的不便、尊严和长期关系。"
+        ? "先确认客户真实需求，再用透明规则、专业流程和长期视角做判断。"
         : main.interpretation;
 
       const bg = ctx.createLinearGradient(0, 0, 0, height);
@@ -1435,7 +1364,7 @@
       ctx.fillStyle = main.hex;
       ctx.font = "900 22px Arial, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText("SERVICE JUDGMENT", panelX + 54, panelY + 60);
+      ctx.fillText("INTEGRITY JUDGMENT", panelX + 54, panelY + 60);
       ctx.fillStyle = "#2f2d29";
       ctx.font = "700 43px 'Songti SC', 'Noto Serif SC', SimSun, serif";
       wrapLines(ctx, interpretationTitle, 780).slice(0, 2).forEach((line, index) => {
@@ -1474,7 +1403,7 @@
     primaryAction.addEventListener("click", () => {
       if (coverView.classList.contains("active")) {
         showView(questionView);
-        primaryAction.textContent = "请选择一种处理方式";
+        primaryAction.textContent = "选择你更优先的判断";
         primaryAction.disabled = true;
         renderQuestion();
         return;
