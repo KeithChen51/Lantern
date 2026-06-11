@@ -50,5 +50,8 @@ knowledge-vectors.json
 # Local code understanding artifacts
 .understand-anything/
 
+# Local reference materials
+/references/
+
 # Local Netlify folder
 .netlify
