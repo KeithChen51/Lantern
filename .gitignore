@@ -47,5 +47,8 @@ knowledge-vectors.json
 # Runtime uploads
 /storage/uploads/
 
+# Local code understanding artifacts
+.understand-anything/
+
 # Local Netlify folder
 .netlify
