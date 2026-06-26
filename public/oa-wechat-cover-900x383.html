@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=900, initial-scale=1" />
+    <title>精诚服务再出发 - 公众号封面</title>
+    <style>
+      :root {
+        --paper: #f4ead6;
+        --paper-warm: #fff6df;
+        --ink: #51402e;
+        --muted: #75624b;
+        --gold: #d29231;
+        --amber: #ffbb47;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 900px;
+        height: 383px;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      .cover {
+        position: relative;
+        width: 900px;
+        height: 383px;
+        overflow: hidden;
+        color: var(--ink);
+        font-family: "Microsoft YaHei", "Noto Sans SC", "PingFang SC", sans-serif;
+        background:
+          linear-gradient(178deg, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0) 30%),
+          linear-gradient(166deg, rgba(255, 255, 255, 0.45) 0 41%, rgba(223, 207, 174, 0.35) 41.4% 100%),
+          radial-gradient(520px 260px at 20% 32%, rgba(255, 252, 238, 0.95), rgba(255, 247, 223, 0.34) 57%, rgba(255, 255, 255, 0) 75%),
+          linear-gradient(90deg, #f1e5d0 0%, #f8efd9 54%, #efe3c9 100%);
+      }
+
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        background-image:
+          radial-gradient(circle at 12% 22%, rgba(126, 97, 54, 0.18) 0 1px, transparent 1.4px),
+          radial-gradient(circle at 43% 61%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.3px);
+        background-size: 34px 32px, 45px 41px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      .sand-back,
+      .sand-front {
+        position: absolute;
+        right: -78px;
+        bottom: -30px;
+        border-radius: 58% 42% 0 0 / 76% 55% 0 0;
+        background: linear-gradient(135deg, rgba(232, 188, 102, 0.28), rgba(194, 146, 66, 0.38));
+      }
+
+      .sand-back {
+        right: -14px;
+        bottom: 16px;
+        width: 350px;
+        height: 178px;
+        opacity: 0.52;
+      }
+
+      .sand-front {
+        width: 520px;
+        height: 218px;
+        opacity: 0.7;
+      }
+
+      .beam-soft {
+        position: absolute;
+        right: 104px;
+        top: 12px;
+        width: 470px;
+        height: 180px;
+        transform-origin: right center;
+        transform: rotate(-5deg);
+        clip-path: polygon(0 23%, 100% 38%, 100% 66%, 0 96%);
+        background:
+          radial-gradient(ellipse at 100% 50%, rgba(250, 190, 84, 0.25), rgba(249, 214, 139, 0.12) 36%, rgba(255, 255, 255, 0) 74%),
+          linear-gradient(270deg, rgba(236, 181, 82, 0.12), rgba(245, 221, 164, 0.07) 56%, rgba(255, 255, 255, 0) 100%);
+        filter: blur(24px);
+        opacity: 0.76;
+        -webkit-mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.18) 70%, transparent 100%);
+        mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.18) 70%, transparent 100%);
+      }
+
+      .beam {
+        position: absolute;
+        right: 108px;
+        top: 26px;
+        width: 340px;
+        height: 150px;
+        transform-origin: right center;
+        transform: rotate(-4deg);
+        border-radius: 56% 0 0 58% / 50% 0 0 54%;
+        background:
+          radial-gradient(ellipse at 100% 48%, rgba(255, 191, 64, 0.46) 0 10%, rgba(255, 205, 96, 0.26) 22%, rgba(255, 229, 165, 0.12) 44%, rgba(255, 255, 255, 0) 72%),
+          linear-gradient(270deg, rgba(255, 188, 60, 0.18), rgba(255, 223, 150, 0.09) 48%, rgba(255, 255, 255, 0) 100%);
+        filter: blur(17px);
+        opacity: 0.84;
+        mix-blend-mode: multiply;
+        -webkit-mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.82) 18%, rgba(0, 0, 0, 0.28) 58%, transparent 100%);
+        mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.82) 18%, rgba(0, 0, 0, 0.28) 58%, transparent 100%);
+      }
+
+      .lighthouse-halo {
+        position: absolute;
+        right: 34px;
+        top: 28px;
+        width: 268px;
+        height: 190px;
+        background:
+          radial-gradient(circle at 62% 39%, rgba(255, 202, 82, 0.88) 0 7%, rgba(255, 177, 52, 0.32) 8% 24%, rgba(255, 218, 143, 0.12) 43%, rgba(255, 255, 255, 0) 70%),
+          repeating-radial-gradient(circle at 62% 39%, rgba(212, 153, 56, 0.21) 0 1.5px, transparent 1.5px 18px);
+        opacity: 0.86;
+      }
+
+      .lighthouse {
+        position: absolute;
+        right: 76px;
+        bottom: 48px;
+        height: 248px;
+        width: auto;
+        z-index: 3;
+        filter: drop-shadow(0 9px 12px rgba(100, 70, 30, 0.14));
+      }
+
+      .copy {
+        position: absolute;
+        left: 58px;
+        top: 172px;
+        width: 618px;
+        z-index: 4;
+      }
+
+      .headline {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        width: 100%;
+        margin: 0;
+        font-family: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+        font-size: 54px;
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: 0;
+        color: var(--ink);
+        text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.42);
+        white-space: nowrap;
+      }
+
+      .accent {
+        width: 360px;
+        height: 4px;
+        margin-top: 17px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--gold), rgba(210, 146, 49, 0.48) 42%, rgba(210, 146, 49, 0));
+      }
+
+      .subtitle {
+        width: 100%;
+        margin: 18px 0 0;
+        font-size: 22px;
+        font-weight: 400;
+        line-height: 1.4;
+        letter-spacing: 0.7px;
+        color: var(--muted);
+        text-align: justify;
+        text-align-last: justify;
+        text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.45);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="cover" aria-label="精诚服务再出发公众号封面">
+      <div class="paper-grain"></div>
+      <div class="sand-back"></div>
+      <div class="sand-front"></div>
+      <div class="beam-soft"></div>
+      <div class="beam"></div>
+      <div class="lighthouse-halo"></div>
+      <img class="lighthouse" src="./oa-lighthouse-transparent.png" alt="" />
+      <section class="copy">
+        <h1 class="headline">
+          <span>求真</span>
+          <span>尽善</span>
+          <span>致美</span>
+          <span>大爱</span>
+          <span>幸福</span>
+        </h1>
+        <div class="accent"></div>
+        <p class="subtitle">精诚服务再出发，让每一次服务沉淀为长期的客户信任。</p>
+      </section>
+    </main>
+  </body>
+</html>

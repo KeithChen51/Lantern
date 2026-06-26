@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=2989, initial-scale=1" />
+    <title>精诚服务再出发 OA Banner</title>
+    <style>
+      :root {
+        --paper: #f4ead6;
+        --paper-warm: #fff6df;
+        --ink: #51402e;
+        --muted: #75624b;
+        --gold: #d29231;
+        --amber: #ffbb47;
+        --headline-weight: 700;
+        --copy-width: 1012px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 2989px;
+        height: 340px;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      .banner {
+        position: relative;
+        width: 2989px;
+        height: 340px;
+        overflow: hidden;
+        background:
+          linear-gradient(178deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0) 31%),
+          linear-gradient(168deg, rgba(255, 255, 255, 0.44) 0 41%, rgba(223, 207, 174, 0.36) 41.3% 100%),
+          radial-gradient(860px 320px at 18% 38%, rgba(255, 252, 238, 0.92), rgba(255, 247, 223, 0.32) 54%, rgba(255, 255, 255, 0) 72%),
+          linear-gradient(90deg, #f1e5d0 0%, #f8efd9 52%, #efe3c9 100%);
+        color: var(--ink);
+        font-family: "Microsoft YaHei", "Noto Sans SC", "PingFang SC", sans-serif;
+      }
+
+      .paper-grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        background-image:
+          radial-gradient(circle at 12% 22%, rgba(126, 97, 54, 0.18) 0 1px, transparent 1.4px),
+          radial-gradient(circle at 43% 61%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.3px);
+        background-size: 36px 34px, 47px 43px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      .sand-back,
+      .sand-front {
+        position: absolute;
+        right: -80px;
+        bottom: -34px;
+        width: 1040px;
+        height: 260px;
+        border-radius: 58% 42% 0 0 / 76% 55% 0 0;
+        background: linear-gradient(135deg, rgba(232, 188, 102, 0.28), rgba(194, 146, 66, 0.38));
+      }
+
+      .sand-back {
+        right: -24px;
+        bottom: 2px;
+        width: 760px;
+        height: 214px;
+        opacity: 0.54;
+      }
+
+      .sand-front {
+        opacity: 0.72;
+      }
+
+      .beam {
+        position: absolute;
+        right: 188px;
+        top: 4px;
+        width: 1080px;
+        height: 190px;
+        transform-origin: right center;
+        transform: rotate(-4deg);
+        border-radius: 56% 0 0 58% / 50% 0 0 54%;
+        background:
+          radial-gradient(ellipse at 100% 48%, rgba(255, 191, 64, 0.48) 0 9%, rgba(255, 205, 96, 0.28) 19%, rgba(255, 229, 165, 0.13) 40%, rgba(255, 255, 255, 0) 72%),
+          linear-gradient(270deg, rgba(255, 188, 60, 0.2), rgba(255, 223, 150, 0.1) 42%, rgba(255, 255, 255, 0) 100%);
+        filter: blur(18px);
+        opacity: 0.86;
+        mix-blend-mode: multiply;
+        -webkit-mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.86) 17%, rgba(0, 0, 0, 0.34) 58%, transparent 100%);
+        mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.86) 17%, rgba(0, 0, 0, 0.34) 58%, transparent 100%);
+      }
+
+      .beam-soft {
+        position: absolute;
+        right: 182px;
+        top: 7px;
+        width: 1520px;
+        height: 218px;
+        transform-origin: right center;
+        transform: rotate(-5deg);
+        clip-path: polygon(0 24%, 100% 38%, 100% 64%, 0 94%);
+        background:
+          radial-gradient(ellipse at 100% 48%, rgba(250, 190, 84, 0.24), rgba(249, 214, 139, 0.12) 38%, rgba(255, 255, 255, 0) 74%),
+          linear-gradient(270deg, rgba(236, 181, 82, 0.12), rgba(245, 221, 164, 0.07) 56%, rgba(255, 255, 255, 0) 100%);
+        filter: blur(28px);
+        opacity: 0.78;
+        -webkit-mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.74) 26%, rgba(0, 0, 0, 0.22) 66%, transparent 100%);
+        mask-image: linear-gradient(270deg, #000 0%, rgba(0, 0, 0, 0.74) 26%, rgba(0, 0, 0, 0.22) 66%, transparent 100%);
+      }
+
+      .lighthouse-halo {
+        position: absolute;
+        right: 88px;
+        top: 10px;
+        width: 390px;
+        height: 195px;
+        background:
+          radial-gradient(circle at 70% 41%, rgba(255, 202, 82, 0.92) 0 7%, rgba(255, 177, 52, 0.34) 8% 24%, rgba(255, 218, 143, 0.11) 42%, rgba(255, 255, 255, 0) 70%),
+          repeating-radial-gradient(circle at 70% 41%, rgba(212, 153, 56, 0.24) 0 2px, transparent 2px 23px);
+        filter: blur(0.1px);
+        opacity: 0.85;
+      }
+
+      .lighthouse {
+        position: absolute;
+        right: 150px;
+        bottom: 40px;
+        height: 260px;
+        width: auto;
+        z-index: 3;
+        filter: drop-shadow(0 8px 12px rgba(100, 70, 30, 0.12));
+      }
+
+      .copy {
+        position: absolute;
+        left: 210px;
+        top: 78px;
+        width: var(--copy-width);
+        z-index: 4;
+      }
+
+      .headline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0;
+        align-items: baseline;
+        width: 100%;
+        margin: 0;
+        font-family: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+        font-size: 72px;
+        font-weight: var(--headline-weight);
+        line-height: 1.05;
+        letter-spacing: 0;
+        color: var(--ink);
+        text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.42);
+        white-space: nowrap;
+      }
+
+      .accent {
+        width: 560px;
+        height: 4px;
+        margin-top: 17px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--gold), rgba(210, 146, 49, 0.48) 42%, rgba(210, 146, 49, 0));
+      }
+
+      .subtitle {
+        width: 100%;
+        margin: 17px 0 0;
+        font-size: 37px;
+        font-weight: 400;
+        line-height: 1.32;
+        letter-spacing: 0.8px;
+        color: var(--muted);
+        text-align: justify;
+        text-align-last: justify;
+        text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.45);
+        white-space: nowrap;
+      }
+    </style>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const headlineWeight = params.get("headlineWeight");
+
+      if (headlineWeight) {
+        document.documentElement.style.setProperty("--headline-weight", headlineWeight);
+      }
+    </script>
+  </head>
+  <body>
+    <main class="banner" aria-label="精诚服务再出发">
+      <div class="paper-grain"></div>
+      <div class="sand-back"></div>
+      <div class="sand-front"></div>
+      <div class="beam-soft"></div>
+      <div class="beam"></div>
+      <div class="lighthouse-halo"></div>
+      <img class="lighthouse" src="./oa-lighthouse-transparent.png" alt="" />
+      <section class="copy">
+        <h1 class="headline">
+          <span>求真</span>
+          <span>尽善</span>
+          <span>致美</span>
+          <span>大爱</span>
+          <span>幸福</span>
+        </h1>
+        <div class="accent"></div>
+        <p class="subtitle">精诚服务再出发，让每一次服务沉淀为长期的客户信任。</p>
+      </section>
+    </main>
+  </body>
+</html>
