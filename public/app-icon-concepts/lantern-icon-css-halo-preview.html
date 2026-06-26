@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1024, initial-scale=1" />
+    <title>Lantern Icon CSS Halo Preview</title>
+    <style>
+      :root {
+        --icon-size: 1024px;
+        --bg: #f8dda2;
+        --ink: #252a26;
+        --gold: #d99a2c;
+        --light: #ffe9b3;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: var(--icon-size);
+        height: var(--icon-size);
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      .icon {
+        position: relative;
+        width: var(--icon-size);
+        height: var(--icon-size);
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      .sun-field {
+        position: absolute;
+        left: 50%;
+        top: 34%;
+        width: 560px;
+        height: 560px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle, rgba(255, 233, 179, 0.96) 0 18%, rgba(246, 191, 84, 0.54) 19% 42%, rgba(246, 191, 84, 0.18) 57%, rgba(246, 191, 84, 0) 74%),
+          radial-gradient(circle, rgba(255, 181, 61, 0.34), rgba(255, 181, 61, 0) 70%);
+        filter: blur(0.2px);
+      }
+
+      .halo {
+        position: absolute;
+        left: 50%;
+        top: 34%;
+        width: 660px;
+        height: 660px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background:
+          repeating-radial-gradient(circle, transparent 0 47px, rgba(255, 252, 235, 0.84) 48px 50px, transparent 51px 64px),
+          repeating-radial-gradient(circle, transparent 0 76px, rgba(143, 99, 40, 0.16) 77px 79px, transparent 80px 103px);
+        opacity: 0.88;
+        -webkit-mask-image: radial-gradient(circle, transparent 0 82px, #000 83px 100%);
+        mask-image: radial-gradient(circle, transparent 0 82px, #000 83px 100%);
+      }
+
+      .halo::before,
+      .halo::after {
+        content: "";
+        position: absolute;
+        inset: 34px;
+        border-radius: 50%;
+        border: 6px solid rgba(217, 154, 44, 0.18);
+      }
+
+      .halo::after {
+        inset: 96px;
+        border-width: 5px;
+        border-color: rgba(255, 252, 235, 0.64);
+      }
+
+      .lighthouse {
+        position: absolute;
+        left: 50%;
+        bottom: 92px;
+        height: 762px;
+        width: auto;
+        transform: translateX(-50%);
+        z-index: 3;
+        filter: drop-shadow(0 16px 18px rgba(92, 62, 24, 0.13));
+      }
+    </style>
+  </head>
+  <body>
+    <main class="icon" aria-label="灯塔图标 CSS 光晕预览">
+      <div class="sun-field"></div>
+      <div class="halo"></div>
+      <img class="lighthouse" src="./lantern-icon-a-lighthouse-body-transparent-trimmed.png" alt="" />
+    </main>
+  </body>
+</html>
