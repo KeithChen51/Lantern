@@ -11,7 +11,7 @@ const HEART_SEARCH_TARGET: HeaderSearchTarget = {
   href: "/",
   label: "本心",
   description: "价值起点：理解精诚服务的判断标准。",
-  keywords: ["heart", "本心", "首页", "价值起点", "价值观", "文化", "真善美爱"],
+  keywords: ["heart", "本心", "首页", "价值起点", "价值观", "文化", "求真", "尽善", "致美", "大爱", "幸福"],
 };
 
 const MIRROR_SEARCH_TARGET: HeaderSearchTarget = {

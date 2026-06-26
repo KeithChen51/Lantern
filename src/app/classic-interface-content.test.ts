@@ -12,7 +12,8 @@ describe("classic interface content guardrails", () => {
 
     expect(heartPage).toContain("求真、尽善、致美、大爱、幸福");
     expect(heartPage).toContain("长期经营的分水岭在哪里？");
-    expect(heartPage).toContain("致美，是让工艺、流程、秩序和体面真正抵达体验。");
+    expect(heartPage).toContain("致美，是让服务不止于完成，更抵达专业与秩序。");
+    expect(heartPage).toContain("人的尊严、自由与幸福是经济发展的目的而不是代价。");
   });
 
   it("keeps the current Action case instead of restoring backup branch content", () => {

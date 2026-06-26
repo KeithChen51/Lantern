@@ -19,6 +19,17 @@ type ValueToneStyle = CSSProperties & {
   "--value-text": string;
 };
 
+type ValueSection = {
+  title: string;
+  focus: string;
+  summary: string;
+  customer: string;
+  employee: string;
+  organization?: string;
+  society?: string;
+  actions: string[];
+};
+
 const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const valueToneStyles = [
@@ -77,7 +88,7 @@ const upgradeReasons = [
   },
 ];
 
-const valueSections = [
+const valueSections: ValueSection[] = [
   {
     title: "求真",
     focus: "回到事实",
@@ -105,7 +116,7 @@ const valueSections = [
   {
     title: "致美",
     focus: "抵达体验",
-    summary: "致美，是让工艺、流程、秩序和体面真正抵达体验。",
+    summary: "致美，是让服务不止于完成，更抵达专业与秩序。",
     customer:
       "面对客户，致美体现在清晰有效的流程、整洁有序的现场、准确克制的表达和稳定可追踪的交付中；也体现在钣喷、维修等高专业度场景里从破损到修复、从混乱到秩序的工艺之美。",
     employee:
@@ -120,20 +131,22 @@ const valueSections = [
       "面对客户，大爱体现在对具体处境的体察。客户遇到事故、返修、异地用车、家庭出行、安全风险或长期信任受挫时，服务不能只剩条款和话术。先理解他的担心、损失和不便，再回到规则中寻找可承担、可交代的解法。",
     employee:
       "面对员工，大爱体现在对安全、尊严、成长和承压状态的关心。员工面对客户情绪、复杂工单、加班压力和跨部门协作时，组织不能只要求“扛住”，而要给出支持、授权、复盘和保护。",
-    actions: ["先看见人的处境，再回到规则中找解法。", "对客户有温度，对员工有支持、有边界、有保护。", "不用情怀替代管理责任，也不让个人独自承担系统问题。"],
+    society:
+      "面向社会，大爱要求把企业经营放在更长远的公共责任之中，以真诚、专业、守信的服务维护行业秩序，减少资源浪费，保护环境，推动构建更安全、更可靠、更有温度的汽车服务生态。",
+    actions: ["先看见人的处境，再回到规则中找解法。", "对客户有温度，对员工有支持、有边界、有保护。", "把服务行为放回长期关系和公共责任中审视。"],
   },
   {
     title: "幸福",
     focus: "共同归处",
     summary:
-      "幸福，是求真、尽善、致美、大爱最终要抵达的状态。",
+      "幸福，是求真、尽善、致美、大爱最终要抵达的状态。人的尊严、自由与幸福是经济发展的目的而不是代价。",
     customer:
       "面对客户，幸福不是简单的满意评分，而是感到安心、被尊重，并愿意继续托付。",
     employee:
       "面对员工，幸福是在真实压力中仍然被支持、被尊重、能成长。员工知道标准在哪里，资源从哪里来，问题可以如何被复盘，而不是把所有压力都变成个人承担。",
     organization:
-      "面对组织，幸福意味着服务体系可持续，经营结果建立在真实价值、稳定交付和长期关系之上。",
-    actions: ["用客户是否更安心来检验服务。", "用员工是否更有尊严、更有支持来检验管理。", "用组织是否更可持续来检验经营。"],
+      "面对组织，幸福意味着服务体系可持续，经营结果建立在真实价值、稳定交付和长期关系之上。发展不应以消耗人的感受和尊严为前提，而是在成就客户、支持员工、承担责任中获得长期价值。",
+    actions: ["用客户是否更安心来检验服务。", "用员工是否更有尊严、更有支持来检验管理。", "用组织是否更可持续、发展是否尊重人的尊严与幸福来检验经营。"],
   },
 ];
 
@@ -141,12 +154,12 @@ const dimensionNotes = [
   {
     title: "五个词是一条路径",
     description:
-      "求真立事实，尽善定取舍，致美见专业，大爱看见人，幸福验结果。",
+      "求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。",
   },
   {
     title: "价值要进入组织能力",
     description:
-      "这套路径不止面向客户，也面向员工。价值观要进入流程、授权、协作、复盘和保障机制，成为组织可以稳定兑现的服务能力。",
+      "这套路径贯穿服务客户、对待员工、组织协作和经营管理全过程。价值观要进入流程、授权、协作、复盘和保障机制，成为组织可以稳定兑现的服务能力。",
   },
   {
     title: "回到真实场景",
@@ -226,7 +239,7 @@ export default function HeartPage() {
         <LhSectionHeader
           eyebrow="升级背景"
           title="长期经营的分水岭在哪里？"
-          description="一个经营命题必须直面：如何让每一次服务不止于交付结果，还能沉淀复购、转介绍、协作效率和组织士气？关键在于持续经营客户信任。"
+          description="如何让每一次服务不止于交付结果，还能沉淀客户信任，正在成为长期经营必须回答的问题。关键在于持续经营客户信任。"
         />
         <div className="grid gap-4 md:grid-cols-3">
           {upgradeReasons.map((reason) => (
@@ -243,7 +256,7 @@ export default function HeartPage() {
           <p className="text-xs font-extrabold tracking-[0.14em] text-panel/65">核心</p>
           <h2 className="mt-3 text-2xl font-extrabold text-panel">精诚服务的核心</h2>
           <p className="mt-4 text-base leading-8 text-panel/80">
-            新的服务价值框架并非对“精诚”的重写，而是把“精于勤，诚于心”的朴素共识进一步转化为可理解、可判断、可执行的价值路径。
+            新的服务价值框架并非对“精诚”的重写，而是对其内涵的延伸，把“精于勤，诚于心”的朴素共识进一步转化为可理解、可判断、可执行的价值路径。
           </p>
         </LhCard>
         <div className="grid gap-5 md:grid-cols-2">
@@ -266,7 +279,7 @@ export default function HeartPage() {
         <LhSectionHeader
           eyebrow="价值路径"
           title="求真、尽善、致美、大爱、幸福"
-          description="求真立事实，尽善定取舍，致美见专业，大爱看见人，幸福验结果。"
+          description="求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。"
         />
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -365,6 +378,21 @@ export default function HeartPage() {
                       <p className="mt-3 text-sm leading-7 text-ink-soft">{value.organization}</p>
                     </div>
                   ) : null}
+                  {"society" in value && value.society ? (
+                    <div
+                      className="rounded-sm border p-4 sm:p-5 md:col-span-2"
+                      style={{
+                        borderColor: "color-mix(in srgb, var(--value-line) 56%, var(--color-line))",
+                        background: "color-mix(in srgb, var(--value-soft) 18%, var(--color-panel) 82%)",
+                      }}
+                    >
+                      <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
+                        <span className="h-2 w-2 rounded-full border" style={{ borderColor: "var(--value-color)" }} />
+                        面向社会
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-ink-soft">{value.society}</p>
+                    </div>
+                  ) : null}
                   <div
                     className="rounded-sm border p-4 sm:p-5 md:col-span-2"
                     style={{
@@ -434,7 +462,7 @@ export default function HeartPage() {
               <td>{PUBLIC_WORKSHOP_ENABLED ? "用于案例复盘、路引问答与岗位 Do & Don't 共创。" : "用于案例复盘、路引问答与后续岗位 Do & Don't 梳理。"}</td>
             </tr>
             <tr>
-              <td>客户与员工双视角</td>
+              <td>客户、员工、社会与组织视角</td>
               <td>避免把服务价值只理解成客户侧口号。</td>
               <td>用于笃行案例复盘中的权衡判断。</td>
             </tr>
