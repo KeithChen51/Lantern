@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>灯塔平台 Classic Amber 视觉规范</title>
+  <style>
+    :root {
+      --lh-ink: #2c2c2c;
+      --lh-ink-soft: color-mix(in srgb, #2c2c2c 74%, white);
+      --lh-muted: color-mix(in srgb, #2c2c2c 58%, white);
+      --lh-page: #f3efe0;
+      --lh-page-start: #f8f3e5;
+      --lh-page-end: #eee6d0;
+      --lh-panel: color-mix(in srgb, white 42%, #f3efe0);
+      --lh-surface: rgba(255, 255, 255, 0.4);
+      --lh-surface-quiet: color-mix(in srgb, #d97706 8%, #f3efe0);
+      --lh-line: rgba(44, 44, 44, 0.08);
+      --lh-line-strong: rgba(217, 119, 6, 0.28);
+      --lh-hairline: rgba(44, 44, 44, 0.06);
+      --lh-classic-amber: #d97706;
+      --lh-primary: var(--lh-classic-amber);
+      --lh-primary-deep: color-mix(in srgb, var(--lh-classic-amber) 76%, #2c2c2c);
+      --lh-brass: #9b7a4c;
+      --lh-danger: #b85c46;
+      --lh-danger-soft: rgba(184, 92, 70, 0.12);
+      --lh-card-radius: 16px;
+      --lh-control-radius: 8px;
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.02);
+      --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.04);
+      --shadow-deck: 0 18px 42px rgba(0, 0, 0, 0.05);
+      --shadow-focus: 0 0 0 3px rgba(217, 119, 6, 0.16);
+      --grid-sidebar: 248px;
+      --grid-content-max: 1220px;
+      --grid-page-gap: 28px;
+      --grid-column-gap: 16px;
+      --grid-row-gap: 24px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --type-caption: 12px;
+      --type-label: 13px;
+      --type-control: 14px;
+      --type-body: 15px;
+      --type-reading: 16px;
+      --type-lead: 20px;
+      --type-h3: 25px;
+      --type-h2: 31px;
+      --type-display: clamp(40px, 5vw, 72px);
+      --title-display: var(--type-display);
+      --title-page: clamp(32px, 3vw, 44px);
+      --title-section: var(--type-h2);
+      --title-subsection: var(--type-h3);
+      --title-card: var(--type-lead);
+      --title-kicker: var(--type-caption);
+      --weight-regular: 400;
+      --weight-medium: 500;
+      --weight-semibold: 600;
+      --weight-bold: 700;
+      --weight-extrabold: 800;
+      --weight-black: 900;
+      --font-hei: "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+      --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--lh-ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(217, 119, 6, 0.09), transparent 28rem),
+        linear-gradient(180deg, var(--lh-page-start), var(--lh-page) 38%, var(--lh-page-end));
+      font-family: var(--font-hei);
+      letter-spacing: 0;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(44, 44, 44, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(44, 44, 44, 0.014) 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: 0.42;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    code {
+      border: 1px solid var(--lh-line);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.38);
+      padding: 0.12em 0.35em;
+      color: var(--lh-primary-deep);
+      font-family: var(--font-mono);
+      font-size: 0.92em;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: var(--grid-sidebar) minmax(0, 1fr);
+      gap: var(--grid-page-gap);
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: var(--space-8);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: var(--space-6);
+      align-self: start;
+      min-height: calc(100dvh - 64px);
+      border-right: 1px solid var(--lh-hairline);
+      padding: var(--space-2) 18px var(--space-2) 0;
+    }
+
+    .brand-lockup { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; }
+
+    .logo-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: var(--lh-control-radius);
+      color: var(--lh-classic-amber);
+      background: rgba(217, 119, 6, 0.08);
+      box-shadow: 0 0 16px rgba(217, 119, 6, 0.12);
+      font-family: var(--font-serif);
+      font-size: 21px;
+      font-weight: var(--weight-extrabold);
+    }
+
+    .brand-title {
+      margin: 0;
+      color: var(--lh-classic-amber);
+      font-family: var(--font-serif);
+      font-size: var(--type-lead);
+      line-height: 1;
+    }
+
+    .brand-subtitle { margin: 5px 0 0; color: var(--lh-muted); font-size: var(--type-caption); font-weight: var(--weight-bold); }
+    .nav { display: grid; gap: var(--space-2); margin-top: 34px; }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      min-height: 38px;
+      border-radius: var(--lh-control-radius);
+      padding: 0 var(--space-3);
+      color: var(--lh-ink-soft);
+      font-size: var(--type-label);
+      font-weight: var(--weight-extrabold);
+    }
+
+    .nav a:hover,
+    .nav a.is-active { background: rgba(217, 119, 6, 0.08); color: var(--lh-classic-amber); }
+    .main { display: grid; gap: 30px; min-width: 0; padding-bottom: 56px; }
+    .hero { padding: var(--space-6) var(--space-2) 18px; }
+
+    .eyebrow,
+    .section-kicker {
+      color: var(--lh-muted);
+      font-size: var(--type-caption);
+      font-weight: var(--weight-black);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border: 1px solid rgba(217, 119, 6, 0.22);
+      border-radius: var(--lh-control-radius);
+      background: rgba(217, 119, 6, 0.08);
+      padding: 0 10px;
+      color: var(--lh-primary-deep);
+    }
+
+    h1, h2, h3 { margin: 0; color: var(--lh-ink); font-family: var(--font-serif); }
+    h1 { max-width: 880px; margin-top: 18px; font-size: var(--type-display); line-height: 1.04; letter-spacing: 0; }
+
+    .hero-lede {
+      max-width: 780px;
+      margin: 18px 0 0;
+      color: rgba(44, 44, 44, 0.68);
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: var(--weight-semibold);
+      line-height: 1.85;
+    }
+
+    .hero-meta,
+    .button-row,
+    .chip-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .hero-meta { margin-top: var(--space-6); }
+
+    .section {
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--lh-card-radius);
+      background: rgba(255, 255, 255, 0.4);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .section-header { display: grid; gap: 9px; border-bottom: 1px solid var(--lh-line); padding: 22px var(--space-6); }
+    .section h2 { font-size: var(--type-h2); line-height: 1.14; }
+
+    .section-intro {
+      max-width: 840px;
+      margin: 0;
+      color: var(--lh-muted);
+      font-size: var(--type-control);
+      line-height: 1.85;
+    }
+
+    .section-body { padding: var(--space-6); }
+    .grid { display: grid; gap: var(--grid-column-gap); }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .card,
+    .scale-card,
+    .grid-metric,
+    .grid-pattern,
+    .shadow-sample,
+    .icon-tile,
+    .rule-card {
+      border: 1px solid var(--lh-line);
+      border-radius: var(--lh-card-radius);
+      background: rgba(255, 255, 255, 0.34);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-4);
+    }
+
+    .card h3,
+    .scale-card h3,
+    .rule-card h3 { font-size: var(--type-lead); line-height: 1.25; }
+
+    .card p,
+    .scale-card p,
+    .rule-card li,
+    .icon-tile span:not(.icon-glyph),
+    .grid-metric span,
+    .grid-pattern span {
+      color: var(--lh-muted);
+      font-size: var(--type-control);
+      line-height: 1.72;
+    }
+
+    .card p,
+    .scale-card p { margin: 9px 0 0; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 28px;
+      border: 1px solid rgba(217, 119, 6, 0.3);
+      border-radius: var(--lh-control-radius);
+      background: rgba(217, 119, 6, 0.1);
+      padding: 0 10px;
+      color: var(--lh-classic-amber);
+      font-size: var(--type-caption);
+      font-weight: var(--weight-black);
+      line-height: 1;
+    }
+
+    .chip.neutral { border-color: var(--lh-line); background: var(--lh-surface-quiet); color: var(--lh-muted); }
+    .chip.brass, .chip.info, .chip.success { border-color: rgba(155, 122, 76, 0.25); background: rgba(155, 122, 76, 0.14); color: var(--lh-brass); }
+    .chip.danger { border-color: rgba(184, 92, 70, 0.25); background: rgba(184, 92, 70, 0.12); color: var(--lh-danger); }
+    .chip::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+
+    .token-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .swatch-card { overflow: hidden; border: 1px solid var(--lh-line); border-radius: 14px; background: rgba(255, 255, 255, 0.36); }
+    .swatch { height: 84px; border-bottom: 1px solid var(--lh-line); }
+    .swatch-info { display: grid; gap: 4px; padding: var(--space-3); }
+    .token-name, .token-value { font-family: var(--font-mono); }
+    .token-name { color: var(--lh-ink); font-size: var(--type-caption); font-weight: var(--weight-extrabold); }
+    .token-value { color: var(--lh-muted); font-size: 11px; line-height: 1.5; }
+
+    .color-architecture {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-3);
+      margin: var(--space-6) 0 0;
+    }
+
+    .color-layer {
+      border: 1px solid var(--lh-line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.34);
+      padding: var(--space-4);
+    }
+
+    .color-layer b { display: block; color: var(--lh-ink); font-size: var(--type-control); }
+    .color-layer p { margin: 8px 0 0; color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
+
+    .aux-token-plan {
+      display: grid;
+      grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+      gap: var(--grid-column-gap);
+      align-items: start;
+      margin-top: var(--space-4);
+    }
+
+    .aux-token-note {
+      border-left: 1px solid rgba(217, 119, 6, 0.28);
+      padding-left: var(--space-4);
+      color: var(--lh-muted);
+      font-size: var(--type-label);
+      font-weight: var(--weight-semibold);
+      line-height: 1.7;
+    }
+
+    .aux-token-note b { display: block; margin-bottom: 6px; color: var(--lh-ink); font-size: var(--type-control); }
+    .aux-token-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .aux-token-list li { display: grid; grid-template-columns: 138px minmax(0, 1fr); gap: var(--space-3); align-items: baseline; border-top: 1px solid var(--lh-line); padding-top: 8px; color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.55; }
+    .aux-token-list li:first-child { border-top: 0; padding-top: 0; }
+    .aux-token-list code { width: fit-content; font-size: 11px; }
+
+    .value-tag-system {
+      display: grid;
+      gap: var(--space-4);
+      margin-top: var(--space-6);
+      border: 1px solid rgba(217, 119, 6, 0.18);
+      border-radius: var(--lh-card-radius);
+      background: color-mix(in srgb, var(--lh-surface) 78%, rgba(217, 119, 6, 0.08));
+      padding: var(--space-5);
+    }
+
+    .value-tag-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); align-items: end; }
+    .value-tag-head h3 { color: var(--lh-ink); font-size: var(--type-lead); line-height: 1.25; }
+    .value-tag-head p { max-width: 720px; margin: 8px 0 0; color: var(--lh-muted); font-size: var(--type-control); font-weight: var(--weight-semibold); line-height: 1.75; }
+    .value-tag-status { color: var(--lh-primary-deep); font-family: var(--font-mono); font-size: var(--type-caption); font-weight: var(--weight-extrabold); }
+    .value-tag-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+    .value-tag-card {
+      display: grid;
+      gap: var(--space-3);
+      min-height: 138px;
+      border: 1px solid color-mix(in srgb, var(--tag-color) 24%, var(--lh-line));
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--tag-color) var(--tag-wash, 10%), rgba(255, 255, 255, 0.42));
+      padding: var(--space-3);
+    }
+    .value-tag-card.is-derived { --tag-wash: 8%; }
+    .value-tag-swatch { height: 26px; border-radius: var(--radius-sm); background: var(--tag-color); box-shadow: inset 0 0 0 1px rgba(44, 44, 44, 0.08); }
+    .value-tag-label { display: inline-flex; width: fit-content; align-items: center; gap: 7px; min-height: 26px; border: 1px solid color-mix(in srgb, var(--tag-color) 34%, transparent); border-radius: var(--lh-control-radius); background: color-mix(in srgb, var(--tag-color) 14%, transparent); padding: 0 9px; color: color-mix(in srgb, var(--tag-color) 74%, var(--lh-ink)); font-size: var(--type-caption); font-weight: var(--weight-black); }
+    .value-tag-label::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+    .value-tag-card b { color: var(--lh-ink); font-size: var(--type-label); }
+    .value-tag-card code { width: fit-content; font-size: 11px; }
+    .value-tag-card p { margin: 0; color: var(--lh-muted); font-size: var(--type-caption); font-weight: var(--weight-semibold); line-height: 1.55; }
+    .value-tag-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+    .value-tag-rule { border-top: 1px solid var(--lh-line); padding-top: var(--space-3); color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
+    .value-tag-rule b { display: block; margin-bottom: 4px; color: var(--lh-ink); font-size: var(--type-control); }
+
+    .type-system { display: grid; gap: var(--space-5); }
+    .type-showcase { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 18px; align-items: stretch; }
+    .type-display { display: grid; align-content: center; min-height: 270px; border-left: 1px solid rgba(217, 119, 6, 0.22); padding: 18px 22px; }
+    .type-display strong { display: block; color: var(--lh-classic-amber); font-family: var(--font-serif); font-size: var(--type-display); line-height: 0.98; }
+    .type-display span { margin-top: var(--space-4); color: rgba(44, 44, 44, 0.66); font-family: var(--font-serif); font-size: 18px; font-weight: var(--weight-semibold); line-height: 1.8; }
+
+    .spec-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+
+    .spec-list li,
+    .scale-row,
+    .weight-row,
+    .space-row {
+      display: grid;
+      gap: var(--space-3);
+      border-top: 1px solid var(--lh-line);
+      padding-top: 10px;
+      color: var(--lh-muted);
+      font-size: var(--type-control);
+      line-height: 1.65;
+    }
+
+    .spec-list li { grid-template-columns: 150px minmax(0, 1fr); }
+    .spec-list li:first-child, .scale-row:first-child, .weight-row:first-child, .space-row:first-child { border-top: 0; padding-top: 0; }
+    .spec-list b, .scale-row strong, .weight-row b, .space-row b, .grid-metric b, .grid-pattern b { color: var(--lh-ink); }
+    .scale-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .scale-card h3, .rule-card h3 { color: var(--lh-classic-amber); }
+    .scale-list, .weight-list, .space-list { display: grid; gap: 10px; margin-top: var(--space-4); }
+    .scale-row { grid-template-columns: 86px 92px minmax(0, 1fr); align-items: baseline; font-size: var(--type-label); }
+    .weight-row { grid-template-columns: 64px minmax(0, 1fr); align-items: baseline; font-size: var(--type-label); }
+    .space-row { grid-template-columns: 72px minmax(0, 1fr) 126px; align-items: center; font-size: var(--type-label); }
+    .sample-display { color: var(--lh-primary-deep); font-family: var(--font-serif); font-size: var(--type-h3); font-weight: var(--weight-black); line-height: 1; white-space: nowrap; }
+    .sample-body { color: var(--lh-ink); font-size: var(--type-body); font-weight: var(--weight-regular); line-height: 1.72; }
+    .space-bar { display: block; height: 12px; border-radius: 999px; background: linear-gradient(90deg, rgba(217, 119, 6, 0.18), rgba(217, 119, 6, 0.52)); box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.18); }
+
+    .heading-system { display: grid; gap: var(--space-4); border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.34); box-shadow: var(--shadow-sm); padding: var(--space-4); }
+    .heading-system h3 { color: var(--lh-classic-amber); font-size: var(--type-lead); line-height: 1.25; }
+    .heading-system p { margin: 0; color: var(--lh-muted); font-size: var(--type-control); line-height: 1.72; }
+    .heading-ladder { display: grid; gap: var(--space-3); }
+    .heading-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) 260px; gap: var(--space-4); align-items: center; border-top: 1px solid var(--lh-line); padding-top: var(--space-3); }
+    .heading-row:first-child { border-top: 0; padding-top: 0; }
+    .heading-role { display: grid; gap: 4px; color: var(--lh-muted); font-size: var(--type-label); line-height: 1.45; }
+    .heading-role b { color: var(--lh-ink); font-size: var(--type-control); }
+    .heading-sample { margin: 0; color: var(--lh-ink); letter-spacing: 0; }
+    .heading-display { color: var(--lh-classic-amber); font-family: var(--font-serif); font-size: clamp(40px, 4vw, 56px); font-weight: var(--weight-black); line-height: 1.04; }
+    .heading-page { font-family: var(--font-serif); font-size: var(--title-page); font-weight: var(--weight-black); line-height: 1.1; }
+    .heading-section { font-family: var(--font-serif); font-size: var(--title-section); font-weight: var(--weight-bold); line-height: 1.14; }
+    .heading-subsection { font-family: var(--font-serif); font-size: var(--title-subsection); font-weight: var(--weight-bold); line-height: 1.2; }
+    .heading-card { font-family: var(--font-serif); font-size: var(--title-card); font-weight: var(--weight-bold); line-height: 1.25; }
+    .heading-kicker { color: var(--lh-muted); font-family: var(--font-hei); font-size: var(--title-kicker); font-weight: var(--weight-black); line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase; }
+    .heading-note { color: var(--lh-muted); font-size: var(--type-label); line-height: 1.6; }
+
+    .shell-system { display: grid; gap: var(--space-5); }
+    .shell-preview-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr); gap: var(--grid-column-gap); align-items: stretch; }
+    .shell-frame { border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.34); box-shadow: var(--shadow-sm); padding: var(--space-4); }
+    .shell-frame h3 { color: var(--lh-classic-amber); font-size: var(--type-lead); line-height: 1.25; }
+    .shell-frame p { margin: 8px 0 0; color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
+    .desktop-shell {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: var(--space-3);
+      min-height: 320px;
+      margin-top: var(--space-4);
+      border: 1px solid var(--lh-line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--lh-page-start), var(--lh-page-end));
+      padding: var(--space-3);
+    }
+    .desktop-rail { display: grid; grid-template-rows: 40px repeat(5, 34px) 1fr 34px; gap: 8px; border-right: 1px solid rgba(217, 119, 6, 0.18); padding-right: var(--space-2); }
+    .rail-logo, .rail-item, .mobile-tab, .mobile-dot { border: 1px solid rgba(217, 119, 6, 0.18); border-radius: var(--lh-control-radius); background: rgba(255, 255, 255, 0.38); }
+    .rail-logo { background: rgba(217, 119, 6, 0.1); }
+    .rail-item.is-active { background: rgba(217, 119, 6, 0.12); box-shadow: inset 2px 0 0 var(--lh-classic-amber); }
+    .desktop-workspace { display: grid; grid-template-rows: 48px minmax(0, 1fr); gap: var(--space-3); min-width: 0; }
+    .desktop-topbar { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: var(--space-3); align-items: center; border: 1px solid var(--lh-line); border-radius: 12px; background: rgba(255, 255, 255, 0.4); padding: var(--space-2); }
+    .topbar-search, .topbar-action, .panel-block { border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.08); }
+    .topbar-search { height: 28px; }
+    .topbar-action { height: 28px; background: rgba(155, 122, 76, 0.12); }
+    .desktop-content { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: var(--space-3); }
+    .content-main, .content-aside { display: grid; gap: var(--space-3); border: 1px solid var(--lh-line); border-radius: 12px; background: rgba(255, 255, 255, 0.34); padding: var(--space-3); }
+    .panel-block { min-height: 48px; }
+    .panel-block.large { min-height: 120px; background: rgba(255, 255, 255, 0.42); }
+    .mobile-shell {
+      display: grid;
+      grid-template-rows: 52px minmax(0, 1fr) 62px;
+      gap: var(--space-3);
+      max-width: 340px;
+      min-height: 520px;
+      margin: var(--space-4) auto 0;
+      border: 1px solid var(--lh-line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, var(--lh-page-start), var(--lh-page-end));
+      padding: var(--space-3);
+    }
+    .mobile-header, .mobile-bottom-nav { border: 1px solid var(--lh-line); border-radius: 18px; background: rgba(255, 255, 255, 0.46); }
+    .mobile-header { display: grid; grid-template-columns: 42px minmax(0, 1fr) 42px; gap: 8px; align-items: center; padding: 7px; }
+    .mobile-dot { height: 34px; background: rgba(217, 119, 6, 0.1); }
+    .mobile-title { height: 20px; border-radius: 999px; background: rgba(44, 44, 44, 0.08); }
+    .mobile-content { display: grid; gap: var(--space-3); overflow: hidden; }
+    .mobile-card { border: 1px solid var(--lh-line); border-radius: 14px; background: rgba(255, 255, 255, 0.4); min-height: 92px; }
+    .mobile-card.large { min-height: 180px; }
+    .mobile-bottom-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 7px; }
+    .mobile-tab { display: grid; place-items: center; min-height: 46px; color: var(--lh-muted); font-size: 10px; font-weight: var(--weight-black); }
+    .mobile-tab.is-active { border-color: rgba(217, 119, 6, 0.32); background: rgba(217, 119, 6, 0.12); color: var(--lh-classic-amber); }
+    .shell-rules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+    .shell-rule { border-top: 1px solid var(--lh-line); padding-top: var(--space-3); color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
+    .shell-rule b { display: block; margin-bottom: 4px; color: var(--lh-ink); font-size: var(--type-control); }
+
+    .grid-system { display: grid; gap: var(--space-5); }
+    .grid-spec { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--grid-column-gap); align-items: stretch; }
+
+    .grid-preview {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--space-2);
+      min-height: 260px;
+      border: 1px solid var(--lh-line);
+      border-radius: var(--lh-card-radius);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18)),
+        repeating-linear-gradient(90deg, rgba(217, 119, 6, 0.08) 0 1px, transparent 1px calc((100% - 88px) / 12 + 8px));
+      padding: 14px;
+    }
+
+    .grid-preview span {
+      display: grid;
+      place-items: center;
+      min-height: 72px;
+      border: 1px solid rgba(217, 119, 6, 0.18);
+      border-radius: var(--lh-control-radius);
+      background: rgba(217, 119, 6, 0.08);
+      color: var(--lh-primary-deep);
+      font-family: var(--font-mono);
+      font-size: var(--type-caption);
+      font-weight: var(--weight-black);
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+
+    .grid-rule-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .grid-rule-list li { border: 1px solid var(--lh-line); border-radius: var(--lh-control-radius); background: rgba(255, 255, 255, 0.3); padding: var(--space-3); }
+    .grid-rule-list b { display: block; color: var(--lh-ink); font-size: var(--type-label); }
+    .grid-rule-list span { display: block; margin-top: var(--space-1); color: var(--lh-muted); font-size: var(--type-caption); line-height: 1.55; }
+    .grid-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .grid-metric strong { display: block; margin-top: var(--space-2); color: var(--lh-classic-amber); font-family: var(--font-mono); font-size: var(--type-lead); line-height: 1; }
+    .grid-patterns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .pattern-bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-1); margin-top: var(--space-3); }
+    .pattern-bars i { display: block; min-height: 22px; border-radius: var(--radius-xs); background: rgba(217, 119, 6, 0.12); }
+    .pattern-bars .wide { grid-column: span 8; }
+    .pattern-bars .aside { grid-column: span 4; background: rgba(155, 122, 76, 0.16); }
+    .pattern-bars .half { grid-column: span 6; }
+    .pattern-bars .third { grid-column: span 4; }
+    .pattern-bars .quarter { grid-column: span 3; }
+
+    .shadow-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .shadow-sample { display: grid; align-content: space-between; min-height: 148px; }
+    .shadow-sample strong { color: var(--lh-ink); font-size: var(--type-body); line-height: 1.4; }
+    .shadow-sample code { margin-top: var(--space-3); align-self: end; color: var(--lh-muted); }
+    .shadow-none { box-shadow: none; }
+    .shadow-sm { box-shadow: var(--shadow-sm); }
+    .shadow-md { box-shadow: var(--shadow-md); }
+    .shadow-deck { box-shadow: var(--shadow-deck); }
+    .shadow-focus { border-color: rgba(217, 119, 6, 0.35); box-shadow: var(--shadow-focus); }
+    .shadow-button { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-panel); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
+
+    .icon-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .icon-tile { display: grid; gap: 10px; }
+
+    .icon-glyph,
+    .callout-icon {
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(217, 119, 6, 0.22);
+      border-radius: var(--lh-control-radius);
+      background: rgba(217, 119, 6, 0.08);
+      color: var(--lh-classic-amber);
+      box-shadow: 0 0 16px rgba(217, 119, 6, 0.12);
+    }
+
+    .icon-glyph { width: 44px; height: 44px; }
+    .callout-icon { width: 34px; height: 34px; background: var(--lh-panel); }
+    .solar-icon { width: 24px; height: 24px; color: currentColor; }
+    .icon-tile b { color: var(--lh-ink); font-size: var(--type-control); }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: var(--lh-control-radius);
+      padding: 0 var(--space-4);
+      font: var(--weight-extrabold) var(--type-control)/1 var(--font-hei);
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .button.primary { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-panel); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
+    .button.secondary { border-color: var(--lh-line-strong); background: var(--lh-panel); color: var(--lh-primary-deep); box-shadow: var(--shadow-sm); }
+    .button.quiet { border-color: var(--lh-line); background: var(--lh-surface-quiet); color: var(--lh-ink-soft); }
+    .button.ghost { border-color: transparent; background: transparent; color: var(--lh-primary-deep); }
+    .button.danger { border-color: rgba(184, 92, 70, 0.3); background: var(--lh-danger-soft); color: var(--lh-danger); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: grid; gap: var(--space-2); }
+    .field label { color: var(--lh-ink); font-size: var(--type-control); font-weight: var(--weight-black); }
+
+    input,
+    textarea {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--lh-line-strong);
+      border-radius: var(--lh-control-radius);
+      outline: 0;
+      background: var(--lh-panel);
+      color: var(--lh-ink);
+      font: var(--weight-regular) var(--type-body)/1.4 var(--font-hei);
+      padding: 0 14px;
+    }
+
+    textarea { min-height: 110px; padding: 13px 14px; line-height: 1.7; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--lh-brass); box-shadow: var(--shadow-focus); }
+    .helper { color: var(--lh-muted); font-size: var(--type-label); line-height: 1.6; }
+
+    .callout {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: var(--space-3);
+      border: 1px solid rgba(217, 119, 6, 0.25);
+      border-radius: var(--lh-card-radius);
+      background: rgba(217, 119, 6, 0.1);
+      padding: var(--space-4);
+      color: var(--lh-primary-deep);
+    }
+
+    .callout strong { display: block; color: var(--lh-ink); font-size: var(--type-control); line-height: 1.6; }
+    .callout p { margin: 3px 0 0; color: var(--lh-ink-soft); font-size: var(--type-control); line-height: 1.75; }
+    .table-wrap { overflow: auto; border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: var(--lh-panel); box-shadow: var(--shadow-sm); }
+    table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    th, td { border-top: 1px solid var(--lh-line); padding: 13px var(--space-4); text-align: left; vertical-align: top; }
+    th { border-top: 0; color: var(--lh-muted); font-size: var(--type-caption); font-weight: var(--weight-black); letter-spacing: 0.12em; text-transform: uppercase; }
+    td { color: var(--lh-ink-soft); font-size: var(--type-control); line-height: 1.65; }
+
+    .matrix-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .matrix-card { display: grid; gap: var(--space-3); border: 1px solid var(--lh-line); border-radius: 12px; background: rgba(255, 255, 255, 0.34); padding: var(--space-4); }
+    .matrix-card b { color: var(--lh-ink); font-size: var(--type-control); line-height: 1.35; }
+    .matrix-card p { margin: 0; color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
+    .state-strip { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--space-2); }
+    .state-pill { display: grid; place-items: center; min-height: 40px; border: 1px solid var(--lh-line); border-radius: var(--lh-control-radius); background: rgba(255, 255, 255, 0.34); color: var(--lh-muted); font-size: 11px; font-weight: var(--weight-black); text-align: center; }
+    .state-pill.is-hover { border-color: rgba(217, 119, 6, 0.22); background: rgba(217, 119, 6, 0.08); color: var(--lh-primary-deep); }
+    .state-pill.is-pressed { border-color: rgba(217, 119, 6, 0.34); background: rgba(217, 119, 6, 0.14); color: var(--lh-primary-deep); }
+    .state-pill.is-focus { border-color: rgba(217, 119, 6, 0.35); box-shadow: var(--shadow-focus); color: var(--lh-primary-deep); }
+    .state-pill.is-disabled { opacity: 0.62; background: rgba(44, 44, 44, 0.04); color: var(--lh-muted); }
+    .state-pill.is-loading { border-style: dashed; color: var(--lh-brass); }
+    .state-pill.is-selected { border-color: rgba(217, 119, 6, 0.3); background: var(--lh-primary-soft, rgba(217,119,6,.1)); color: var(--lh-primary-deep); }
+    .state-pill.is-error { border-color: rgba(184, 92, 70, 0.28); background: var(--lh-danger-soft); color: var(--lh-danger); }
+    .anatomy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .anatomy-card { display: grid; gap: var(--space-3); border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.36); padding: var(--space-4); }
+    .anatomy-card h3 { color: var(--lh-classic-amber); font-size: var(--type-lead); line-height: 1.25; }
+    .anatomy-card ol, .anatomy-card ul { display: grid; gap: 7px; margin: 0; padding-left: 18px; color: var(--lh-ink-soft); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.6; }
+    .governance-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); }
+    .governance-step { border: 1px solid rgba(217, 119, 6, 0.18); border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.07); padding: var(--space-3); color: var(--lh-primary-deep); font-size: var(--type-label); font-weight: var(--weight-black); line-height: 1.45; }
+
+    .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--grid-column-gap); }
+    .rule-card ul { display: grid; gap: 9px; margin: var(--space-3) 0 0; padding-left: 18px; }
+    .rule-card.dont h3 { color: var(--lh-danger); }
+    .footer-note { color: var(--lh-muted); font-size: var(--type-caption); line-height: 1.75; padding: 0 var(--space-2); }
+
+    @media (max-width: 980px) {
+      .page { grid-template-columns: 1fr; padding: var(--space-5); }
+      .sidebar { position: relative; top: auto; min-height: auto; border-right: 0; border-bottom: 1px solid var(--lh-hairline); padding: 0 0 18px; }
+      .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
+      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .rule-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar" aria-label="视觉规范目录">
+      <div class="brand-lockup">
+        <div class="logo-mark">灯</div>
+        <div>
+          <p class="brand-title">灯塔</p>
+          <p class="brand-subtitle">Classic Amber Visual Spec</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="is-active" href="#overview">定位</a>
+        <a href="#color">颜色</a>
+        <a href="#type">字体</a>
+        <a href="#layout">布局</a>
+        <a href="#grid">网格</a>
+        <a href="#shadow">阴影</a>
+        <a href="#icon">图标</a>
+        <a href="#components">组件</a>
+        <a href="#accessibility">可访问性</a>
+        <a href="#states">交互状态</a>
+        <a href="#anatomy">组件结构</a>
+        <a href="#content-recovery">内容反馈</a>
+        <a href="#governance">治理</a>
+        <a href="#patterns">页面模式</a>
+        <a href="#rules">边界</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section id="overview" class="hero">
+        <span class="eyebrow">Lighthouse Platform UI / v0.2</span>
+        <h1>灯塔平台视觉规范<br />经典琥珀版本</h1>
+        <p class="hero-lede">本规范按当前产品实际使用的 Classic Amber 视觉系统整理。它服务于平台导航、内容阅读、Hermit 问答、Workshop 投稿与后台维护，不采用探索过程中的 Harbor Signal、暖色备选、H5 预热稿或印刷输出样式。</p>
+        <div class="hero-meta">
+          <span class="chip">Active Runtime</span>
+          <span class="chip brass">Amber / Brass</span>
+          <span class="chip neutral">Desktop First</span>
+          <span class="chip neutral">Independent Platform System</span>
+        </div>
+      </section>
+
+      <section id="overview-cards" class="section">
+        <div class="section-header">
+          <span class="section-kicker">01 / Positioning</span>
+          <h2>平台视觉定位</h2>
+          <p class="section-intro">灯塔平台的视觉系统独立于服务品牌新版 VI。服务品牌资产用于对外传播与品牌内容，平台系统用于产品界面、后台、知识库和工作流。</p>
+        </div>
+        <div class="section-body grid three">
+          <article class="card"><h3>暖纸色底</h3><p>页面底色采用温暖纸面色，形成内部知识平台和阅读界面的可信氛围。背景可以有轻微纹理，但不能喧宾夺主。</p></article>
+          <article class="card"><h3>琥珀主色</h3><p>琥珀色用于平台识别、当前导航、主操作、提示性高亮。它是经典版的识别点，不再引入探索版蓝绿色主色。</p></article>
+          <article class="card"><h3>低阴影低噪声</h3><p>卡片和面板以半透明白、细边框、轻阴影建立层级。避免过重玻璃、强发光、强投影和装饰性渐变。</p></article>
+        </div>
+      </section>
+
+      <section id="color" class="section">
+        <div class="section-header">
+          <span class="section-kicker">02 / Color Tokens</span>
+          <h2>颜色系统</h2>
+          <p class="section-intro">以下 token 来自当前 Classic Amber 模式。页面中的色块和组件示例使用同一组变量渲染。</p>
+        </div>
+        <div class="section-body">
+          <div class="token-grid">
+            <article class="swatch-card"><div class="swatch" style="background:#f3efe0"></div><div class="swatch-info"><span class="token-name">--lh-page</span><span class="token-value">#f3efe0 / 页面底色</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#f8f3e5"></div><div class="swatch-info"><span class="token-name">--lh-page-start</span><span class="token-value">#f8f3e5 / 顶部过渡</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#eee6d0"></div><div class="swatch-info"><span class="token-name">--lh-page-end</span><span class="token-value">#eee6d0 / 底部过渡</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:rgba(255,255,255,.4)"></div><div class="swatch-info"><span class="token-name">--lh-surface</span><span class="token-value">rgba(255,255,255,.4) / 卡片面</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#2c2c2c"></div><div class="swatch-info"><span class="token-name">--lh-ink</span><span class="token-value">#2c2c2c / 主文本</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#d97706"></div><div class="swatch-info"><span class="token-name">--lh-classic-amber</span><span class="token-value">#d97706 / 主操作与高亮</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#9b7a4c"></div><div class="swatch-info"><span class="token-name">--lh-brass</span><span class="token-value">#9b7a4c / 辅助信号色</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#b85c46"></div><div class="swatch-info"><span class="token-name">--lh-danger</span><span class="token-value">#b85c46 / 危险与错误</span></div></article>
+          </div>
+
+          <div class="color-architecture">
+            <article class="color-layer">
+              <b>Core / 平台核心色</b>
+              <p>纸色、墨色、琥珀、黄铜构成平台底盘。导航、标题、主按钮、页头、重点高亮只从这一层取色。</p>
+            </article>
+            <article class="color-layer">
+              <b>Semantic / 语义状态色</b>
+              <p>成功、警告、危险、信息优先复用黄铜、琥珀和危险色。除错误/风险外，不新增高饱和状态色。</p>
+            </article>
+            <article class="color-layer">
+              <b>Auxiliary / 内容辅助色</b>
+              <p>辅助色被吸收到价值标签体系，只服务内容分类和检索，不参与品牌识别、页面调性和核心操作。</p>
+            </article>
+          </div>
+
+          <div class="aux-token-plan">
+            <div class="aux-token-note">
+              <b>吸收原则</b>
+              辅助色不进入主色板，但进入设计系统的命名 token。每个价值只保留一个 base 色，再由系统生成 soft、line、text 三个派生值，避免页面里散落临时 hex。
+            </div>
+            <ul class="aux-token-list">
+              <li><code>--lh-value-truth</code><span>保留 <code>#6ab0a5</code>，用于求真、事实、透明、澄清。</span></li>
+              <li><code>--lh-value-good</code><span>保留 <code>#728a69</code>，用于尽善、支持、改进、协调。</span></li>
+              <li><code>--lh-value-order</code><span>从 <code>--lh-brass</code> 派生，替代原紫色，用于致美、秩序、专业、工艺。</span></li>
+              <li><code>--lh-value-care</code><span>谨慎保留 <code>#c74f5a</code>，用于大爱、关怀、尊严；不替代 danger。</span></li>
+              <li><code>--lh-value-result</code><span>从 <code>--lh-classic-amber</code> 派生，替代原桃橙，用于幸福、结果、归处。</span></li>
+            </ul>
+          </div>
+
+          <div class="value-tag-system">
+            <div class="value-tag-head">
+              <div>
+                <span class="section-kicker">Auxiliary / Value Tags</span>
+                <h3>价值标签辅助色</h3>
+                <p>五个价值词不再驱动整页主题色。它们只作为内容分类、筛选 chip、来源标记和小面积标签使用；页面主视觉、导航、标题、按钮和大卡片仍然回到 Classic Amber 主系统。</p>
+              </div>
+              <span class="value-tag-status">not primary tokens</span>
+            </div>
+
+            <div class="value-tag-grid">
+              <article class="value-tag-card" style="--tag-color:#6ab0a5">
+                <span class="value-tag-swatch"></span>
+                <span class="value-tag-label">求真</span>
+                <b>事实 / 澄清</b>
+                <code>#6ab0a5</code>
+                <p>可保留。用于事实核对、透明说明、信息澄清类标签。</p>
+              </article>
+              <article class="value-tag-card" style="--tag-color:#728a69">
+                <span class="value-tag-swatch"></span>
+                <span class="value-tag-label">尽善</span>
+                <b>改进 / 支持</b>
+                <code>#728a69</code>
+                <p>可保留。偏橄榄绿，和纸色、黄铜色兼容度较高。</p>
+              </article>
+              <article class="value-tag-card is-derived" style="--tag-color:#9b7a4c">
+                <span class="value-tag-swatch"></span>
+                <span class="value-tag-label">致美</span>
+                <b>秩序 / 专业</b>
+                <code>derive from brass</code>
+                <p>替代原紫色。用黄铜派生色表达秩序、工艺和专业感。</p>
+              </article>
+              <article class="value-tag-card" style="--tag-color:#c74f5a">
+                <span class="value-tag-swatch"></span>
+                <span class="value-tag-label">大爱</span>
+                <b>关怀 / 人</b>
+                <code>#c74f5a</code>
+                <p>谨慎保留。只用于关怀类内容，不替代 danger/error。</p>
+              </article>
+              <article class="value-tag-card is-derived" style="--tag-color:#d97706">
+                <span class="value-tag-swatch"></span>
+                <span class="value-tag-label">幸福</span>
+                <b>结果 / 归处</b>
+                <code>derive from amber</code>
+                <p>替代原桃橙。使用琥珀浅阶，避免新增相近但不统一的橙色。</p>
+              </article>
+            </div>
+
+            <div class="value-tag-rules">
+              <div class="value-tag-rule"><b>允许</b>标签、筛选 chip、内容来源、价值分类、小圆点、表格行内状态。</div>
+              <div class="value-tag-rule"><b>限制</b>单页同屏最多出现三类价值标签；透明底优先，实色只用于 6-8px 标识点。</div>
+              <div class="value-tag-rule"><b>禁止</b>大面积卡片背景、页面分区、主按钮、导航高亮、标题文字和装饰性渐变。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="type" class="section">
+        <div class="section-header">
+          <span class="section-kicker">03 / Typography</span>
+          <h2>字体与排版</h2>
+          <p class="section-intro">经典版的文本气质来自黑体 UI 字体与少量宋体标题的组合。普通控件和表格使用黑体栈，页面主标题、价值阅读区域和少数编辑性文本可以使用衬线。</p>
+        </div>
+        <div class="section-body type-system">
+          <div class="type-showcase">
+            <div class="type-display">
+              <strong>在服务现场，看见人的真实需要。</strong>
+              <span>标题使用思源宋建立“手册、灯塔、价值文本”的编辑感。正文保持足够对比，不用过低透明度制造高级感。</span>
+            </div>
+            <ul class="spec-list">
+              <li><b>UI 字体</b><span><code>--font-hei</code>：苹方优先，用于导航、表单、按钮、后台表格和普通 UI 正文。</span></li>
+              <li><b>标题字体</b><span><code>--font-serif</code>：思源宋优先，用于页面主标题、价值阅读标题和编辑性段落。</span></li>
+              <li><b>排版基准</b><span>正文从 15-16px 起步，控件 14px，说明文字 12-13px；页面标题只在真正的顶层场景使用 40-72px。</span></li>
+              <li><b>阅读行高</b><span>正文 1.7-1.8，控件 1.4-1.5，标题 1.12-1.2。行距服务阅读，不为装饰拉开。</span></li>
+            </ul>
+          </div>
+          <article class="heading-system">
+            <h3>标题层级样式</h3>
+            <p>标题层级不是单纯字号选择，而是页面结构。每个视图优先使用 Display、Page、Section、Subsection、Card、Kicker 六类角色，不新增临时标题样式。</p>
+            <div class="heading-ladder">
+              <div class="heading-row">
+                <span class="heading-role"><b>Display / Hero</b><code>--title-display</code></span>
+                <strong class="heading-sample heading-display">灯塔平台视觉规范</strong>
+                <span class="heading-note">思源宋，40-72px，900，1.04。只用于首屏、价值阅读封面和空状态主句。</span>
+              </div>
+              <div class="heading-row">
+                <span class="heading-role"><b>Page Title</b><code>--title-page</code></span>
+                <strong class="heading-sample heading-page">Workshop 投稿审核</strong>
+                <span class="heading-note">思源宋，32-44px，900，1.1。用于产品页面主标题，一个页面只出现一次。</span>
+              </div>
+              <div class="heading-row">
+                <span class="heading-role"><b>Section Title</b><code>--title-section</code></span>
+                <strong class="heading-sample heading-section">图标规范</strong>
+                <span class="heading-note">思源宋，31px，700，1.14。用于页面内主要区块标题，对应本规范的 H2。</span>
+              </div>
+              <div class="heading-row">
+                <span class="heading-role"><b>Subsection</b><code>--title-subsection</code></span>
+                <strong class="heading-sample heading-subsection">状态与反馈</strong>
+                <span class="heading-note">思源宋，25px，700，1.2。用于区块内的二级分组，不作为卡片标题滥用。</span>
+              </div>
+              <div class="heading-row">
+                <span class="heading-role"><b>Card Title</b><code>--title-card</code></span>
+                <strong class="heading-sample heading-card">低阴影低噪声</strong>
+                <span class="heading-note">思源宋或苹方，20px，700，1.25。用于卡片、面板和表单小节标题。</span>
+              </div>
+              <div class="heading-row">
+                <span class="heading-role"><b>Kicker / Label</b><code>--title-kicker</code></span>
+                <strong class="heading-sample heading-kicker">07 / Iconography</strong>
+                <span class="heading-note">苹方，12px，900，0.12em 字距。只做结构定位，不承载正文信息。</span>
+              </div>
+            </div>
+          </article>
+          <div class="scale-grid">
+            <article class="scale-card"><h3>字号层级</h3><p>字号遵循 16px 基准和 1.25 模数，产品 UI 取更克制的中段。</p><div class="scale-list">
+              <div class="scale-row"><strong>Caption</strong><code>12/16</code><span style="font-size:var(--type-caption)">元信息、表头辅助、时间戳</span></div>
+              <div class="scale-row"><strong>Label</strong><code>13/18</code><span style="font-size:var(--type-label)">标签、帮助文本、密集说明</span></div>
+              <div class="scale-row"><strong>Control</strong><code>14/20</code><span style="font-size:var(--type-control)">按钮、导航、表格、输入控件</span></div>
+              <div class="scale-row"><strong>Body</strong><code>15/24</code><span class="sample-body">卡片正文、列表说明、普通阅读</span></div>
+              <div class="scale-row"><strong>Reading</strong><code>16/28</code><span style="font-size:var(--type-reading);line-height:1.75">长文、Hermit 回答、价值说明</span></div>
+              <div class="scale-row"><strong>Lead</strong><code>20/32</code><span style="font-size:var(--type-lead);line-height:1.6">导语和关键说明</span></div>
+              <div class="scale-row"><strong>Section</strong><code>31/35</code><span class="sample-display">区块标题</span></div>
+            </div></article>
+            <article class="scale-card"><h3>字重层级</h3><p>字重用于建立职责层级，不用全页面加粗制造视觉力度。</p><div class="weight-list">
+              <div class="weight-row"><b style="font-weight:var(--weight-regular)">400</b><span>正文、长阅读、表格内容。</span></div>
+              <div class="weight-row"><b style="font-weight:var(--weight-medium)">500</b><span>次级强调、摘要里的关键词。</span></div>
+              <div class="weight-row"><b style="font-weight:var(--weight-semibold)">600</b><span>导语、阅读段落里的重点。</span></div>
+              <div class="weight-row"><b style="font-weight:var(--weight-bold)">700</b><span>导航、表格行首、稳定标签。</span></div>
+              <div class="weight-row"><b style="font-weight:var(--weight-extrabold)">800</b><span>按钮、组件标题、可操作项。</span></div>
+              <div class="weight-row"><b style="font-weight:var(--weight-black)">900</b><span>页内 Kicker、关键状态、少量展示标题。</span></div>
+            </div></article>
+            <article class="scale-card"><h3>间距层级</h3><p>4px 是最小单位。组内紧、组间松，靠留白表达关系。</p><div class="space-list">
+              <div class="space-row"><b>4px</b><span>图标与文字的最小间隔</span><i class="space-bar" style="width:4px"></i></div>
+              <div class="space-row"><b>8px</b><span>字段内部、标签与说明</span><i class="space-bar" style="width:8px"></i></div>
+              <div class="space-row"><b>12px</b><span>紧凑列表、控件组</span><i class="space-bar" style="width:12px"></i></div>
+              <div class="space-row"><b>16px</b><span>卡片内默认栅格间距</span><i class="space-bar" style="width:16px"></i></div>
+              <div class="space-row"><b>24px</b><span>区块内容内边距</span><i class="space-bar" style="width:24px"></i></div>
+              <div class="space-row"><b>32px</b><span>页面边距和大组分隔</span><i class="space-bar" style="width:32px"></i></div>
+              <div class="space-row"><b>48px</b><span>跨模块的大段落分隔</span><i class="space-bar" style="width:48px"></i></div>
+            </div></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="layout" class="section">
+        <div class="section-header"><span class="section-kicker">04 / System Shell</span><h2>桌面端与移动端系统框架</h2><p class="section-intro">经典版桌面端参照当前产品的固定侧栏、顶部工具区和内容工作区。移动端不压缩桌面侧栏，采用底部导航作为五个核心入口的默认框架。</p></div>
+        <div class="section-body shell-system">
+          <div class="shell-preview-grid">
+            <article class="shell-frame">
+              <h3>Desktop Shell / 当前参照</h3>
+              <p>桌面端保留固定左侧导航，支持 240px 展开和 80px 折叠。主内容区根据侧栏状态偏移，顶部保留搜索、身份与关键操作，页面内容保持 1220px 最大宽度。</p>
+              <div class="desktop-shell" aria-label="desktop shell preview">
+                <div class="desktop-rail">
+                  <span class="rail-logo"></span>
+                  <span class="rail-item is-active"></span>
+                  <span class="rail-item"></span>
+                  <span class="rail-item"></span>
+                  <span class="rail-item"></span>
+                  <span class="rail-item"></span>
+                  <span></span>
+                  <span class="rail-item"></span>
+                </div>
+                <div class="desktop-workspace">
+                  <div class="desktop-topbar"><span class="topbar-search"></span><span class="topbar-action"></span></div>
+                  <div class="desktop-content">
+                    <div class="content-main"><span class="panel-block large"></span><span class="panel-block"></span><span class="panel-block"></span></div>
+                    <div class="content-aside"><span class="panel-block"></span><span class="panel-block large"></span></div>
+                  </div>
+                </div>
+              </div>
+            </article>
+            <article class="shell-frame">
+              <h3>Mobile Shell / 目标框架</h3>
+              <p>手机端主任务优先，顶部只保留页面标题、搜索或必要状态；五个核心入口进入底部导航。底部导航不承载二级菜单，复杂筛选进入页面内抽屉或分段控件。</p>
+              <div class="mobile-shell" aria-label="mobile shell preview">
+                <div class="mobile-header"><span class="mobile-dot"></span><span class="mobile-title"></span><span class="mobile-dot"></span></div>
+                <div class="mobile-content"><span class="mobile-card large"></span><span class="mobile-card"></span><span class="mobile-card"></span></div>
+                <div class="mobile-bottom-nav">
+                  <span class="mobile-tab is-active">本心</span>
+                  <span class="mobile-tab">镜鉴</span>
+                  <span class="mobile-tab">笃行</span>
+                  <span class="mobile-tab">共创</span>
+                  <span class="mobile-tab">路引</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="shell-rules">
+            <div class="shell-rule"><b>Desktop</b>固定侧栏 + 顶部工具条 + 内容工作区。适合阅读、后台维护、问答和工作流并存的内部平台。</div>
+            <div class="shell-rule"><b>Tablet</b>横屏可保留侧栏；竖屏过渡为紧凑顶部栏和底部导航，不让内容被窄侧栏挤压。</div>
+            <div class="shell-rule"><b>Mobile</b>底部五入口导航，触控目标不低于 44px；主操作靠近内容或底部，避免依赖 hover。</div>
+            <div class="shell-rule"><b>Content</b>不同终端共享同一信息架构，但页面骨架可以重排：桌面主从布局，移动端单列纵向阅读。</div>
+          </div>
+
+          <div class="grid two">
+            <article class="card"><h3>Shell 参数</h3><ul class="spec-list"><li><b>内容宽度</b><span><code>--grid-content-max: 1220px</code></span></li><li><b>侧栏展开</b><span><code>240px</code>；主内容偏移 <code>260px</code></span></li><li><b>侧栏折叠</b><span><code>80px</code>；主内容偏移 <code>100px</code></span></li><li><b>移动底栏</b><span><code>5 tabs</code>，高度 62-72px，底部安全区需额外留白。</span></li></ul></article>
+            <article class="card"><h3>Surface 参数</h3><ul class="spec-list"><li><b>卡片圆角</b><span><code>16px</code></span></li><li><b>控件圆角</b><span><code>8px</code></span></li><li><b>默认阴影</b><span><code>0 2px 10px rgba(0,0,0,.02)</code></span></li><li><b>移动页面</b><span>单列卡片优先，内容区底部 padding 不小于底栏高度。</span></li></ul></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="grid" class="section">
+        <div class="section-header"><span class="section-kicker">05 / Grid System</span><h2>网格规范</h2><p class="section-intro">Classic Amber 的网格不追求复杂视觉实验。它用稳定的桌面工作区、12 列内容栅格、2/3/4 列组件组和表格栅格，让阅读页、问答页和后台页都像同一个平台。</p></div>
+        <div class="section-body grid-system">
+          <div class="grid-spec">
+            <div class="grid-preview" aria-label="12 column grid preview"><span class="span-12">page header / 12</span><span class="span-8">main content / 8</span><span class="span-4">aside / 4</span><span class="span-6">card / 6</span><span class="span-6">card / 6</span></div>
+            <ul class="grid-rule-list"><li><b>Shell grid</b><span>桌面端使用固定侧栏加主内容区。侧栏展开 240px，折叠 80px；主区最大宽度 1220px，页面边距 32px。</span></li><li><b>Content grid</b><span>主内容使用 12 列逻辑栅格，列间距 16px，行间距 24px。标题和主工作区优先跨满 12 列。</span></li><li><b>Component grid</b><span>卡片组只允许 2、3、4 列三种默认密度。组件宽度由任务关系决定，不为装饰随机跨列。</span></li><li><b>Data grid</b><span>数据比较优先用表格。表格最小宽度 720px，单元格左右 16px，上下 13px，不强行卡片化。</span></li></ul>
+          </div>
+          <div class="grid-metrics"><article class="grid-metric"><b>Shell width</b><strong>240 / 80</strong><span>展开侧栏 240px，折叠侧栏 80px；规范页目录使用 248px 以容纳长标签。</span></article><article class="grid-metric"><b>Content max</b><strong>1220px</strong><span>主内容最大宽度。超过该宽度只增加留白，不拉长阅读行。</span></article><article class="grid-metric"><b>Column gap</b><strong>16px</strong><span>内容列和卡片列的默认间距。复杂页面可用 24px 做行间距。</span></article><article class="grid-metric"><b>Page gutter</b><strong>32px</strong><span>桌面页边距。规范页自身也按此节奏留出呼吸空间。</span></article></div>
+          <div class="grid-patterns">
+            <article class="grid-pattern"><b>12 / 全宽阅读与工作区</b><span>用于页面标题、Hermit 主问答区、Workshop 投稿区、后台主表格。</span><div class="pattern-bars"><i class="wide" style="grid-column:span 12"></i></div></article>
+            <article class="grid-pattern"><b>8 / 4 主从布局</b><span>用于阅读页、详情页和有上下文侧栏的工作区。主内容 8 列，证据、目录、摘要 4 列。</span><div class="pattern-bars"><i class="wide"></i><i class="aside"></i></div></article>
+            <article class="grid-pattern"><b>6 / 6 双栏比较</b><span>用于表单分组、前后状态、提交与审核的双侧信息。</span><div class="pattern-bars"><i class="half"></i><i class="half"></i></div></article>
+            <article class="grid-pattern"><b>4 / 4 / 4 或 3 / 3 / 3 / 3</b><span>用于稳定重复项，如色板、组件样式、图标角色、模板入口。不要混入第 5 种宽度。</span><div class="pattern-bars"><i class="third"></i><i class="third"></i><i class="third"></i><i class="quarter"></i><i class="quarter"></i><i class="quarter"></i><i class="quarter"></i></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="shadow" class="section">
+        <div class="section-header"><span class="section-kicker">06 / Elevation</span><h2>阴影与层级</h2><p class="section-intro">经典版阴影很轻，主要靠暖纸色、半透明白面、细边框和少量漫反射建立层级。阴影不能变成装饰，只有可点击、悬浮或需要聚焦的元素才提高层级。</p></div>
+        <div class="section-body shadow-grid"><article class="shadow-sample shadow-none"><strong>Level 0 / Flat</strong><code>box-shadow: none</code></article><article class="shadow-sample shadow-sm"><strong>Level 1 / Card</strong><code>0 2px 10px rgba(0,0,0,.02)</code></article><article class="shadow-sample shadow-md"><strong>Level 2 / Hover</strong><code>0 8px 30px rgba(0,0,0,.04)</code></article><article class="shadow-sample shadow-deck"><strong>Level 3 / Deck</strong><code>0 18px 42px rgba(0,0,0,.05)</code></article><article class="shadow-sample shadow-focus"><strong>Focus Ring</strong><code>0 0 0 3px rgba(217,119,6,.16)</code></article><article class="shadow-sample shadow-button"><strong>Primary Button</strong><code>inset + amber drop</code></article></div>
+      </section>
+
+      <section id="icon" class="section">
+        <div class="section-header"><span class="section-kicker">07 / Iconography</span><h2>图标规范</h2><p class="section-intro">平台图标系统默认使用 Iconify Solar 的 Bold Duotone 风格，由 <code>src/components/ui/lighthouse-icons.ts</code> 统一出口。图标不是装饰素材，必须对应导航、状态、操作或输入提示。</p></div>
+        <div class="section-body grid">
+          <div class="icon-grid">
+            <article class="icon-tile"><span class="icon-glyph"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.717 20.362C21.143 19.585 22 18.587 22 17.5c0-1.152-.963-2.204-2.546-3C17.623 13.58 14.962 13 12 13s-5.623.58-7.454 1.5C2.963 15.296 2 16.348 2 17.5s.963 2.204 2.546 3C6.377 21.42 9.038 22 12 22c3.107 0 5.882-.637 7.717-1.638" opacity=".5"/><path fill="currentColor" fill-rule="evenodd" d="M5 8.515C5 4.917 8.134 2 12 2s7 2.917 7 6.515c0 3.57-2.234 7.735-5.72 9.225a3.28 3.28 0 0 1-2.56 0C7.234 16.25 5 12.084 5 8.515M12 11a2 2 0 1 0 0-4a2 2 0 0 0 0 4" clip-rule="evenodd"/></svg></span><b>Logo / 模块</b><span><code>lighthouseIcons.logo</code> 对应 Solar 地点类标记。24x24 视图，容器 40x40 或 44x44，活动态使用琥珀色和轻微 glow。</span></article>
+            <article class="icon-tile"><span class="icon-glyph"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2s10 4.477 10 10" opacity=".5"/><path fill="currentColor" d="M16.03 8.97a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 1 1 1.06-1.06l1.47 1.47l2.235-2.235L14.97 8.97a.75.75 0 0 1 1.06 0"/></svg></span><b>状态</b><span><code>lighthouseIcons.status</code>、<code>warning</code>、<code>info</code> 使用 Solar 状态图标。颜色跟随状态 token，不单独创造新颜色。</span></article>
+            <article class="icon-tile"><span class="icon-glyph"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.313 11.157a9.157 9.157 0 1 1-18.313 0a9.157 9.157 0 0 1 18.313 0" opacity=".5"/><path fill="currentColor" d="m17.1 18.122l3.666 3.666a.723.723 0 0 0 1.023-1.022L18.122 17.1a9 9 0 0 1-1.022 1.022"/></svg></span><b>搜索 / 输入</b><span><code>lighthouseIcons.search</code> 默认也纳入 Solar 系统。只有输入框需要更轻时，才允许明确标注 linear 例外。</span></article>
+            <article class="icon-tile"><span class="icon-glyph"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M17.47 15.53a.75.75 0 0 0 1.28-.53V6a.75.75 0 0 0-.75-.75H9a.75.75 0 0 0-.53 1.28z" clip-rule="evenodd"/><path fill="currentColor" d="M5.47 17.47a.75.75 0 1 0 1.06 1.06l6.97-6.97l-1.06-1.06z" opacity=".5"/></svg></span><b>操作</b><span><code>lighthouseIcons.edit</code>、<code>publish</code>、<code>refresh</code>、<code>more</code> 等操作统一 20x20 Solar 图标，不混入其他图标库。</span></article>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Icon Role</th><th>Runtime Source</th><th>Size</th><th>Color Rule</th></tr></thead><tbody><tr><td>Navigation</td><td><code>lighthouseIcons.heart</code> etc.</td><td>20px glyph in 24px track</td><td>Active amber, inactive deck icon color. Duotone secondary layer uses current color opacity.</td></tr><tr><td>Icon button</td><td><code>LhIconButton</code> + <code>lighthouseIcons.*</code></td><td>36px or 44px button, 20px glyph</td><td>Inherit button variant color and focus ring.</td></tr><tr><td>Status</td><td><code>lighthouseIcons.status</code> etc.</td><td>16px to 20px</td><td>Use success, warning, danger, info tokens only.</td></tr><tr><td>Brand mark</td><td><code>lighthouseIcons.logo</code></td><td>20px glyph in 40px mark</td><td>Amber with low glow; do not redraw official VI marks.</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="components" class="section">
+        <div class="section-header"><span class="section-kicker">08 / Components</span><h2>组件样式</h2><p class="section-intro">组件样式对应当前 <code>LhButton</code>、<code>LhChip</code>、<code>LhStatusBadge</code>、<code>LhPanel</code>、<code>LhCard</code>、<code>LhTextField</code>、<code>LhDataTableShell</code> 的视觉语言。</p></div>
+        <div class="section-body grid">
+          <article class="card"><h3>Buttons</h3><p>主按钮只用于当前页面最重要动作；二级按钮用于普通操作；危险按钮用于删除、拒绝、撤销等高风险动作。</p><div class="button-row" style="margin-top:14px"><span class="button primary">主操作</span><span class="button secondary">二级操作</span><span class="button quiet">低强调</span><span class="button ghost">文字操作</span><span class="button danger">危险操作</span></div></article>
+          <article class="card"><h3>Badges / Chips</h3><p>经典版当前将琥珀和铜褐作为主要状态表达。为保持现状，success、info、brass 仍使用同一铜褐家族；danger 单独使用砖红。</p><div class="chip-row" style="margin-top:14px"><span class="chip neutral">Neutral</span><span class="chip">Warning / Amber</span><span class="chip brass">Brass</span><span class="chip success">Success</span><span class="chip info">Info</span><span class="chip danger">Danger</span></div></article>
+          <article class="card"><h3>Form</h3><div class="form-grid" style="margin-top:14px"><div class="field"><label for="scenario">场景名称</label><input id="scenario" value="客户等待时间过长" /><span class="helper">输入应对应真实服务现场，不使用抽象口号。</span></div><div class="field"><label for="owner">提交角色</label><input id="owner" value="服务顾问" /><span class="helper">字段高度与按钮保持同一视觉节奏。</span></div><div class="field" style="grid-column:1 / -1"><label for="note">处理建议</label><textarea id="note">先确认客户的等待感受，再说明当前进度与下一步可选择方案。</textarea></div></div></article>
+          <article class="callout"><span class="callout-icon"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2s10 4.477 10 10" opacity=".5"/><path fill="currentColor" d="M12 17.75a.75.75 0 0 0 .75-.75v-6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75M12 7a1 1 0 1 1 0 2a1 1 0 0 1 0-2"/></svg></span><span><strong>Classic Amber 的 callout 用于当前页面内的提示，不用于全局装饰。</strong><p>如果一个区块只是为了好看而加提示框，应改为普通段落或区域说明。</p></span></article>
+          <div class="table-wrap"><table><thead><tr><th>Component</th><th>Token</th><th>Rule</th><th>Usage</th></tr></thead><tbody><tr><td>Card / Panel</td><td><code>--lh-card-radius</code></td><td>16px + light border + soft surface</td><td>案例卡、数据区、内容面板</td></tr><tr><td>Button / Input</td><td><code>--lh-control-radius</code></td><td>8px + consistent height rhythm</td><td>操作按钮、搜索、输入控件</td></tr><tr><td>Data table</td><td><code>--grid-table-min</code></td><td>720px minimum, 13px 16px cell padding</td><td>后台列表、审核队列、统计表</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="accessibility" class="section">
+        <div class="section-header"><span class="section-kicker">09 / Accessibility</span><h2>可访问性规范</h2><p class="section-intro">灯塔平台是内部工作系统，清晰可用优先于装饰。可访问性规则必须覆盖颜色、键盘、触控、语义和动效。</p></div>
+        <div class="section-body">
+          <div class="matrix-grid"><article class="matrix-card"><b>Contrast</b><p>正文、表格、按钮文字目标不低于 4.5:1；大标题、图标和边界目标不低于 3:1。低透明度文字不能承担关键说明。</p></article><article class="matrix-card"><b>Keyboard</b><p>所有可交互元素必须有可见 <code>focus-visible</code>，焦点顺序跟阅读顺序一致，不能只依赖 hover 暴露动作。</p></article><article class="matrix-card"><b>Touch</b><p>移动端和触控场景点击目标不小于 44x44px；底部导航、图标按钮和表单控件必须保留可触达间距。</p></article><article class="matrix-card"><b>Semantics</b><p>图标按钮必须有 accessible label；错误、帮助文本通过 <code>aria-describedby</code> 关联，错误字段使用 <code>aria-invalid</code>。</p></article></div>
+          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>Area</th><th>Required Rule</th><th>Not Allowed</th></tr></thead><tbody><tr><td>Color</td><td>状态必须同时使用文字、图标或标签，不只依赖颜色。</td><td>只用红/绿表达通过或失败。</td></tr><tr><td>Focus</td><td>使用 Classic Amber focus ring，不能被阴影或透明背景吞掉。</td><td>移除 outline 后不提供替代焦点。</td></tr><tr><td>Motion</td><td>遵守 <code>prefers-reduced-motion</code>；动效只解释状态变化。</td><td>装饰性循环动画、闪烁、强弹性动效。</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="states" class="section">
+        <div class="section-header"><span class="section-kicker">10 / Interaction States</span><h2>交互状态矩阵</h2><p class="section-intro">组件不能只定义默认态。按钮、输入、标签、表格行和卡片需要共享一套状态语言，让用户知道当前能否操作、正在发生什么、下一步在哪里。</p></div>
+        <div class="section-body">
+          <div class="state-strip" aria-label="interaction state samples"><span class="state-pill">default</span><span class="state-pill is-hover">hover</span><span class="state-pill is-pressed">pressed</span><span class="state-pill is-focus">focus</span><span class="state-pill is-disabled">disabled</span><span class="state-pill is-loading">loading</span><span class="state-pill is-selected">selected</span><span class="state-pill is-error">error</span></div>
+          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>State</th><th>Visual Contract</th><th>Behavior Contract</th></tr></thead><tbody><tr><td>Hover / Pressed</td><td>改变背景、边框或轻阴影，不改变布局尺寸。</td><td>只在可点击元素上出现；移动端不依赖 hover。</td></tr><tr><td>Focus-visible</td><td><code>--shadow-focus</code> + 明确边框。</td><td>键盘可达，焦点顺序与 DOM/阅读顺序一致。</td></tr><tr><td>Disabled</td><td>降低强调并保留标签可读性。</td><td>必须说明禁用原因或提供可恢复路径，不能只靠透明度。</td></tr><tr><td>Loading</td><td>保持控件宽度，显示局部进度或骨架。</td><td>避免重复提交；长任务要说明正在处理什么。</td></tr><tr><td>Selected / Error</td><td>selected 用 primary-soft；error 用 danger + 文案。</td><td>选中范围和错误恢复动作必须明确。</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="anatomy" class="section">
+        <div class="section-header"><span class="section-kicker">11 / Component Anatomy</span><h2>组件结构与变体</h2><p class="section-intro">组件规范不仅定义外观，还要定义结构、职责、变体和禁用场景。新增组件前先确认现有 primitive 是否能表达同一语义。</p></div>
+        <div class="section-body anatomy-grid"><article class="anatomy-card"><h3>Button</h3><ol><li>容器：高度 32/40/48 或默认 44px。</li><li>内容：动词标签，可带 Solar 图标。</li><li>状态：hover、pressed、focus、disabled、loading。</li><li>禁用：不用按钮承载纯导航说明。</li></ol></article><article class="anatomy-card"><h3>Field</h3><ol><li>可见 label。</li><li>输入控件。</li><li>helper text。</li><li>validation message。</li><li>错误必须和字段关联。</li></ol></article><article class="anatomy-card"><h3>Chip / Badge</h3><ol><li>区分分类、状态、角色、指标、代码。</li><li>状态使用语义色。</li><li>价值标签只做内容辅助。</li><li>不要用一个 badge 表达所有含义。</li></ol></article><article class="anatomy-card"><h3>Card / Panel</h3><ol><li>Card 是重复对象。</li><li>Panel 是工作区域。</li><li>标题、元信息、正文、操作轨道稳定。</li><li>禁止卡片套卡片制造层级。</li></ol></article><article class="anatomy-card"><h3>Table</h3><ol><li>列头可排序时显示方向。</li><li>选中行显示范围。</li><li>批量操作显示数量。</li><li>空状态区分无数据和无结果。</li></ol></article><article class="anatomy-card"><h3>Navigation</h3><ol><li>一级入口稳定。</li><li>深页提供返回或面包屑。</li><li>移动端五入口底部导航。</li><li>局部筛选不进入全局导航。</li></ol></article></div>
+      </section>
+
+      <section id="content-recovery" class="section">
+        <div class="section-header"><span class="section-kicker">12 / Content & Recovery</span><h2>内容、状态与恢复</h2><p class="section-intro">Lighthouse 的文案要帮助用户判断下一步。状态信息必须说明发生了什么、影响范围、用户能做什么。</p></div>
+        <div class="section-body">
+          <div class="matrix-grid"><article class="matrix-card"><b>Action Copy</b><p>按钮使用具体动词：发布指南、保存草稿、重新生成、清除筛选。避免“确定”“提交”“OK”这类缺少范围的标签。</p></article><article class="matrix-card"><b>Empty State</b><p>首次空状态说明下一步；筛选空状态说明筛选条件并提供清除入口；权限空状态说明申请或返回路径。</p></article><article class="matrix-card"><b>Error Recovery</b><p>错误必须包含原因、影响和恢复动作。字段错误靠近字段，区块错误放 callout，阻塞错误提供重试或返回。</p></article><article class="matrix-card"><b>Hermit Boundary</b><p>Hermit 回答要区分直接建议、原则依据、相关案例和不确定性；证据不足时给出相近逻辑和下一步提问。</p></article></div>
+          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>State</th><th>Message Pattern</th><th>Primary Recovery</th></tr></thead><tbody><tr><td>Loading</td><td>正在加载“对象/范围”，不是泛泛的 loading。</td><td>骨架或局部进度，避免整页空白。</td></tr><tr><td>Field error</td><td>指出字段问题和正确格式。</td><td>聚焦字段并保留用户已输入内容。</td></tr><tr><td>Section error</td><td>说明哪个模块失败、是否影响其他模块。</td><td>重试、刷新局部数据或查看来源。</td></tr><tr><td>Blocking error</td><td>说明无法继续的原因。</td><td>重试、返回安全页面、联系管理员。</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="governance" class="section">
+        <div class="section-header"><span class="section-kicker">13 / Governance</span><h2>设计系统治理与落地</h2><p class="section-intro">规范只有在设计、文档、代码和测试之间保持同一事实源，才不会退化成一次性页面。新增样式必须先进入设计系统，再进入页面。</p></div>
+        <div class="section-body">
+          <div class="governance-flow"><span class="governance-step">1. Define token</span><span class="governance-step">2. Document rule</span><span class="governance-step">3. Map component</span><span class="governance-step">4. Update runtime</span><span class="governance-step">5. Verify tests</span></div>
+          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>Decision</th><th>Rule</th><th>Source Of Truth</th></tr></thead><tbody><tr><td>新增颜色或间距</td><td>先更新 token 文档和 HTML 规范，再写 runtime CSS。</td><td><code>tokens.md</code> + HTML spec</td></tr><tr><td>新增组件</td><td>先确认现有 primitive 无法表达语义，再写 anatomy、状态和可访问性规则。</td><td><code>components.md</code></td></tr><tr><td>新增页面模式</td><td>必须说明任务、骨架、状态入口和移动端降级。</td><td><code>patterns.md</code></td></tr><tr><td>废弃旧样式</td><td>标明替代 token/组件，避免页面继续复制旧 class。</td><td><code>do-dont.md</code> + runtime tests</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="patterns" class="section">
+        <div class="section-header"><span class="section-kicker">14 / Page Patterns</span><h2>页面模式</h2><p class="section-intro">灯塔平台不是每页都使用卡片墙。页面模式必须由任务关系决定，保持平台级一致性。</p></div>
+        <div class="section-body grid three"><article class="card"><h3>阅读页</h3><p>标题和正文全宽，证据、目录、推荐内容使用 8/4 主从布局。正文优先 16px 阅读字号。</p></article><article class="card"><h3>工作流页</h3><p>表单和审核信息使用 6/6 或全宽表格。主操作固定在可预期区域，不随机漂移。</p></article><article class="card"><h3>后台页</h3><p>数据比较优先表格，不强行卡片化。筛选、批量操作和状态反馈保持同一骨架。</p></article></div>
+      </section>
+
+      <section id="rules" class="section">
+        <div class="section-header"><span class="section-kicker">15 / Guardrails</span><h2>使用边界</h2><p class="section-intro">经典琥珀版本要有效、雅致。有效意味着规范能直接落地；雅致意味着有足够秩序、留白和克制。</p></div>
+        <div class="section-body rule-grid">
+          <article class="rule-card"><h3>Do</h3><ul><li>用苹方承载产品 UI，用思源宋承载少量价值表达。</li><li>用 12 列逻辑网格和固定间距控制页面秩序。</li><li>用真实 Solar 图标和 <code>lighthouseIcons</code> 入口。</li><li>用轻边框、暖纸色和低阴影表达层级。</li></ul></article>
+          <article class="rule-card dont"><h3>Don't</h3><ul><li>不要混入探索版蓝绿色、印刷稿或对外品牌 VI 资产。</li><li>不要用字符、手绘图形或其他图标库替代 Solar。</li><li>不要为了“丰富”随机跨列、叠卡、加重阴影。</li><li>不要用低对比文字或过度透明制造所谓高级感。</li></ul></article>
+        </div>
+      </section>
+
+      <p class="footer-note">This visual specification documents the Lighthouse platform UI system only. Service-brand VI assets should be stored and referenced separately.</p>
+    </main>
+  </div>
+</body>
+</html>

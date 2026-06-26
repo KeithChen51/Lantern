@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>精诚服务新版 VI 手册 | Visual Identity Manual</title>
-  <meta name="description" content="精诚服务新版 VI 手册工作稿，规范标识、色彩、字体、信任路径辅助图形、版式、图像风格、应用系统和禁用规则。">
+  <meta name="description" content="精诚服务新版 VI 手册工作稿，基于求真、尽善、致美、大爱、幸福的新核心理念，规范标识、组合、色彩、字体、辅助图形、图像与应用系统。">
   <meta property="og:title" content="精诚服务新版 VI 手册">
-  <meta property="og:description" content="基于求真、尽善、致美、大爱、幸福的新一代精诚服务视觉识别系统。">
+  <meta property="og:description" content="一份面向新版核心理念的精诚服务视觉识别手册工作稿。">
   <meta property="og:type" content="article">
   <style>
     @font-face {
@@ -49,29 +49,27 @@
     }
 
     :root {
-      --ink: #141b25;
-      --ink-2: #202a36;
+      --paper: #fbfaf6;
+      --paper-deep: #f0eee7;
+      --paper-soft: #e8e7e1;
+      --ink: #24231f;
+      --ink-deep: #141b25;
+      --muted: #706c63;
+      --quiet: #8a8378;
+      --line: #d8d1c4;
+      --line-dark: rgba(255, 253, 248, 0.22);
+      --copper: #9b6d45;
+      --green: #3e5a50;
       --blue: #003087;
-      --gray: #595757;
       --silver: #dcdddd;
-      --silver-2: #bababa;
-      --white: #fbfbf8;
-      --paper: #f3f2ec;
-      --warm: #eee5d7;
-      --gold: #be9457;
       --red: #e50011;
+      --gold: #be9457;
       --yellow: #fdd000;
-      --cyan: #70c7da;
-      --text: #20262f;
-      --muted: #67717d;
-      --hairline: rgba(20, 27, 37, 0.14);
-      --hairline-dark: rgba(251, 251, 248, 0.18);
-      --font-song: "FZ Qingke Benyuesong", "FZQKBYSJW", "Songti SC", "SimSun", serif;
-      --font-sans: "FZ LanTing Hei", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Source Han Sans CN", sans-serif;
+      --white: #fffdf8;
+      --font-display: "FZ Qingke Benyuesong", "Songti SC", "SimSun", serif;
+      --font-body: "FZ LanTing Hei", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
       --font-strong: "FZ LanTing CuHei", "FZ LanTing Hei", "Microsoft YaHei UI", sans-serif;
-      --font-byd: "BYD Type", "Segoe UI", var(--font-sans);
-      --page-x: clamp(18px, 4vw, 56px);
-      --page-y: clamp(40px, 7vw, 86px);
+      --font-byd: "BYD Type", "Segoe UI", sans-serif;
     }
 
     * {
@@ -80,22 +78,24 @@
 
     html {
       scroll-behavior: smooth;
-      background: var(--paper);
-      color: var(--text);
-      font-family: var(--font-sans);
-      line-height: 1.62;
+      background: var(--paper-soft);
+      color: var(--ink);
+      font-family: var(--font-body);
+      line-height: 1.68;
+      font-synthesis: none;
+      letter-spacing: 0;
     }
 
     body {
       margin: 0;
       min-width: 320px;
       background:
-        linear-gradient(90deg, rgba(20, 27, 37, 0.045) 1px, transparent 1px) 0 0 / 48px 48px,
-        linear-gradient(180deg, rgba(20, 27, 37, 0.035) 1px, transparent 1px) 0 0 / 48px 48px,
-        var(--paper);
+        linear-gradient(90deg, rgba(62, 90, 80, 0.08), transparent 24%, transparent 76%, rgba(155, 109, 69, 0.08)),
+        var(--paper-soft);
     }
 
-    img {
+    img,
+    svg {
       display: block;
       max-width: 100%;
     }
@@ -105,704 +105,718 @@
       text-decoration: none;
     }
 
-    .manual-shell {
-      display: grid;
-      grid-template-columns: 290px minmax(0, 1fr);
-      min-height: 100vh;
+    p,
+    h1,
+    h2,
+    h3,
+    figure,
+    ul,
+    ol {
+      margin-top: 0;
     }
 
-    .sidebar {
+    .page {
+      width: min(100%, 1080px);
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 24px 70px rgba(36, 35, 31, 0.12);
+    }
+
+    .topline {
       position: sticky;
       top: 0;
-      height: 100vh;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      padding: 14px 44px;
+      background: rgba(251, 250, 246, 0.94);
+      border-bottom: 1px solid rgba(216, 209, 196, 0.72);
+      color: var(--muted);
+      backdrop-filter: blur(10px);
+    }
+
+    .topline b {
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .topline nav {
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 28px;
-      padding: 34px 28px;
-      background: var(--ink);
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: flex-end;
+      font-size: 13px;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 720px;
       color: var(--white);
-      border-right: 1px solid rgba(251, 251, 248, 0.12);
+      background: #201f1b;
+      isolation: isolate;
     }
 
-    .brand-title {
-      display: grid;
-      gap: 18px;
+    .hero > img {
+      width: 100%;
+      height: 720px;
+      object-fit: cover;
     }
 
-    .brand-title::before {
+    .hero::after {
       content: "";
-      width: 18px;
-      height: 54px;
-      background: var(--red);
-    }
-
-    .brand-title strong {
-      display: block;
-      font-family: var(--font-song);
-      font-size: 28px;
-      line-height: 1.18;
-      letter-spacing: 0;
-    }
-
-    .brand-title span {
-      color: rgba(251, 251, 248, 0.58);
-      font-family: var(--font-byd);
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-
-    .toc {
-      display: grid;
-      gap: 6px;
-      margin: 34px 0 0;
-      padding: 0;
-      list-style: none;
-      font-size: 14px;
-    }
-
-    .toc a {
-      display: grid;
-      grid-template-columns: 38px 1fr;
-      gap: 12px;
-      padding: 9px 0;
-      color: rgba(251, 251, 248, 0.72);
-      border-bottom: 1px solid rgba(251, 251, 248, 0.08);
-    }
-
-    .toc a:hover {
-      color: var(--white);
-    }
-
-    .toc code {
-      font-family: var(--font-byd);
-      color: var(--gold);
-      font-size: 12px;
-    }
-
-    .sidebar-meta {
-      display: grid;
-      gap: 8px;
-      color: rgba(251, 251, 248, 0.54);
-      font-size: 12px;
-    }
-
-    main {
-      min-width: 0;
-    }
-
-    .manual-page {
-      min-height: 100vh;
-      padding: var(--page-y) var(--page-x);
-      border-bottom: 1px solid var(--hairline);
-      background: rgba(251, 251, 248, 0.78);
-    }
-
-    .manual-page.dark {
-      background: var(--ink);
-      color: var(--white);
-    }
-
-    .manual-page.warm {
-      background: var(--warm);
-    }
-
-    .manual-page.cover {
-      display: grid;
-      align-content: space-between;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
       background:
-        linear-gradient(135deg, rgba(20, 27, 37, 0.98), rgba(20, 27, 37, 0.9) 52%, rgba(0, 48, 135, 0.9)),
-        var(--ink);
-      color: var(--white);
+        linear-gradient(90deg, rgba(20, 18, 14, 0.82) 0%, rgba(20, 18, 14, 0.52) 38%, rgba(20, 18, 14, 0.08) 72%),
+        linear-gradient(0deg, rgba(20, 18, 14, 0.68), rgba(20, 18, 14, 0.08) 48%);
     }
 
-    .page-head {
-      display: grid;
-      grid-template-columns: minmax(0, 0.85fr) minmax(280px, 0.48fr);
-      gap: clamp(28px, 5vw, 76px);
-      align-items: end;
-      margin-bottom: clamp(34px, 6vw, 72px);
+    .hero-copy {
+      position: absolute;
+      z-index: 2;
+      left: 78px;
+      right: 62px;
+      bottom: 72px;
     }
 
-    .chapter {
-      color: var(--blue);
-      font-family: var(--font-byd);
-      font-size: 12px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+    .hero-kicker,
+    .section-index,
+    .meta-label,
+    .spec-label {
+      color: var(--copper);
+      font-family: var(--font-strong);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
     }
 
-    .dark .chapter,
-    .cover .chapter {
-      color: var(--gold);
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 26px;
+      color: rgba(255, 253, 248, 0.78);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .hero-kicker::before,
+    .closing-kicker::before {
+      content: "";
+      width: 58px;
+      height: 1px;
+      background: rgba(255, 253, 248, 0.62);
     }
 
     h1,
     h2,
-    h3,
-    p {
-      margin-top: 0;
-    }
-
-    h1,
-    h2 {
-      font-family: var(--font-song);
+    .lead,
+    .concept-word,
+    .value-name,
+    .pull,
+    .final-line {
+      font-family: var(--font-display);
+      font-weight: 600;
       letter-spacing: 0;
-      font-weight: 700;
     }
 
     h1 {
-      max-width: 930px;
-      margin: 26px 0 34px;
-      font-size: clamp(50px, 8.5vw, 116px);
-      line-height: 0.98;
+      max-width: 860px;
+      margin-bottom: 26px;
+      font-size: 72px;
+      line-height: 1.12;
     }
 
-    h2 {
-      margin: 14px 0 0;
-      font-size: clamp(34px, 5.8vw, 72px);
-      line-height: 1.06;
+    .hero-subtitle {
+      max-width: 560px;
+      margin-bottom: 34px;
+      color: rgba(255, 253, 248, 0.84);
+      font-size: 24px;
+      line-height: 1.75;
     }
 
-    h3 {
-      margin-bottom: 12px;
-      color: inherit;
-      font-size: 21px;
-      line-height: 1.28;
-    }
-
-    .lead {
-      max-width: 740px;
-      color: rgba(251, 251, 248, 0.76);
-      font-size: clamp(18px, 2.2vw, 23px);
-    }
-
-    .page-summary {
-      margin: 0;
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    .dark .page-summary {
-      color: rgba(251, 251, 248, 0.68);
-    }
-
-    .cover-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 0.88fr) minmax(340px, 0.48fr);
-      gap: clamp(40px, 7vw, 90px);
-      align-items: end;
-    }
-
-    .cover-card {
-      padding: 28px;
-      background: var(--white);
-      color: var(--ink);
-      border: 1px solid rgba(251, 251, 248, 0.2);
-    }
-
-    .cover-card img {
-      width: 100%;
-      background: var(--white);
-    }
-
-    .cover-meta {
-      display: grid;
-      gap: 12px;
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(251, 251, 248, 0.18);
-      color: rgba(251, 251, 248, 0.62);
-      font-size: 13px;
-    }
-
-    .rule-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .hero-lockup {
+      display: inline-grid;
+      grid-template-columns: auto 1px auto;
       gap: 18px;
+      align-items: center;
+      padding: 16px 18px;
+      background: rgba(255, 253, 248, 0.92);
     }
 
-    .rule {
-      min-height: 210px;
-      padding: 24px;
-      border: 1px solid var(--hairline);
-      background: var(--white);
-    }
-
-    .dark .rule {
-      background: rgba(251, 251, 248, 0.055);
-      border-color: var(--hairline-dark);
-    }
-
-    .rule b {
-      display: block;
-      margin-bottom: 14px;
-      color: var(--ink);
-      font-size: 18px;
-    }
-
-    .dark .rule b {
-      color: var(--white);
-    }
-
-    .rule p,
-    .rule li {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .dark .rule p,
-    .dark .rule li {
-      color: rgba(251, 251, 248, 0.66);
-    }
-
-    .asset-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px;
-    }
-
-    .asset-spec {
-      display: grid;
-      grid-template-rows: minmax(210px, auto) auto;
-      border: 1px solid var(--hairline);
-      background: var(--white);
-    }
-
-    .asset-preview {
-      display: grid;
-      place-items: center;
-      min-height: 240px;
-      padding: 30px;
-      background:
-        linear-gradient(90deg, rgba(20, 27, 37, 0.04) 1px, transparent 1px) 0 0 / 34px 34px,
-        linear-gradient(180deg, rgba(20, 27, 37, 0.035) 1px, transparent 1px) 0 0 / 34px 34px,
-        var(--white);
-    }
-
-    .asset-preview.dark-preview {
-      background: var(--ink);
-    }
-
-    .asset-preview img {
-      max-height: 150px;
+    .hero-lockup img:first-child {
+      min-height: 0;
+      width: 86px;
+      height: auto;
       object-fit: contain;
     }
 
-    .asset-body {
-      padding: 22px 24px 24px;
-      border-top: 1px solid var(--hairline);
+    .hero-lockup i {
+      width: 1px;
+      height: 44px;
+      background: rgba(36, 35, 31, 0.22);
     }
 
-    .asset-body ul {
-      margin: 14px 0 0;
-      padding-left: 18px;
-      color: var(--muted);
-      font-size: 14px;
+    .hero-lockup img:last-child {
+      min-height: 0;
+      width: 220px;
+      height: auto;
+      object-fit: contain;
     }
 
-    .concept-grid {
+    .opening {
+      padding: 90px 82px 76px;
+      background: linear-gradient(180deg, var(--paper), var(--paper-deep));
+    }
+
+    .lead {
+      max-width: 850px;
+      color: #26231f;
+      font-size: 34px;
+      line-height: 1.72;
+    }
+
+    .lead em {
+      color: var(--green);
+      font-style: normal;
+    }
+
+    .intro-grid {
       display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(320px, 0.58fr);
-      gap: 24px;
-      align-items: stretch;
-      margin: 28px 0;
+      grid-template-columns: 0.72fr 1.28fr;
+      gap: 58px;
+      margin-top: 58px;
+      padding-top: 42px;
+      border-top: 1px solid var(--line);
     }
 
-    .concept-board,
-    .combo-board {
-      padding: clamp(24px, 4vw, 38px);
-      background: var(--white);
-      border: 1px solid var(--hairline);
+    .toc-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
 
-    .concept-board.dark-board {
-      background: var(--ink);
-      color: var(--white);
-      border-color: var(--hairline-dark);
+    .toc-list a {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      align-items: baseline;
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 17px;
     }
 
-    .concept-label {
-      margin-bottom: 24px;
-      color: var(--blue);
+    .toc-list code {
+      color: var(--copper);
       font-family: var(--font-byd);
-      font-size: 12px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      font-size: 13px;
     }
 
-    .dark-board .concept-label {
-      color: var(--gold);
+    .intro-copy {
+      color: #3b3832;
+      font-size: 23px;
+      line-height: 1.95;
     }
 
-    .tenword-mark {
-      display: inline-grid;
-      grid-template-columns: repeat(5, auto);
-      gap: clamp(14px, 2.5vw, 30px);
-      align-items: end;
-      color: var(--ink);
-      font-family: var(--font-song);
-      font-size: clamp(38px, 7vw, 86px);
+    .value-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-top: 56px;
+      border-top: 1px solid #cfc8bc;
+      border-bottom: 1px solid #cfc8bc;
+    }
+
+    .value-chip {
+      min-height: 174px;
+      padding: 28px 20px 24px;
+      border-right: 1px solid #cfc8bc;
+    }
+
+    .value-chip:last-child {
+      border-right: 0;
+    }
+
+    .value-chip strong {
+      display: block;
+      color: var(--green);
+      font-family: var(--font-display);
+      font-size: 37px;
+      font-weight: 700;
       line-height: 1;
-      letter-spacing: 0.04em;
+    }
+
+    .value-chip span {
+      display: block;
+      margin-top: 18px;
+      color: #625d54;
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .wide-image,
+    .image-pair {
+      margin: 0;
+      background: #171714;
+    }
+
+    .wide-image img {
+      width: 100%;
+      aspect-ratio: 21 / 11.8;
+      object-fit: cover;
+    }
+
+    .section {
+      padding: 88px 82px 84px;
+      background: var(--paper);
+    }
+
+    .section.alt {
+      background: var(--paper-deep);
+    }
+
+    .section.dark {
+      background: var(--ink-deep);
+      color: var(--white);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 156px 1fr;
+      gap: 54px;
+      align-items: start;
+      margin-bottom: 52px;
+    }
+
+    .section-index span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .dark .section-index span {
+      color: rgba(255, 253, 248, 0.62);
+    }
+
+    h2 {
+      margin-bottom: 0;
+      color: #1f211d;
+      font-size: 43px;
+      line-height: 1.32;
+    }
+
+    .dark h2 {
+      color: var(--white);
+    }
+
+    .section-summary {
+      max-width: 720px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.9;
+    }
+
+    .dark .section-summary {
+      color: rgba(255, 253, 248, 0.68);
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .principle {
+      min-height: 190px;
+      padding: 28px 26px;
+      border-right: 1px solid var(--line);
+    }
+
+    .principle:last-child {
+      border-right: 0;
+    }
+
+    .principle b,
+    .rule-row b,
+    .application b,
+    .misuse b,
+    .font-line b {
+      display: block;
+      color: var(--ink);
+      font-family: var(--font-strong);
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .principle p,
+    .rule-row p,
+    .application p,
+    .misuse p,
+    .font-line span {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .concept-stage {
+      padding: 58px 48px 52px;
+      background:
+        linear-gradient(90deg, rgba(255, 253, 248, 0.06) 1px, transparent 1px) 0 0 / 42px 42px,
+        linear-gradient(180deg, rgba(255, 253, 248, 0.06) 1px, transparent 1px) 0 0 / 42px 42px,
+        #182029;
+      border: 1px solid rgba(255, 253, 248, 0.12);
+    }
+
+    .concept-mark {
+      display: grid;
+      grid-template-columns: repeat(5, auto);
+      gap: 28px;
+      align-items: end;
+      color: var(--white);
       white-space: nowrap;
     }
 
-    .dark-board .tenword-mark {
-      color: var(--white);
-    }
-
-    .tenword-mark span {
+    .concept-word {
       position: relative;
       display: inline-block;
+      padding-bottom: 20px;
+      font-size: 74px;
+      line-height: 1;
     }
 
-    .tenword-mark span::after {
+    .concept-word::after {
       content: "";
       position: absolute;
-      left: 8%;
-      right: 8%;
-      bottom: -14px;
+      left: 6%;
+      right: 6%;
+      bottom: 0;
       height: 3px;
       background: var(--blue);
     }
 
-    .tenword-mark span:nth-child(2)::after {
-      background: var(--cyan);
+    .concept-word:nth-child(2)::after {
+      background: #70c7da;
     }
 
-    .tenword-mark span:nth-child(3)::after {
-      background: var(--silver-2);
+    .concept-word:nth-child(3)::after {
+      background: var(--silver);
     }
 
-    .tenword-mark span:nth-child(4)::after {
+    .concept-word:nth-child(4)::after {
       background: var(--gold);
     }
 
-    .tenword-mark span:nth-child(5)::after {
+    .concept-word:nth-child(5)::after {
       background: var(--yellow);
     }
 
-    .tenword-compact {
-      display: inline-block;
-      color: var(--ink);
-      font-family: var(--font-strong);
-      font-size: clamp(28px, 4.8vw, 58px);
-      line-height: 1.1;
-      letter-spacing: 0.18em;
+    .concept-note {
+      max-width: 780px;
+      margin: 44px 0 0;
+      color: rgba(255, 253, 248, 0.7);
+      font-size: 16px;
+      line-height: 1.85;
     }
 
-    .tenword-vertical {
-      display: inline-grid;
+    .concept-forms {
+      display: grid;
+      grid-template-columns: 1fr 0.92fr;
+      gap: 24px;
+      margin-top: 26px;
+    }
+
+    .form-panel {
+      min-height: 230px;
+      display: grid;
+      align-content: center;
+      padding: 30px;
+      border: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    .form-panel .spec-label {
+      margin-bottom: 24px;
+    }
+
+    .compact-mark {
+      color: var(--ink);
+      font-family: var(--font-strong);
+      font-size: 46px;
+      line-height: 1.18;
+    }
+
+    .vertical-mark {
+      display: grid;
       grid-template-columns: repeat(5, auto);
       gap: 12px;
+      justify-content: start;
       color: var(--ink);
-      font-family: var(--font-song);
-      font-size: clamp(34px, 5vw, 64px);
+      font-family: var(--font-display);
+      font-size: 56px;
       line-height: 1;
     }
 
-    .tenword-vertical span {
+    .vertical-mark span {
       writing-mode: vertical-rl;
       padding: 12px 8px;
-      border-left: 1px solid var(--hairline);
-      border-right: 1px solid var(--hairline);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
     }
 
-    .concept-note {
-      max-width: 720px;
-      margin: 34px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .dark-board .concept-note {
-      color: rgba(251, 251, 248, 0.66);
-    }
-
-    .concept-variants {
+    .asset-story {
       display: grid;
-      gap: 18px;
-    }
-
-    .concept-variant {
-      min-height: 150px;
-      display: grid;
-      align-content: center;
-      padding: 22px;
-      border: 1px solid var(--hairline);
-      background: var(--white);
-    }
-
-    .concept-variant b {
-      display: block;
-      margin-bottom: 14px;
-      color: var(--muted);
-      font-family: var(--font-byd);
-      font-size: 12px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .combo-grid {
-      display: grid;
-      gap: 18px;
-      margin-top: 24px;
-    }
-
-    .brand-combo {
-      display: grid;
-      grid-template-columns: minmax(110px, 0.36fr) 1px minmax(180px, 0.78fr) minmax(190px, 0.62fr);
-      gap: clamp(16px, 2.4vw, 28px);
-      align-items: center;
-      min-height: 126px;
-      padding: 22px;
-      background: var(--white);
-      border: 1px solid var(--hairline);
-    }
-
-    .brand-combo .brand-logo {
-      max-height: 54px;
-      object-fit: contain;
-      justify-self: start;
-    }
-
-    .brand-combo .divider {
-      width: 1px;
-      height: 58px;
-      background: var(--hairline);
-    }
-
-    .brand-combo .service-logo {
-      max-height: 68px;
-      object-fit: contain;
-      justify-self: start;
-    }
-
-    .brand-combo .combo-concept {
-      display: grid;
-      gap: 8px;
-      justify-items: start;
-      color: var(--ink);
-    }
-
-    .combo-concept strong {
-      font-family: var(--font-song);
-      font-size: clamp(22px, 3vw, 34px);
-      line-height: 1.08;
-      letter-spacing: 0.06em;
-      white-space: nowrap;
-    }
-
-    .combo-concept small {
-      color: var(--muted);
-      font-family: var(--font-byd);
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .combo-rules {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-      margin-top: 22px;
-    }
-
-    .clearspace-demo {
-      display: grid;
-      grid-template-columns: minmax(0, 0.85fr) minmax(270px, 0.58fr);
+      grid-template-columns: 1fr 1fr;
       gap: 24px;
-      align-items: stretch;
-      margin-top: 24px;
     }
 
-    .clear-box {
-      position: relative;
+    .mark-panel {
+      display: grid;
+      grid-template-rows: minmax(240px, auto) auto;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .mark-preview {
       display: grid;
       place-items: center;
-      min-height: 320px;
-      border: 1px dashed var(--blue);
-      background: var(--white);
-      overflow: hidden;
+      min-height: 260px;
+      padding: 34px;
+      background:
+        linear-gradient(90deg, rgba(36, 35, 31, 0.04) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(180deg, rgba(36, 35, 31, 0.035) 1px, transparent 1px) 0 0 / 34px 34px,
+        var(--white);
     }
 
-    .clear-box::before,
-    .clear-box::after {
-      content: "";
-      position: absolute;
-      pointer-events: none;
-      border: 1px solid rgba(229, 0, 17, 0.42);
+    .mark-preview.dark-preview {
+      background: var(--ink-deep);
     }
 
-    .clear-box::before {
-      inset: 42px;
+    .mark-preview img {
+      max-height: 150px;
+      object-fit: contain;
     }
 
-    .clear-box::after {
-      inset: 82px;
+    .mark-copy {
+      padding: 24px 0 0;
     }
 
-    .clear-box img {
-      position: relative;
-      z-index: 1;
-      width: min(70%, 420px);
-      background: var(--white);
+    .mark-copy h3 {
+      margin-bottom: 10px;
+      font-family: var(--font-strong);
+      font-size: 20px;
     }
 
-    .spec-list {
-      display: grid;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      border-top: 1px solid var(--hairline);
-    }
-
-    .spec-list li {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 16px;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--hairline);
+    .mark-copy p {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.8;
     }
 
-    .spec-list b {
-      color: var(--ink);
-    }
-
-    .swatch-grid {
+    .combo-list {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      border: 1px solid var(--hairline);
-      background: var(--white);
+      gap: 16px;
+    }
+
+    .combo-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.34fr) 1px minmax(200px, 0.82fr) minmax(180px, 0.58fr);
+      gap: 24px;
+      align-items: center;
+      min-height: 126px;
+      padding: 20px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .combo-row:last-child {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .combo-row img {
+      max-height: 62px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .combo-row i {
+      width: 1px;
+      height: 62px;
+      background: var(--line);
+    }
+
+    .combo-text {
+      display: grid;
+      gap: 8px;
+    }
+
+    .combo-text strong {
+      font-family: var(--font-display);
+      font-size: 31px;
+      font-weight: 600;
+      line-height: 1.12;
+    }
+
+    .combo-text small {
+      color: var(--quiet);
+      font-family: var(--font-byd);
+      font-size: 12px;
+    }
+
+    .rule-ledger {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 32px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rule-row {
+      padding: 24px 22px 26px;
+      border-right: 1px solid var(--line);
+    }
+
+    .rule-row:last-child {
+      border-right: 0;
+    }
+
+    .swatch-system {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--line);
     }
 
     .swatch {
       min-height: 230px;
-      padding: 22px;
       display: grid;
       align-content: end;
+      padding: 22px;
       color: var(--white);
-      border-right: 1px solid rgba(251, 251, 248, 0.2);
-      border-bottom: 1px solid rgba(251, 251, 248, 0.2);
+      border-right: 1px solid rgba(255, 253, 248, 0.25);
+      border-bottom: 1px solid rgba(255, 253, 248, 0.25);
     }
 
     .swatch.light {
       color: var(--ink);
-      border-color: var(--hairline);
+      border-color: var(--line);
     }
 
     .swatch b {
-      display: block;
+      font-family: var(--font-strong);
       font-size: 19px;
-      line-height: 1.24;
     }
 
-    .swatch code {
+    .swatch code,
+    .ratio-bar code {
+      display: block;
       margin-top: 8px;
       font-family: var(--font-byd);
-      font-size: 13px;
       color: currentColor;
+      font-size: 13px;
     }
 
     .swatch span {
       display: block;
       margin-top: 10px;
-      opacity: 0.72;
+      opacity: 0.76;
       font-size: 12px;
+      line-height: 1.55;
     }
 
     .ratio-bar {
       display: grid;
       grid-template-columns: 60fr 20fr 10fr 5fr 5fr;
-      height: 76px;
-      margin-top: 24px;
-      border: 1px solid var(--hairline);
+      min-height: 84px;
+      margin-top: 26px;
+      border: 1px solid var(--line);
     }
 
     .ratio-bar div {
       display: grid;
       place-items: center;
-      padding: 8px;
+      padding: 10px;
       font-size: 12px;
       text-align: center;
     }
 
-    .type-specimen {
+    .type-system {
       display: grid;
-      grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.58fr);
-      gap: 26px;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 34px;
       align-items: stretch;
     }
 
     .type-poster {
-      padding: clamp(30px, 5vw, 58px);
+      min-height: 520px;
+      display: grid;
+      align-content: center;
+      padding: 50px;
       background: var(--white);
-      border: 1px solid var(--hairline);
+      border: 1px solid var(--line);
     }
 
     .type-poster .display {
-      margin: 0 0 28px;
-      font-family: var(--font-song);
-      font-size: clamp(52px, 8vw, 96px);
-      line-height: 1.02;
-      color: var(--ink);
+      margin-bottom: 34px;
+      color: var(--green);
+      font-family: var(--font-display);
+      font-size: 84px;
+      line-height: 1.08;
     }
 
-    .type-poster .body-copy {
-      max-width: 660px;
+    .type-poster p:last-child {
+      max-width: 620px;
       color: var(--muted);
-      font-size: 16px;
+      font-size: 17px;
+      line-height: 1.9;
     }
 
-    .font-row {
-      padding: 18px 0;
-      border-top: 1px solid var(--hairline);
-    }
-
-    .font-row:last-child {
-      border-bottom: 1px solid var(--hairline);
-    }
-
-    .font-row b {
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    .font-row span {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .graphic-system {
+    .font-lines {
       display: grid;
-      grid-template-columns: minmax(320px, 0.66fr) minmax(0, 1fr);
-      gap: 30px;
+      align-content: start;
+      border-top: 1px solid var(--line);
+    }
+
+    .font-line {
+      padding: 21px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .path-system {
+      display: grid;
+      grid-template-columns: 0.74fr 1fr;
+      gap: 34px;
       align-items: center;
     }
 
     .path-board {
-      position: relative;
       min-height: 430px;
       background:
-        linear-gradient(90deg, rgba(251, 251, 248, 0.08) 1px, transparent 1px) 0 0 / 42px 42px,
-        linear-gradient(180deg, rgba(251, 251, 248, 0.08) 1px, transparent 1px) 0 0 / 42px 42px,
-        rgba(251, 251, 248, 0.04);
-      border: 1px solid var(--hairline-dark);
+        linear-gradient(90deg, rgba(255, 253, 248, 0.08) 1px, transparent 1px) 0 0 / 42px 42px,
+        linear-gradient(180deg, rgba(255, 253, 248, 0.08) 1px, transparent 1px) 0 0 / 42px 42px,
+        rgba(255, 253, 248, 0.04);
+      border: 1px solid var(--line-dark);
     }
 
     .path-board svg {
       width: 100%;
-      height: 100%;
       min-height: 430px;
     }
 
-    .node-manual {
+    .node-list {
       display: grid;
-      gap: 12px;
+      border-top: 1px solid var(--line-dark);
     }
 
     .node-row {
@@ -810,8 +824,8 @@
       grid-template-columns: 48px 86px 1fr;
       gap: 18px;
       align-items: center;
-      padding: 13px 0;
-      border-bottom: 1px solid var(--hairline-dark);
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line-dark);
     }
 
     .node-shape {
@@ -821,7 +835,7 @@
     }
 
     .node-shape.turn {
-      border-color: var(--cyan);
+      border-color: #70c7da;
       border-radius: 0 18px 18px 0;
     }
 
@@ -842,948 +856,824 @@
 
     .node-row b {
       color: var(--white);
+      font-family: var(--font-strong);
     }
 
     .node-row span {
-      color: rgba(251, 251, 248, 0.66);
+      color: rgba(255, 253, 248, 0.66);
       font-size: 14px;
     }
 
-    .layout-grid {
+    .image-pair {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 20px;
+      grid-template-columns: 1fr 1fr;
     }
 
-    .layout-sample {
-      min-height: 320px;
-      padding: 24px;
-      background: var(--white);
-      border: 1px solid var(--hairline);
+    .image-pair img {
+      width: 100%;
+      aspect-ratio: 1 / 0.78;
+      object-fit: cover;
     }
 
-    .sample-canvas {
+    .application-grid,
+    .misuse-grid {
       display: grid;
-      gap: 10px;
-      min-height: 174px;
-      margin-bottom: 22px;
-      padding: 18px;
-      border: 1px solid var(--hairline);
-      background: linear-gradient(90deg, rgba(20, 27, 37, 0.05) 1px, transparent 1px) 0 0 / 28px 28px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px 34px;
     }
 
-    .canvas-line {
-      height: 12px;
-      background: var(--silver);
-    }
-
-    .canvas-line.short {
-      width: 52%;
-      background: var(--blue);
-    }
-
-    .canvas-block {
-      height: 54px;
-      background: var(--ink);
-    }
-
-    .sample-canvas.relation {
-      background: var(--warm);
-    }
-
-    .sample-canvas.relation .canvas-block {
-      border-radius: 0 42px 0 0;
-      background: var(--gold);
-    }
-
-    .photo-rules {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px;
-    }
-
-    .photo-card {
-      padding: 28px;
-      min-height: 360px;
-      border: 1px solid var(--hairline);
-      background: var(--white);
-    }
-
-    .photo-placeholder {
-      min-height: 170px;
-      margin-bottom: 22px;
-      background:
-        linear-gradient(135deg, rgba(20, 27, 37, 0.88), rgba(0, 48, 135, 0.72)),
-        repeating-linear-gradient(90deg, transparent 0 22px, rgba(251, 251, 248, 0.12) 22px 23px);
-    }
-
-    .photo-card.bad .photo-placeholder {
-      background:
-        linear-gradient(135deg, rgba(229, 0, 17, 0.75), rgba(20, 27, 37, 0.7)),
-        repeating-linear-gradient(45deg, transparent 0 18px, rgba(251, 251, 248, 0.18) 18px 20px);
-    }
-
-    .photo-card ul {
-      margin: 12px 0 0;
-      padding-left: 18px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .application-spread {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px;
-    }
-
-    .application {
-      min-height: 360px;
-      padding: 28px;
-      border: 1px solid var(--hairline);
-      background: var(--white);
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      gap: 22px;
-    }
-
-    .app-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 18px;
-      border-bottom: 1px solid var(--hairline);
-      padding-bottom: 16px;
-    }
-
-    .app-header b {
-      font-family: var(--font-song);
-      font-size: 26px;
-      color: var(--ink);
-    }
-
-    .app-tag {
-      color: var(--blue);
-      font-family: var(--font-byd);
-      font-size: 12px;
-      letter-spacing: 0.12em;
-      white-space: nowrap;
+    .application,
+    .misuse {
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
     }
 
     .check-lines {
       display: grid;
       gap: 8px;
-      align-content: start;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .check-lines span {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 16px;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--hairline);
-      color: var(--muted);
-      font-size: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
     }
 
     .check-lines i {
-      color: var(--blue);
+      color: var(--green);
       font-style: normal;
-      white-space: nowrap;
+      font-family: var(--font-strong);
     }
 
-    .dont-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .dont {
-      min-height: 250px;
-      padding: 20px;
-      background: var(--white);
-      border: 1px solid var(--hairline);
-    }
-
-    .wrong-mark {
-      position: relative;
+    .misuse-demo {
+      min-height: 112px;
       display: grid;
       place-items: center;
-      min-height: 120px;
       margin-bottom: 18px;
-      border: 1px solid var(--hairline);
-      background: var(--paper);
+      padding: 18px;
+      background: var(--white);
+      border: 1px solid var(--line);
       overflow: hidden;
     }
 
-    .wrong-mark::after {
+    .misuse-demo img {
+      max-height: 54px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .misuse-demo.stretch img {
+      transform: scaleX(1.45);
+    }
+
+    .misuse-demo.busy {
+      background:
+        repeating-linear-gradient(45deg, #b51c28 0 12px, #003087 12px 24px, #fdd000 24px 36px);
+    }
+
+    .misuse-demo.red-load {
+      color: var(--red);
+      font-family: var(--font-strong);
+      font-size: 34px;
+    }
+
+    .closing-image {
+      position: relative;
+      min-height: 610px;
+      color: var(--white);
+      background: #1e1c18;
+      isolation: isolate;
+    }
+
+    .closing-image img {
+      width: 100%;
+      height: 610px;
+      object-fit: cover;
+    }
+
+    .closing-image::after {
       content: "";
       position: absolute;
-      left: 8%;
-      right: 8%;
-      top: 50%;
-      height: 3px;
-      background: var(--red);
-      transform: rotate(-18deg);
-    }
-
-    .wrong-mark img {
-      width: 68%;
-      opacity: 0.8;
-    }
-
-    .wrong-mark.stretch img {
-      transform: scaleX(1.55);
-    }
-
-    .wrong-mark.color {
-      background: var(--red);
-    }
-
-    .wrong-mark.busy {
+      inset: 0;
+      z-index: 1;
       background:
-        linear-gradient(45deg, #111 0 16px, #ddd 16px 32px, #003087 32px 48px, #be9457 48px 64px);
-      background-size: 64px 64px;
+        linear-gradient(90deg, rgba(27, 25, 21, 0.8), rgba(27, 25, 21, 0.26) 55%, rgba(27, 25, 21, 0.08)),
+        linear-gradient(0deg, rgba(27, 25, 21, 0.68), transparent 54%);
     }
 
-    .dont b {
-      display: block;
-      margin-bottom: 8px;
-      color: var(--ink);
+    .closing-copy {
+      position: absolute;
+      z-index: 2;
+      left: 82px;
+      right: 62px;
+      bottom: 78px;
     }
 
-    .dont p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
+    .closing-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 22px;
+      color: rgba(255, 253, 248, 0.78);
+      font-size: 21px;
+      line-height: 1;
     }
 
-    .checklist {
-      display: grid;
-      grid-template-columns: minmax(0, 0.82fr) minmax(300px, 0.5fr);
-      gap: 28px;
-      align-items: start;
+    .closing-copy h2 {
+      color: var(--white);
+      font-size: 40px;
+      line-height: 1.42;
     }
 
-    .checklist ol {
-      margin: 0;
-      padding-left: 24px;
-      color: var(--muted);
+    .finale {
+      padding: 76px 82px 88px;
+      background: #20231f;
+      color: var(--white);
     }
 
-    .checklist li {
-      padding: 10px 0;
-      border-bottom: 1px solid var(--hairline);
+    .finale p {
+      max-width: 820px;
+      color: rgba(255, 253, 248, 0.82);
+      font-size: 22px;
+      line-height: 1.95;
     }
 
-    .manual-footer {
-      padding: 30px var(--page-x);
-      color: rgba(251, 251, 248, 0.62);
-      background: #0c121a;
-      font-size: 12px;
+    .finale p + p {
+      margin-top: 20px;
     }
 
-    .manual-footer div {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 16px;
+    .final-line {
+      margin-top: 48px;
+      color: var(--white);
+      font-size: 40px;
+      line-height: 1.55;
     }
 
-    @media (max-width: 1100px) {
-      .manual-shell {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
+    @media (max-width: 860px) {
+      .topline {
         position: static;
-        height: auto;
+        grid-template-columns: 1fr;
+        padding: 16px 32px;
       }
 
-      .toc {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .topline nav {
+        justify-content: flex-start;
       }
 
-      .cover-grid,
-      .page-head,
-      .clearspace-demo,
-      .type-specimen,
-      .concept-grid,
-      .graphic-system,
-      .checklist {
+      .hero,
+      .hero > img {
+        min-height: 620px;
+        height: 620px;
+      }
+
+      .hero-copy,
+      .closing-copy {
+        left: 36px;
+        right: 34px;
+        bottom: 46px;
+      }
+
+      h1 {
+        font-size: 46px;
+      }
+
+      h2 {
+        font-size: 34px;
+      }
+
+      .hero-subtitle {
+        font-size: 20px;
+      }
+
+      .opening,
+      .section,
+      .finale {
+        padding-left: 32px;
+        padding-right: 32px;
+      }
+
+      .lead {
+        font-size: 26px;
+      }
+
+      .intro-grid,
+      .section-head,
+      .concept-forms,
+      .asset-story,
+      .type-system,
+      .path-system {
+        grid-template-columns: 1fr;
+        gap: 26px;
+      }
+
+      .value-strip,
+      .principles,
+      .rule-ledger,
+      .swatch-system,
+      .application-grid,
+      .misuse-grid,
+      .image-pair {
         grid-template-columns: 1fr;
       }
 
-      .rule-grid,
-      .layout-grid,
-      .dont-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 760px) {
-      .manual-page {
-        min-height: auto;
+      .value-chip,
+      .principle,
+      .rule-row {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
       }
 
-      .toc,
-      .rule-grid,
-      .asset-grid,
-      .swatch-grid,
-      .photo-rules,
-      .application-spread,
-      .layout-grid,
-      .dont-grid {
+      .value-chip:last-child,
+      .principle:last-child,
+      .rule-row:last-child {
+        border-bottom: 0;
+      }
+
+      .concept-stage {
+        padding: 38px 26px;
+      }
+
+      .concept-mark {
+        grid-template-columns: repeat(2, auto);
+        justify-content: start;
+        row-gap: 30px;
+      }
+
+      .concept-word {
+        font-size: 48px;
+      }
+
+      .combo-row {
         grid-template-columns: 1fr;
+        gap: 14px;
       }
 
-      .toc {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .sidebar {
-        padding: 26px 18px;
-      }
-
-      .spec-list li,
-      .node-row {
-        grid-template-columns: 1fr;
-        gap: 8px;
-      }
-
-      .swatch {
-        min-height: 150px;
-      }
-
-      .ratio-bar {
-        grid-template-columns: 1fr;
-        height: auto;
-      }
-
-      .tenword-mark {
-        grid-template-columns: 1fr;
-        gap: 18px;
-        white-space: normal;
-      }
-
-      .tenword-vertical {
-        grid-template-columns: repeat(5, auto);
-        font-size: 30px;
-      }
-
-      .brand-combo {
-        grid-template-columns: 1fr;
-      }
-
-      .brand-combo .divider {
+      .combo-row i {
         width: 100%;
         height: 1px;
       }
 
-      .combo-rules {
+      .type-poster {
+        min-height: auto;
+        padding: 34px 28px;
+      }
+
+      .type-poster .display {
+        font-size: 48px;
+      }
+
+      .closing-copy h2 {
+        font-size: 30px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .topline {
+        padding: 14px 20px;
+        gap: 10px;
+      }
+
+      .topline b {
+        color: var(--ink);
+        font-family: var(--font-strong);
+        font-size: 18px;
+        line-height: 1.2;
+      }
+
+      .topline nav {
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .hero,
+      .hero > img {
+        min-height: 640px;
+        height: 640px;
+      }
+
+      .hero-copy,
+      .closing-copy {
+        left: 22px;
+        right: 22px;
+      }
+
+      .hero-copy {
+        bottom: 34px;
+        max-width: 330px;
+      }
+
+      .hero::after {
+        background:
+          linear-gradient(90deg, rgba(20, 18, 14, 0.84) 0%, rgba(20, 18, 14, 0.72) 54%, rgba(20, 18, 14, 0.44) 100%),
+          linear-gradient(0deg, rgba(20, 18, 14, 0.78), rgba(20, 18, 14, 0.16) 58%);
+      }
+
+      .hero > img {
+        object-position: 58% center;
+      }
+
+      .hero-kicker {
+        margin-bottom: 18px;
+        font-size: 14px;
+      }
+
+      .hero-kicker::before {
+        width: 38px;
+      }
+
+      h1 {
+        margin-bottom: 14px;
+        font-size: 36px;
+        text-shadow: 0 2px 22px rgba(0, 0, 0, 0.32);
+      }
+
+      h2 {
+        font-size: 29px;
+      }
+
+      .hero-subtitle {
+        margin-bottom: 18px;
+        font-size: 17px;
+        line-height: 1.62;
+      }
+
+      .hero-lockup {
+        grid-template-columns: auto 1px auto;
+        gap: 10px;
+        max-width: 100%;
+        padding: 10px 12px;
+      }
+
+      .hero-lockup i {
+        width: 1px;
+        height: 34px;
+      }
+
+      .hero-lockup img:first-child {
+        width: 60px;
+      }
+
+      .hero-lockup img:last-child {
+        width: min(158px, 48vw);
+      }
+
+      .opening,
+      .section,
+      .finale {
+        padding: 62px 22px;
+      }
+
+      .lead {
+        font-size: 23px;
+      }
+
+      .intro-copy {
+        font-size: 19px;
+      }
+
+      .value-chip strong,
+      .compact-mark,
+      .vertical-mark {
+        font-size: 34px;
+      }
+
+      .concept-mark {
         grid-template-columns: 1fr;
       }
 
-      .ratio-bar div {
-        min-height: 48px;
-      }
-    }
-
-    @media print {
-      .manual-shell {
-        display: block;
+      .concept-word {
+        font-size: 42px;
       }
 
-      .sidebar {
-        display: none;
+      .vertical-mark {
+        grid-template-columns: repeat(3, auto);
       }
 
-      .manual-page {
-        min-height: 100vh;
-        break-after: page;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      html {
-        scroll-behavior: auto;
+      .ratio-bar {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <div class="manual-shell">
-    <aside class="sidebar" aria-label="VI 手册目录">
-      <div>
-        <a class="brand-title" href="#cover" aria-label="返回封面">
-          <strong>精诚服务<br>新版 VI 手册</strong>
-          <span>Visual Identity Manual v0.1</span>
-        </a>
-        <ol class="toc">
-          <li><a href="#overview"><code>A0</code><span>手册原则</span></a></li>
-          <li><a href="#logo"><code>A1</code><span>品牌标识</span></a></li>
-          <li><a href="#color"><code>A2</code><span>品牌色彩</span></a></li>
-          <li><a href="#type"><code>A3</code><span>品牌字体</span></a></li>
-          <li><a href="#graphic"><code>A4</code><span>辅助图形</span></a></li>
-          <li><a href="#layout"><code>A5</code><span>版式系统</span></a></li>
-          <li><a href="#image"><code>A6</code><span>图像风格</span></a></li>
-          <li><a href="#application"><code>B1</code><span>应用规范</span></a></li>
-          <li><a href="#dont"><code>C1</code><span>禁用示例</span></a></li>
-          <li><a href="#check"><code>D1</code><span>交付清单</span></a></li>
+  <main class="page">
+    <header class="topline" aria-label="手册导航">
+      <a href="#cover"><b>精诚服务新版 VI 手册</b></a>
+      <nav>
+        <a href="#concept">核心理念</a>
+        <a href="#marks">标识组合</a>
+        <a href="#color">色彩字体</a>
+        <a href="#system">图形应用</a>
+        <a href="#delivery">交付清单</a>
+      </nav>
+    </header>
+
+    <section class="hero" id="cover" aria-labelledby="cover-title">
+      <img src="../../output/wechat-push-images/01-cover-selected.png" alt="精诚服务交付中心封面图">
+      <div class="hero-copy">
+        <div class="hero-kicker">2026 · 新版视觉识别工作稿</div>
+        <h1 id="cover-title">精诚服务新版 VI 手册</h1>
+        <p class="hero-subtitle">以“求真、尽善、致美、大爱、幸福”为核心理念，把服务价值转化为可识别、可执行、可复制的视觉系统。</p>
+        <div class="hero-lockup" aria-label="BYD 与精诚服务标识组合示例">
+          <img src="vi-assets/brand-byd-red.png" alt="BYD 主品牌标识">
+          <i aria-hidden="true"></i>
+          <img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务横版标识">
+        </div>
+      </div>
+    </section>
+
+    <section class="opening" id="overview" aria-labelledby="overview-title">
+      <p class="lead" id="overview-title"><em>新版 VI 不再复刻旧手册的版式和口号层级。</em>它以二十周年品牌升级为起点，把新的核心理念放到主轴位置，让标识、字体、色彩、图形和应用模板都围绕“长期信任”重新组织。</p>
+      <div class="intro-grid">
+        <ol class="toc-list" aria-label="章节目录">
+          <li><a href="#principle"><code>01</code><span>手册原则</span></a></li>
+          <li><a href="#concept"><code>02</code><span>核心理念字样</span></a></li>
+          <li><a href="#marks"><code>03</code><span>品牌标识与组合</span></a></li>
+          <li><a href="#color"><code>04</code><span>色彩与字体</span></a></li>
+          <li><a href="#system"><code>05</code><span>辅助图形与应用</span></a></li>
+          <li><a href="#delivery"><code>06</code><span>禁用与交付</span></a></li>
         </ol>
+        <div class="intro-copy">
+          <p>旧表达“精于勤，诚于心”保留为历史资产。新的日常理念表达预计由十字核心框架承担，因此手册首先定义这十个字的视觉样式，再定义它与主品牌、精诚服务标识共同出现时的层级。</p>
+          <p>视觉方向不追求强科技感或装饰化热闹，而是建立一种更高级、更克制、更有服务现场质感的品牌长卷：真实图像承载信任，宋体标题承载价值，深色结构承载秩序，金色与绿色只在关键判断处出现。</p>
+        </div>
       </div>
-      <div class="sidebar-meta">
-        <span>工作稿 / 2026-06-24</span>
-        <span>基于旧版品牌管理手册与新版价值框架</span>
+      <div class="value-strip" aria-label="新版核心理念">
+        <div class="value-chip"><strong>求真</strong><span>立事实，尊重规律和真实处境。</span></div>
+        <div class="value-chip"><strong>尽善</strong><span>在约束中选择更有利于长期信任的做法。</span></div>
+        <div class="value-chip"><strong>致美</strong><span>让服务不止于完成，更抵达专业与秩序。</span></div>
+        <div class="value-chip"><strong>大爱</strong><span>看见人的处境、尊严、安全和长期关系。</span></div>
+        <div class="value-chip"><strong>幸福</strong><span>让尊严、自由与幸福成为发展的目的。</span></div>
       </div>
-    </aside>
+    </section>
 
-    <main>
-      <section class="manual-page cover" id="cover" aria-labelledby="cover-title">
+    <figure class="wide-image">
+      <img src="../../output/wechat-push-images/copyright-02-consultation.jpg" alt="服务顾问与客户沟通">
+    </figure>
+
+    <section class="section" id="principle" aria-labelledby="principle-title">
+      <div class="section-head">
+        <div class="section-index">一<span>手册原则</span></div>
         <div>
-          <p class="chapter">Service Brand Visual Identity</p>
-          <h1 id="cover-title">精诚服务新版 VI 手册</h1>
-          <p class="lead">将“求真、尽善、致美、大爱、幸福”转化为可识别、可执行、可复制的服务视觉系统。</p>
+          <h2 id="principle-title">从旧版资产继承，向新版价值系统生长</h2>
+          <p class="section-summary">这份手册不把旧版 VI 当作束缚，也不任意抛弃已有资产。正式标识保持来源清晰；理念表达、版式气质和应用系统按新版价值框架重构。</p>
         </div>
-        <div class="cover-grid">
-          <div class="cover-meta">
-            <span>核心概念：信任路径 Trust Path</span>
-            <span>设计原则：事实清楚、流程有序、专业可见、关系有温度</span>
-            <span>标识策略：官方标识保留，视觉系统更新</span>
-          </div>
-          <figure class="cover-card">
-            <img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务横版品牌标识">
-          </figure>
-        </div>
-      </section>
+      </div>
+      <div class="principles">
+        <article class="principle">
+          <b>标识不重绘</b>
+          <p>主品牌与精诚服务官方标识只使用现有文件，不用文字、CSS、描摹或生成图像替代。</p>
+        </article>
+        <article class="principle">
+          <b>理念先成形</b>
+          <p>十字核心理念是新版视觉系统的价值入口，先定义字样、排列、色彩节奏和使用边界。</p>
+        </article>
+        <article class="principle">
+          <b>应用可落地</b>
+          <p>所有版式、图像、色彩和辅助图形都必须能进入客户解释、车间看板、员工支持和数字平台。</p>
+        </article>
+      </div>
+    </section>
 
-      <section class="manual-page" id="overview" aria-labelledby="overview-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A0 / Manual Principles</p>
-            <h2 id="overview-title">手册使用原则</h2>
-          </div>
-          <p class="page-summary">本手册是新版 VI 的工作稿，用于统一视觉语言、应用边界和交付判断。正式发布前，商标、字体授权和标准色值仍需品牌方确认。</p>
-        </header>
-
-        <div class="rule-grid">
-          <article class="rule">
-            <b>01. 标识不重绘</b>
-            <p>官方标识、理念 icon 和联合标识规则属于正式品牌资产。除品牌方正式审批外，不重新绘制、不改色、不变形、不替换。</p>
-          </article>
-          <article class="rule">
-            <b>02. 系统要可执行</b>
-            <p>新版 VI 不只用于海报展示，更要进入客户解释卡、车间看板、员工支持卡、共创内容和数字平台。</p>
-          </article>
-          <article class="rule">
-            <b>03. 红色降级使用</b>
-            <p>精诚红保留为历史识别和重要提醒色。大面积背景与结构色优先使用信任深蓝、银灰和事实白。</p>
-          </article>
-          <article class="rule">
-            <b>04. 图形承载价值</b>
-            <p>“信任路径”承担新版价值表达：定点、转向、对齐、承托、闭环，对应求真、尽善、致美、大爱、幸福。</p>
-          </article>
-          <article class="rule">
-            <b>05. 文字先清楚</b>
-            <p>标题可以有东方气质，正文必须清楚稳定。服务说明、流程、风险和责任信息不得为了视觉效果牺牲可读性。</p>
-          </article>
-          <article class="rule">
-            <b>06. 真实优先</b>
-            <p>图像应来自真实服务现场、真实工序、真实人物互动。避免过度摆拍、炫技光效和无法兑现的情绪化表达。</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="manual-page" id="logo" aria-labelledby="logo-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A1 / Brand Marks</p>
-            <h2 id="logo-title">品牌标识规范</h2>
-          </div>
-          <p class="page-summary">第一阶段沿用旧版手册中的正式标识资产，同时新增“求真、尽善、致美、大爱、幸福”十字核心理念标识。它预计取代“精于勤，诚于心”的日常理念表达。</p>
-        </header>
-
-        <div class="asset-grid">
-          <article class="asset-spec">
-            <figure class="asset-preview">
-              <img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务横版标识">
-            </figure>
-            <div class="asset-body">
-              <h3>比亚迪精诚服务横版标识</h3>
-              <ul>
-                <li>用于正式对外传播、门店物料、汇报封面、品牌落款。</li>
-                <li>保持原始比例、颜色和留白，不拆分印章、理念和英文签名。</li>
-                <li>在复杂背景上必须使用经确认的正色或反白版本。</li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="asset-spec">
-            <figure class="asset-preview">
-              <div class="tenword-mark" aria-label="求真、尽善、致美、大爱、幸福核心理念标准稿">
-                <span>求真</span><span>尽善</span><span>致美</span><span>大爱</span><span>幸福</span>
-              </div>
-            </figure>
-            <div class="asset-body">
-              <h3>十字核心理念标准稿</h3>
-              <ul>
-                <li>作为新版价值框架的主理念表达，优先用于品牌升级、培训、手册封面和核心传播页。</li>
-                <li>五组二字词保持完整顺序，不拆分重排，不单独抽取某一词作为口号。</li>
-                <li>默认横排标准稿；小尺寸使用紧凑稿；章节页可使用竖排稿。</li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="asset-spec">
-            <figure class="asset-preview">
-              <img src="vi-assets/denza-jingcheng-service-blue-horizontal.png" alt="腾势精诚服务横版标识">
-            </figure>
-            <div class="asset-body">
-              <h3>腾势精诚服务横版标识</h3>
-              <ul>
-                <li>用于腾势相关售后服务传播和内部材料。</li>
-                <li>与主品牌标识共同出现时，遵守旧版手册中的联合标识规则。</li>
-                <li>不得借新版 VI 改变腾势蓝或组合关系。</li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="asset-spec">
-            <figure class="asset-preview">
-              <img src="vi-assets/byd-service-principle-icon-dark.png" alt="精于勤诚于心旧版品牌理念 icon">
-            </figure>
-            <div class="asset-body">
-              <h3>旧版理念 icon（历史资产）</h3>
-              <ul>
-                <li>保留用于品牌历史、文化溯源、老物料过渡和纪念内容。</li>
-                <li>新版日常理念表达逐步转向“求真、尽善、致美、大爱、幸福”。</li>
-                <li>不得将旧理念 icon 与十字核心理念并列为同级主口号。</li>
-              </ul>
-            </div>
-          </article>
-        </div>
-
-        <div class="concept-grid" aria-label="十字核心理念字样规范">
-          <article class="concept-board dark-board">
-            <p class="concept-label">Primary Concept Mark</p>
-            <div class="tenword-mark">
-              <span>求真</span><span>尽善</span><span>致美</span><span>大爱</span><span>幸福</span>
-            </div>
-            <p class="concept-note">标准稿使用方正清刻本悦宋简体，保留东方文化气质，但用五条色彩下划线把“价值路径”固定下来。适合封面、发布主视觉、手册章节页和大型物料。</p>
-          </article>
-
-          <div class="concept-variants">
-            <article class="concept-variant">
-              <b>Compact Version</b>
-              <div class="tenword-compact">求真尽善致美大爱幸福</div>
-            </article>
-            <article class="concept-variant">
-              <b>Vertical Version</b>
-              <div class="tenword-vertical">
-                <span>求真</span><span>尽善</span><span>致美</span><span>大爱</span><span>幸福</span>
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <div class="combo-board" aria-label="核心理念与主品牌组合规范">
-          <p class="concept-label">Combination Rules</p>
-          <h3>主品牌与核心理念共同出现时，主品牌优先，精诚服务承接，核心理念解释。</h3>
-          <div class="combo-grid">
-            <article class="brand-combo">
-              <img class="brand-logo" src="vi-assets/brand-byd-red.png" alt="BYD 主品牌标识">
-              <i class="divider" aria-hidden="true"></i>
-              <img class="service-logo" src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务标识">
-              <div class="combo-concept">
-                <strong>求真尽善致美大爱幸福</strong>
-                <small>Trust Path</small>
-              </div>
-            </article>
-            <article class="brand-combo">
-              <img class="brand-logo" src="vi-assets/brand-denza-positive.png" alt="腾势主品牌标识">
-              <i class="divider" aria-hidden="true"></i>
-              <img class="service-logo" src="vi-assets/denza-jingcheng-service-blue-horizontal.png" alt="腾势精诚服务标识">
-              <div class="combo-concept">
-                <strong>求真尽善致美大爱幸福</strong>
-                <small>Trust Path</small>
-              </div>
-            </article>
-            <article class="brand-combo">
-              <img class="brand-logo" src="vi-assets/brand-yangwang-black.png" alt="仰望主品牌标识">
-              <i class="divider" aria-hidden="true"></i>
-              <div class="combo-concept">
-                <strong>仰望 · 精诚至臻</strong>
-                <small>Service Identity</small>
-              </div>
-              <div class="combo-concept">
-                <strong>求真尽善致美大爱幸福</strong>
-                <small>Core Philosophy</small>
-              </div>
-            </article>
-            <article class="brand-combo">
-              <img class="brand-logo" src="vi-assets/brand-fangchengbao-black.png" alt="方程豹主品牌标识">
-              <i class="divider" aria-hidden="true"></i>
-              <div class="combo-concept">
-                <strong>精诚服务</strong>
-                <small>Service Brand</small>
-              </div>
-              <div class="combo-concept">
-                <strong>求真尽善致美大爱幸福</strong>
-                <small>Core Philosophy</small>
-              </div>
-            </article>
-          </div>
-
-          <div class="combo-rules">
-            <article class="rule">
-              <b>组合层级</b>
-              <p>主品牌标识优先，精诚服务标识次之，十字核心理念作为价值解释层。三者不得等大并列。</p>
-            </article>
-            <article class="rule">
-              <b>使用场景</b>
-              <p>完整组合用于封面、主视觉、发布页和大型物料；小尺寸场景只保留主品牌 + 精诚服务标识，不强行加入十字理念。</p>
-            </article>
-            <article class="rule">
-              <b>安全距离</b>
-              <p>主品牌与精诚服务之间使用垂直分隔线或足够留白；核心理念与标识之间至少保留标识高度 0.5A。</p>
-            </article>
-          </div>
-        </div>
-
-        <div class="clearspace-demo">
-          <figure class="clear-box" aria-label="标识安全空间示意">
-            <img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务横版标识安全空间示意">
-          </figure>
-          <ul class="spec-list">
-            <li><b>安全空间</b><span>标识四周保留不小于标识高度 0.5A 的空白；联合标识可按 0.25A 作为最低参考。</span></li>
-            <li><b>最小尺寸</b><span>横版标识高度小于 10mm 时禁止使用；竖版标识高度小于 16mm 时禁止使用。</span></li>
-            <li><b>背景选择</b><span>浅色背景使用正色稿；深色背景使用反白稿或经确认的深色版。</span></li>
-            <li><b>文件来源</b><span>优先使用官方 AI/PNG 文件，不建议根据网格图自行重绘。</span></li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="manual-page" id="color" aria-labelledby="color-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A2 / Color System</p>
-            <h2 id="color-title">品牌色彩规范</h2>
-          </div>
-          <p class="page-summary">新版色彩系统以“可信、克制、清晰”为目标。蓝、银、灰承担系统结构；红色保留历史识别；金与黄用于关怀和结果。</p>
-        </header>
-
-        <div class="swatch-grid" aria-label="精诚服务新版色彩令牌">
-          <div class="swatch" style="background:#141b25"><b>信任深蓝</b><code>#141B25</code><span>RGB 20/27/37<br>CMYK 90/85/71/59</span></div>
-          <div class="swatch" style="background:#003087"><b>服务蓝</b><code>#003087</code><span>RGB 0/48/135<br>CMYK 100/88/0/0</span></div>
-          <div class="swatch" style="background:#595757"><b>秩序灰</b><code>#595757</code><span>RGB 89/87/87<br>CMYK 0/0/0/80</span></div>
-          <div class="swatch light" style="background:#dcdddd"><b>工艺银</b><code>#DCDDDD</code><span>RGB 220/221/221<br>CMYK 0/0/0/20</span></div>
-          <div class="swatch light" style="background:#fbfbf8"><b>事实白</b><code>#FBFBF8</code><span>大面积背景<br>信息承载</span></div>
-          <div class="swatch" style="background:#be9457"><b>善意金</b><code>#BE9457</code><span>RGB 200/155/90<br>CMYK 30/45/70/0</span></div>
-          <div class="swatch" style="background:#e50011"><b>行动暖红</b><code>#E50011</code><span>由 R229/G0/B17 推导<br>正式色值待确认</span></div>
-          <div class="swatch light" style="background:#fdd000"><b>结果黄</b><code>#FDD000</code><span>RGB 255/208/0<br>CMYK 0/20/100/0</span></div>
-        </div>
-
-        <div class="ratio-bar" aria-label="色彩使用比例">
-          <div style="background:#fbfbf8;color:#141b25">60%<br>事实白 / 浅银灰</div>
-          <div style="background:#141b25;color:#fbfbf8">20%<br>信任深蓝</div>
-          <div style="background:#595757;color:#fbfbf8">10%<br>秩序灰</div>
-          <div style="background:#003087;color:#fbfbf8">5%<br>服务蓝</div>
-          <div style="background:#be9457;color:#fbfbf8">5%<br>暖金/暖红</div>
-        </div>
-      </section>
-
-      <section class="manual-page warm" id="type" aria-labelledby="type-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A3 / Typography</p>
-            <h2 id="type-title">品牌字体规范</h2>
-          </div>
-          <p class="page-summary">本 HTML 已通过本地 @font-face 加载方正清刻本悦宋、方正兰亭系列和 BYD Type。正式发布前仍需确认授权期限、使用范围和 Web/视频/印刷许可。</p>
-        </header>
-
-        <div class="type-specimen">
-          <article class="type-poster">
-            <p class="display">求真尽善致美大爱幸福</p>
-            <p class="body-copy">核心理念十字使用方正清刻本悦宋简体作为主标题字形，避免书法化过度情绪；正文说明、规范条款和数字平台内容使用方正兰亭黑系统，保证阅读稳定。</p>
-          </article>
-          <div>
-            <div class="font-row">
-              <b>品牌标题：方正清刻本悦宋简体</b>
-              <span>已加载 `vi-assets/fonts/fz-qingke-benyuesong.ttf`。用于十字核心理念、封面、章节标题和价值短句。</span>
-            </div>
-            <div class="font-row">
-              <b>正文说明：方正兰亭黑 / 方正兰亭粗黑</b>
-              <span>已加载 `fz-lanting-hei.ttf` 与 `fz-lanting-cuhei.ttf`。用于流程、规范、服务说明和数字平台正文。</span>
-            </div>
-            <div class="font-row">
-              <b>英文与编号：BYD Type</b>
-              <span>已加载 Regular / Medium / Bold 三个字重。用于英文名、编号、规格参数和数字标注。</span>
-            </div>
-            <div class="font-row">
-              <b>备用字体：Microsoft YaHei UI / Source Han Sans CN</b>
-              <span>用于无法部署授权字体的系统页面和内部材料。</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="manual-page dark" id="graphic" aria-labelledby="graphic-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A4 / Graphic System</p>
-            <h2 id="graphic-title">信任路径辅助图形</h2>
-          </div>
-          <p class="page-summary">辅助图形由线、节点、转向、对齐、承托和闭环组成。它是新版价值框架的可视化系统，不是替代标志的第二套 logo。</p>
-        </header>
-
-        <div class="graphic-system">
-          <figure class="path-board" aria-label="信任路径辅助图形构成">
-            <svg viewBox="0 0 620 430" role="img" aria-labelledby="path-title path-desc">
-              <title id="path-title">信任路径构成示意</title>
-              <desc id="path-desc">路径从定点出发，经过转向、对齐、承托，抵达闭环。</desc>
-              <defs>
-                <linearGradient id="manualPath" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#003087"/>
-                  <stop offset="32%" stop-color="#70c7da"/>
-                  <stop offset="55%" stop-color="#dcdddd"/>
-                  <stop offset="78%" stop-color="#be9457"/>
-                  <stop offset="100%" stop-color="#fdd000"/>
-                </linearGradient>
-              </defs>
-              <path d="M70 110 H205 C258 110 246 182 296 182 H382 C438 182 430 274 494 274 H552" fill="none" stroke="url(#manualPath)" stroke-width="8" stroke-linecap="square"/>
-              <rect x="50" y="90" width="40" height="40" fill="#141b25" stroke="#003087" stroke-width="8"/>
-              <path d="M184 90H226V132H184Z" fill="#141b25" stroke="#70c7da" stroke-width="8"/>
-              <rect x="276" y="162" width="40" height="40" transform="rotate(45 296 182)" fill="#141b25" stroke="#dcdddd" stroke-width="8"/>
-              <path d="M368 203V168c0-18 14-32 32-32s32 14 32 32v35" fill="none" stroke="#be9457" stroke-width="8"/>
-              <circle cx="552" cy="274" r="22" fill="#141b25" stroke="#fdd000" stroke-width="8"/>
-              <text x="40" y="168" fill="#fbfbf8" font-size="18">求真</text>
-              <text x="172" y="168" fill="#fbfbf8" font-size="18">尽善</text>
-              <text x="270" y="242" fill="#fbfbf8" font-size="18">致美</text>
-              <text x="370" y="242" fill="#fbfbf8" font-size="18">大爱</text>
-              <text x="530" y="330" fill="#fbfbf8" font-size="18">幸福</text>
-            </svg>
-          </figure>
-
-          <div class="node-manual">
-            <div class="node-row"><i class="node-shape"></i><b>定点</b><span>事实、证据、依据、责任人的标记。</span></div>
-            <div class="node-row"><i class="node-shape turn"></i><b>转向</b><span>方案选择、协调路径、规则中的更优解。</span></div>
-            <div class="node-row"><i class="node-shape align"></i><b>对齐</b><span>工序、现场、标准和专业交付的秩序。</span></div>
-            <div class="node-row"><i class="node-shape hold"></i><b>承托</b><span>客户处境、员工支持、安全边界和尊严。</span></div>
-            <div class="node-row"><i class="node-shape loop"></i><b>闭环</b><span>安心、托付、复盘、持续改善和长期关系。</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="manual-page" id="layout" aria-labelledby="layout-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A5 / Layout System</p>
-            <h2 id="layout-title">版式与信息层级</h2>
-          </div>
-          <p class="page-summary">新版版式围绕“事实层、判断层、关系层”组织。信息先清楚，再强调品牌气质。</p>
-        </header>
-
-        <div class="layout-grid">
-          <article class="layout-sample">
-            <div class="sample-canvas">
-              <span class="canvas-line short"></span>
-              <span class="canvas-block"></span>
-              <span class="canvas-line"></span>
-              <span class="canvas-line"></span>
-            </div>
-            <h3>事实层</h3>
-            <p>用于车况、费用、进度、依据、责任人。白底、深蓝标题、灰色正文，避免装饰干扰判断。</p>
-          </article>
-          <article class="layout-sample">
-            <div class="sample-canvas">
-              <span class="canvas-line short"></span>
-              <span class="canvas-line"></span>
-              <span class="canvas-block" style="background:#003087"></span>
-              <span class="canvas-line"></span>
-            </div>
-            <h3>判断层</h3>
-            <p>用于方案比较、路径转向、边界说明。服务蓝作为结构强调，暖金只标记关键取舍。</p>
-          </article>
-          <article class="layout-sample">
-            <div class="sample-canvas relation">
-              <span class="canvas-line short"></span>
-              <span class="canvas-block"></span>
-              <span class="canvas-line"></span>
-              <span class="canvas-line"></span>
-            </div>
-            <h3>关系层</h3>
-            <p>用于客户安心、员工支持、长期托付。留白更大，文字更克制，用承托面表达温度。</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="manual-page" id="image" aria-labelledby="image-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">A6 / Image Style</p>
-            <h2 id="image-title">图像风格规范</h2>
-          </div>
-          <p class="page-summary">图像要服务“可信”。优先真实服务现场、真实工序、真实人物互动，不使用无法支撑服务承诺的空泛情绪画面。</p>
-        </header>
-
-        <div class="photo-rules">
-          <article class="photo-card">
-            <div class="photo-placeholder" aria-hidden="true"></div>
-            <h3>推荐方向</h3>
-            <ul>
-              <li>服务顾问说明车况、费用、进度和风险。</li>
-              <li>维修、钣喷、质检、交付的真实工序。</li>
-              <li>工具、工单、检查表、洁净工位等细节特写。</li>
-              <li>员工协作、培训、复盘和现场支持。</li>
-            </ul>
-          </article>
-          <article class="photo-card bad">
-            <div class="photo-placeholder" aria-hidden="true"></div>
-            <h3>避免方向</h3>
-            <ul>
-              <li>过度摆拍的握手、递钥匙、微笑合影。</li>
-              <li>只有车辆大景，缺少服务关系和服务动作。</li>
-              <li>过度暗调、强反光、泛科技光效。</li>
-              <li>暗示“绝对安全”“零风险”等不可兑现承诺。</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section class="manual-page" id="application" aria-labelledby="application-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">B1 / Applications</p>
-            <h2 id="application-title">应用系统规范</h2>
-          </div>
-          <p class="page-summary">第一批落地模板优先覆盖能验证服务价值的真实触点。海报好看不够，必须能用于现场和组织管理。</p>
-        </header>
-
-        <div class="application-spread">
-          <article class="application">
-            <div class="app-header"><b>客户解释卡</b><span class="app-tag">Customer Card</span></div>
-            <p>用于说明事实、费用、进度、风险和下一步责任。</p>
-            <div class="check-lines">
-              <span>车况事实 <i>已确认</i></span>
-              <span>费用依据 <i>可追溯</i></span>
-              <span>进度节点 <i>可查看</i></span>
-              <span>下一步责任人 <i>已明确</i></span>
-            </div>
-          </article>
-
-          <article class="application">
-            <div class="app-header"><b>车间工序看板</b><span class="app-tag">Workshop Board</span></div>
-            <p>用于维修、钣喷、质检等场景，让工序秩序被看见。</p>
-            <div class="check-lines">
-              <span>评估 <i>定点</i></span>
-              <span>维修 <i>对齐</i></span>
-              <span>质检 <i>复核</i></span>
-              <span>交付 <i>闭环</i></span>
-            </div>
-          </article>
-
-          <article class="application">
-            <div class="app-header"><b>员工支持卡</b><span class="app-tag">Employee Support</span></div>
-            <p>用于投诉、返修、跨部门协作等高压场景。</p>
-            <div class="check-lines">
-              <span>客户处境 <i>先看见</i></span>
-              <span>规则边界 <i>讲清楚</i></span>
-              <span>组织支持 <i>给到位</i></span>
-              <span>复盘机制 <i>可持续</i></span>
-            </div>
-          </article>
-
-          <article class="application">
-            <div class="app-header"><b>数字平台组件</b><span class="app-tag">Digital System</span></div>
-            <p>用于 Lighthouse / Workshop / Hermit 等内容平台。</p>
-            <div class="check-lines">
-              <span>价值维度标签 <i>统一</i></span>
-              <span>案例卡片 <i>可读</i></span>
-              <span>审核状态 <i>清晰</i></span>
-              <span>证据链引用 <i>可追溯</i></span>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="manual-page" id="dont" aria-labelledby="dont-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">C1 / Misuse</p>
-            <h2 id="dont-title">禁用示例</h2>
-          </div>
-          <p class="page-summary">以下规则用于保护正式标识和新版视觉系统的一致性。真实项目中应由模板和校验机制进一步约束。</p>
-        </header>
-
-        <div class="dont-grid">
-          <article class="dont">
-            <div class="wrong-mark stretch"><img src="vi-assets/byd-jingcheng-service-horizontal.png" alt=""></div>
-            <b>禁止拉伸变形</b>
-            <p>不得横向或纵向压缩、拉伸、倾斜标识。</p>
-          </article>
-          <article class="dont">
-            <div class="wrong-mark color"><img src="vi-assets/byd-jingcheng-service-horizontal.png" alt=""></div>
-            <b>禁止随意改色</b>
-            <p>不得把官方标识改成非手册规定的颜色组合。</p>
-          </article>
-          <article class="dont">
-            <div class="wrong-mark busy"><img src="vi-assets/byd-jingcheng-service-horizontal.png" alt=""></div>
-            <b>禁止复杂背景</b>
-            <p>不得把标识直接放在高噪声、强纹理或低对比背景上。</p>
-          </article>
-          <article class="dont">
-            <div class="wrong-mark"><span style="font-size:38px;color:#e50011;font-weight:700;">全红背景</span></div>
-            <b>禁止红色过载</b>
-            <p>新版 VI 不以大面积红色作为默认主视觉。</p>
-          </article>
-          <article class="dont">
-            <div class="wrong-mark"><span style="font-size:30px;color:#003087;">五色贴纸化</span></div>
-            <b>禁止普通 icon 化</b>
-            <p>五个价值维度不能简化成随意五色图标贴纸。</p>
-          </article>
-          <article class="dont">
-            <div class="wrong-mark"><span style="font-size:28px;color:#be9457;">无意义装饰线</span></div>
-            <b>禁止装饰性路径</b>
-            <p>信任路径必须表达流程、判断或关系，不做纯背景花纹。</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="manual-page" id="check" aria-labelledby="check-title">
-        <header class="page-head">
-          <div>
-            <p class="chapter">D1 / Delivery Checklist</p>
-            <h2 id="check-title">落地交付清单</h2>
-          </div>
-          <p class="page-summary">正式进入模板和物料制作前，建议先用这份清单做一次品牌、法务、授权和应用场景确认。</p>
-        </header>
-
-        <div class="checklist">
-          <ol>
-            <li>确认是否继续采用“The Genuine Way”作为新版英文表达。</li>
-            <li>确认“求真、尽善、致美、大爱、幸福”正式替代“精于勤，诚于心”的日常理念表达。</li>
-            <li>确认十字核心理念标准稿、紧凑稿、竖排稿三种字样是否进入正式规范。</li>
-            <li>确认旧标识、历史理念 icon、联合标识的正式文件版本。</li>
-            <li>确认精诚红标准色：旧稿中的 RGB 229/0/17 与 HEX #ff0000 需要统一。</li>
-            <li>复核方正、汉仪、BYD Type 等字体的授权范围。</li>
-            <li>确认 BYD、腾势、仰望、方程豹等主品牌与核心理念共同出现时的组合层级。</li>
-            <li>补充真实服务现场照片，建立正向与反向图片库。</li>
-            <li>制作 PPT、客户解释卡、车间看板、员工支持卡、数字平台组件模板。</li>
-            <li>建立禁用示例和文件校验机制，避免输出漂移。</li>
-          </ol>
-          <article class="rule">
-            <b>手册状态</b>
-            <p>当前为 HTML 工作稿，适合内部讨论、方向确认和初步模板化。正式 VI 发布前，需要补齐矢量源文件、印刷色值、字体授权证明和应用样张。</p>
-          </article>
-        </div>
-      </section>
-
-      <footer class="manual-footer">
+    <section class="section dark" id="concept" aria-labelledby="concept-title">
+      <div class="section-head">
+        <div class="section-index">二<span>核心理念字样</span></div>
         <div>
-          <span>精诚服务新版 VI 手册 / HTML 工作稿 / v0.1 / 2026-06-24</span>
-          <span>依据：旧版品牌管理手册、新版价值框架、现有品牌标识资产</span>
+          <h2 id="concept-title">让十个字成为新版系统的视觉主轴</h2>
+          <p class="section-summary">十字核心理念预计取代“精于勤，诚于心”的日常理念表达。它不是一句普通口号，而是一条从事实、善意、秩序、关怀到幸福的价值路径。</p>
         </div>
-      </footer>
-    </main>
-  </div>
+      </div>
+      <div class="concept-stage" aria-label="十字核心理念标准横排稿">
+        <div class="concept-mark">
+          <span class="concept-word">求真</span>
+          <span class="concept-word">尽善</span>
+          <span class="concept-word">致美</span>
+          <span class="concept-word">大爱</span>
+          <span class="concept-word">幸福</span>
+        </div>
+        <p class="concept-note">标准稿使用方正清刻本悦宋简体。五条短线不是装饰，而是把五个价值维度固定为一条可识别的路径：服务蓝代表事实，青蓝代表选择，银灰代表秩序，暖金代表关怀，结果黄代表幸福抵达。</p>
+      </div>
+      <div class="concept-forms">
+        <article class="form-panel">
+          <div class="spec-label">紧凑横排</div>
+          <div class="compact-mark">求真尽善致美大爱幸福</div>
+          <p class="section-summary">用于小尺寸页眉、腰封、内页页脚、数字平台组件。不再拆分为五个贴纸化图标。</p>
+        </article>
+        <article class="form-panel">
+          <div class="spec-label">竖排仪式稿</div>
+          <div class="vertical-mark" aria-label="求真、尽善、致美、大爱、幸福竖排稿">
+            <span>求真</span>
+            <span>尽善</span>
+            <span>致美</span>
+            <span>大爱</span>
+            <span>幸福</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section alt" id="marks" aria-labelledby="marks-title">
+      <div class="section-head">
+        <div class="section-index">三<span>品牌标识与组合</span></div>
+        <div>
+          <h2 id="marks-title">主品牌优先，精诚服务承接，核心理念解释</h2>
+          <p class="section-summary">新版组合关系不把三者等大并列。主品牌承担归属，精诚服务承担服务识别，十字理念承担价值解释。</p>
+        </div>
+      </div>
+      <div class="asset-story">
+        <article class="mark-panel">
+          <figure class="mark-preview">
+            <img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务横版标识">
+          </figure>
+          <div class="mark-copy">
+            <h3>精诚服务横版标识</h3>
+            <p>延续旧版正式资产，用于服务品牌主识别。不得拉伸、描摹、改色或与十字理念合并为新 logo。</p>
+          </div>
+        </article>
+        <article class="mark-panel">
+          <figure class="mark-preview dark-preview">
+            <img src="vi-assets/byd-service-principle-icon-dark.png" alt="精于勤诚于心旧版理念图形">
+          </figure>
+          <div class="mark-copy">
+            <h3>旧版理念图形</h3>
+            <p>作为历史资产保留。新版日常传播不再将它与十字核心理念并列为同级主口号。</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="combo-list" aria-label="主品牌与精诚服务组合规范">
+        <article class="combo-row">
+          <img src="vi-assets/brand-byd-red.png" alt="BYD 主品牌标识">
+          <i aria-hidden="true"></i>
+          <img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="比亚迪精诚服务标识">
+          <div class="combo-text"><strong>求真尽善致美大爱幸福</strong><small>BYD SERVICE SYSTEM</small></div>
+        </article>
+        <article class="combo-row">
+          <img src="vi-assets/brand-denza-positive.png" alt="腾势主品牌标识">
+          <i aria-hidden="true"></i>
+          <img src="vi-assets/denza-jingcheng-service-blue-horizontal.png" alt="腾势精诚服务标识">
+          <div class="combo-text"><strong>求真尽善致美大爱幸福</strong><small>DENZA SERVICE SYSTEM</small></div>
+        </article>
+        <article class="combo-row">
+          <img src="vi-assets/brand-yangwang-black.png" alt="仰望主品牌标识">
+          <i aria-hidden="true"></i>
+          <div class="combo-text"><strong>仰望 · 精诚至臻</strong><small>SERVICE EXPRESSION</small></div>
+          <div class="combo-text"><strong>求真尽善致美大爱幸福</strong><small>VALUE LAYER</small></div>
+        </article>
+        <article class="combo-row">
+          <img src="vi-assets/brand-fangchengbao-black.png" alt="方程豹主品牌标识">
+          <i aria-hidden="true"></i>
+          <div class="combo-text"><strong>精诚服务</strong><small>SERVICE BRAND</small></div>
+          <div class="combo-text"><strong>求真尽善致美大爱幸福</strong><small>VALUE LAYER</small></div>
+        </article>
+      </div>
+      <div class="rule-ledger">
+        <article class="rule-row">
+          <b>组合层级</b>
+          <p>主品牌标识最大，精诚服务次之，十字理念最轻。三者不得等大并列。</p>
+        </article>
+        <article class="rule-row">
+          <b>使用场景</b>
+          <p>完整组合用于封面、发布主视觉和大型物料；小尺寸场景只保留主品牌与精诚服务。</p>
+        </article>
+        <article class="rule-row">
+          <b>安全距离</b>
+          <p>主品牌与服务品牌之间使用垂直分隔线或足够留白；理念层与标识至少保留 0.5A。</p>
+        </article>
+      </div>
+    </section>
+
+    <figure class="wide-image">
+      <img src="../../output/wechat-push-images/copyright-03-technician.jpg" alt="技师进行专业检修">
+    </figure>
+
+    <section class="section" id="color" aria-labelledby="color-title">
+      <div class="section-head">
+        <div class="section-index">四<span>色彩与字体</span></div>
+        <div>
+          <h2 id="color-title">可信、克制、清晰，而不是热闹</h2>
+          <p class="section-summary">新版色彩从旧版蓝、银、灰、红、金、黄中提取角色：白与浅银承载信息，深蓝建立秩序，服务蓝标记结构，暖金与结果黄只用于关键判断。</p>
+        </div>
+      </div>
+      <div class="swatch-system" aria-label="精诚服务新版色彩系统">
+        <div class="swatch" style="background:#141b25"><b>信任深蓝</b><code>#141B25</code><span>深色封面、结构底、重要信息区</span></div>
+        <div class="swatch" style="background:#003087"><b>服务蓝</b><code>#003087</code><span>路径起点、结构线、按钮与重点标记</span></div>
+        <div class="swatch" style="background:#595757"><b>秩序灰</b><code>#595757</code><span>规范正文、表格层级、辅助信息</span></div>
+        <div class="swatch light" style="background:#dcdddd"><b>工艺银</b><code>#DCDDDD</code><span>版面底纹、边界、冷静留白</span></div>
+        <div class="swatch light" style="background:#fbfbf8"><b>事实白</b><code>#FBFBF8</code><span>正文大面积背景和信息承载</span></div>
+        <div class="swatch" style="background:#be9457"><b>善意金</b><code>#BE9457</code><span>判断、关怀、承托关系的少量强调</span></div>
+        <div class="swatch" style="background:#e50011"><b>行动暖红</b><code>#E50011</code><span>保留历史识别，不作为大面积背景</span></div>
+        <div class="swatch light" style="background:#fdd000"><b>结果黄</b><code>#FDD000</code><span>闭环、幸福、最终抵达的高光</span></div>
+      </div>
+      <div class="ratio-bar" aria-label="色彩使用比例">
+        <div style="background:#fbfbf8;color:#141b25">60%<code>事实白 / 浅银</code></div>
+        <div style="background:#141b25;color:#fbfbf8">20%<code>信任深蓝</code></div>
+        <div style="background:#595757;color:#fbfbf8">10%<code>秩序灰</code></div>
+        <div style="background:#003087;color:#fbfbf8">5%<code>服务蓝</code></div>
+        <div style="background:#be9457;color:#fbfbf8">5%<code>暖金 / 暖红</code></div>
+      </div>
+    </section>
+
+    <section class="section alt" aria-labelledby="type-title">
+      <div class="section-head">
+        <div class="section-index">五<span>字体规范</span></div>
+        <div>
+          <h2 id="type-title">让品牌感首先来自文字气质</h2>
+          <p class="section-summary">本 HTML 已通过本地文件加载方正清刻本悦宋、方正兰亭系列和 BYD Type。正式发布前仍需确认字体授权期限、使用范围和 Web / 视频 / 印刷许可。</p>
+        </div>
+      </div>
+      <div class="type-system">
+        <article class="type-poster">
+          <p class="display">求真尽善致美大爱幸福</p>
+          <p>核心理念、封面标题和章节主语使用方正清刻本悦宋简体，保留东方文化气质；正文说明、规范条款和数字平台内容使用方正兰亭黑系统，保证阅读稳定。</p>
+        </article>
+        <div class="font-lines">
+          <div class="font-line">
+            <b>品牌标题：方正清刻本悦宋简体</b>
+            <span>用于核心理念、封面、章节标题和价值短句。文件：vi-assets/fonts/fz-qingke-benyuesong.ttf</span>
+          </div>
+          <div class="font-line">
+            <b>正文说明：方正兰亭黑 / 方正兰亭粗黑</b>
+            <span>用于流程、规范、服务说明和数字平台正文。文件：fz-lanting-hei.ttf / fz-lanting-cuhei.ttf</span>
+          </div>
+          <div class="font-line">
+            <b>英文与编号：BYD Type</b>
+            <span>用于英文名、编号、规格参数和数字标注。已加载 Regular / Medium / Bold 三个字重。</span>
+          </div>
+          <div class="font-line">
+            <b>备用字体：Microsoft YaHei UI / Source Han Sans CN</b>
+            <span>用于无法部署授权字体的系统页面和内部材料。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section dark" id="system" aria-labelledby="system-title">
+      <div class="section-head">
+        <div class="section-index">六<span>辅助图形与应用</span></div>
+        <div>
+          <h2 id="system-title">信任路径不是装饰线，而是服务秩序的图形化</h2>
+          <p class="section-summary">辅助图形由定点、转向、对齐、承托和闭环组成。它用于解释服务流程、判断依据和关系闭环，不替代正式标识。</p>
+        </div>
+      </div>
+      <div class="path-system">
+        <figure class="path-board" aria-label="信任路径辅助图形构成">
+          <svg viewBox="0 0 620 430" role="img" aria-labelledby="path-title path-desc">
+            <title id="path-title">信任路径构成示意</title>
+            <desc id="path-desc">路径从定点出发，经过转向、对齐、承托，抵达闭环。</desc>
+            <defs>
+              <linearGradient id="manualPath" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#003087"/>
+                <stop offset="32%" stop-color="#70c7da"/>
+                <stop offset="55%" stop-color="#dcdddd"/>
+                <stop offset="78%" stop-color="#be9457"/>
+                <stop offset="100%" stop-color="#fdd000"/>
+              </linearGradient>
+            </defs>
+            <path d="M70 110 H205 C258 110 246 182 296 182 H382 C438 182 430 274 494 274 H552" fill="none" stroke="url(#manualPath)" stroke-width="8" stroke-linecap="square"/>
+            <rect x="50" y="90" width="40" height="40" fill="#141b25" stroke="#003087" stroke-width="8"/>
+            <path d="M184 90H226V132H184Z" fill="#141b25" stroke="#70c7da" stroke-width="8"/>
+            <rect x="276" y="162" width="40" height="40" transform="rotate(45 296 182)" fill="#141b25" stroke="#dcdddd" stroke-width="8"/>
+            <path d="M368 203V168c0-18 14-32 32-32s32 14 32 32v35" fill="none" stroke="#be9457" stroke-width="8"/>
+            <circle cx="552" cy="274" r="22" fill="#141b25" stroke="#fdd000" stroke-width="8"/>
+            <text x="40" y="168" fill="#fffdf8" font-size="18">求真</text>
+            <text x="172" y="168" fill="#fffdf8" font-size="18">尽善</text>
+            <text x="270" y="242" fill="#fffdf8" font-size="18">致美</text>
+            <text x="370" y="242" fill="#fffdf8" font-size="18">大爱</text>
+            <text x="530" y="330" fill="#fffdf8" font-size="18">幸福</text>
+          </svg>
+        </figure>
+        <div class="node-list">
+          <div class="node-row"><i class="node-shape"></i><b>定点</b><span>事实、证据、依据、责任人的标记。</span></div>
+          <div class="node-row"><i class="node-shape turn"></i><b>转向</b><span>方案选择、协调路径、规则中的更优解。</span></div>
+          <div class="node-row"><i class="node-shape align"></i><b>对齐</b><span>工序、现场、标准和专业交付的秩序。</span></div>
+          <div class="node-row"><i class="node-shape hold"></i><b>承托</b><span>客户处境、员工支持、安全边界和尊严。</span></div>
+          <div class="node-row"><i class="node-shape loop"></i><b>闭环</b><span>安心、托付、复盘、持续改善和长期关系。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <figure class="image-pair" aria-label="服务现场图像风格示例">
+      <img src="../../output/wechat-push-images/copyright-04-team.jpg" alt="服务团队复盘讨论">
+      <img src="../../output/wechat-push-images/05-ending-a-no-car.png" alt="服务中心结尾空镜">
+    </figure>
+
+    <section class="section" aria-labelledby="application-title">
+      <div class="section-head">
+        <div class="section-index">七<span>应用系统</span></div>
+        <div>
+          <h2 id="application-title">第一批模板从真实服务触点开始</h2>
+          <p class="section-summary">海报好看不够。新版系统要优先进入能验证服务价值的场景：解释、工序、支持、复盘和数字平台。</p>
+        </div>
+      </div>
+      <div class="application-grid">
+        <article class="application">
+          <b>客户解释卡</b>
+          <p>用于说明事实、费用、进度、风险和下一步责任。</p>
+          <div class="check-lines">
+            <span>车况事实 <i>已确认</i></span>
+            <span>费用依据 <i>可追溯</i></span>
+            <span>进度节点 <i>可查看</i></span>
+            <span>下一步责任人 <i>已明确</i></span>
+          </div>
+        </article>
+        <article class="application">
+          <b>车间工序看板</b>
+          <p>用于维修、钣喷、质检等场景，让工序秩序被看见。</p>
+          <div class="check-lines">
+            <span>评估 <i>定点</i></span>
+            <span>维修 <i>对齐</i></span>
+            <span>质检 <i>复核</i></span>
+            <span>交付 <i>闭环</i></span>
+          </div>
+        </article>
+        <article class="application">
+          <b>员工支持卡</b>
+          <p>用于投诉、返修、跨部门协作等高压场景。</p>
+          <div class="check-lines">
+            <span>客户处境 <i>先看见</i></span>
+            <span>规则边界 <i>讲清楚</i></span>
+            <span>组织支持 <i>给到位</i></span>
+            <span>复盘机制 <i>可持续</i></span>
+          </div>
+        </article>
+        <article class="application">
+          <b>数字平台组件</b>
+          <p>用于 Lighthouse / Workshop / Hermit 等内容平台。</p>
+          <div class="check-lines">
+            <span>价值维度标签 <i>统一</i></span>
+            <span>案例卡片 <i>可读</i></span>
+            <span>审核状态 <i>清晰</i></span>
+            <span>证据链引用 <i>可追溯</i></span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section alt" id="delivery" aria-labelledby="delivery-title">
+      <div class="section-head">
+        <div class="section-index">八<span>禁用与交付</span></div>
+        <div>
+          <h2 id="delivery-title">让规范保护高级感，而不是制造限制感</h2>
+          <p class="section-summary">禁用规则只服务一个目标：避免标识资产被破坏，避免十字理念变成贴纸化口号，避免新版视觉系统回到旧版物料堆叠。</p>
+        </div>
+      </div>
+      <div class="misuse-grid">
+        <article class="misuse">
+          <div class="misuse-demo stretch"><img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="被错误拉伸的精诚服务标识示例"></div>
+          <b>禁止拉伸变形</b>
+          <p>不得横向或纵向压缩、拉伸、倾斜标识。</p>
+        </article>
+        <article class="misuse">
+          <div class="misuse-demo busy"><img src="vi-assets/byd-jingcheng-service-horizontal.png" alt="复杂背景中的错误标识示例"></div>
+          <b>禁止复杂背景</b>
+          <p>不得把标识直接放在高噪声、强纹理或低对比背景上。</p>
+        </article>
+        <article class="misuse">
+          <div class="misuse-demo red-load">全红背景</div>
+          <b>禁止红色过载</b>
+          <p>行动暖红只保留历史识别与少量强调，不作为新版主视觉的大面积背景。</p>
+        </article>
+        <article class="misuse">
+          <div class="misuse-demo"><span class="compact-mark" style="font-size:30px;color:#003087;">五色贴纸化</span></div>
+          <b>禁止普通 icon 化</b>
+          <p>五个价值维度不能被拆成随意五色图标，也不能与旧理念 icon 并列为同级主口号。</p>
+        </article>
+      </div>
+      <div class="rule-ledger">
+        <article class="rule-row">
+          <b>确认理念替代</b>
+          <p>确认“求真、尽善、致美、大爱、幸福”是否正式替代“精于勤，诚于心”的日常理念表达。</p>
+        </article>
+        <article class="rule-row">
+          <b>确认资产版本</b>
+          <p>确认 BYD、腾势、仰望、方程豹等主品牌与精诚服务组合的正式源文件版本。</p>
+        </article>
+        <article class="rule-row">
+          <b>确认授权边界</b>
+          <p>复核方正、BYD Type 等字体在 Web、视频、印刷、内部平台中的使用授权。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="closing-image">
+      <img src="../../output/wechat-push-images/05-ending-a-no-car.png" alt="服务中心结尾空镜">
+      <div class="closing-copy">
+        <div class="closing-kicker">二十年，是回望，更是启程。</div>
+        <h2>求真不虚，尽善不空，致美不浮，大爱不泛，<br>让幸福从愿景进入每一次服务。</h2>
+      </div>
+    </section>
+
+    <footer class="finale">
+      <p>当前版本为 HTML 工作稿，适合内部讨论、方向确认和初步模板化。正式 VI 发布前，需要补齐矢量源文件、印刷色值、字体授权证明、图片库与应用样张。</p>
+      <p>本版重构以推文视觉为基准：真实图像、长卷叙事、克制色彩、宋体价值表达和清晰规范模块共同构成新版手册的视觉语言。</p>
+      <div class="final-line">精诚服务的下一个二十年，由此开启。</div>
+    </footer>
+  </main>
 </body>
 </html>

@@ -28,6 +28,8 @@ export const lighthouseIcons = {
   close: solarIcon("close-circle-bold"),
   pin: solarIcon("pin-bold"),
   unpin: solarIcon("pin-circle-bold"),
+  collapseSidebar: solarIcon("round-double-alt-arrow-left-bold-duotone"),
+  expandSidebar: solarIcon("round-double-alt-arrow-right-bold-duotone"),
   menu: solarIcon("sidebar-minimalistic-bold"),
   bell: solarIcon("bell-bold"),
   more: solarIcon("menu-dots-bold"),

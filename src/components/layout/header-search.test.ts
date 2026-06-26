@@ -44,8 +44,8 @@ describe("header search", () => {
     const navigation = readProjectFile("src/components/layout/Navigation.tsx");
     const appShell = readProjectFile("src/components/layout/AppShell.tsx");
 
-    expect(header).toContain("getHeaderSearchMatches");
-    expect(header).toContain("resolveHeaderSearch");
+    expect(navigation).toContain("getHeaderSearchMatches");
+    expect(navigation).toContain("resolveHeaderSearch");
     expect(header).not.toContain("const SEARCH_TARGETS");
     expect(header).toContain("rounded-[var(--lh-card-radius)]");
     expect(header).toContain("[backdrop-filter:var(--lh-shell-blur)]");

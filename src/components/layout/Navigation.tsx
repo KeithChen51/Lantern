@@ -1,12 +1,29 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { isPublicWorkshopEnabled } from "@/config/features";
 import { cn } from "@/lib/utils";
+import { getHeaderSearchMatches, resolveHeaderSearch } from "./header-search";
 import { getVisibleNavItems } from "./navigation-model";
+
+const WORKSHOP_IS_PUBLIC = isPublicWorkshopEnabled();
+
+const NOTIFICATIONS = [
+  "路引已可直接接收服务场景，并按事实、依据和下一步话术回应。",
+  ...(WORKSHOP_IS_PUBLIC ? ["行动指南支持提交岗位应做/避免建议，审核后进入公共指南。"] : []),
+  "镜鉴与笃行分别用于外部标杆和内部实践复盘。",
+];
+
+const SEARCH_PLACEHOLDER = "搜索";
+const SEARCH_FALLBACK_HINT = WORKSHOP_IS_PUBLIC
+  ? "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 行动指南 / 路引。"
+  : "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 路引。";
 
 interface NavigationProps {
   isPinned: boolean;
@@ -22,27 +39,298 @@ function isItemActive(pathname: string, href: string) {
   return pathname.startsWith(href);
 }
 
-function Logo({ isExpanded }: { isExpanded: boolean }) {
+function LighthouseMark({ className }: { className?: string }) {
   return (
-    <Link
-      data-lh-logo
-      href="/"
-      className={cn(
-        "grid min-h-12 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]",
-        !isExpanded && "grid-cols-1 justify-items-center",
-      )}
-      aria-label="Lighthouse 首页"
-    >
-      <span data-lh-logo-mark className="flex h-10 w-10 items-center justify-center rounded-[var(--lh-control-radius)] bg-action text-panel shadow-[var(--lh-card-shadow)]">
-        <Icon data-lh-logo-icon icon={lighthouseIcons.logo} className="h-5 w-5" />
-      </span>
-      {isExpanded && (
-        <span data-lh-logo-copy className="min-w-0">
-          <span data-lh-logo-title className="block text-lg font-extrabold leading-tight text-[var(--color-deck-text)]">Lighthouse</span>
-          <span data-lh-logo-subtitle className="block text-xs font-bold leading-tight text-[var(--color-deck-muted-strong)]">服务文化平台</span>
+    <span data-lh-logo-mark className={cn("flex items-center justify-center", className)}>
+      <Image
+        data-lh-logo-image
+        src="/nav-lighthouse-transparent.png"
+        alt=""
+        width={102}
+        height={256}
+        priority
+        className="h-full w-auto object-contain"
+      />
+    </span>
+  );
+}
+
+function Logo({
+  isExpanded,
+  onTogglePin,
+  showToggle = true,
+}: {
+  isExpanded: boolean;
+  onTogglePin: () => void;
+  showToggle?: boolean;
+}) {
+  if (!isExpanded) {
+    return (
+      <button
+        data-lh-logo
+        data-expanded="false"
+        type="button"
+        onClick={onTogglePin}
+        className="group grid min-h-12 grid-cols-1 items-center justify-items-center rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
+        aria-label="展开侧栏"
+        title="展开侧栏"
+      >
+        <span className="relative flex h-10 w-10 items-center justify-center">
+          <LighthouseMark className="h-10 w-10 transition-[opacity,transform] duration-150 group-hover:scale-95 group-hover:opacity-0 group-focus-visible:scale-95 group-focus-visible:opacity-0" />
+          <Icon
+            icon={lighthouseIcons.expandSidebar}
+            className="absolute h-6 w-6 scale-90 text-[var(--color-action-deep)] opacity-0 drop-shadow-[0_2px_4px_rgba(217,119,6,0.24)] transition-[color,opacity,transform] duration-150 group-hover:scale-100 group-hover:opacity-100 group-hover:text-[var(--color-action)] group-focus-visible:scale-100 group-focus-visible:opacity-100 group-focus-visible:text-[var(--color-action)]"
+          />
         </span>
+      </button>
+    );
+  }
+
+  return (
+    <div data-lh-logo-shell className="relative">
+      <Link
+        data-lh-logo
+        data-expanded="true"
+        href="/"
+        className="grid min-h-12 grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-3 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
+        aria-label="灯塔首页"
+      >
+        <LighthouseMark className="h-12 w-8" />
+        <span data-lh-logo-copy className="min-w-0">
+          <span data-lh-logo-title className="block text-2xl font-extrabold leading-none text-[var(--color-deck-text)]">灯塔</span>
+          <span data-lh-logo-subtitle className="mt-1 block text-xs font-bold leading-tight text-[var(--color-deck-muted-strong)]">服务文化数字平台</span>
+        </span>
+      </Link>
+      {showToggle && (
+        <button
+          data-lh-sidebar-toggle
+          data-lh-logo-toggle
+          type="button"
+          onClick={onTogglePin}
+          className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[var(--color-action-deep)] drop-shadow-[0_2px_4px_rgba(217,119,6,0.24)] transition-[color,opacity,transform] duration-150 hover:text-[var(--color-action)] focus-visible:text-[var(--color-action)]"
+          aria-label="收起侧栏"
+          title="收起侧栏"
+        >
+          <Icon icon={lighthouseIcons.collapseSidebar} className="h-6 w-6" />
+        </button>
       )}
-    </Link>
+    </div>
+  );
+}
+
+function SidebarSearch({ isExpanded, onNavigate, className }: { isExpanded: boolean; onNavigate?: () => void; className?: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [query, setQuery] = React.useState("");
+  const [searchFeedback, setSearchFeedback] = React.useState("");
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const searchMatches = React.useMemo(() => getHeaderSearchMatches(query, 6), [query]);
+
+  React.useEffect(() => {
+    setSearchFeedback("");
+    setIsSearchOpen(false);
+  }, [pathname]);
+
+  const submitSearchQuery = (rawQuery: string) => {
+    const trimmedQuery = rawQuery.trim();
+    if (!trimmedQuery) {
+      setIsSearchOpen(true);
+      setSearchFeedback("请输入关键词，或从下方页面建议中选择。");
+      return;
+    }
+
+    const matchedTarget = resolveHeaderSearch(trimmedQuery);
+
+    if (!matchedTarget) {
+      setIsSearchOpen(true);
+      setSearchFeedback(SEARCH_FALLBACK_HINT);
+      return;
+    }
+
+    router.push(matchedTarget.href);
+    onNavigate?.();
+    setSearchFeedback(`已跳转到 ${matchedTarget.label}。`);
+  };
+
+  const handleSearchTarget = (href: string, label: string) => {
+    setQuery("");
+    setIsSearchOpen(false);
+    setSearchFeedback(`已跳转到 ${label}。`);
+    router.push(href);
+    onNavigate?.();
+  };
+
+  if (!isExpanded) {
+    return (
+      <div className={cn("relative", className)}>
+        <button
+          type="button"
+          data-lh-sidebar-search-trigger
+          onClick={() => setIsSearchOpen((prev) => !prev)}
+          className="grid min-h-11 w-full items-center justify-items-center rounded-[var(--lh-control-radius)] border border-transparent text-[var(--color-deck-text-soft)] transition-colors hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action"
+          aria-label="打开搜索"
+          title="搜索"
+        >
+          <Icon icon={lighthouseIcons.search} className="h-5 w-5" />
+        </button>
+        {isSearchOpen && (
+          <div className="absolute left-[calc(100%+0.5rem)] top-0 z-20 w-72 rounded-[var(--lh-card-radius)] border border-line bg-panel p-2 shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
+            <SidebarSearchPanel
+              query={query}
+              setQuery={setQuery}
+              searchFeedback={searchFeedback}
+              setSearchFeedback={setSearchFeedback}
+              searchMatches={searchMatches}
+              onSubmit={submitSearchQuery}
+              onTarget={handleSearchTarget}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("relative", className)}>
+      <SidebarSearchPanel
+        query={query}
+        setQuery={setQuery}
+        searchFeedback={searchFeedback}
+        setSearchFeedback={setSearchFeedback}
+        searchMatches={searchMatches}
+        onSubmit={submitSearchQuery}
+        onTarget={handleSearchTarget}
+        isOpen={isSearchOpen}
+        setIsOpen={setIsSearchOpen}
+      />
+    </div>
+  );
+}
+
+function SidebarSearchPanel({
+  query,
+  setQuery,
+  searchFeedback,
+  setSearchFeedback,
+  searchMatches,
+  onSubmit,
+  onTarget,
+  isOpen = true,
+  setIsOpen,
+}: {
+  query: string;
+  setQuery: (value: string) => void;
+  searchFeedback: string;
+  setSearchFeedback: (value: string) => void;
+  searchMatches: ReturnType<typeof getHeaderSearchMatches>;
+  onSubmit: (value: string) => void;
+  onTarget: (href: string, label: string) => void;
+  isOpen?: boolean;
+  setIsOpen?: (value: boolean) => void;
+}) {
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(query);
+      }}
+      className="relative min-w-0"
+    >
+      <div className="relative">
+        <Icon icon={lighthouseIcons.search} className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-primary" />
+        <input
+          data-lh-search-input
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setSearchFeedback("");
+            setIsOpen?.(true);
+          }}
+          onFocus={() => setIsOpen?.(true)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            onSubmit(event.currentTarget.value);
+          }}
+          type="text"
+          placeholder={SEARCH_PLACEHOLDER}
+          className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-9 pr-3 text-xs font-bold text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
+        />
+      </div>
+      {(isOpen || searchFeedback) && (searchFeedback || query.trim()) && (
+        <div className="absolute left-0 top-full z-20 mt-2 w-[min(22rem,calc(100vw-32px))] overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-panel text-sm shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
+          {searchFeedback && (
+            <p className="border-b border-line bg-surface-quiet px-3 py-2 text-xs font-bold leading-5 text-muted" aria-live="polite">
+              {searchFeedback}
+            </p>
+          )}
+          {searchMatches.length > 0 ? (
+            <div className="grid p-1" role="listbox" aria-label="搜索结果">
+              {searchMatches.map((target) => (
+                <button
+                  key={target.href}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onTarget(target.href, target.label)}
+                  className="grid gap-0.5 rounded-[var(--lh-control-radius)] px-3 py-2 text-left transition-colors hover:bg-primary-soft focus:bg-primary-soft focus:outline-none"
+                >
+                  <span className="text-sm font-extrabold text-ink">{target.label}</span>
+                  <span className="text-xs font-bold leading-5 text-muted">{target.description}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="px-3 py-3 text-xs font-bold leading-5 text-muted">没有匹配结果。</p>
+          )}
+        </div>
+      )}
+    </form>
+  );
+}
+
+function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; className?: string }) {
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  return (
+    <div className={cn("relative", className)}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={cn(
+          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-sm font-bold text-[var(--color-deck-text-soft)] transition-colors hover:bg-[var(--lh-deck-panel-hover)] hover:text-action",
+          isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
+        )}
+        aria-label="通知"
+        title="通知"
+      >
+        <Icon icon={lighthouseIcons.bell} className="h-5 w-5" />
+        <span className="absolute left-8 top-2 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />
+        {isExpanded && <span className="text-left">消息提醒</span>}
+      </button>
+
+      {isOpen && (
+        <div
+          className={cn(
+            "absolute bottom-12 z-20 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-sm text-ink-soft shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]",
+            isExpanded ? "left-0" : "left-[calc(100%+0.5rem)]",
+          )}
+        >
+          <p className="mb-3 text-xs font-extrabold text-primary-deep">今日可处理</p>
+          <ul className="space-y-2">
+            {NOTIFICATIONS.map((item) => (
+              <li key={item} className="leading-6">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -106,27 +394,14 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
         className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-200 ease-out md:flex"
         aria-label="主导航"
       >
-        <Logo isExpanded={isExpanded} />
+        <Logo isExpanded={isExpanded} onTogglePin={onTogglePin} />
+        <SidebarSearch isExpanded={isExpanded} className={isExpanded ? "mt-5" : "mt-4"} />
 
-        <div className="mt-8 flex flex-1 flex-col gap-2">
+        <div className="mt-6 flex flex-1 flex-col gap-2">
           <NavLinks isExpanded={isExpanded} pathname={pathname} />
         </div>
 
-        <div className="mt-6 grid gap-3">
-          <button
-            data-lh-sidebar-toggle
-            type="button"
-            onClick={onTogglePin}
-            className={cn(
-              "grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] px-3 py-2 text-sm font-bold text-[var(--color-deck-text-soft)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
-              isExpanded ? "grid-cols-[20px_minmax(0,1fr)] gap-3" : "justify-items-center",
-            )}
-            aria-label={isPinned ? "收起侧栏" : "固定侧栏"}
-          >
-            <Icon icon={isPinned ? lighthouseIcons.pin : lighthouseIcons.unpin} className="h-5 w-5" />
-            {isExpanded && <span className="text-left">{isPinned ? "收起侧栏" : "固定侧栏"}</span>}
-          </button>
-        </div>
+        <SidebarNotifications isExpanded={isExpanded} className="mt-6" />
       </nav>
 
       <div
@@ -146,7 +421,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
           aria-label="移动端主导航"
         >
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-            <Logo isExpanded />
+            <Logo isExpanded onTogglePin={onTogglePin} showToggle={false} />
             <LhIconButton
               type="button"
               label="关闭导航菜单"
@@ -156,11 +431,13 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
               className="border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] text-[var(--color-deck-text)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
             />
           </div>
+          <SidebarSearch isExpanded onNavigate={onMobileClose} className="mt-5" />
 
-          <div className="mt-8 flex flex-1 flex-col gap-2">
+          <div className="mt-6 flex flex-1 flex-col gap-2">
             <NavLinks isExpanded pathname={pathname} onNavigate={onMobileClose} />
           </div>
 
+          <SidebarNotifications isExpanded className="mt-6" />
         </nav>
       </div>
     </>
