@@ -1,8 +1,13 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { headers } from "next/headers";
+import {
+  createHermitProvider,
+  readHermitModelName,
+  resolveHermitProviderSettings,
+  selectHermitLanguageModel,
+} from "@/lib/hermit/model-provider";
 import { buildSystemPrompt } from "@/lib/hermit/system-prompt";
-import { searchKnowledge } from "@/lib/hermit/rag";
+import { searchKnowledgeDetailed, type RagSearchResult } from "@/lib/hermit/rag";
 import { authRepository, createAuthService } from "@/modules/auth";
 import {
   createHermitChatService,
@@ -15,16 +20,6 @@ const authService = createAuthService(authRepository);
 const tenantService = createTenantService(tenantRepository);
 const hermitChatService = createHermitChatService(hermitChatRepository);
 const RAG_TOP_K = 3;
-
-/**
- * Create an OpenAI-compatible provider with configurable baseURL.
- */
-function getProvider() {
-  return createOpenAI({
-    apiKey: process.env.OPENAI_API_KEY || "",
-    baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-  });
-}
 
 /**
  * Extract the last user text from UIMessages for RAG retrieval.
@@ -87,15 +82,18 @@ export async function POST(req: Request) {
   const participant = await resolveChatParticipant();
 
   // RAG: search knowledge base for relevant context
+  let ragResult: RagSearchResult | null = null;
   let ragContext = "";
   try {
-    ragContext = await searchKnowledge(query, RAG_TOP_K);
+    ragResult = await searchKnowledgeDetailed(query, RAG_TOP_K);
+    ragContext = ragResult.contextText;
   } catch (err) {
     console.warn("[Hermit] RAG search failed, continuing without context:", err);
   }
 
-  const provider = getProvider();
-  const model = process.env.OPENAI_MODEL || "gpt-4o";
+  const providerSettings = resolveHermitProviderSettings();
+  const provider = createHermitProvider(providerSettings);
+  const model = readHermitModelName();
 
   await persistChat("incoming messages", () =>
     hermitChatService.persistIncomingMessages({
@@ -107,7 +105,7 @@ export async function POST(req: Request) {
   );
 
   const result = streamText({
-    model: provider(model),
+    model: selectHermitLanguageModel(provider, model, providerSettings.apiMode),
     system: buildSystemPrompt(ragContext),
     messages: await convertToModelMessages(messages),
   });
@@ -126,6 +124,7 @@ export async function POST(req: Request) {
             query,
             contextText: ragContext,
             topK: RAG_TOP_K,
+            sourceSnapshot: ragResult?.sourceSnapshot,
           },
         }),
       );

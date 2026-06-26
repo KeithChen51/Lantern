@@ -1,119 +1,179 @@
 /**
  * Knowledge Base Builder
  *
- * Reads Markdown files from src/lib/hermit/knowledge/,
- * splits them into chunks, generates embeddings via the configured API,
- * and saves the result as knowledge-vectors.json.
- *
- * Usage:
- *   npx tsx scripts/build-knowledge.ts
- *
- * Environment variables (loaded from .env.local):
- *   EMBEDDING_API_KEY   – API key for the embedding service
- *   EMBEDDING_BASE_URL  – Base URL (default: https://api.openai.com/v1)
- *   EMBEDDING_MODEL     – Model name (default: text-embedding-3-small)
+ * Builds Hermit retrieval vectors from static knowledge files, static Action
+ * cases, and optionally published database content when DATABASE_URL is set.
  */
 
 import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
+import { ContentStatus, ContentType, PrismaClient } from "@prisma/client";
+import { ACTION_CASES } from "../src/app/action/action-cases";
+import {
+  buildKnowledgeChunks,
+  formatActionCaseKnowledgeDocuments,
+  formatContentItemKnowledgeDocument,
+  formatMarkdownKnowledgeDocument,
+  formatPublishedGuideKnowledgeDocument,
+  type KnowledgeSourceDocument,
+  type KnowledgeSourceType,
+} from "../src/lib/hermit/knowledge-builder";
 
-// Load .env.local (optional – Netlify injects env vars natively)
 const envPath = path.join(process.cwd(), ".env.local");
 if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
 }
 
-const KNOWLEDGE_DIR = path.join(
-  process.cwd(),
-  "src/lib/hermit/knowledge"
-);
+const KNOWLEDGE_DIR = path.join(process.cwd(), "src/lib/hermit/knowledge");
 const OUTPUT_PATH = path.join(KNOWLEDGE_DIR, "knowledge-vectors.json");
-
-const BASE_URL =
-  process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
-const API_KEY =
-  process.env.EMBEDDING_API_KEY || process.env.OPENAI_API_KEY || "";
+const BASE_URL = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
+const API_KEY = process.env.EMBEDDING_API_KEY || process.env.OPENAI_API_KEY || "";
 const MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
+const REQUIRE_DATABASE = process.env.HERMIT_KNOWLEDGE_REQUIRE_DATABASE === "true";
 
-/* ── types ── */
+const CONTENT_TYPE_TO_SOURCE_TYPE: Record<ContentType, KnowledgeSourceType> = {
+  [ContentType.HEART]: "heart",
+  [ContentType.MIRROR_CASE]: "mirror_case",
+  [ContentType.ACTION_CASE]: "action_case",
+  [ContentType.NORM_FILE]: "norm_file",
+  [ContentType.WORKSHOP_GUIDE]: "workshop_guide",
+  [ContentType.TRAINING]: "training",
+};
 
-interface Chunk {
-  id: string;
-  source: string;
-  heading: string;
-  content: string;
+const STATIC_EXTRA_MARKDOWN_FILES: Array<{ filePath: string; sourceType: KnowledgeSourceType; sourceLabel: string }> = [
+  {
+    filePath: path.join(process.cwd(), "docs/lighthouse-workshop-co-creation-report.md"),
+    sourceType: "workshop_guide",
+    sourceLabel: "Workshop 共创报告",
+  },
+  {
+    filePath: path.join(process.cwd(), "public/胖东来企业全面调研报告.md"),
+    sourceType: "mirror_case",
+    sourceLabel: "Mirror 调研资料",
+  },
+];
+
+function relativeId(filePath: string) {
+  return path.relative(process.cwd(), filePath).replace(/\\/g, "/").replace(/\.md$/i, "");
 }
 
-/* ── markdown splitting ── */
+function extractTitle(markdown: string, filePath: string) {
+  const h1 = markdown.match(/^#\s+(.+)$/m)?.[1]?.trim();
+  return h1 || path.basename(filePath, path.extname(filePath));
+}
 
-function splitMarkdown(text: string, source: string): Chunk[] {
-  const chunks: Chunk[] = [];
-  // Split on level-2 headings (##)
-  const sections = text.split(/^## /m);
+function inferKnowledgeFileSourceType(fileName: string): KnowledgeSourceType {
+  if (fileName.includes("heart")) return "heart";
+  if (fileName.includes("mirror") || fileName.includes("pang-dong-lai")) return "mirror_case";
+  if (fileName.includes("sop") || fileName.includes("norm")) return "norm_file";
+  return "manual";
+}
 
-  for (let i = 0; i < sections.length; i++) {
-    const section = sections[i].trim();
-    if (!section) continue;
+function readMarkdownFile(filePath: string, sourceType: KnowledgeSourceType, sourceLabel: string) {
+  const content = fs.readFileSync(filePath, "utf-8");
+  const title = extractTitle(content, filePath);
+  return formatMarkdownKnowledgeDocument({
+    id: `file:${relativeId(filePath)}`,
+    source: `${sourceLabel} / ${title}`,
+    sourceType,
+    evidenceTier: sourceType === "norm_file" ? "exact" : "analogous",
+    title,
+    content,
+  });
+}
 
-    // First section (before any ##) uses the H1 or filename as heading
-    let heading: string;
-    let content: string;
+function readMarkdownDirectory(dirPath: string, sourceLabel: string): KnowledgeSourceDocument[] {
+  if (!fs.existsSync(dirPath)) return [];
 
-    if (i === 0) {
-      // Try to extract H1
-      const h1Match = section.match(/^# (.+)/m);
-      heading = h1Match ? h1Match[1].trim() : source;
-      content = section.replace(/^# .+\n?/, "").trim();
-    } else {
-      // The heading is the first line
-      const lines = section.split("\n");
-      heading = lines[0].trim();
-      content = lines.slice(1).join("\n").trim();
-    }
+  return fs
+    .readdirSync(dirPath)
+    .filter((fileName) => fileName.endsWith(".md"))
+    .map((fileName) =>
+      readMarkdownFile(path.join(dirPath, fileName), inferKnowledgeFileSourceType(fileName), sourceLabel),
+    );
+}
 
-    // Skip empty or very short chunks
-    if (content.length < 20) continue;
+function readStaticMarkdownDocuments(): KnowledgeSourceDocument[] {
+  const documents = [
+    ...readMarkdownDirectory(KNOWLEDGE_DIR, "Hermit 静态知识"),
+    ...readMarkdownDirectory(path.join(process.cwd(), "docs/brand"), "品牌规范文件"),
+  ];
 
-    // Further split if chunk is too long (> 1000 chars)
-    if (content.length > 1000) {
-      const subSections = content.split(/^### /m);
-      for (let j = 0; j < subSections.length; j++) {
-        const sub = subSections[j].trim();
-        if (sub.length < 20) continue;
-
-        let subHeading: string;
-        let subContent: string;
-        if (j === 0) {
-          subHeading = heading;
-          subContent = sub;
-        } else {
-          const subLines = sub.split("\n");
-          subHeading = `${heading} > ${subLines[0].trim()}`;
-          subContent = subLines.slice(1).join("\n").trim();
-        }
-
-        chunks.push({
-          id: `${source}#${chunks.length}`,
-          source,
-          heading: subHeading,
-          content: subContent,
-        });
-      }
-    } else {
-      chunks.push({
-        id: `${source}#${chunks.length}`,
-        source,
-        heading,
-        content,
-      });
+  for (const source of STATIC_EXTRA_MARKDOWN_FILES) {
+    if (fs.existsSync(source.filePath)) {
+      documents.push(readMarkdownFile(source.filePath, source.sourceType, source.sourceLabel));
     }
   }
 
-  return chunks;
+  return documents;
 }
 
-/* ── embedding API ── */
+async function readDatabaseKnowledgeDocuments(): Promise<KnowledgeSourceDocument[]> {
+  if (!process.env.DATABASE_URL) return [];
+
+  const prisma = new PrismaClient();
+  try {
+    const [guides, contentItems] = await Promise.all([
+      prisma.publishedGuide.findMany({
+        orderBy: { publishedAt: "desc" },
+      }),
+      prisma.contentItem.findMany({
+        where: {
+          status: ContentStatus.PUBLISHED,
+          publishedVersionId: { not: null },
+          contentType: {
+            in: [
+              ContentType.HEART,
+              ContentType.MIRROR_CASE,
+              ContentType.ACTION_CASE,
+              ContentType.NORM_FILE,
+              ContentType.WORKSHOP_GUIDE,
+              ContentType.TRAINING,
+            ],
+          },
+        },
+        include: { publishedVersion: true },
+        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+      }),
+    ]);
+
+    return [
+      ...guides.map((guide) =>
+        formatPublishedGuideKnowledgeDocument({
+          id: guide.id,
+          title: guide.title,
+          roleName: guide.roleName,
+          serviceScenario: guide.serviceScenario,
+          principleRef: guide.principleRef,
+          doText: guide.doText,
+          howText: guide.howText,
+          dontText: guide.dontText,
+          publishedAt: guide.publishedAt,
+        }),
+      ),
+      ...contentItems.flatMap((item) => {
+        const version = item.publishedVersion;
+        if (!version?.bodyMarkdown.trim()) return [];
+        return [
+          formatContentItemKnowledgeDocument({
+            id: item.id,
+            title: version.title || item.title,
+            contentType: CONTENT_TYPE_TO_SOURCE_TYPE[item.contentType],
+            bodyMarkdown: version.bodyMarkdown,
+            updatedAt: item.updatedAt,
+          }),
+        ];
+      }),
+    ];
+  } catch (error) {
+    if (REQUIRE_DATABASE) throw error;
+    console.warn("[Hermit Knowledge] Database sources skipped:", error);
+    return [];
+  } finally {
+    await prisma.$disconnect();
+  }
+}
 
 async function embed(texts: string[]): Promise<number[][]> {
   console.log(`  Embedding ${texts.length} chunk(s) via ${MODEL}...`);
@@ -146,61 +206,46 @@ async function embed(texts: string[]): Promise<number[][]> {
     .map((d: { embedding: number[] }) => d.embedding);
 }
 
-/* ── main ── */
-
 async function main() {
-  console.log("🔧 Hermit Knowledge Base Builder\n");
+  console.log("Hermit Knowledge Base Builder\n");
   console.log(`  Embedding API: ${BASE_URL}`);
   console.log(`  Model:         ${MODEL}\n`);
 
-  // Find all .md files in knowledge dir
-  const files = fs
-    .readdirSync(KNOWLEDGE_DIR)
-    .filter((f) => f.endsWith(".md"));
+  const documents = [
+    ...readStaticMarkdownDocuments(),
+    ...formatActionCaseKnowledgeDocuments(ACTION_CASES),
+    ...(await readDatabaseKnowledgeDocuments()),
+  ];
 
-  if (files.length === 0) {
-    console.log("⚠️  No markdown files found in knowledge directory.");
+  const chunks = buildKnowledgeChunks(documents);
+  if (chunks.length === 0) {
+    console.log("No knowledge chunks found.");
     return;
   }
 
-  console.log(`📄 Found ${files.length} knowledge file(s):\n`);
+  console.log(`  Documents: ${documents.length}`);
+  console.log(`  Chunks:    ${chunks.length}\n`);
 
-  const allChunks: Chunk[] = [];
-
-  for (const file of files) {
-    const filePath = path.join(KNOWLEDGE_DIR, file);
-    const text = fs.readFileSync(filePath, "utf-8");
-    const chunks = splitMarkdown(text, file.replace(".md", ""));
-    console.log(`  ${file} → ${chunks.length} chunk(s)`);
-    allChunks.push(...chunks);
-  }
-
-  console.log(`\n📊 Total: ${allChunks.length} chunks\n`);
-
-  // Generate embeddings (batch)
-  const texts = allChunks.map(
-    (c) => `${c.heading}\n\n${c.content}`
+  const texts = chunks.map(
+    (chunk) =>
+      `${chunk.heading}\nSource: ${chunk.source}\nType: ${chunk.sourceType}\nEvidence: ${chunk.evidenceTier}\n\n${chunk.content}`,
   );
 
   const vectors = await embed(texts);
-
-  // Build index
   const index = {
     model: MODEL,
     dimension: vectors[0]?.length || 0,
-    chunks: allChunks.map((chunk, i) => ({
+    chunks: chunks.map((chunk, index) => ({
       ...chunk,
-      vector: vectors[i],
+      vector: vectors[index],
     })),
   };
 
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(index, null, 2), "utf-8");
-  console.log(
-    `\n✅ Saved ${index.chunks.length} vectors (dim=${index.dimension}) → knowledge-vectors.json`
-  );
+  console.log(`\nSaved ${index.chunks.length} vectors (dim=${index.dimension}) to knowledge-vectors.json`);
 }
 
 main().catch((err) => {
-  console.error("❌ Build failed:", err);
+  console.error("Build failed:", err);
   process.exit(1);
 });
