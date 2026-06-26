@@ -53,5 +53,9 @@ knowledge-vectors.json
 # Local reference materials
 /references/
 
+# Local generated review/output artifacts
+/output/
+/.playwright-cli/
+
 # Local Netlify folder
 .netlify
