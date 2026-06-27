@@ -41,18 +41,33 @@ Heart is a value-introduction and light guide surface. It can carry the warmest 
 
 Use:
 
-- Strong intro.
-- Four value cards or sections when they clarify the value structure.
+- Strong editorial intro that reads as the platform prologue.
+- One continuous cultural reading flow before downstream module navigation.
+- Value sections as a restrained scroll or ledger, not five unrelated color systems.
 - Customer and employee viewpoints.
-- A light guide into downstream modules.
+- A quiet guide into downstream modules after the value reading is complete.
 - Official brand assets only when the content itself is brand-facing.
 
 Avoid:
 
 - Extra naming layers around the value system unless explicitly approved.
 - Turning value sections into decorative-only cards.
+- Giving each value a separate decorative color treatment on the homepage; reserve value-color mapping for small tags or metadata only.
+- Equal-weight card grids that make Heart feel like a module directory rather than a cultural starting point.
 - Using service-brand VI colors to restyle platform buttons or navigation.
 - Serif body text for ordinary UI or low-contrast prose.
+
+Runtime home pattern:
+
+- Home currently routes to Heart, so Heart carries first-impression responsibility.
+- `data-lh-heart-page` owns the page rhythm: hero, prologue, origin, value scroll, downstream guide, and closing sentence.
+- `data-lh-heart-prologue` and `data-lh-heart-origin` use editorial separators and reading-width copy before any operational entry points.
+- `data-lh-heart-value-scroll` keeps 求真、尽善、致美、大爱、幸福 in one visual system; it uses amber and warm paper tokens only.
+- `data-lh-heart-guide-list` is a navigation list, not a card deck. It should feel like a continuation path after reading, not a competing feature grid.
+- Heart motion uses `--lh-motion-*` and `--lh-ease-*` tokens. Motion should clarify reading order and interaction feedback, not decorate.
+- Entrance animation is allowed once on page load for hero and major sections; repeated or looping motion is not allowed.
+- Hover motion may use opacity and transform only. It must not change layout dimensions, spacing, or content order.
+- `prefers-reduced-motion` must disable Heart page motion and keep all content immediately available.
 
 ## Mirror And Action Patterns
 

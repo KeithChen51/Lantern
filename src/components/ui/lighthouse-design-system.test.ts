@@ -86,6 +86,7 @@ describe("lighthouse design system contract", () => {
 
   it("maps Classic Amber accessibility tokens into runtime CSS", () => {
     const globals = readProjectFile("src/app/globals.css");
+    const tokensDoc = readProjectFile("docs/design/tokens.md");
 
     [
       "--lh-primary-text: #9b5c14;",
@@ -97,8 +98,23 @@ describe("lighthouse design system contract", () => {
       "--lh-focus-offset: 3px;",
       "--lh-focus-halo: rgba(217, 119, 6, 0.18);",
       "--shadow-focus: 0 0 0 3px var(--lh-focus-halo);",
+      "--lh-ease-out: cubic-bezier(0.22, 1, 0.36, 1);",
+      "--lh-ease-standard: cubic-bezier(0.25, 1, 0.5, 1);",
+      "--lh-motion-fast: 160ms;",
+      "--lh-motion-medium: 280ms;",
+      "--lh-motion-slow: 520ms;",
     ].forEach((token) => {
       expect(globals).toContain(token);
+    });
+
+    [
+      "`--lh-motion-fast` | `160ms`",
+      "`--lh-motion-medium` | `280ms`",
+      "`--lh-motion-slow` | `520ms`",
+      "`--lh-ease-standard` | `cubic-bezier(0.25, 1, 0.5, 1)`",
+      "`--lh-ease-out` | `cubic-bezier(0.22, 1, 0.36, 1)`",
+    ].forEach((token) => {
+      expect(tokensDoc).toContain(token);
     });
 
     const focusVisibleBlock = extractCssBlock(globals, ":focus-visible");
@@ -329,25 +345,40 @@ describe("lighthouse design system contract", () => {
     expect(bodyBeforeBlock).not.toContain("--lh-body-accent-rgb");
   });
 
-  it("keeps inverse emphasis surfaces safe for light value-theme decks", () => {
+  it("keeps the Heart homepage cohesive as an editorial prologue instead of colored card fragments", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
+    const globals = readProjectFile("src/app/globals.css");
+    const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
 
-    expect(heartPage).toContain("bg-[linear-gradient(135deg,var(--color-primary-deep),var(--color-primary))]");
-    expect(heartPage).not.toContain("bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] p-6 text-panel");
-  });
+    [
+      "data-lh-heart-page",
+      "data-lh-heart-prologue",
+      "data-lh-heart-origin",
+      "data-lh-heart-value-scroll",
+      "data-lh-heart-guide-list",
+      "data-lh-heart-closing",
+      "data-lh-heart-title-line",
+    ].forEach((token) => {
+      expect(heartPage).toContain(token);
+      expect(globals).toContain(`[${token}]`);
+    });
 
-  it("uses the selected value-theme accents to layer the heart value rows", () => {
-    const heartPage = readProjectFile("src/app/heart/page.tsx");
-    const valueRowColors = [...heartPage.matchAll(/"--value-color": "(#[0-9a-f]{6})"/g)].map((match) => match[1]);
-
-    expect(valueRowColors).toEqual(["#6ab0a5", "#728a69", "#806c9f", "#c74f5a", "#f1a77d"]);
-    expect(heartPage).toContain("valueToneStyles");
-    expect(heartPage).toContain("lg:grid-cols-[250px_minmax(0,1fr)]");
-    expect(heartPage).toContain("color-mix(in srgb, var(--value-soft) 54%");
-    expect(heartPage).toContain("color-mix(in srgb, var(--value-soft) 22%");
-    expect(heartPage).toContain("borderColor: \"var(--value-line)\"");
-    expect(heartPage).not.toContain("linear-gradient(115deg");
-    expect(heartPage).not.toContain("linear-gradient(145deg");
+    expect(heartPage).not.toContain("valueToneStyles");
+    expect(heartPage).not.toContain("--value-color");
+    expect(heartPage).not.toContain("bg-[linear-gradient(135deg,var(--color-primary-deep),var(--color-primary))]");
+    expect(heartPage).not.toContain("md:grid-cols-3");
+    expect(heartPage).not.toContain("xl:grid-cols-4");
+    expect(globals).toContain("[data-lh-heart-value-item]");
+    expect(globals).toContain("[data-lh-heart-guide-link]");
+    expect(globals).toContain("@keyframes lh-heart-rise-in");
+    expect(globals).toContain("@media (prefers-reduced-motion: no-preference)");
+    expect(globals).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(globals).toContain("transition: background-color var(--lh-motion-medium) var(--lh-ease-standard), border-color var(--lh-motion-medium) var(--lh-ease-standard), transform var(--lh-motion-medium) var(--lh-ease-out);");
+    expect(visualSpec).toContain('<section id="motion" class="section">');
+    expect(visualSpec).toContain("--lh-motion-fast: 160ms;");
+    expect(visualSpec).toContain("首页/本心文化序章收至 36-57px");
+    expect(visualSpec).toContain("Home / Heart Cultural Prologue");
+    expect(visualSpec).toContain("prefers-reduced-motion");
   });
 
   it("does not mount runtime theme or typeface switching in the app shell", () => {

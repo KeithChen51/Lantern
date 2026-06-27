@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@iconify/react";
-import type { CSSProperties } from "react";
 import {
-  LhCard,
   LhChip,
   LhDataTableShell,
   LhPageHero,
@@ -10,14 +8,6 @@ import {
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { isPublicWorkshopEnabled } from "@/config/features";
-
-type ValueToneStyle = CSSProperties & {
-  "--value-color": string;
-  "--value-soft": string;
-  "--value-wash": string;
-  "--value-line": string;
-  "--value-text": string;
-};
 
 type ValueSection = {
   title: string;
@@ -31,44 +21,6 @@ type ValueSection = {
 };
 
 const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
-
-const valueToneStyles = [
-  {
-    "--value-color": "#6ab0a5",
-    "--value-soft": "color-mix(in srgb, #6ab0a5 13%, var(--color-panel))",
-    "--value-wash": "color-mix(in srgb, #6ab0a5 8%, var(--color-raised))",
-    "--value-line": "color-mix(in srgb, #6ab0a5 38%, var(--color-line))",
-    "--value-text": "color-mix(in srgb, #6ab0a5 58%, var(--color-ink))",
-  },
-  {
-    "--value-color": "#728a69",
-    "--value-soft": "color-mix(in srgb, #728a69 13%, var(--color-panel))",
-    "--value-wash": "color-mix(in srgb, #728a69 8%, var(--color-raised))",
-    "--value-line": "color-mix(in srgb, #728a69 38%, var(--color-line))",
-    "--value-text": "color-mix(in srgb, #728a69 58%, var(--color-ink))",
-  },
-  {
-    "--value-color": "#806c9f",
-    "--value-soft": "color-mix(in srgb, #806c9f 13%, var(--color-panel))",
-    "--value-wash": "color-mix(in srgb, #806c9f 8%, var(--color-raised))",
-    "--value-line": "color-mix(in srgb, #806c9f 38%, var(--color-line))",
-    "--value-text": "color-mix(in srgb, #806c9f 58%, var(--color-ink))",
-  },
-  {
-    "--value-color": "#c74f5a",
-    "--value-soft": "color-mix(in srgb, #c74f5a 13%, var(--color-panel))",
-    "--value-wash": "color-mix(in srgb, #c74f5a 8%, var(--color-raised))",
-    "--value-line": "color-mix(in srgb, #c74f5a 38%, var(--color-line))",
-    "--value-text": "color-mix(in srgb, #c74f5a 58%, var(--color-ink))",
-  },
-  {
-    "--value-color": "#f1a77d",
-    "--value-soft": "color-mix(in srgb, #f1a77d 14%, var(--color-panel))",
-    "--value-wash": "color-mix(in srgb, #f1a77d 9%, var(--color-raised))",
-    "--value-line": "color-mix(in srgb, #f1a77d 42%, var(--color-line))",
-    "--value-text": "color-mix(in srgb, #f1a77d 62%, var(--color-ink))",
-  },
-] satisfies ValueToneStyle[];
 
 const upgradeReasons = [
   {
@@ -213,9 +165,15 @@ const visibleGuideSections = guideSections.filter((section) => section.href !== 
 
 export default function HeartPage() {
   return (
-    <div className="space-y-8 pb-12">
+    <div data-lh-heart-page className="pb-16">
       <LhPageHero
-        title="于此，回答“精诚服务”为什么再次出发。"
+        data-lh-heart-hero
+        title={
+          <>
+            <span data-lh-heart-title-line>于此，回答“精诚服务”</span>
+            <span data-lh-heart-title-line>为什么再次出发。</span>
+          </>
+        }
         description={
           <>
             <p>
@@ -235,212 +193,130 @@ export default function HeartPage() {
         asideItems={readingPath.map((item) => ({ title: item }))}
       />
 
-      <section className="space-y-5">
-        <LhSectionHeader
-          eyebrow="升级背景"
-          title="长期经营的分水岭在哪里？"
-          description="如何让每一次服务不止于交付结果，还能沉淀客户信任，正在成为长期经营必须回答的问题。关键在于持续经营客户信任。"
-        />
-        <div className="grid gap-4 md:grid-cols-3">
+      <section data-lh-heart-prologue>
+        <div data-lh-heart-prologue-lead>
+          <p data-lh-heart-kicker>升级背景</p>
+          <h2>长期经营的分水岭在哪里？</h2>
+          <p>
+            如何让每一次服务不止于交付结果，还能沉淀客户信任，正在成为长期经营必须回答的问题。关键在于持续经营客户信任。
+          </p>
+        </div>
+        <div data-lh-heart-prologue-notes>
           {upgradeReasons.map((reason) => (
-            <LhCard key={reason.title} className="p-5">
-              <h3 className="text-lg font-extrabold text-ink">{reason.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-ink-soft">{reason.description}</p>
-            </LhCard>
+            <article key={reason.title} data-lh-heart-note>
+              <h3>{reason.title}</h3>
+              <p>{reason.description}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-        <LhCard className="border-primary-deep/35 bg-[linear-gradient(135deg,var(--color-primary-deep),var(--color-primary))] p-6 text-panel shadow-lh-deck">
-          <p className="text-xs font-extrabold tracking-[0.14em] text-panel/65">核心</p>
-          <h2 className="mt-3 text-2xl font-extrabold text-panel">精诚服务的核心</h2>
-          <p className="mt-4 text-base leading-8 text-panel/80">
+      <section data-lh-heart-origin>
+        <div data-lh-heart-origin-lead>
+          <p data-lh-heart-kicker>核心</p>
+          <h2>精诚服务的核心</h2>
+          <p>
             新的服务价值框架并非对“精诚”的重写，而是对其内涵的延伸，把“精于勤，诚于心”的朴素共识进一步转化为可理解、可判断、可执行的价值路径。
           </p>
-        </LhCard>
-        <div className="grid gap-5 md:grid-cols-2">
-          <LhCard className="p-6">
-            <h3 className="text-xl font-extrabold text-ink">精</h3>
-            <p className="mt-4 text-sm leading-7 text-ink-soft">
+        </div>
+        <div data-lh-heart-origin-pair>
+          <article>
+            <h3>精</h3>
+            <p>
               精，代表极致的追求与行动。专业判断、认真执行、持续改善，最终体现在清楚的流程、合理的排产、顺畅的协作和稳定的交付上。
             </p>
-          </LhCard>
-          <LhCard className="p-6">
-            <h3 className="text-xl font-extrabold text-ink">诚</h3>
-            <p className="mt-4 text-sm leading-7 text-ink-soft">
+          </article>
+          <article>
+            <h3>诚</h3>
+            <p>
               诚，代表内在的价值与品格。真实、善意、秩序和关怀，不停留在态度上，而体现在客户关系、员工支持和组织管理里。
             </p>
-          </LhCard>
+          </article>
         </div>
       </section>
 
-      <section className="space-y-6">
+      <section data-lh-heart-values>
         <LhSectionHeader
           eyebrow="价值路径"
           title="求真、尽善、致美、大爱、幸福"
           description="求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。"
         />
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div data-lh-heart-value-summary>
           {dimensionNotes.map((note) => (
-            <LhCard key={note.title} className="p-5">
-              <h3 className="text-lg font-extrabold text-ink">{note.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-ink-soft">{note.description}</p>
-            </LhCard>
+            <article key={note.title}>
+              <h3>{note.title}</h3>
+              <p>{note.description}</p>
+            </article>
           ))}
         </div>
 
-        <div className="grid gap-5">
-          {valueSections.map((value, index) => {
-            const toneStyle = valueToneStyles[index % valueToneStyles.length];
-
-            return (
-              <LhCard
-                key={value.title}
-                className="grid gap-0 p-0 shadow-lh-md lg:grid-cols-[250px_minmax(0,1fr)]"
-                style={{
-                  ...toneStyle,
-                  borderColor: "var(--value-line)",
-                  background: "color-mix(in srgb, var(--value-wash) 46%, var(--color-raised))",
-                }}
-              >
-                <div
-                  className="relative min-w-0 border-b p-5 sm:p-6 lg:border-b-0 lg:border-r"
-                  style={{
-                    borderColor: "var(--value-line)",
-                    background: "color-mix(in srgb, var(--value-soft) 72%, var(--color-panel))",
-                  }}
-                >
-                  <span
-                    className="pointer-events-none absolute inset-y-6 left-0 w-1 rounded-r-full"
-                    style={{ background: "var(--value-color)" }}
-                  />
-                  <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)] lg:grid-cols-1">
-                    <span
-                      className="flex h-14 w-[72px] items-center justify-center rounded-sm border text-xl font-extrabold shadow-[0_1px_0_rgba(255,255,255,0.72)_inset]"
-                      style={{
-                        borderColor: "var(--value-line)",
-                        background: "color-mix(in srgb, var(--value-soft) 68%, var(--color-panel))",
-                        color: "var(--value-text)",
-                      }}
-                    >
-                      {value.title}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
-                        {value.focus}
-                      </p>
-                      <p className="mt-3 text-sm leading-7 text-ink-soft">{value.summary}</p>
-                    </div>
-                  </div>
+        <ol data-lh-heart-value-scroll>
+          {valueSections.map((value, index) => (
+            <li key={value.title} data-lh-heart-value-item>
+              <div data-lh-heart-value-heading>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3>{value.title}</h3>
+                  <p>{value.focus}</p>
                 </div>
-
-                <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-2">
-                  <div
-                    className="rounded-sm border p-4 sm:p-5"
-                    style={{
-                      borderColor: "var(--value-line)",
-                      background: "color-mix(in srgb, var(--value-soft) 54%, var(--color-panel) 46%)",
-                    }}
-                  >
-                    <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
-                      <span className="h-2 w-2 rounded-full" style={{ background: "var(--value-color)" }} />
-                      面对客户
-                    </p>
-                    <p className="mt-3 text-sm leading-7 text-ink-soft">{value.customer}</p>
-                  </div>
-                  <div
-                    className="rounded-sm border p-4 sm:p-5"
-                    style={{
-                      borderColor: "color-mix(in srgb, var(--value-line) 64%, var(--color-line))",
-                      background: "color-mix(in srgb, var(--value-soft) 22%, var(--color-panel) 78%)",
-                    }}
-                  >
-                    <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
-                      <span className="h-2 w-2 rounded-full border" style={{ borderColor: "var(--value-color)" }} />
-                      面对员工
-                    </p>
-                    <p className="mt-3 text-sm leading-7 text-ink-soft">{value.employee}</p>
-                  </div>
-                  {"organization" in value && value.organization ? (
-                    <div
-                      className="rounded-sm border p-4 sm:p-5 md:col-span-2"
-                      style={{
-                        borderColor: "color-mix(in srgb, var(--value-line) 56%, var(--color-line))",
-                        background: "color-mix(in srgb, var(--value-soft) 18%, var(--color-panel) 82%)",
-                      }}
-                    >
-                      <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
-                        <span className="h-2 w-2 rounded-full border" style={{ borderColor: "var(--value-color)" }} />
-                        面对组织
-                      </p>
-                      <p className="mt-3 text-sm leading-7 text-ink-soft">{value.organization}</p>
-                    </div>
-                  ) : null}
-                  {"society" in value && value.society ? (
-                    <div
-                      className="rounded-sm border p-4 sm:p-5 md:col-span-2"
-                      style={{
-                        borderColor: "color-mix(in srgb, var(--value-line) 56%, var(--color-line))",
-                        background: "color-mix(in srgb, var(--value-soft) 18%, var(--color-panel) 82%)",
-                      }}
-                    >
-                      <p className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
-                        <span className="h-2 w-2 rounded-full border" style={{ borderColor: "var(--value-color)" }} />
-                        面向社会
-                      </p>
-                      <p className="mt-3 text-sm leading-7 text-ink-soft">{value.society}</p>
-                    </div>
-                  ) : null}
-                  <div
-                    className="rounded-sm border p-4 sm:p-5 md:col-span-2"
-                    style={{
-                      borderColor: "color-mix(in srgb, var(--value-line) 68%, var(--color-line))",
-                      background: "color-mix(in srgb, var(--value-soft) 28%, var(--color-panel) 72%)",
-                    }}
-                  >
-                    <p className="text-sm font-extrabold" style={{ color: "var(--value-text)" }}>
-                      行动提示
-                    </p>
-                    <ul className="mt-3 grid gap-2 text-sm leading-7 text-ink-soft sm:grid-cols-3">
-                      {value.actions.map((action) => (
-                        <li key={action} className="flex gap-2">
-                          <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--value-color)" }} />
-                          <span>{action}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </LhCard>
-            );
-          })}
-        </div>
+              </div>
+              <p data-lh-heart-value-summary-text>{value.summary}</p>
+              <div data-lh-heart-viewpoints>
+                <article>
+                  <h4>面对客户</h4>
+                  <p>{value.customer}</p>
+                </article>
+                <article>
+                  <h4>面对员工</h4>
+                  <p>{value.employee}</p>
+                </article>
+                {"organization" in value && value.organization ? (
+                  <article data-wide="true">
+                    <h4>面对组织</h4>
+                    <p>{value.organization}</p>
+                  </article>
+                ) : null}
+                {"society" in value && value.society ? (
+                  <article data-wide="true">
+                    <h4>面向社会</h4>
+                    <p>{value.society}</p>
+                  </article>
+                ) : null}
+              </div>
+              <div data-lh-heart-actions>
+                <h4>行动提示</h4>
+                <ul>
+                  {value.actions.map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      <section className="space-y-6">
+      <section data-lh-heart-next>
         <LhSectionHeader
           eyebrow="后续入口"
           title="接下来怎么看这套内容"
           description="这个框架是“精诚服务”的价值底座。接下来的内容，会帮助大家把它放回真实场景、日常动作和共同规范中。"
         />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div data-lh-heart-guide-list>
           {visibleGuideSections.map((section) => (
-            <Link key={section.title} href={section.href} className="group block">
-              <LhCard className="grid min-h-52 grid-rows-[auto_1fr_auto] gap-4 p-5 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
-                    <Icon icon={section.icon} className="h-5 w-5" />
-                  </span>
+            <Link key={section.title} href={section.href} data-lh-heart-guide-link>
+              <span data-lh-heart-guide-icon>
+                <Icon icon={section.icon} />
+              </span>
+              <span data-lh-heart-guide-copy>
+                <span>
                   <LhChip tone="neutral">{section.label}</LhChip>
-                </div>
-                <div>
-                  <h3 className="text-xl font-extrabold text-ink">{section.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-ink-soft">{section.description}</p>
-                </div>
-                <span className="text-sm font-extrabold text-primary-deep">进入页面</span>
-              </LhCard>
+                  <strong>{section.title}</strong>
+                </span>
+                <span>{section.description}</span>
+              </span>
+              <span data-lh-heart-guide-action>进入</span>
             </Link>
           ))}
         </div>
@@ -470,8 +346,8 @@ export default function HeartPage() {
         </table>
       </LhDataTableShell>
 
-      <section className="border-t border-line pt-6">
-        <p className="max-w-4xl text-lg font-extrabold leading-9 text-ink">
+      <section data-lh-heart-closing>
+        <p>
           愿求真不虚，尽善不空，致美不浮，大爱不泛，让幸福从愿景进入每一次服务。
         </p>
       </section>

@@ -309,12 +309,18 @@ Motion should clarify state changes without making the product feel animated for
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--motion-fast` | `120ms` | Hover, press, chip state. |
-| `--motion-base` | `180ms` | Panel state, row selection, button transitions. |
-| `--motion-slow` | `240ms` | Dialogs, drawers, large region transitions. |
-| `--ease-standard` | `cubic-bezier(.2, 0, 0, 1)` | Default easing. |
+| `--lh-motion-fast` | `160ms` | Hover and immediate micro-feedback. |
+| `--lh-motion-medium` | `280ms` | Row, card, guide-link, and local state transitions. |
+| `--lh-motion-slow` | `520ms` | One-time page or major-section entrance choreography. |
+| `--lh-ease-standard` | `cubic-bezier(0.25, 1, 0.5, 1)` | Color, border, opacity, and shadow transitions. |
+| `--lh-ease-out` | `cubic-bezier(0.22, 1, 0.36, 1)` | Entrance, directional transform, and settle motion. |
 
-Respect `prefers-reduced-motion`.
+Rules:
+
+- Motion should use runtime `--lh-motion-*` and `--lh-ease-*` tokens, not ad hoc durations.
+- One-time entrance motion is allowed for Heart/Home hero and major editorial sections.
+- Hover motion may use opacity and transform only; it must not change element dimensions, spacing, or content order.
+- Respect `prefers-reduced-motion`; non-essential entrance and hover motion must be disabled.
 
 ## Z-Index
 

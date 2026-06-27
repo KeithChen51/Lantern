@@ -29,6 +29,11 @@
       --lh-danger-soft: rgba(184, 92, 70, 0.12);
       --lh-focus-outline: #9b5c14;
       --lh-focus-halo: rgba(217, 119, 6, 0.18);
+      --lh-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --lh-ease-standard: cubic-bezier(0.25, 1, 0.5, 1);
+      --lh-motion-fast: 160ms;
+      --lh-motion-medium: 280ms;
+      --lh-motion-slow: 520ms;
       --lh-card-radius: 16px;
       --lh-control-radius: 8px;
       --radius-xs: 4px;
@@ -553,7 +558,7 @@
       border-radius: var(--lh-control-radius);
       padding: 0 var(--space-4);
       font: var(--weight-extrabold) var(--type-control)/1 var(--font-hei);
-      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+      transition: background-color var(--lh-motion-fast) var(--lh-ease-standard), border-color var(--lh-motion-fast) var(--lh-ease-standard), color var(--lh-motion-fast) var(--lh-ease-standard), box-shadow var(--lh-motion-fast) var(--lh-ease-standard);
     }
 
     .button.primary { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-panel); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
@@ -622,6 +627,38 @@
     .governance-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); }
     .governance-step { border: 1px solid rgba(217, 119, 6, 0.18); border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.07); padding: var(--space-3); color: var(--lh-primary-deep); font-size: var(--type-label); font-weight: var(--weight-black); line-height: 1.45; }
 
+    .motion-system,
+    .pattern-system { display: grid; gap: var(--space-4); }
+
+    .motion-token-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+    .motion-token { display: grid; gap: 8px; border: 1px solid var(--lh-line); border-radius: var(--lh-control-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-3); }
+    .motion-token b { color: var(--lh-ink); font-size: var(--type-label); line-height: 1.4; }
+    .motion-token code { width: fit-content; font-size: 11px; }
+    .motion-token span { color: var(--lh-muted); font-size: var(--type-caption); font-weight: var(--weight-semibold); line-height: 1.55; }
+    .motion-principles { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: var(--grid-column-gap); }
+    .motion-demo { display: grid; gap: var(--space-3); border: 1px solid rgba(217, 119, 6, 0.2); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-4); }
+    .motion-demo h3,
+    .home-pattern h3,
+    .pattern-card h3 { color: var(--lh-primary-text); font-size: var(--type-lead); line-height: 1.25; }
+    .motion-demo p,
+    .home-pattern p,
+    .pattern-card p { margin: 0; color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.68; }
+    .motion-flow { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+    .motion-step { border: 1px solid var(--lh-line); border-radius: var(--lh-control-radius); background: rgba(255, 255, 255, 0.3); padding: var(--space-3); color: var(--lh-ink-soft); font-size: var(--type-label); font-weight: var(--weight-bold); line-height: 1.45; transition: transform var(--lh-motion-medium) var(--lh-ease-out), border-color var(--lh-motion-medium) var(--lh-ease-standard), background-color var(--lh-motion-medium) var(--lh-ease-standard); }
+    .motion-step:hover { border-color: rgba(217, 119, 6, 0.28); background: rgba(217, 119, 6, 0.08); transform: translateY(-2px); }
+    .motion-rules { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+    .motion-rules li { border-top: 1px solid var(--lh-line); padding-top: var(--space-3); color: var(--lh-muted); font-size: var(--type-control); font-weight: var(--weight-semibold); line-height: 1.65; }
+    .motion-rules li:first-child { border-top: 0; padding-top: 0; }
+    .motion-rules b { display: block; margin-bottom: 4px; color: var(--lh-ink); }
+
+    .home-pattern { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--grid-column-gap); align-items: stretch; border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.26); padding: var(--space-4); }
+    .home-title-sample { align-self: center; color: var(--lh-primary-text); font-family: var(--font-serif); font-size: clamp(36px, 3.45vw, 57px); font-weight: var(--weight-black); line-height: 1.08; }
+    .home-title-sample span { display: block; }
+    .home-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
+    .home-flow span { display: grid; align-items: center; min-height: 58px; border: 1px solid rgba(217, 119, 6, 0.16); border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.06); padding: var(--space-2); color: var(--lh-primary-text); font-size: var(--type-caption); font-weight: var(--weight-black); line-height: 1.35; text-align: center; }
+    .pattern-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .pattern-card { border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-4); }
+
     .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--grid-column-gap); }
     .rule-card ul { display: grid; gap: 9px; margin: var(--space-3) 0 0; padding-left: 18px; }
     .rule-card.dont h3 { color: var(--lh-danger-text); }
@@ -631,7 +668,13 @@
       .page { grid-template-columns: 1fr; padding: var(--space-5); }
       .sidebar { position: relative; top: auto; min-height: auto; border-right: 0; border-bottom: 1px solid var(--lh-hairline); padding: 0 0 18px; }
       .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
-      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .rule-grid { grid-template-columns: 1fr; }
+      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .motion-token-grid, .motion-principles, .home-pattern, .home-flow, .pattern-card-grid, .rule-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .motion-step { transition: none; }
+      .motion-step:hover { transform: none; }
     }
   </style>
 </head>
@@ -659,6 +702,7 @@
         <a href="#anatomy">组件结构</a>
         <a href="#content-recovery">内容反馈</a>
         <a href="#governance">治理</a>
+        <a href="#motion">动效</a>
         <a href="#patterns">页面模式</a>
         <a href="#rules">边界</a>
       </nav>
@@ -812,7 +856,8 @@
             <ul class="spec-list">
               <li><b>UI 字体</b><span><code>--font-hei</code>：苹方优先，用于导航、表单、按钮、后台表格和普通 UI 正文。</span></li>
               <li><b>标题字体</b><span><code>--font-serif</code>：思源宋优先，用于页面主标题、价值阅读标题和编辑性段落。</span></li>
-              <li><b>排版基准</b><span>正文从 15-16px 起步，控件 14px，说明文字 12-13px；页面标题只在真正的顶层场景使用 40-72px。</span></li>
+              <li><b>排版基准</b><span>正文从 15-16px 起步，控件 14px，说明文字 12-13px；页面标题只在真正的顶层场景使用 40-72px，不复制到模块标题。</span></li>
+              <li><b>文化序章</b><span>首页/本心页可使用更克制的 36-57px 思源宋主句，固定为两行表达，避免字号过大压碎后续内容。</span></li>
               <li><b>阅读行高</b><span>正文 1.7-1.8，控件 1.4-1.5，标题 1.12-1.2。行距服务阅读，不为装饰拉开。</span></li>
             </ul>
           </div>
@@ -823,7 +868,7 @@
               <div class="heading-row">
                 <span class="heading-role"><b>Display / Hero</b><code>--title-display</code></span>
                 <strong class="heading-sample heading-display">灯塔平台视觉规范</strong>
-                <span class="heading-note">思源宋，40-72px，900，1.04。只用于首屏、价值阅读封面和空状态主句。</span>
+                <span class="heading-note">思源宋，40-72px，900，1.04。只用于首屏、价值阅读封面和空状态主句；首页/本心文化序章收至 36-57px。</span>
               </div>
               <div class="heading-row">
                 <span class="heading-role"><b>Page Title</b><code>--title-page</code></span>
@@ -1024,13 +1069,56 @@
         </div>
       </section>
 
+      <section id="motion" class="section">
+        <div class="section-header"><span class="section-kicker">14 / Motion</span><h2>动效规范</h2><p class="section-intro">Classic Amber 的动效只承担三件事：说明阅读顺序、反馈交互状态、帮助用户理解空间变化。它不承担装饰，不循环播放，也不制造浮夸的页面戏剧性。</p></div>
+        <div class="section-body motion-system">
+          <div class="motion-token-grid">
+            <article class="motion-token"><b>Fast</b><code>--lh-motion-fast: 160ms</code><span>hover、focus 邻近反馈、图标轻微状态变化。</span></article>
+            <article class="motion-token"><b>Medium</b><code>--lh-motion-medium: 280ms</code><span>卡片、列表项、导览入口和局部状态切换。</span></article>
+            <article class="motion-token"><b>Slow</b><code>--lh-motion-slow: 520ms</code><span>首页/本心页首屏和主要编辑区块的一次性进入。</span></article>
+            <article class="motion-token"><b>Ease Out</b><code>--lh-ease-out</code><span>进入、上移、展开后的落定，保持柔和但不拖沓。</span></article>
+            <article class="motion-token"><b>Standard</b><code>--lh-ease-standard</code><span>颜色、边框、背景等常规 UI 状态过渡。</span></article>
+          </div>
+          <div class="motion-principles">
+            <article class="motion-demo">
+              <h3>允许的微交互</h3>
+              <p>交互只改变 opacity、transform、background-color、border-color、color 和 box-shadow。不得用动效改变布局尺寸、内容顺序或阅读节奏。</p>
+              <div class="motion-flow" aria-label="motion example">
+                <span class="motion-step">导航 hover：文字加深，背景轻微出现</span>
+                <span class="motion-step">卡片 hover：translateY(-2px)，不改变间距</span>
+                <span class="motion-step">首页进入：只在首次加载分层出现一次</span>
+              </div>
+            </article>
+            <ul class="motion-rules">
+              <li><b>入口动效</b>只用于 Heart/Home hero、文化序章和少数首屏重点区块；普通后台、表格和表单默认不做入场动画。</li>
+              <li><b>反馈动效</b>必须跟随组件状态：hover、pressed、focus-visible、selected、loading。没有状态含义的漂浮、闪烁和循环动画禁止使用。</li>
+              <li><b>可访问性</b>必须响应 <code>prefers-reduced-motion</code>。开启 reduced motion 后，内容应立即可见，交互仍保留颜色、边框和焦点反馈。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section id="patterns" class="section">
-        <div class="section-header"><span class="section-kicker">14 / Page Patterns</span><h2>页面模式</h2><p class="section-intro">灯塔平台不是每页都使用卡片墙。页面模式必须由任务关系决定，保持平台级一致性。</p></div>
-        <div class="section-body grid three"><article class="card"><h3>阅读页</h3><p>标题和正文全宽，证据、目录、推荐内容使用 8/4 主从布局。正文优先 16px 阅读字号。</p></article><article class="card"><h3>工作流页</h3><p>表单和审核信息使用 6/6 或全宽表格。主操作固定在可预期区域，不随机漂移。</p></article><article class="card"><h3>后台页</h3><p>数据比较优先表格，不强行卡片化。筛选、批量操作和状态反馈保持同一骨架。</p></article></div>
+        <div class="section-header"><span class="section-kicker">15 / Page Patterns</span><h2>页面模式</h2><p class="section-intro">灯塔平台不是每页都使用卡片墙。页面模式必须由任务关系决定：文化页负责建立理解，阅读页负责沉淀内容，工作流页负责完成任务，后台页负责比较和维护。</p></div>
+        <div class="section-body pattern-system">
+          <article class="home-pattern">
+            <div>
+              <h3>Home / Heart Cultural Prologue</h3>
+              <p>当前首页进入本心页，因此本心页承担第一印象。它不是功能卡片目录，而是平台理念的文化序章：先给出一句明确主张，再让价值、来源、行动入口逐层出现。</p>
+              <div class="home-flow" aria-label="home page pattern flow"><span>Hero 主句</span><span>Prologue 序章</span><span>Origin 来源</span><span>Values 阅读</span><span>Guides 行动</span><span>Closing 收束</span></div>
+            </div>
+            <strong class="home-title-sample"><span>于此，回答“精诚服务”</span><span>为什么再次出发。</span></strong>
+          </article>
+          <div class="pattern-card-grid">
+            <article class="pattern-card"><h3>阅读页</h3><p>标题和正文全宽，证据、目录、推荐内容使用 8/4 主从布局。正文优先 16px 阅读字号，长文交给 <code>LhContentProse</code> 约束。</p></article>
+            <article class="pattern-card"><h3>工作流页</h3><p>表单和审核信息使用 6/6 或全宽表格。主操作固定在可预期区域，加载、错误和空状态必须提供恢复路径。</p></article>
+            <article class="pattern-card"><h3>后台页</h3><p>数据比较优先表格，不强行卡片化。筛选、批量操作和状态反馈保持同一骨架，密集信息用网格和表头建立秩序。</p></article>
+          </div>
+        </div>
       </section>
 
       <section id="rules" class="section">
-        <div class="section-header"><span class="section-kicker">15 / Guardrails</span><h2>使用边界</h2><p class="section-intro">经典琥珀版本要有效、雅致。有效意味着规范能直接落地；雅致意味着有足够秩序、留白和克制。</p></div>
+        <div class="section-header"><span class="section-kicker">16 / Guardrails</span><h2>使用边界</h2><p class="section-intro">经典琥珀版本要有效、雅致。有效意味着规范能直接落地；雅致意味着有足够秩序、留白和克制。</p></div>
         <div class="section-body rule-grid">
           <article class="rule-card"><h3>Do</h3><ul><li>用苹方承载产品 UI，用思源宋承载少量价值表达。</li><li>用 12 列逻辑网格和固定间距控制页面秩序。</li><li>用真实 Solar 图标和 <code>lighthouseIcons</code> 入口。</li><li>用轻边框、暖纸色和低阴影表达层级。</li></ul></article>
           <article class="rule-card dont"><h3>Don't</h3><ul><li>不要混入探索版蓝绿色、印刷稿或对外品牌 VI 资产。</li><li>不要用字符、手绘图形或其他图标库替代 Solar。</li><li>不要为了“丰富”随机跨列、叠卡、加重阴影。</li><li>不要用低对比文字或过度透明制造所谓高级感。</li></ul></article>
