@@ -18,7 +18,7 @@ export const lighthouseIcons = {
   action: solarIcon("bolt-bold"),
   workshop: solarIcon("clipboard-check-bold"),
   hermit: solarIcon("magic-stick-3-bold"),
-  search: solarIcon("magnifer-linear"),
+  search: solarIcon("magnifer-bold-duotone"),
   send: solarIcon("plain-bold"),
   edit: solarIcon("pen-2-bold"),
   delete: solarIcon("trash-bin-trash-bold"),

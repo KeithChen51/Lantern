@@ -97,8 +97,8 @@ function Logo({
       >
         <LighthouseMark className="h-12 w-8" />
         <span data-lh-logo-copy className="min-w-0">
-          <span data-lh-logo-title className="block text-2xl font-extrabold leading-none text-[var(--color-deck-text)]">灯塔</span>
-          <span data-lh-logo-subtitle className="mt-1 block text-xs font-bold leading-tight text-[var(--color-deck-muted-strong)]">服务文化数字平台</span>
+          <span data-lh-logo-title className="block text-[length:var(--title-card)] font-[var(--weight-bold)] leading-none text-[var(--color-deck-text)]">灯塔</span>
+          <span data-lh-logo-subtitle className="mt-1 block text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)] text-[var(--color-deck-muted-strong)]">服务文化数字平台</span>
         </span>
       </Link>
       {showToggle && (
@@ -254,13 +254,13 @@ function SidebarSearchPanel({
           }}
           type="text"
           placeholder={SEARCH_PLACEHOLDER}
-          className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-9 pr-3 text-xs font-bold text-ink outline-none transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus:border-signal focus:bg-panel"
+          className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-9 pr-3 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-ink transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus-visible:border-[var(--lh-focus-outline)] focus-visible:bg-panel"
         />
       </div>
       {(isOpen || searchFeedback) && (searchFeedback || query.trim()) && (
-        <div className="absolute left-0 top-full z-20 mt-2 w-[min(22rem,calc(100vw-32px))] overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-panel text-sm shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
+        <div className="absolute left-0 top-full z-20 mt-2 w-[min(22rem,calc(100vw-32px))] overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-panel text-[length:var(--type-body)] shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
           {searchFeedback && (
-            <p className="border-b border-line bg-surface-quiet px-3 py-2 text-xs font-bold leading-5 text-muted" aria-live="polite">
+            <p className="border-b border-line bg-surface-quiet px-3 py-2 text-[length:var(--type-label)] font-[var(--weight-bold)] leading-[var(--leading-label)] text-muted" aria-live="polite">
               {searchFeedback}
             </p>
           )}
@@ -272,15 +272,15 @@ function SidebarSearchPanel({
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => onTarget(target.href, target.label)}
-                  className="grid gap-0.5 rounded-[var(--lh-control-radius)] px-3 py-2 text-left transition-colors hover:bg-primary-soft focus:bg-primary-soft focus:outline-none"
+                  className="grid gap-0.5 rounded-[var(--lh-control-radius)] px-3 py-2 text-left transition-colors hover:bg-primary-soft focus-visible:bg-primary-soft"
                 >
-                  <span className="text-sm font-extrabold text-ink">{target.label}</span>
-                  <span className="text-xs font-bold leading-5 text-muted">{target.description}</span>
+                  <span className="text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-ink">{target.label}</span>
+                  <span className="text-[length:var(--type-label)] font-[var(--weight-bold)] leading-[var(--leading-label)] text-muted">{target.description}</span>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="px-3 py-3 text-xs font-bold leading-5 text-muted">没有匹配结果。</p>
+            <p className="px-3 py-3 text-[length:var(--type-label)] font-[var(--weight-bold)] leading-[var(--leading-label)] text-muted">没有匹配结果。</p>
           )}
         </div>
       )}
@@ -302,7 +302,7 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-sm font-bold text-[var(--color-deck-text-soft)] transition-colors hover:bg-[var(--lh-deck-panel-hover)] hover:text-action",
+          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-colors hover:bg-[var(--lh-deck-panel-hover)] hover:text-action",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
         )}
         aria-label="通知"
@@ -316,14 +316,14 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
       {isOpen && (
         <div
           className={cn(
-            "absolute bottom-12 z-20 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-sm text-ink-soft shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]",
+            "absolute bottom-12 z-20 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]",
             isExpanded ? "left-0" : "left-[calc(100%+0.5rem)]",
           )}
         >
-          <p className="mb-3 text-xs font-extrabold text-primary-deep">今日可处理</p>
+          <p className="mb-3 text-[length:var(--title-kicker)] font-[var(--weight-black)] leading-[1.2] tracking-[var(--tracking-kicker)] text-primary-text">今日可处理</p>
           <ul className="space-y-2">
             {NOTIFICATIONS.map((item) => (
-              <li key={item} className="leading-6">
+              <li key={item} className="leading-[var(--leading-body)]">
                 {item}
               </li>
             ))}
@@ -370,8 +370,8 @@ function NavLinks({
         />
         {isExpanded && (
           <span data-lh-nav-copy className="min-w-0">
-            <span data-lh-nav-sub-label className="block truncate text-sm font-extrabold leading-tight">{item.subLabel}</span>
-            <span data-lh-nav-label className={cn("block truncate text-xs font-bold leading-tight", isActive ? "text-[var(--color-deck-muted-strong)]" : "text-[var(--color-deck-muted)]")}>
+            <span data-lh-nav-sub-label className="block truncate text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)]">{item.subLabel}</span>
+            <span data-lh-nav-label className={cn("block truncate text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]", isActive ? "text-[var(--color-deck-muted-strong)]" : "text-[var(--color-deck-muted)]")}>
               {item.label}
             </span>
           </span>

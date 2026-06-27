@@ -15,4 +15,9 @@ describe("lighthouse icon registry", () => {
       expect(icon.height).toBe(24);
     }
   });
+
+  it("uses the locked Solar Bold Duotone search icon by default", () => {
+    expect(lighthouseIcons.search.body).toContain('opacity=".5"');
+    expect(lighthouseIcons.search.body).not.toContain("stroke=");
+  });
 });

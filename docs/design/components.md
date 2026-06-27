@@ -24,6 +24,10 @@ Existing primitives:
 - `LhMetricTile`
 - `LhPageHero`
 - `LhDataTableShell`
+- `LhBackLink`
+- `LhContentProse`
+- `LhStateNotice`
+- `LhEmptyState`
 
 These are the runtime base. The design system should strengthen their semantics before adding many new primitives.
 
@@ -42,12 +46,37 @@ Every component contract should define anatomy, variants, states, accessibility,
 
 | Component family | Required anatomy | Accessibility rule | Do not use for |
 | --- | --- | --- | --- |
-| Button | Container, label, optional Solar icon, loading affordance. | Keyboard focus, disabled reason where unclear, loading width preserved. | Passive labels or broad navigation descriptions. |
+| Button | Container, label, optional Solar icon, loading affordance. | Keyboard focus uses 2px outline + 3px offset + halo; disabled reason where unclear; loading width preserved. | Passive labels or broad navigation descriptions. |
 | Icon button | 36px or 44px target, 20px icon, accessible label. | `aria-label` is required; tooltip for unfamiliar icons. | Ambiguous destructive actions without confirmation. |
 | Field | Label, control, helper text, validation/error message. | `aria-describedby` for helper/error, `aria-invalid` for invalid fields. | Placeholder-only labels. |
 | Chip / Badge | Text label, optional dot/icon, semantic wrapper. | Do not rely on color alone for state meaning. | Merging status, category, role, metric, and code into one generic style. |
 | Card / Panel | Title, metadata, body, action region. | Whole-card click target must be keyboard reachable. | Page-section wrappers or card-in-card hierarchy. |
 | Data table | Header, rows, sortable columns, selection, bulk toolbar where needed. | Sort and selection state must be textual or programmatic, not only visual. | Visual browsing where comparison is not needed. |
+| Back link | Link container, Solar icon, text label. | Native link target with Classic Amber focus-visible outline. | Breadcrumb trails, primary actions, or row-level actions. |
+| Content prose | Semantic headings, paragraphs, lists, quote, divider. | Preserve heading order and readable line length; do not encode action state. | Forms, data tables, dense control groups, or decorative card copy. |
+| State notice | Tone, optional icon, title, message, action. | Warning and danger announce as alerts; color is paired with text and icon. | Empty states or persistent page instructions. |
+| Empty state | Optional icon, title, description, action region. | Name the current scope and provide the next useful action when available. | Error alerts, loading skeletons, or normal content cards. |
+
+## Typography Contract
+
+Reusable components consume runtime typography tokens instead of raw Tailwind type utilities.
+
+| Component | Font role | Size / line-height | Weight | Rule |
+| --- | --- | --- | --- | --- |
+| `LhButton` | UI sans | `--type-control / --leading-control` by default | `--weight-extrabold` | Button labels are action text, not body copy. Small and large sizes step through `--type-caption` and `--type-body`. |
+| `LhIconButton` | UI sans | `--type-control` or `--type-reading` glyph context | `--weight-extrabold` | Icon-only controls still inherit button typography and focus rules. |
+| `LhChip` / `LhStatusBadge` | UI sans | `--type-caption / --leading-caption` | `--weight-bold` | Small colored text must use readable semantic text tokens. |
+| `LhTextField` / `LhTextArea` | UI sans | labels use `--type-control`, helper uses `--type-label`, input uses `--type-reading` | label `--weight-extrabold`, helper `--weight-bold` only for errors | Placeholder is not a label; error text uses danger text token. |
+| `LhSectionHeader` | serif title plus sans kicker | title uses `--title-section`, kicker uses `--title-kicker` | title `--weight-bold`, kicker `--weight-black` | Section hierarchy comes from title tokens, not one-off page sizes. |
+| `LhPageHero` | serif page title, sans controls | title uses `--title-page`, body uses `--type-reading` | title `--weight-black` | Page title is one per view; admin pages may use quieter page-level treatment. |
+| `LhDataTableShell` | UI sans | headers use `--type-caption`, cells use `--type-body` | header `--weight-black` | Tables are dense but still tokenized and readable. |
+| `LhBackLink` | UI sans | `--type-control / --leading-control` | `--weight-extrabold` | Detail pages use one consistent back affordance rather than page-local link styling. |
+| `LhContentProse` | editorial reading | `--type-reading / --leading-reading`, compact uses `--type-body` | headings `--weight-extrabold` | Markdown and long-form case text use semantic tags; visual classes live in the prose wrapper. |
+| `LhStateNotice` | UI sans | body uses `--type-body`, title uses `--type-control` | title `--weight-extrabold` | Status/recovery messages use semantic tone text tokens and role defaults. |
+| `LhEmptyState` | UI sans plus optional icon | title uses `--title-card`, description uses `--type-body` | title `--weight-extrabold` | Empty states are composed regions, not dashed cards built per page. |
+| Navigation shell | UI sans | sub-label `--type-control`, label `--type-caption` | sub-label `--weight-extrabold`, label `--weight-bold` | Navigation is product chrome, not editorial serif copy. |
+
+Shared primitives and the navigation shell should not contain `text-xs`, `text-sm`, `text-base`, `font-bold`, `font-extrabold`, or `leading-6` as their source of truth. Use CSS variables or data-attribute defaults so a visual-spec change can be applied centrally.
 
 ## Interaction State Matrix
 
@@ -56,7 +85,7 @@ Every component contract should define anatomy, variants, states, accessibility,
 | Default | Communicates whether the element can be used. |
 | Hover | Changes color, border, or elevation without layout shift. |
 | Pressed | Confirms activation without resizing. |
-| Focus-visible | Uses Classic Amber focus ring and remains visible on tinted surfaces. |
+| Focus-visible | Uses 2px Classic Amber outline, 3px offset, and halo. It must remain visible on warm paper, white surfaces, selected rows, and tinted cards. |
 | Disabled | Keeps text readable and explains unavailable actions when needed. |
 | Loading | Keeps width stable, prevents duplicate submit, and keeps enough label context. |
 | Selected | Shows selected scope before any bulk action. |
@@ -89,6 +118,8 @@ Rules:
 - Destructive actions require `danger`; irreversible destructive actions also require confirmation.
 - Loading state disables the button and preserves width where possible.
 - Icon-only actions use `LhIconButton`, not a text button with hidden text.
+- Amber button/link text smaller than `18px` uses `--color-primary-text`, not raw `--color-primary`.
+- Danger button/link text smaller than `18px` uses `--color-danger-text`, not raw `--color-danger`.
 
 ## Icon Button
 
@@ -102,6 +133,7 @@ Rules:
 - Match button size to adjacent form controls or toolbar density.
 - Default icon-button sizes are `36px` small and `44px` medium, with a `20px` glyph.
 - Icon-only buttons inherit the same radius, border, shadow, focus, disabled, and loading logic as text buttons.
+- Focus-visible on icon buttons must show an external outline, not only an inner glow or icon color change.
 
 ## Iconography
 
@@ -143,6 +175,24 @@ Rules:
 - No default glass blur. Use solid surface, border, and tokenized background.
 - Hover elevation is allowed only when the whole card is clickable.
 
+## Page-Level Primitives
+
+These primitives sit above buttons/cards and below page templates. They exist so page migrations do not recreate the same typography and state rules in every route.
+
+| Primitive | Use | Do not use for | Accessibility |
+| --- | --- | --- | --- |
+| `LhBackLink` | Shallow detail pages that return to a collection or module context. | Breadcrumbs, primary submit actions, or inline table actions. | Native link semantics; focus ring must stay external and visible on panel and page backgrounds. |
+| `LhContentProse` | Markdown, case body text, source notes, and long-form reading blocks. | Data tables, form layouts, button groups, or arbitrary card decoration. | Keep semantic headings/lists in the content; do not fake headings with styled paragraphs. |
+| `LhStateNotice` | Section-level success, info, warning, danger, and neutral messages with optional recovery action. | Empty data states or first-use guidance. | `warning` and `danger` default to `role="alert"`; other tones default to `role="status"`. |
+| `LhEmptyState` | No data, no published cases, filtered empty, or future-content placeholders. | Errors, loading, or normal repeated content. | Title names the scope; description explains next step; actions are real buttons/links when available. |
+
+Rules:
+
+- Page-level primitives consume Classic Amber typography and tone tokens; do not pass raw color classes to make new variants.
+- `LhContentProse` owns visual styling for Markdown descendants. Renderers should output semantic tags only.
+- `LhEmptyState` and `LhStateNotice` are separate meanings. Do not use an empty state to report an error or a state notice to fill an empty collection.
+- Back links use the Solar icon map through `lighthouseIcons`; do not draw custom arrows.
+
 ## Tags, Chips, And Status
 
 Split label semantics into separate components or explicit wrappers.
@@ -161,10 +211,10 @@ Status mapping:
 
 | Status | Tone | Color |
 | --- | --- | --- |
-| Approved, completed, healthy | `success` | Current Classic Amber uses restrained brass; do not use it decoratively. |
-| Needs attention | `warning` | Amber/orange only. |
-| Failed, rejected, destructive | `danger` | Brick red only. |
-| Draft, pending, processing, neutral info | `info` or `neutral` | Current Classic Amber uses brass or neutral; keep copy explicit. |
+| Approved, completed, healthy | `success` | Current Classic Amber uses restrained brass; small text uses `--color-brass-text`. |
+| Needs attention | `warning` | Amber/orange fill or border; small text uses `--color-primary-text`. |
+| Failed, rejected, destructive | `danger` | Brick red fill/border, `--color-danger-text` for small text. |
+| Draft, pending, processing, neutral info | `info` or `neutral` | Current Classic Amber uses brass or neutral; small text uses `--color-brass-text` and copy stays explicit. |
 
 Do not use warning for pending. Do not use success for neutral "available" labels unless the state is explicitly healthy or completed.
 

@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { Icon } from "@iconify/react";
 import ReactMarkdown from "react-markdown";
 import {
+  LhBackLink,
   LhCard,
   LhChip,
+  LhContentProse,
   LhDataTableShell,
   LhPageHero,
   LhPanel,
@@ -24,18 +25,6 @@ export function ActionCaseDetailView({ actionCase }: ActionCaseDetailViewProps) 
   }
 
   return <StaticActionCaseDetail actionCase={actionCase.record} />;
-}
-
-function BackLink() {
-  return (
-    <Link
-      href="/action"
-      className="inline-flex items-center gap-2 rounded-sm border border-line bg-panel px-3 py-2 text-sm font-bold text-primary-deep shadow-lh-sm transition-colors hover:border-line-strong hover:bg-primary-soft"
-    >
-      <Icon icon={lighthouseIcons.action} className="h-4 w-4" />
-      返回笃行
-    </Link>
-  );
 }
 
 function statusLabel(status: string) {
@@ -83,7 +72,9 @@ function ManagedActionCaseDetail({
 }) {
   return (
     <article className="space-y-8 pb-12">
-      <BackLink />
+      <LhBackLink href="/action" icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}>
+        返回笃行
+      </LhBackLink>
 
       <LhPageHero
         icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
@@ -119,28 +110,24 @@ function ManagedActionCaseDetail({
 
       <ContentSection eyebrow="案例正文" title="Markdown 正文">
         <LhPanel className="p-5 md:p-6">
-          <div className="action-case-prose text-sm leading-8 text-ink-soft md:text-base md:leading-8">
+          <LhContentProse>
             <ReactMarkdown
               components={{
-                h1: ({ children }) => <h2 className="mb-4 mt-2 text-3xl font-extrabold leading-tight text-ink">{children}</h2>,
-                h2: ({ children }) => <h3 className="mb-3 mt-8 text-2xl font-extrabold leading-tight text-ink">{children}</h3>,
-                h3: ({ children }) => <h4 className="mb-2 mt-6 text-xl font-extrabold leading-tight text-ink">{children}</h4>,
-                p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                strong: ({ children }) => <strong className="font-extrabold text-ink">{children}</strong>,
-                ul: ({ children }) => <ul className="mb-5 list-disc space-y-2 pl-5 last:mb-0">{children}</ul>,
-                ol: ({ children }) => <ol className="mb-5 list-decimal space-y-2 pl-5 last:mb-0">{children}</ol>,
+                h1: ({ children }) => <h2>{children}</h2>,
+                h2: ({ children }) => <h3>{children}</h3>,
+                h3: ({ children }) => <h4>{children}</h4>,
+                p: ({ children }) => <p>{children}</p>,
+                strong: ({ children }) => <strong>{children}</strong>,
+                ul: ({ children }) => <ul>{children}</ul>,
+                ol: ({ children }) => <ol>{children}</ol>,
                 li: ({ children }) => <li>{children}</li>,
-                blockquote: ({ children }) => (
-                  <blockquote className="my-5 rounded-sm border-l-4 border-primary bg-surface-quiet px-4 py-3 text-muted">
-                    {children}
-                  </blockquote>
-                ),
-                hr: () => <hr className="my-6 border-line" />,
+                blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+                hr: () => <hr />,
               }}
             >
               {actionCase.markdown}
             </ReactMarkdown>
-          </div>
+          </LhContentProse>
         </LhPanel>
       </ContentSection>
     </article>
@@ -156,7 +143,9 @@ function StaticActionCaseDetail({
 
   return (
     <article className="space-y-8 pb-12">
-      <BackLink />
+      <LhBackLink href="/action" icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}>
+        返回笃行
+      </LhBackLink>
 
       <LhPageHero
         icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
@@ -201,11 +190,11 @@ function StaticActionCaseDetail({
 
       <ContentSection eyebrow="案例正文" title="从现场选择回到服务链条" description={brief.caseQuestion}>
         <LhPanel className="space-y-5 p-5 md:p-6">
-          {caseBody.paragraphs.map((paragraph) => (
-            <p key={paragraph} className="text-sm leading-8 text-ink-soft">
-              {paragraph}
-            </p>
-          ))}
+          <LhContentProse>
+            {caseBody.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </LhContentProse>
         </LhPanel>
       </ContentSection>
 
@@ -267,7 +256,9 @@ function StaticActionCaseDetail({
               <span className="flex h-9 w-9 items-center justify-center rounded-sm border border-line bg-surface-quiet text-sm font-extrabold text-primary-deep">
                 {index + 1}
               </span>
-              <p className="mt-4 text-sm leading-7 text-ink-soft">{item}</p>
+              <LhContentProse variant="compact" className="mt-4">
+                <p>{item}</p>
+              </LhContentProse>
             </li>
           ))}
         </ol>
@@ -275,16 +266,18 @@ function StaticActionCaseDetail({
 
       <ContentSection eyebrow="来源材料" title="来源材料">
         <details className="rounded-sm border border-dashed border-line-strong bg-surface-quiet p-5">
-          <summary className="cursor-pointer text-sm font-extrabold text-primary-deep">查看维护字段</summary>
+          <summary className="cursor-pointer text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text">查看维护字段</summary>
           <div className="mt-5 space-y-5">
             {evidence.sourceMaterials.map((source) => (
               <div key={source.title} className="border-t border-line pt-4 first:border-t-0 first:pt-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-extrabold text-ink">{source.title}</p>
+                  <p className="text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-ink">{source.title}</p>
                   <LhChip tone="neutral">{source.type}</LhChip>
                   <LhChip tone="warning">{source.visibility}</LhChip>
                 </div>
-                <p className="mt-2 text-sm leading-7 text-ink-soft">{source.note}</p>
+                <LhContentProse variant="compact" className="mt-2">
+                  <p>{source.note}</p>
+                </LhContentProse>
               </div>
             ))}
           </div>

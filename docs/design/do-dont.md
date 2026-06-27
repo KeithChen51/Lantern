@@ -14,6 +14,7 @@
 | --- | --- |
 | Use Classic Amber roles for platform UI tokens. | Copy the service-brand VI palette wholesale into product controls. |
 | Reserve amber for primary action, selected emphasis, and warning-like attention. | Use amber for every pending, neutral, success, info, and decorative label at once. |
+| Use `primary-text`, `brass-text`, and `danger-text` for small colored text. | Use raw amber, brass, or danger as 12-14px text on warm paper or white surfaces. |
 | Keep semantic meanings stable even when Classic Amber maps success/info to restrained brass. | Reuse semantic colors for decoration or value-theme surfaces. |
 | Use primary-soft for selected rows and active low-emphasis states. | Use saturated backgrounds for selection in dense tables. |
 
@@ -23,6 +24,8 @@
 | --- | --- |
 | Use sans-serif for product UI, forms, nav, tables, cards, and Hermit chat. | Use serif as ordinary UI body text. |
 | Use serif sparingly for quotations, chapter-like moments, or explicit editorial emphasis. | Apply literary heading/body styling to admin, review queues, filters, or controls. |
+| Use `--type-*`, `--title-*`, `--leading-*`, and `--weight-*` in reusable primitives and navigation. | Hard-code `text-xs`, `text-sm`, `font-bold`, or `leading-6` as the source of truth in shared UI. |
+| Keep PingFang SC first in the sans stack and Source Han Serif SC first in the serif stack. | Reintroduce Aptos, Playfair Display, or runtime typeface switching into platform UI. |
 | Keep normal text readable with strong enough contrast. | Hide important constraints or metadata in low-opacity text. |
 
 ## Components
@@ -39,7 +42,7 @@
 | Do | Don't |
 | --- | --- |
 | Keep body, table, button, and form text at readable contrast. | Use low-opacity text for constraints, warnings, or required instructions. |
-| Use Classic Amber focus-visible styling on every interactive element. | Remove browser focus outlines without a visible replacement. |
+| Use 2px outline, 3px offset, and focus halo on every keyboard-focusable element. | Use only soft glow, color change, or shadow as the focus indicator. |
 | Pair state colors with labels, icons, dots, or placement. | Communicate success, danger, selection, or progress by color alone. |
 | Preserve control width during loading and prevent duplicate submit. | Let loading labels resize buttons or leave users unsure what is processing. |
 | Explain disabled actions when the reason is not obvious. | Disable controls with opacity only and no recovery path. |
@@ -59,6 +62,7 @@
 | --- | --- |
 | Use panels for bounded work areas and cards for repeated items. | Put cards inside cards or style whole page sections as floating cards. |
 | Use solid surfaces, borders, and stable spacing. | Use glass blur, decorative gradients, or glow as default product styling. |
+| Keep page backgrounds quiet: warm paper, solid surfaces, and a restrained border system. | Add global grid texture, radial amber glow, or repeated translucent floating sections by default. |
 | Keep admin and data tools denser and quieter than public reading pages. | Use landing-page hero composition for admin, review, or maintenance workflows. |
 | Use stable card tracks and fixed control heights. | Let dynamic labels, hover states, or badges resize the layout. |
 
@@ -86,6 +90,7 @@
 | --- | --- |
 | Update `docs/design/README.md` when adding design-system files. | Leave new design files unclassified. |
 | Update `docs/design/tokens.md` before adding new global UI tokens. | Add new one-off hex values directly in pages. |
+| Update `src/app/globals.css`, shared primitives, and design-system tests when typography roles change. | Let the HTML visual spec and runtime typography drift apart. |
 | Update `docs/design/components.md` before adding a new primitive family. | Add near-duplicate primitives with overlapping meanings. |
 | Update runtime tests when changing design-system contracts. | Treat design-system tests as incidental snapshots. |
 

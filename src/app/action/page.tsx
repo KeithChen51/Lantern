@@ -4,6 +4,7 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
+  LhEmptyState,
   LhPageHero,
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
@@ -74,10 +75,10 @@ export default async function ActionPage() {
 
                   <div className="flex items-center justify-between border-t border-line pt-4">
                     <span className="text-sm font-bold text-muted">笃行学习卡</span>
-                    <span className="inline-flex min-h-9 items-center gap-2 rounded-sm border border-line-strong bg-panel px-3 text-xs font-bold text-primary-deep shadow-lh-sm">
+                    <LhChip tone="primary" className="min-h-9 px-3">
                       <Icon icon={lighthouseIcons.document} className="h-4 w-4" />
                       查看复盘
-                    </span>
+                    </LhChip>
                   </div>
                 </div>
 
@@ -101,16 +102,13 @@ export default async function ActionPage() {
             </Link>
           ))}
 
-          <LhCard className="grid gap-4 border-dashed p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-            <div>
-              <LhChip tone="neutral">待补充</LhChip>
-              <h2 className="mt-4 text-2xl font-extrabold text-ink">更多内部实践待沉淀</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-ink-soft">
-                后续可继续接入交付、索赔、客户关怀、门店协同等真实案例，让一线经验留在组织里。
-              </p>
-            </div>
-            <span className="text-sm font-extrabold text-muted">等待新增案例</span>
-          </LhCard>
+          <LhEmptyState
+            tone="neutral"
+            icon={<Icon icon={lighthouseIcons.document} className="h-5 w-5" />}
+            title="更多内部实践待沉淀"
+            description="后续可继续接入交付、索赔、客户关怀、门店协同等真实案例，让一线经验留在组织里。"
+            secondaryAction={<LhChip tone="neutral">等待新增案例</LhChip>}
+          />
         </div>
       </section>
 

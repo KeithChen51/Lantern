@@ -17,7 +17,8 @@ See `lighthouse-platform-visual-system.md` for the layer boundary. Use `tokens.m
 3. `tokens.md`: use the product color, type, spacing, radius, elevation, motion, and density roles.
 4. `components.md`: use the shared component semantics and state rules.
 5. `patterns.md`: use the page and workflow patterns for Heart, Mirror, Action, Hermit, Workshop, and Admin.
-6. `do-dont.md`: check guardrails before adding visual files, tokens, or new UI primitives.
+6. `classic-amber-page-migration-audit.md`: use the page-level migration audit to decide which runtime pages and primitives should be aligned first.
+7. `do-dont.md`: check guardrails before adding visual files, tokens, or new UI primitives.
 
 ## Current Files
 
@@ -28,6 +29,7 @@ See `lighthouse-platform-visual-system.md` for the layer boundary. Use `tokens.m
 | `tokens.md` | Platform design-system spec | Product colors, type, grid, spacing, radius, borders, elevation, icons, motion, z-index, and density. |
 | `components.md` | Platform design-system spec | Shared component semantics, iconography, variants, states, and acceptance checklist. |
 | `patterns.md` | Platform design-system spec | Product page and workflow patterns for Heart, Mirror, Action, Hermit, Workshop, and Admin. |
+| `classic-amber-page-migration-audit.md` | Runtime migration audit | Page-level Classic Amber drift inventory and recommended third-phase migration waves. |
 | `do-dont.md` | Platform design-system guardrails | Explicit rules for mixing brand VI, platform UI, components, color, and product areas. |
 | `lighthouse-ui-kit.html` | Platform UI exploration / kit reference | Product UI reference. Useful for layout, token, and component direction, but still needs conversion into code-level docs. |
 | `lighthouse-color-system.html` | Platform color exploration | Product color exploration. Do not treat every explored palette as active runtime truth. |

@@ -20,10 +20,15 @@
       --lh-hairline: rgba(44, 44, 44, 0.06);
       --lh-classic-amber: #d97706;
       --lh-primary: var(--lh-classic-amber);
-      --lh-primary-deep: color-mix(in srgb, var(--lh-classic-amber) 76%, #2c2c2c);
+      --lh-primary-deep: #9b5c14;
+      --lh-primary-text: #9b5c14;
       --lh-brass: #9b7a4c;
+      --lh-brass-text: #806744;
       --lh-danger: #b85c46;
+      --lh-danger-text: #965040;
       --lh-danger-soft: rgba(184, 92, 70, 0.12);
+      --lh-focus-outline: #9b5c14;
+      --lh-focus-halo: rgba(217, 119, 6, 0.18);
       --lh-card-radius: 16px;
       --lh-control-radius: 8px;
       --radius-xs: 4px;
@@ -31,7 +36,7 @@
       --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.02);
       --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.04);
       --shadow-deck: 0 18px 42px rgba(0, 0, 0, 0.05);
-      --shadow-focus: 0 0 0 3px rgba(217, 119, 6, 0.16);
+      --shadow-focus: 0 0 0 3px var(--lh-focus-halo);
       --grid-sidebar: 248px;
       --grid-content-max: 1220px;
       --grid-page-gap: 28px;
@@ -78,27 +83,18 @@
     body {
       margin: 0;
       color: var(--lh-ink);
-      background:
-        radial-gradient(circle at 20% 0%, rgba(217, 119, 6, 0.09), transparent 28rem),
-        linear-gradient(180deg, var(--lh-page-start), var(--lh-page) 38%, var(--lh-page-end));
+      background: linear-gradient(180deg, var(--lh-page-start), var(--lh-page) 42%, var(--lh-page-end));
       font-family: var(--font-hei);
       letter-spacing: 0;
     }
 
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(44, 44, 44, 0.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(44, 44, 44, 0.014) 1px, transparent 1px);
-      background-size: 24px 24px;
-      opacity: 0.42;
-    }
-
     a { color: inherit; text-decoration: none; }
+
+    :focus-visible {
+      outline: 2px solid var(--lh-focus-outline);
+      outline-offset: 3px;
+      box-shadow: var(--shadow-focus);
+    }
 
     code {
       border: 1px solid var(--lh-line);
@@ -136,9 +132,8 @@
       width: 34px;
       height: 34px;
       border-radius: var(--lh-control-radius);
-      color: var(--lh-classic-amber);
-      background: rgba(217, 119, 6, 0.08);
-      box-shadow: 0 0 16px rgba(217, 119, 6, 0.12);
+      color: var(--lh-primary-text);
+      background: rgba(217, 119, 6, 0.06);
       font-family: var(--font-serif);
       font-size: 21px;
       font-weight: var(--weight-extrabold);
@@ -146,7 +141,7 @@
 
     .brand-title {
       margin: 0;
-      color: var(--lh-classic-amber);
+      color: var(--lh-primary-text);
       font-family: var(--font-serif);
       font-size: var(--type-lead);
       line-height: 1;
@@ -167,7 +162,7 @@
     }
 
     .nav a:hover,
-    .nav a.is-active { background: rgba(217, 119, 6, 0.08); color: var(--lh-classic-amber); }
+    .nav a.is-active { background: rgba(217, 119, 6, 0.08); color: var(--lh-primary-text); }
     .main { display: grid; gap: 30px; min-width: 0; padding-bottom: 56px; }
     .hero { padding: var(--space-6) var(--space-2) 18px; }
 
@@ -184,11 +179,11 @@
       display: inline-flex;
       align-items: center;
       min-height: 28px;
-      border: 1px solid rgba(217, 119, 6, 0.22);
+      border: 1px solid var(--lh-line);
       border-radius: var(--lh-control-radius);
-      background: rgba(217, 119, 6, 0.08);
+      background: rgba(255, 255, 255, 0.24);
       padding: 0 10px;
-      color: var(--lh-primary-deep);
+      color: var(--lh-ink-soft);
     }
 
     h1, h2, h3 { margin: 0; color: var(--lh-ink); font-family: var(--font-serif); }
@@ -210,10 +205,9 @@
     .hero-meta { margin-top: var(--space-6); }
 
     .section {
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--lh-line);
       border-radius: var(--lh-card-radius);
-      background: rgba(255, 255, 255, 0.4);
-      box-shadow: var(--shadow-sm);
+      background: color-mix(in srgb, var(--lh-page) 72%, white);
     }
 
     .section-header { display: grid; gap: 9px; border-bottom: 1px solid var(--lh-line); padding: 22px var(--space-6); }
@@ -241,8 +235,7 @@
     .rule-card {
       border: 1px solid var(--lh-line);
       border-radius: var(--lh-card-radius);
-      background: rgba(255, 255, 255, 0.34);
-      box-shadow: var(--shadow-sm);
+      background: rgba(255, 255, 255, 0.28);
       padding: var(--space-4);
     }
 
@@ -273,15 +266,15 @@
       border-radius: var(--lh-control-radius);
       background: rgba(217, 119, 6, 0.1);
       padding: 0 10px;
-      color: var(--lh-classic-amber);
+      color: var(--lh-primary-text);
       font-size: var(--type-caption);
       font-weight: var(--weight-black);
       line-height: 1;
     }
 
     .chip.neutral { border-color: var(--lh-line); background: var(--lh-surface-quiet); color: var(--lh-muted); }
-    .chip.brass, .chip.info, .chip.success { border-color: rgba(155, 122, 76, 0.25); background: rgba(155, 122, 76, 0.14); color: var(--lh-brass); }
-    .chip.danger { border-color: rgba(184, 92, 70, 0.25); background: rgba(184, 92, 70, 0.12); color: var(--lh-danger); }
+    .chip.brass, .chip.info, .chip.success { border-color: rgba(155, 122, 76, 0.25); background: rgba(155, 122, 76, 0.14); color: var(--lh-brass-text); }
+    .chip.danger { border-color: rgba(184, 92, 70, 0.25); background: rgba(184, 92, 70, 0.12); color: var(--lh-danger-text); }
     .chip::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
 
     .token-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
@@ -336,9 +329,9 @@
       display: grid;
       gap: var(--space-4);
       margin-top: var(--space-6);
-      border: 1px solid rgba(217, 119, 6, 0.18);
+      border: 1px solid var(--lh-line);
       border-radius: var(--lh-card-radius);
-      background: color-mix(in srgb, var(--lh-surface) 78%, rgba(217, 119, 6, 0.08));
+      background: rgba(255, 255, 255, 0.24);
       padding: var(--space-5);
     }
 
@@ -370,7 +363,7 @@
     .type-system { display: grid; gap: var(--space-5); }
     .type-showcase { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 18px; align-items: stretch; }
     .type-display { display: grid; align-content: center; min-height: 270px; border-left: 1px solid rgba(217, 119, 6, 0.22); padding: 18px 22px; }
-    .type-display strong { display: block; color: var(--lh-classic-amber); font-family: var(--font-serif); font-size: var(--type-display); line-height: 0.98; }
+    .type-display strong { display: block; color: var(--lh-primary-text); font-family: var(--font-serif); font-size: var(--type-display); line-height: 0.98; }
     .type-display span { margin-top: var(--space-4); color: rgba(44, 44, 44, 0.66); font-family: var(--font-serif); font-size: 18px; font-weight: var(--weight-semibold); line-height: 1.8; }
 
     .spec-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
@@ -392,7 +385,7 @@
     .spec-list li:first-child, .scale-row:first-child, .weight-row:first-child, .space-row:first-child { border-top: 0; padding-top: 0; }
     .spec-list b, .scale-row strong, .weight-row b, .space-row b, .grid-metric b, .grid-pattern b { color: var(--lh-ink); }
     .scale-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
-    .scale-card h3, .rule-card h3 { color: var(--lh-classic-amber); }
+    .scale-card h3, .rule-card h3 { color: var(--lh-primary-text); }
     .scale-list, .weight-list, .space-list { display: grid; gap: 10px; margin-top: var(--space-4); }
     .scale-row { grid-template-columns: 86px 92px minmax(0, 1fr); align-items: baseline; font-size: var(--type-label); }
     .weight-row { grid-template-columns: 64px minmax(0, 1fr); align-items: baseline; font-size: var(--type-label); }
@@ -401,8 +394,8 @@
     .sample-body { color: var(--lh-ink); font-size: var(--type-body); font-weight: var(--weight-regular); line-height: 1.72; }
     .space-bar { display: block; height: 12px; border-radius: 999px; background: linear-gradient(90deg, rgba(217, 119, 6, 0.18), rgba(217, 119, 6, 0.52)); box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.18); }
 
-    .heading-system { display: grid; gap: var(--space-4); border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.34); box-shadow: var(--shadow-sm); padding: var(--space-4); }
-    .heading-system h3 { color: var(--lh-classic-amber); font-size: var(--type-lead); line-height: 1.25; }
+    .heading-system { display: grid; gap: var(--space-4); border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-4); }
+    .heading-system h3 { color: var(--lh-primary-text); font-size: var(--type-lead); line-height: 1.25; }
     .heading-system p { margin: 0; color: var(--lh-muted); font-size: var(--type-control); line-height: 1.72; }
     .heading-ladder { display: grid; gap: var(--space-3); }
     .heading-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) 260px; gap: var(--space-4); align-items: center; border-top: 1px solid var(--lh-line); padding-top: var(--space-3); }
@@ -410,7 +403,7 @@
     .heading-role { display: grid; gap: 4px; color: var(--lh-muted); font-size: var(--type-label); line-height: 1.45; }
     .heading-role b { color: var(--lh-ink); font-size: var(--type-control); }
     .heading-sample { margin: 0; color: var(--lh-ink); letter-spacing: 0; }
-    .heading-display { color: var(--lh-classic-amber); font-family: var(--font-serif); font-size: clamp(40px, 4vw, 56px); font-weight: var(--weight-black); line-height: 1.04; }
+    .heading-display { color: var(--lh-primary-text); font-family: var(--font-serif); font-size: clamp(40px, 4vw, 56px); font-weight: var(--weight-black); line-height: 1.04; }
     .heading-page { font-family: var(--font-serif); font-size: var(--title-page); font-weight: var(--weight-black); line-height: 1.1; }
     .heading-section { font-family: var(--font-serif); font-size: var(--title-section); font-weight: var(--weight-bold); line-height: 1.14; }
     .heading-subsection { font-family: var(--font-serif); font-size: var(--title-subsection); font-weight: var(--weight-bold); line-height: 1.2; }
@@ -420,8 +413,8 @@
 
     .shell-system { display: grid; gap: var(--space-5); }
     .shell-preview-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr); gap: var(--grid-column-gap); align-items: stretch; }
-    .shell-frame { border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.34); box-shadow: var(--shadow-sm); padding: var(--space-4); }
-    .shell-frame h3 { color: var(--lh-classic-amber); font-size: var(--type-lead); line-height: 1.25; }
+    .shell-frame { border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-4); }
+    .shell-frame h3 { color: var(--lh-primary-text); font-size: var(--type-lead); line-height: 1.25; }
     .shell-frame p { margin: 8px 0 0; color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
     .desktop-shell {
       display: grid;
@@ -431,7 +424,7 @@
       margin-top: var(--space-4);
       border: 1px solid var(--lh-line);
       border-radius: 14px;
-      background: linear-gradient(180deg, var(--lh-page-start), var(--lh-page-end));
+      background: var(--lh-page);
       padding: var(--space-3);
     }
     .desktop-rail { display: grid; grid-template-rows: 40px repeat(5, 34px) 1fr 34px; gap: 8px; border-right: 1px solid rgba(217, 119, 6, 0.18); padding-right: var(--space-2); }
@@ -456,7 +449,7 @@
       margin: var(--space-4) auto 0;
       border: 1px solid var(--lh-line);
       border-radius: 28px;
-      background: linear-gradient(180deg, var(--lh-page-start), var(--lh-page-end));
+      background: var(--lh-page);
       padding: var(--space-3);
     }
     .mobile-header, .mobile-bottom-nav { border: 1px solid var(--lh-line); border-radius: 18px; background: rgba(255, 255, 255, 0.46); }
@@ -468,7 +461,7 @@
     .mobile-card.large { min-height: 180px; }
     .mobile-bottom-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 7px; }
     .mobile-tab { display: grid; place-items: center; min-height: 46px; color: var(--lh-muted); font-size: 10px; font-weight: var(--weight-black); }
-    .mobile-tab.is-active { border-color: rgba(217, 119, 6, 0.32); background: rgba(217, 119, 6, 0.12); color: var(--lh-classic-amber); }
+    .mobile-tab.is-active { border-color: rgba(217, 119, 6, 0.32); background: rgba(217, 119, 6, 0.12); color: var(--lh-primary-text); }
     .shell-rules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
     .shell-rule { border-top: 1px solid var(--lh-line); padding-top: var(--space-3); color: var(--lh-muted); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
     .shell-rule b { display: block; margin-bottom: 4px; color: var(--lh-ink); font-size: var(--type-control); }
@@ -512,7 +505,7 @@
     .grid-rule-list b { display: block; color: var(--lh-ink); font-size: var(--type-label); }
     .grid-rule-list span { display: block; margin-top: var(--space-1); color: var(--lh-muted); font-size: var(--type-caption); line-height: 1.55; }
     .grid-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--grid-column-gap); }
-    .grid-metric strong { display: block; margin-top: var(--space-2); color: var(--lh-classic-amber); font-family: var(--font-mono); font-size: var(--type-lead); line-height: 1; }
+    .grid-metric strong { display: block; margin-top: var(--space-2); color: var(--lh-primary-text); font-family: var(--font-mono); font-size: var(--type-lead); line-height: 1; }
     .grid-patterns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-column-gap); }
     .pattern-bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-1); margin-top: var(--space-3); }
     .pattern-bars i { display: block; min-height: 22px; border-radius: var(--radius-xs); background: rgba(217, 119, 6, 0.12); }
@@ -543,8 +536,7 @@
       border: 1px solid rgba(217, 119, 6, 0.22);
       border-radius: var(--lh-control-radius);
       background: rgba(217, 119, 6, 0.08);
-      color: var(--lh-classic-amber);
-      box-shadow: 0 0 16px rgba(217, 119, 6, 0.12);
+      color: var(--lh-primary-text);
     }
 
     .icon-glyph { width: 44px; height: 44px; }
@@ -568,7 +560,7 @@
     .button.secondary { border-color: var(--lh-line-strong); background: var(--lh-panel); color: var(--lh-primary-deep); box-shadow: var(--shadow-sm); }
     .button.quiet { border-color: var(--lh-line); background: var(--lh-surface-quiet); color: var(--lh-ink-soft); }
     .button.ghost { border-color: transparent; background: transparent; color: var(--lh-primary-deep); }
-    .button.danger { border-color: rgba(184, 92, 70, 0.3); background: var(--lh-danger-soft); color: var(--lh-danger); }
+    .button.danger { border-color: rgba(184, 92, 70, 0.3); background: var(--lh-danger-soft); color: var(--lh-danger-text); }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .field { display: grid; gap: var(--space-2); }
@@ -588,7 +580,7 @@
     }
 
     textarea { min-height: 110px; padding: 13px 14px; line-height: 1.7; resize: vertical; }
-    input:focus, textarea:focus { border-color: var(--lh-brass); box-shadow: var(--shadow-focus); }
+    input:focus-visible, textarea:focus-visible { border-color: var(--lh-focus-outline); }
     .helper { color: var(--lh-muted); font-size: var(--type-label); line-height: 1.6; }
 
     .callout {
@@ -604,7 +596,7 @@
 
     .callout strong { display: block; color: var(--lh-ink); font-size: var(--type-control); line-height: 1.6; }
     .callout p { margin: 3px 0 0; color: var(--lh-ink-soft); font-size: var(--type-control); line-height: 1.75; }
-    .table-wrap { overflow: auto; border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: var(--lh-panel); box-shadow: var(--shadow-sm); }
+    .table-wrap { overflow: auto; border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: var(--lh-panel); }
     table { width: 100%; min-width: 720px; border-collapse: collapse; }
     th, td { border-top: 1px solid var(--lh-line); padding: 13px var(--space-4); text-align: left; vertical-align: top; }
     th { border-top: 0; color: var(--lh-muted); font-size: var(--type-caption); font-weight: var(--weight-black); letter-spacing: 0.12em; text-transform: uppercase; }
@@ -618,21 +610,21 @@
     .state-pill { display: grid; place-items: center; min-height: 40px; border: 1px solid var(--lh-line); border-radius: var(--lh-control-radius); background: rgba(255, 255, 255, 0.34); color: var(--lh-muted); font-size: 11px; font-weight: var(--weight-black); text-align: center; }
     .state-pill.is-hover { border-color: rgba(217, 119, 6, 0.22); background: rgba(217, 119, 6, 0.08); color: var(--lh-primary-deep); }
     .state-pill.is-pressed { border-color: rgba(217, 119, 6, 0.34); background: rgba(217, 119, 6, 0.14); color: var(--lh-primary-deep); }
-    .state-pill.is-focus { border-color: rgba(217, 119, 6, 0.35); box-shadow: var(--shadow-focus); color: var(--lh-primary-deep); }
+    .state-pill.is-focus { border-color: var(--lh-focus-outline); outline: 2px solid var(--lh-focus-outline); outline-offset: 3px; box-shadow: var(--shadow-focus); color: var(--lh-primary-text); }
     .state-pill.is-disabled { opacity: 0.62; background: rgba(44, 44, 44, 0.04); color: var(--lh-muted); }
-    .state-pill.is-loading { border-style: dashed; color: var(--lh-brass); }
+    .state-pill.is-loading { border-style: dashed; color: var(--lh-brass-text); }
     .state-pill.is-selected { border-color: rgba(217, 119, 6, 0.3); background: var(--lh-primary-soft, rgba(217,119,6,.1)); color: var(--lh-primary-deep); }
-    .state-pill.is-error { border-color: rgba(184, 92, 70, 0.28); background: var(--lh-danger-soft); color: var(--lh-danger); }
+    .state-pill.is-error { border-color: rgba(184, 92, 70, 0.28); background: var(--lh-danger-soft); color: var(--lh-danger-text); }
     .anatomy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
-    .anatomy-card { display: grid; gap: var(--space-3); border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.36); padding: var(--space-4); }
-    .anatomy-card h3 { color: var(--lh-classic-amber); font-size: var(--type-lead); line-height: 1.25; }
+    .anatomy-card { display: grid; gap: var(--space-3); border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-4); }
+    .anatomy-card h3 { color: var(--lh-primary-text); font-size: var(--type-lead); line-height: 1.25; }
     .anatomy-card ol, .anatomy-card ul { display: grid; gap: 7px; margin: 0; padding-left: 18px; color: var(--lh-ink-soft); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.6; }
     .governance-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); }
     .governance-step { border: 1px solid rgba(217, 119, 6, 0.18); border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.07); padding: var(--space-3); color: var(--lh-primary-deep); font-size: var(--type-label); font-weight: var(--weight-black); line-height: 1.45; }
 
     .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--grid-column-gap); }
     .rule-card ul { display: grid; gap: 9px; margin: var(--space-3) 0 0; padding-left: 18px; }
-    .rule-card.dont h3 { color: var(--lh-danger); }
+    .rule-card.dont h3 { color: var(--lh-danger-text); }
     .footer-note { color: var(--lh-muted); font-size: var(--type-caption); line-height: 1.75; padding: 0 var(--space-2); }
 
     @media (max-width: 980px) {
@@ -692,9 +684,9 @@
           <p class="section-intro">灯塔平台的视觉系统独立于服务品牌新版 VI。服务品牌资产用于对外传播与品牌内容，平台系统用于产品界面、后台、知识库和工作流。</p>
         </div>
         <div class="section-body grid three">
-          <article class="card"><h3>暖纸色底</h3><p>页面底色采用温暖纸面色，形成内部知识平台和阅读界面的可信氛围。背景可以有轻微纹理，但不能喧宾夺主。</p></article>
-          <article class="card"><h3>琥珀主色</h3><p>琥珀色用于平台识别、当前导航、主操作、提示性高亮。它是经典版的识别点，不再引入探索版蓝绿色主色。</p></article>
-          <article class="card"><h3>低阴影低噪声</h3><p>卡片和面板以半透明白、细边框、轻阴影建立层级。避免过重玻璃、强发光、强投影和装饰性渐变。</p></article>
+          <article class="card"><h3>暖纸色底</h3><p>页面底色采用温暖纸面色，形成内部知识平台和阅读界面的可信氛围。默认不使用网格纹理或大面积发光。</p></article>
+          <article class="card"><h3>琥珀主色</h3><p>琥珀色用于平台识别、当前导航、主操作和提示性高亮。小字号文本必须使用更深的 primary text token。</p></article>
+          <article class="card"><h3>低阴影低噪声</h3><p>卡片和面板以暖纸色、白面和细边框建立层级。阴影只用于浮层、悬浮和聚焦，不作为默认装饰。</p></article>
         </div>
       </section>
 
@@ -712,8 +704,11 @@
             <article class="swatch-card"><div class="swatch" style="background:rgba(255,255,255,.4)"></div><div class="swatch-info"><span class="token-name">--lh-surface</span><span class="token-value">rgba(255,255,255,.4) / 卡片面</span></div></article>
             <article class="swatch-card"><div class="swatch" style="background:#2c2c2c"></div><div class="swatch-info"><span class="token-name">--lh-ink</span><span class="token-value">#2c2c2c / 主文本</span></div></article>
             <article class="swatch-card"><div class="swatch" style="background:#d97706"></div><div class="swatch-info"><span class="token-name">--lh-classic-amber</span><span class="token-value">#d97706 / 主操作与高亮</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#9b5c14"></div><div class="swatch-info"><span class="token-name">--lh-primary-text</span><span class="token-value">#9b5c14 / 小字号琥珀文本</span></div></article>
             <article class="swatch-card"><div class="swatch" style="background:#9b7a4c"></div><div class="swatch-info"><span class="token-name">--lh-brass</span><span class="token-value">#9b7a4c / 辅助信号色</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#806744"></div><div class="swatch-info"><span class="token-name">--lh-brass-text</span><span class="token-value">#806744 / 小字号辅助文本</span></div></article>
             <article class="swatch-card"><div class="swatch" style="background:#b85c46"></div><div class="swatch-info"><span class="token-name">--lh-danger</span><span class="token-value">#b85c46 / 危险与错误</span></div></article>
+            <article class="swatch-card"><div class="swatch" style="background:#965040"></div><div class="swatch-info"><span class="token-name">--lh-danger-text</span><span class="token-value">#965040 / 小字号危险文本</span></div></article>
           </div>
 
           <div class="color-architecture">
@@ -964,8 +959,8 @@
       </section>
 
       <section id="shadow" class="section">
-        <div class="section-header"><span class="section-kicker">06 / Elevation</span><h2>阴影与层级</h2><p class="section-intro">经典版阴影很轻，主要靠暖纸色、半透明白面、细边框和少量漫反射建立层级。阴影不能变成装饰，只有可点击、悬浮或需要聚焦的元素才提高层级。</p></div>
-        <div class="section-body shadow-grid"><article class="shadow-sample shadow-none"><strong>Level 0 / Flat</strong><code>box-shadow: none</code></article><article class="shadow-sample shadow-sm"><strong>Level 1 / Card</strong><code>0 2px 10px rgba(0,0,0,.02)</code></article><article class="shadow-sample shadow-md"><strong>Level 2 / Hover</strong><code>0 8px 30px rgba(0,0,0,.04)</code></article><article class="shadow-sample shadow-deck"><strong>Level 3 / Deck</strong><code>0 18px 42px rgba(0,0,0,.05)</code></article><article class="shadow-sample shadow-focus"><strong>Focus Ring</strong><code>0 0 0 3px rgba(217,119,6,.16)</code></article><article class="shadow-sample shadow-button"><strong>Primary Button</strong><code>inset + amber drop</code></article></div>
+        <div class="section-header"><span class="section-kicker">06 / Elevation</span><h2>阴影与层级</h2><p class="section-intro">经典版阴影很轻，主要靠暖纸色、白面、细边框和少量漫反射建立层级。阴影不能变成装饰，只有可点击、悬浮、浮层或需要聚焦的元素才提高层级。</p></div>
+        <div class="section-body shadow-grid"><article class="shadow-sample shadow-none"><strong>Level 0 / Flat</strong><code>box-shadow: none</code></article><article class="shadow-sample shadow-sm"><strong>Level 1 / Raised</strong><code>0 2px 10px rgba(0,0,0,.02)</code></article><article class="shadow-sample shadow-md"><strong>Level 2 / Hover</strong><code>0 8px 30px rgba(0,0,0,.04)</code></article><article class="shadow-sample shadow-deck"><strong>Level 3 / Deck</strong><code>0 18px 42px rgba(0,0,0,.05)</code></article><article class="shadow-sample shadow-focus"><strong>Focus Ring</strong><code>2px outline + 3px halo</code></article><article class="shadow-sample shadow-button"><strong>Primary Button</strong><code>inset + restrained amber drop</code></article></div>
       </section>
 
       <section id="icon" class="section">
@@ -996,7 +991,7 @@
         <div class="section-header"><span class="section-kicker">09 / Accessibility</span><h2>可访问性规范</h2><p class="section-intro">灯塔平台是内部工作系统，清晰可用优先于装饰。可访问性规则必须覆盖颜色、键盘、触控、语义和动效。</p></div>
         <div class="section-body">
           <div class="matrix-grid"><article class="matrix-card"><b>Contrast</b><p>正文、表格、按钮文字目标不低于 4.5:1；大标题、图标和边界目标不低于 3:1。低透明度文字不能承担关键说明。</p></article><article class="matrix-card"><b>Keyboard</b><p>所有可交互元素必须有可见 <code>focus-visible</code>，焦点顺序跟阅读顺序一致，不能只依赖 hover 暴露动作。</p></article><article class="matrix-card"><b>Touch</b><p>移动端和触控场景点击目标不小于 44x44px；底部导航、图标按钮和表单控件必须保留可触达间距。</p></article><article class="matrix-card"><b>Semantics</b><p>图标按钮必须有 accessible label；错误、帮助文本通过 <code>aria-describedby</code> 关联，错误字段使用 <code>aria-invalid</code>。</p></article></div>
-          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>Area</th><th>Required Rule</th><th>Not Allowed</th></tr></thead><tbody><tr><td>Color</td><td>状态必须同时使用文字、图标或标签，不只依赖颜色。</td><td>只用红/绿表达通过或失败。</td></tr><tr><td>Focus</td><td>使用 Classic Amber focus ring，不能被阴影或透明背景吞掉。</td><td>移除 outline 后不提供替代焦点。</td></tr><tr><td>Motion</td><td>遵守 <code>prefers-reduced-motion</code>；动效只解释状态变化。</td><td>装饰性循环动画、闪烁、强弹性动效。</td></tr></tbody></table></div>
+          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>Token / Area</th><th>Hard Contract</th><th>Allowed Usage</th></tr></thead><tbody><tr><td><code>--lh-classic-amber</code></td><td>在暖纸色上约 2.77:1，在白面上约 3.19:1；不用于 14px 以下正文、小导航、小标签文字。</td><td>图标、边框、选中底、主按钮底、大字号强调。</td></tr><tr><td><code>--lh-primary-text</code></td><td><code>#9b5c14</code> 在暖纸色和白面上均达到 4.5:1 以上。</td><td>琥珀语义的小字号文字、文字按钮、active nav 文本、chip 文本。</td></tr><tr><td><code>--lh-brass-text</code></td><td><code>#806744</code> 在暖纸色和白面上均达到 4.5:1 以上。</td><td>success、info、brass 小字号标签文字。</td></tr><tr><td><code>--lh-danger-text</code></td><td><code>#965040</code> 在暖纸色和白面上均达到 4.5:1 以上。</td><td>错误说明、危险按钮文字、危险 chip 文本。</td></tr><tr><td>Focus</td><td><code>outline: 2px solid --lh-focus-outline</code> + <code>outline-offset: 3px</code> + 3px halo。</td><td>所有 button、link、field、tab、table action、card action。</td></tr><tr><td>Motion</td><td>遵守 <code>prefers-reduced-motion</code>；动效只解释状态变化。</td><td>hover、pressed、loading、drawer/dialog 进入退出。</td></tr></tbody></table></div>
         </div>
       </section>
 
@@ -1004,7 +999,7 @@
         <div class="section-header"><span class="section-kicker">10 / Interaction States</span><h2>交互状态矩阵</h2><p class="section-intro">组件不能只定义默认态。按钮、输入、标签、表格行和卡片需要共享一套状态语言，让用户知道当前能否操作、正在发生什么、下一步在哪里。</p></div>
         <div class="section-body">
           <div class="state-strip" aria-label="interaction state samples"><span class="state-pill">default</span><span class="state-pill is-hover">hover</span><span class="state-pill is-pressed">pressed</span><span class="state-pill is-focus">focus</span><span class="state-pill is-disabled">disabled</span><span class="state-pill is-loading">loading</span><span class="state-pill is-selected">selected</span><span class="state-pill is-error">error</span></div>
-          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>State</th><th>Visual Contract</th><th>Behavior Contract</th></tr></thead><tbody><tr><td>Hover / Pressed</td><td>改变背景、边框或轻阴影，不改变布局尺寸。</td><td>只在可点击元素上出现；移动端不依赖 hover。</td></tr><tr><td>Focus-visible</td><td><code>--shadow-focus</code> + 明确边框。</td><td>键盘可达，焦点顺序与 DOM/阅读顺序一致。</td></tr><tr><td>Disabled</td><td>降低强调并保留标签可读性。</td><td>必须说明禁用原因或提供可恢复路径，不能只靠透明度。</td></tr><tr><td>Loading</td><td>保持控件宽度，显示局部进度或骨架。</td><td>避免重复提交；长任务要说明正在处理什么。</td></tr><tr><td>Selected / Error</td><td>selected 用 primary-soft；error 用 danger + 文案。</td><td>选中范围和错误恢复动作必须明确。</td></tr></tbody></table></div>
+          <div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>State</th><th>Visual Contract</th><th>Behavior Contract</th></tr></thead><tbody><tr><td>Hover / Pressed</td><td>改变背景、边框或轻阴影，不改变布局尺寸。</td><td>只在可点击元素上出现；移动端不依赖 hover。</td></tr><tr><td>Focus-visible</td><td>2px outline、3px offset、3px halo 同时出现；不能只靠柔光。</td><td>键盘可达，焦点顺序与 DOM/阅读顺序一致；固定顶栏/底栏不能遮挡焦点。</td></tr><tr><td>Disabled</td><td>降低强调并保留标签可读性。</td><td>必须说明禁用原因或提供可恢复路径，不能只靠透明度。</td></tr><tr><td>Loading</td><td>保持控件宽度，显示局部进度或骨架。</td><td>避免重复提交；长任务要说明正在处理什么。</td></tr><tr><td>Selected / Error</td><td>selected 用 primary-soft；error 用 danger-text + 文案。</td><td>选中范围和错误恢复动作必须明确。</td></tr></tbody></table></div>
         </div>
       </section>
 

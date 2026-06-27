@@ -38,9 +38,11 @@ The active platform palette is Classic Amber: a warm paper surface with amber ac
 | Line | `--color-line` | `rgba(44, 44, 44, 0.08)` | Default borders and dividers. |
 | Line strong | `--color-line-strong` | `rgba(217, 119, 6, 0.28)` | Active region boundaries and form borders. |
 | Primary | `--color-primary` | `#d97706` | Primary actions, active navigation, selected highlights. |
-| Primary deep | `--color-primary-deep` | `color-mix(in srgb, #d97706 76%, #2c2c2c)` | Hover/active state for primary actions. |
+| Primary deep / text | `--color-primary-deep`, `--color-primary-text` | `#9b5c14` | Hover/active state and small amber text that must pass contrast. |
 | Primary soft | `--color-primary-soft` | `rgba(217, 119, 6, 0.1)` | Selected backgrounds and low-emphasis active states. |
 | Signal / Brass | `--color-signal`, `--color-brass` | `#9b7a4c` | Secondary signal, quiet success/info/brass labels. |
+| Signal text | `--color-signal-text`, `--color-brass-text` | `#806744` | Small success/info/brass text that must pass contrast. |
+| Danger text | `--color-danger-text` | `#965040` | Small error, destructive, and danger text that must pass contrast. |
 
 ### Semantic Colors
 
@@ -48,12 +50,36 @@ Each status color has exactly one meaning. Do not reuse semantic colors for deco
 
 | Meaning | Token | Target value | Rule |
 | --- | --- | --- | --- |
-| Success | `--color-success` | `#9b7a4c` | Completed, healthy, approved in the current restrained brass treatment. |
+| Success | `--color-success` / `--color-success-text` | `#9b7a4c` / `#806744` | Completed, healthy, approved in the current restrained brass treatment. |
 | Warning | `--color-warning` | `#d97706` | Needs attention before proceeding; also the classic primary accent. |
-| Danger | `--color-danger` | `#b85c46` | Error, destructive, failed, cannot be undone. |
-| Info | `--color-info` | `#9b7a4c` | Neutral information, pending, system message in the current brass treatment. |
+| Danger | `--color-danger` / `--color-danger-text` | `#b85c46` / `#965040` | Error, destructive, failed, cannot be undone. |
+| Info | `--color-info` / `--color-info-text` | `#9b7a4c` / `#806744` | Neutral information, pending, system message in the current brass treatment. |
 
 Classic Amber keeps the semantic set intentionally warm and restrained. If future implementation needs stronger semantic separation, update this document and the HTML visual spec together before changing runtime CSS.
+
+### Runtime Mapping
+
+This table is the bridge between the HTML visual specification and the active CSS runtime. A design role is considered implemented only when the HTML demo token, runtime CSS token, and component usage agree.
+
+| Design role | HTML demo token | Runtime CSS token | Usage |
+| --- | --- | --- | --- |
+| Warm paper page | `--lh-page` | `--color-page`, `--color-paper` | Body background, shell background, large reading surfaces. |
+| Primary amber action | `--lh-amber` / `--lh-primary` | `--color-primary`, `--color-action` | Primary filled buttons, active icon fill, selected background accents. Not for small text. |
+| Readable amber text | `--lh-primary-text` | `--color-primary-text`, `--color-primary-deep`, `--color-action-deep` | Small active nav text, text buttons, amber chip text, hover/active foregrounds. |
+| Brass secondary signal | `--lh-brass` | `--color-brass`, `--color-signal` | Quiet secondary borders, soft fills, non-critical status icon color. |
+| Readable brass text | `--lh-brass-text` | `--color-brass-text`, `--color-signal-text`, `--color-success-text`, `--color-info-text` | Small success/info/brass labels and status badges that must pass contrast. |
+| Warning text | `--lh-primary-text` | `--color-warning-text` | Warning chip/status text; amber remains warning, but small text uses the deep token. |
+| Danger text | `--lh-danger-text` | `--color-danger-text` | Error helper copy, danger chips, destructive text buttons. |
+| Focus outline | `--lh-focus-outline` | `--lh-focus-outline` | `2px` visible outline for every keyboard-reachable control. |
+| Focus halo | `--lh-focus-halo`, `--shadow-focus` | `--lh-focus-halo`, `--shadow-focus` | Secondary glow around focus outline; never the only indicator. |
+| Focus offset | `3px` | `--lh-focus-offset` | Separation between component edge and focus outline. |
+| UI font | `--font-sans-stack` | `--font-sans-stack`, `--font-hei-stack` | App chrome, navigation, controls, tables, admin, Hermit interaction UI. Must start with PingFang SC. |
+| Serif accent font | `--font-serif-stack` | `--font-serif-stack`, `--font-noto-stack` | Page display titles and explicit editorial moments. Must start with Source Han Serif SC. |
+| Type scale | `--type-*` | `--type-caption`, `--type-label`, `--type-control`, `--type-body`, `--type-reading`, `--type-lead`, `--type-h3`, `--type-h2`, `--type-display` | Runtime source for all reusable component font sizes. |
+| Title scale | `--title-*` | `--title-display`, `--title-page`, `--title-section`, `--title-subsection`, `--title-card`, `--title-kicker` | Runtime source for page, section, card, and kicker hierarchy. |
+| Weight scale | `--weight-*` | `--weight-regular`, `--weight-medium`, `--weight-semibold`, `--weight-bold`, `--weight-extrabold`, `--weight-black` | Runtime source for reusable component weights. |
+| Line-height scale | `--leading-*` | `--leading-caption`, `--leading-label`, `--leading-control`, `--leading-body`, `--leading-reading`, `--leading-lead` | Runtime source for component vertical rhythm. |
+| Kicker tracking | `--tracking-kicker` | `--tracking-kicker` | Structural small labels only; not body copy. |
 
 ## Typography
 
@@ -110,6 +136,13 @@ Weight scale:
 | `--weight-black` | `900` | Kicker labels, key states, rare display emphasis. |
 
 Do not scale type directly with viewport width. Use fixed steps and responsive layout constraints instead. The body floor is `15px`, and normal reading should prefer `16px`.
+
+Runtime contract:
+
+- `src/app/globals.css` must expose every `--type-*`, `--title-*`, `--leading-*`, `--weight-*`, and `--tracking-*` token listed above.
+- `src/components/ui/lighthouse-primitives.tsx` and `src/components/layout/Navigation.tsx` must consume typography tokens for reusable component font size, weight, and line height.
+- Raw Tailwind typography utilities such as `text-sm`, `text-xs`, `font-bold`, and `leading-6` are allowed only as page-local migration debt, not inside shared primitives or the navigation shell.
+- Changing a type role starts here, then updates the HTML visual spec, runtime CSS, primitives, and design-system tests in the same change set.
 
 ## Spacing And Density
 
@@ -235,7 +268,9 @@ Default UI surfaces are solid, readable, and lightly bounded.
 | `--shadow-sm` | `0 2px 10px rgba(0, 0, 0, 0.02)` | Default cards, panels, table shells. |
 | `--shadow-md` | `0 8px 30px rgba(0, 0, 0, 0.04)` | Hovered clickable cards and elevated panels. |
 | `--shadow-deck` | `0 18px 42px rgba(0, 0, 0, 0.05)` | Hero aside, deck panels, rare raised summary blocks. |
-| `--shadow-focus` | `0 0 0 3px rgba(217, 119, 6, 0.16)` | Keyboard and input focus ring. |
+| `--focus-outline` | `2px solid #9b5c14` | Required visible focus outline. |
+| `--focus-offset` | `3px` | Required gap between control and focus outline. |
+| `--shadow-focus` | `0 0 0 3px rgba(217, 119, 6, 0.18)` | Secondary focus halo; never the only focus indicator. |
 | Primary button shadow | `0 1px 0 rgba(255,255,255,.16) inset, 0 8px 16px rgba(217,119,6,.18)` | Primary buttons only. |
 | Amber icon glow | `drop-shadow(0 0 8px rgba(217, 119, 6, 0.5))` | Active nav icon and logo icon only. |
 
@@ -244,6 +279,7 @@ Rules:
 - Pair every elevated surface with a `1px` border. The border defines the edge; the shadow only adds depth.
 - Do not add shadows to every card. Default cards use Level 1; hover/elevated states use Level 2.
 - Do not use heavy black shadows. The Classic Amber system should feel like paper and light, not floating glass.
+- The spec document may show subtle examples, but product pages should not use background grids, radial glow, translucent floating sections, or amber glow as default composition.
 
 ## Iconography
 
@@ -298,7 +334,10 @@ Classic Amber must remain readable before it feels refined.
 | Rule | Contract |
 | --- | --- |
 | Text contrast | Body, table, button, and form text target `4.5:1` contrast or better. Large display text and essential icons target `3:1` or better. |
-| Focus visible | Keyboard focus uses `--shadow-focus` plus a visible border or outline. Do not remove focus styling without an equivalent replacement. |
+| Amber text | `--color-primary` is not valid for small text on warm paper or white surfaces. Use `--color-primary-text` for small nav, chips, text buttons, and inline amber emphasis. |
+| Signal text | `--color-brass` is not valid for small status text. Use `--color-brass-text` / semantic `*-text` aliases for success/info/brass labels. |
+| Danger text | `--color-danger` is not valid for small text on warm paper. Use `--color-danger-text` for error copy and destructive labels. |
+| Focus visible | Keyboard focus uses `2px` outline, `3px` offset, and `--shadow-focus` halo. The halo is supporting feedback, not the sole visible indicator. |
 | Touch target | Touch and mobile controls target at least `44px` in both dimensions. Dense desktop controls may be smaller only when adjacent keyboard/mouse affordances are clear. |
 | Color independence | Status, errors, selected state, and progress must not rely on color alone. Pair color with text, icon, dot, border, or placement. |
 | Reduced motion | `prefers-reduced-motion` disables non-essential transitions and any repeated or decorative animation. |
@@ -314,11 +353,11 @@ Every interactive component should define the states below before it is consider
 | Default | Component base token. | Clearly communicates whether the element is interactive. |
 | Hover | Slight background, border, or shadow change. | Desktop pointer only; no critical behavior hidden behind hover. |
 | Pressed / active | Stronger selected or pressed fill. | Must not change layout size. |
-| Focus-visible | `--shadow-focus` with visible border. | Keyboard reachable and ordered with the page reading flow. |
+| Focus-visible | `2px` outline, `3px` offset, and `--shadow-focus` halo. | Keyboard reachable and ordered with the page reading flow; sticky headers, sidebars, and mobile bottom nav must not obscure focused elements. |
 | Disabled | Muted but readable text and controls. | Explain why unavailable when the reason is not obvious. |
 | Loading | Preserve width and label context. | Prevent duplicate submit and state what is processing for longer tasks. |
 | Selected | `--color-primary-soft` plus optional left accent. | Scope of selection must be visible before bulk actions. |
-| Error | `--color-danger`, nearby message, and recovery action. | State what happened and what the user can do next. |
+| Error | `--color-danger-text`, nearby message, and recovery action. | State what happened and what the user can do next. |
 
 ## Implementation Rule
 

@@ -72,11 +72,20 @@ Detail view:
 - Reading path: situation, action, principle, result, reflection.
 - Related cases or similar patterns where useful.
 
+Action case runtime template:
+
+- `/action` list cards keep stable tracks: metadata chips, case title, summary, case question, learning-card action, and key-node preview.
+- Empty or future-case placeholders use `LhEmptyState`, not one-off dashed cards.
+- Detail pages use `LhBackLink` for returning to `/action`.
+- Markdown or long-form case body uses `LhContentProse`; Markdown renderers output semantic tags and do not carry local title/paragraph classes.
+- Status or recovery messages use `LhStateNotice` when the page is communicating a state, not when the collection is empty.
+
 Rules:
 
 - Do not hide constraints, risks, or source metadata in pale text.
 - Use status badges only for workflow state, not for all metadata.
 - Use comparison tables when tradeoffs matter.
+- Do not copy Action page-local typography classes into new case pages; promote repeated patterns into primitives first.
 
 ## Hermit Pattern
 
@@ -155,6 +164,7 @@ Rules:
 
 - Do not use editorial hero styling for admin pages.
 - Do not use decorative amber or glow to signal importance.
+- Do not use global grid texture, radial glow, or translucent floating sections as default product page backgrounds.
 - Use compact density where users compare many rows.
 
 ## Forms
@@ -204,6 +214,15 @@ Mobile implementation is still not the primary implementation gate, but the shel
 - Bottom navigation does not carry second-level actions; complex filters and secondary actions move into page-local drawers, segmented controls, or inline sections.
 - Main content collapses to one column. Desktop 8/4 and 6/6 layouts become ordered vertical sections rather than squeezed columns.
 - Touch targets should be at least 44px, and page content needs bottom padding that clears the bottom navigation and safe area.
+
+## Runtime Typography Pattern
+
+The visual spec controls code through typography tokens, not page-by-page font choices.
+
+- Product chrome, navigation, controls, forms, data tables, and admin flows use PingFang SC through `--font-sans-stack`.
+- Page display titles and explicit editorial moments use Source Han Serif SC through `--font-serif-stack`; they do not turn the surrounding controls into serif UI.
+- Reusable primitives and navigation consume `--type-*`, `--title-*`, `--leading-*`, and `--weight-*`; page-local exceptions are migration debt and should not be copied into new components.
+- When the type scale changes, update `tokens.md`, the HTML visual spec, `globals.css`, shared primitives, navigation, and design-system tests together.
 
 ## Governance Pattern
 
