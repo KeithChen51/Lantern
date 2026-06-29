@@ -13,7 +13,9 @@
       --lh-page-start: #f8f3e5;
       --lh-page-end: #eee6d0;
       --lh-panel: color-mix(in srgb, white 42%, #f3efe0);
-      --lh-surface: rgba(255, 255, 255, 0.4);
+      --lh-surface: rgba(255, 255, 255, 0.64);
+      --lh-surface-solid: rgba(255, 255, 255, 0.76);
+      --lh-surface-reading: rgba(255, 255, 255, 0.52);
       --lh-surface-quiet: color-mix(in srgb, #d97706 8%, #f3efe0);
       --lh-line: rgba(44, 44, 44, 0.08);
       --lh-line-strong: rgba(217, 119, 6, 0.28);
@@ -38,9 +40,9 @@
       --lh-control-radius: 8px;
       --radius-xs: 4px;
       --radius-sm: 6px;
-      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.02);
-      --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.04);
-      --shadow-deck: 0 18px 42px rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 6px 18px rgba(86, 64, 32, 0.04);
+      --shadow-md: 0 10px 30px rgba(86, 64, 32, 0.06);
+      --shadow-deck: 0 16px 42px rgba(76, 54, 26, 0.08);
       --shadow-focus: 0 0 0 3px var(--lh-focus-halo);
       --grid-sidebar: 248px;
       --grid-content-max: 1220px;
@@ -437,7 +439,7 @@
     .rail-logo { background: rgba(217, 119, 6, 0.1); }
     .rail-item.is-active { background: rgba(217, 119, 6, 0.12); box-shadow: inset 2px 0 0 var(--lh-classic-amber); }
     .desktop-workspace { display: grid; grid-template-rows: 48px minmax(0, 1fr); gap: var(--space-3); min-width: 0; }
-    .desktop-topbar { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: var(--space-3); align-items: center; border: 1px solid var(--lh-line); border-radius: 12px; background: rgba(255, 255, 255, 0.4); padding: var(--space-2); }
+    .desktop-topbar { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: var(--space-3); align-items: center; border: 1px solid var(--lh-line); border-radius: 12px; background: var(--lh-surface); padding: var(--space-2); }
     .topbar-search, .topbar-action, .panel-block { border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.08); }
     .topbar-search { height: 28px; }
     .topbar-action { height: 28px; background: rgba(155, 122, 76, 0.12); }
@@ -462,7 +464,7 @@
     .mobile-dot { height: 34px; background: rgba(217, 119, 6, 0.1); }
     .mobile-title { height: 20px; border-radius: 999px; background: rgba(44, 44, 44, 0.08); }
     .mobile-content { display: grid; gap: var(--space-3); overflow: hidden; }
-    .mobile-card { border: 1px solid var(--lh-line); border-radius: 14px; background: rgba(255, 255, 255, 0.4); min-height: 92px; }
+    .mobile-card { border: 1px solid var(--lh-line); border-radius: 14px; background: var(--lh-surface); min-height: 92px; }
     .mobile-card.large { min-height: 180px; }
     .mobile-bottom-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 7px; }
     .mobile-tab { display: grid; place-items: center; min-height: 46px; color: var(--lh-muted); font-size: 10px; font-weight: var(--weight-black); }
@@ -656,6 +658,21 @@
     .home-title-sample span { display: block; }
     .home-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
     .home-flow span { display: grid; align-items: center; min-height: 58px; border: 1px solid rgba(217, 119, 6, 0.16); border-radius: var(--lh-control-radius); background: rgba(217, 119, 6, 0.06); padding: var(--space-2); color: var(--lh-primary-text); font-size: var(--type-caption); font-weight: var(--weight-black); line-height: 1.35; text-align: center; }
+    .archetype-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .archetype-card { display: grid; gap: var(--space-3); border: 1px solid rgba(217, 119, 6, 0.14); border-radius: var(--lh-card-radius); background: var(--lh-surface); padding: var(--space-4); box-shadow: var(--shadow-sm); }
+    .archetype-card h3 { color: var(--lh-primary-text); font-size: var(--type-lead); line-height: 1.25; }
+    .archetype-card p { margin: 0; color: var(--lh-ink-soft); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.68; }
+    .archetype-card code { width: fit-content; font-size: 11px; }
+    .page-contract-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-column-gap); }
+    .page-contract { display: grid; gap: var(--space-3); border: 1px solid rgba(217, 119, 6, 0.16); border-radius: var(--lh-card-radius); background: var(--lh-surface-solid); padding: var(--space-4); box-shadow: var(--shadow-sm); }
+    .page-contract h3 { color: var(--lh-ink); font-size: var(--type-h3); line-height: 1.18; }
+    .page-contract p { margin: 0; color: var(--lh-ink-soft); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.68; }
+    .page-contract dl { display: grid; gap: 10px; margin: 0; }
+    .page-contract div { display: grid; gap: 4px; border-top: 1px solid var(--lh-line); padding-top: 10px; }
+    .page-contract div:first-child { border-top: 0; padding-top: 0; }
+    .page-contract dt { color: var(--lh-primary-text); font-size: var(--type-caption); font-weight: var(--weight-black); letter-spacing: var(--tracking-kicker); text-transform: uppercase; }
+    .page-contract dd { margin: 0; color: var(--lh-ink-soft); font-size: var(--type-label); font-weight: var(--weight-semibold); line-height: 1.65; }
+    .page-contract code { width: fit-content; font-size: 11px; }
     .pattern-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-column-gap); }
     .pattern-card { border: 1px solid var(--lh-line); border-radius: var(--lh-card-radius); background: rgba(255, 255, 255, 0.28); padding: var(--space-4); }
 
@@ -668,7 +685,7 @@
       .page { grid-template-columns: 1fr; padding: var(--space-5); }
       .sidebar { position: relative; top: auto; min-height: auto; border-right: 0; border-bottom: 1px solid var(--lh-hairline); padding: 0 0 18px; }
       .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
-      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .motion-token-grid, .motion-principles, .home-pattern, .home-flow, .pattern-card-grid, .rule-grid { grid-template-columns: 1fr; }
+      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .motion-token-grid, .motion-principles, .home-pattern, .home-flow, .archetype-grid, .page-contract-grid, .pattern-card-grid, .rule-grid { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -981,7 +998,7 @@
 
           <div class="grid two">
             <article class="card"><h3>Shell 参数</h3><ul class="spec-list"><li><b>内容宽度</b><span><code>--grid-content-max: 1220px</code></span></li><li><b>侧栏展开</b><span><code>240px</code>；主内容偏移 <code>260px</code></span></li><li><b>侧栏折叠</b><span><code>80px</code>；主内容偏移 <code>100px</code></span></li><li><b>移动底栏</b><span><code>5 tabs</code>，高度 62-72px，底部安全区需额外留白。</span></li></ul></article>
-            <article class="card"><h3>Surface 参数</h3><ul class="spec-list"><li><b>卡片圆角</b><span><code>16px</code></span></li><li><b>控件圆角</b><span><code>8px</code></span></li><li><b>默认阴影</b><span><code>0 2px 10px rgba(0,0,0,.02)</code></span></li><li><b>移动页面</b><span>单列卡片优先，内容区底部 padding 不小于底栏高度。</span></li></ul></article>
+          <article class="card"><h3>Surface 参数</h3><ul class="spec-list"><li><b>卡片圆角</b><span><code>16px</code></span></li><li><b>控件圆角</b><span><code>8px</code></span></li><li><b>默认阴影</b><span><code>0 6px 18px rgba(86,64,32,.04)</code></span></li><li><b>移动页面</b><span>单列卡片优先，内容区底部 padding 不小于底栏高度。</span></li></ul></article>
           </div>
         </div>
       </section>
@@ -1005,7 +1022,7 @@
 
       <section id="shadow" class="section">
         <div class="section-header"><span class="section-kicker">06 / Elevation</span><h2>阴影与层级</h2><p class="section-intro">经典版阴影很轻，主要靠暖纸色、白面、细边框和少量漫反射建立层级。阴影不能变成装饰，只有可点击、悬浮、浮层或需要聚焦的元素才提高层级。</p></div>
-        <div class="section-body shadow-grid"><article class="shadow-sample shadow-none"><strong>Level 0 / Flat</strong><code>box-shadow: none</code></article><article class="shadow-sample shadow-sm"><strong>Level 1 / Raised</strong><code>0 2px 10px rgba(0,0,0,.02)</code></article><article class="shadow-sample shadow-md"><strong>Level 2 / Hover</strong><code>0 8px 30px rgba(0,0,0,.04)</code></article><article class="shadow-sample shadow-deck"><strong>Level 3 / Deck</strong><code>0 18px 42px rgba(0,0,0,.05)</code></article><article class="shadow-sample shadow-focus"><strong>Focus Ring</strong><code>2px outline + 3px halo</code></article><article class="shadow-sample shadow-button"><strong>Primary Button</strong><code>inset + restrained amber drop</code></article></div>
+        <div class="section-body shadow-grid"><article class="shadow-sample shadow-none"><strong>Level 0 / Flat</strong><code>box-shadow: none</code></article><article class="shadow-sample shadow-sm"><strong>Level 1 / Raised</strong><code>0 6px 18px rgba(86,64,32,.04)</code></article><article class="shadow-sample shadow-md"><strong>Level 2 / Hover</strong><code>0 10px 30px rgba(86,64,32,.06)</code></article><article class="shadow-sample shadow-deck"><strong>Level 3 / Work Surface</strong><code>0 16px 42px rgba(76,54,26,.08)</code></article><article class="shadow-sample shadow-focus"><strong>Focus Ring</strong><code>2px outline + 3px halo</code></article><article class="shadow-sample shadow-button"><strong>Primary Button</strong><code>inset + restrained amber drop</code></article></div>
       </section>
 
       <section id="icon" class="section">
@@ -1109,6 +1126,36 @@
             </div>
             <strong class="home-title-sample"><span>于此，回答“精诚服务”</span><span>为什么再次出发。</span></strong>
           </article>
+          <div class="archetype-grid" aria-label="runtime page archetypes">
+            <article class="archetype-card"><h3>文化阅读</h3><code>data-lh-page-archetype="cultural-reading"</code><p>用于 Heart/Home。本页可以最有文化感，但必须靠标题、正文和留白建立气质，不靠雾化、堆卡或五色主题。</p></article>
+            <article class="archetype-card"><h3>工具工作台</h3><code>data-lh-page-archetype="tool-workspace"</code><p>用于 Hermit。需要稳定标题语境、实体工作 surface、可见输入区和清晰状态反馈，避免像空白落地页。</p></article>
+            <article class="archetype-card"><h3>案例工作流</h3><code>data-lh-page-archetype="case-workflow"</code><p>用于 Action。阅读主列和支持侧栏要有主次关系；案例问题、关键节点、维护字段不能全部做成同等重量的卡片。</p></article>
+            <article class="archetype-card"><h3>共创工作流</h3><code>data-lh-page-archetype="workflow"</code><p>用于 Workshop。分区、筛选、提交和记录使用同一组件族，不用局部字体、阴影和圆角制造临时层级。</p></article>
+          </div>
+          <div class="page-contract-grid" aria-label="page style contracts">
+            <article class="page-contract">
+              <h3>本心 / Heart</h3>
+              <p>本心是平台理念入口，不是模块目录。它负责让读者先形成共同价值判断，再进入案例、共创和问答。</p>
+              <dl>
+                <div><dt>Hook</dt><dd><code>data-lh-page="heart"</code> + <code>cultural-reading</code></dd></div>
+                <div><dt>首屏</dt><dd>大号思源宋主张、三步阅读路径、克制留白。首屏不放功能卡片墙。</dd></div>
+                <div><dt>节奏</dt><dd>Hero 主句 -> 序章 -> 来源 -> 价值 ledger -> 后续入口 -> 收束句。</dd></div>
+                <div><dt>主次</dt><dd>主张和段落是主角；chip、图标、guide link 只做导航辅助。</dd></div>
+                <div><dt>禁用</dt><dd>五色价值主题、装饰 glow、服务品牌 VI 控件、密集模块卡片。</dd></div>
+              </dl>
+            </article>
+            <article class="page-contract">
+              <h3>路引 / Hermit</h3>
+              <p>路引是服务文化问答工作台，不是宣传页。它要让用户把真实服务场景说清楚，并得到有依据的下一步建议。</p>
+              <dl>
+                <div><dt>Hook</dt><dd><code>data-lh-page="hermit"</code> + <code>tool-workspace</code></dd></div>
+                <div><dt>首屏</dt><dd>紧凑上下文标题、稳定工作 surface、明确输入区和少量高质量建议问题。</dd></div>
+                <div><dt>节奏</dt><dd>场景输入 -> 回答 -> 依据/相近案例 -> 下一步动作。空态也要显露领域边界。</dd></div>
+                <div><dt>主次</dt><dd>输入框和最新回答是主角；建议问题、状态和帮助文案退居辅助。</dd></div>
+                <div><dt>禁用</dt><dd>隐藏标题、落地页式空态、装饰性 prompt pill、泛 AI agent 视觉。</dd></div>
+              </dl>
+            </article>
+          </div>
           <div class="pattern-card-grid">
             <article class="pattern-card"><h3>阅读页</h3><p>标题和正文全宽，证据、目录、推荐内容使用 8/4 主从布局。正文优先 16px 阅读字号，长文交给 <code>LhContentProse</code> 约束。</p></article>
             <article class="pattern-card"><h3>工作流页</h3><p>表单和审核信息使用 6/6 或全宽表格。主操作固定在可预期区域，加载、错误和空状态必须提供恢复路径。</p></article>

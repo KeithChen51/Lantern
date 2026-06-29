@@ -6,18 +6,21 @@ import { useSearchParams } from "next/navigation";
 import { AdminWorkshopClient } from "../admin/workshop/AdminWorkshopClient";
 import {
   LhButton,
-  LhCard,
   LhChip,
+  LhEmptyState,
+  LhMetaList,
   LhPageHero,
   LhPanel,
   LhSearchBox,
   LhSectionHeader,
+  LhSegmentedControl,
+  LhStateNotice,
   LhStatusBadge,
+  LhSubmissionCard,
   LhTextArea,
   LhTextField,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons, type LighthouseIcon } from "@/components/ui/lighthouse-icons";
-import { cn } from "@/lib/utils";
 import {
   getVisibleWorkshopSections,
   isWorkshopSectionId,
@@ -83,7 +86,7 @@ type PreviewIdentityResponse = {
 };
 
 type BadgeTone = React.ComponentProps<typeof LhStatusBadge>["tone"];
-type NoticeTone = "success" | "danger" | "info";
+type NoticeTone = React.ComponentProps<typeof LhStateNotice>["tone"];
 
 const roles = ["全部岗位", "服务顾问", "理赔顾问", "休息区服务专员", "备件人员", "维修人员", "洗车人员", "其他后台支持人员"];
 
@@ -201,17 +204,9 @@ function StateNotice({ tone, children }: { tone: NoticeTone; children: React.Rea
   const icon =
     tone === "success" ? lighthouseIcons.status : tone === "danger" ? lighthouseIcons.warning : lighthouseIcons.info;
   return (
-    <div
-      className={cn(
-        "mb-6 flex items-start gap-3 rounded-sm border px-4 py-3 text-sm font-bold leading-6",
-        tone === "success" && "border-success/25 bg-success-soft text-success",
-        tone === "danger" && "border-danger/25 bg-danger-soft text-danger",
-        tone === "info" && "border-info/25 bg-info-soft text-info",
-      )}
-    >
-      <Icon icon={icon} className="mt-0.5 h-5 w-5 shrink-0" />
-      <span className="min-w-0">{children}</span>
-    </div>
+    <LhStateNotice data-lh-workshop-notice tone={tone} icon={<Icon icon={icon} />}>
+      {children}
+    </LhStateNotice>
   );
 }
 
@@ -225,35 +220,24 @@ function SectionTabs({
   onChange: (section: WorkshopSectionId) => void;
 }) {
   return (
-    <div className="mb-8 flex max-w-full flex-wrap gap-2 pb-2">
-      {sections.map(({ id, label }) => {
-        const active = current === id;
-        const copy = sectionCopy[id];
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onChange(id)}
-            className={cn(
-              "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-sm border px-4 text-sm font-extrabold transition-[background,border-color,color]",
-              active
-                ? "border-primary bg-primary-soft text-primary-deep"
-                : "border-line bg-panel text-muted hover:border-line-strong hover:text-ink",
-            )}
-          >
-            <Icon icon={copy.icon} className="h-4 w-4" />
-            {label}
-          </button>
-        );
-      })}
-    </div>
+    <LhSegmentedControl
+      data-lh-workshop-section-tabs
+      label="Workshop 分区"
+      options={sections.map(({ id, label }) => ({
+        value: id,
+        label,
+        icon: <Icon icon={sectionCopy[id].icon} />,
+      }))}
+      value={current}
+      onChange={onChange}
+    />
   );
 }
 
 function WorkshopHero({ onCreate }: { onCreate: () => void }) {
   return (
     <LhPageHero
-      className="mb-6"
+      data-lh-workshop-hero
       title="把现场做对的事，写成大家都能用的行动指南。"
       description={
         <p>
@@ -267,12 +251,12 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
         { title: "发布", description: "最高管理员编辑后进入公开区" },
       ]}
       footer={
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-bold text-muted">先写清一个具体场景，比写一套大原则更有用。</p>
+        <div data-lh-workshop-hero-footer>
+          <p>先写清一个具体场景，比写一套大原则更有用。</p>
           <LhButton
             type="button"
             variant="primary"
-            icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
+            icon={<Icon icon={lighthouseIcons.add} />}
             onClick={onCreate}
           >
             提交行动建议
@@ -285,42 +269,39 @@ function WorkshopHero({ onCreate }: { onCreate: () => void }) {
 
 function ContributionBoard({ items }: { items: ContributionStat[] }) {
   return (
-    <LhPanel className="p-5">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
-          <Icon icon={lighthouseIcons.cupStar} className="h-5 w-5" />
+    <LhPanel data-lh-workshop-side-panel>
+      <div data-lh-workshop-panel-header>
+        <span data-lh-workshop-panel-icon>
+          <Icon icon={lighthouseIcons.cupStar} />
         </span>
         <div>
-          <h3 className="text-xl font-extrabold text-ink">贡献榜单</h3>
-          <p className="text-sm text-muted">按已发布条目展示门店和个人。</p>
+          <h3>贡献榜单</h3>
+          <p>按已发布条目展示门店和个人。</p>
         </div>
       </div>
-      <div className="grid gap-3">
-        {items.length > 0 ? (
-          items.map((item) => (
-            <div key={item.userId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-sm border border-line bg-panel px-3 py-3">
-              <span className="min-w-0 text-sm font-bold text-ink-soft">
-                {item.storeName ? `${item.storeName} · ` : ""}
-                {item.displayName}
-              </span>
-              <LhChip tone="success">{item.publishedCount} 条</LhChip>
-            </div>
-          ))
-        ) : (
-          <p className="rounded-sm border border-dashed border-line bg-surface-quiet p-4 text-sm leading-6 text-muted">
-            暂无已发布贡献。发布后会显示门店和个人贡献。
-          </p>
-        )}
-      </div>
+      {items.length > 0 ? (
+        <LhMetaList
+          items={items.map((item) => ({
+            label: item.storeName ? `${item.storeName} · ${item.displayName}` : item.displayName,
+            value: <LhChip tone="success">{item.publishedCount} 条</LhChip>,
+          }))}
+        />
+      ) : (
+        <LhEmptyState
+          tone="neutral"
+          title="暂无已发布贡献"
+          description="发布后会显示门店和个人贡献。"
+        />
+      )}
     </LhPanel>
   );
 }
 
 function GuideSnippet({ label, text, tone }: { label: string; text: string; tone: BadgeTone }) {
   return (
-    <div className="min-w-0 rounded-sm border border-line bg-surface-quiet p-4">
+    <div data-lh-workshop-snippet>
       <LhChip tone={tone}>{label}</LhChip>
-      <p className="mt-3 text-sm leading-7 text-ink-soft">{text}</p>
+      <p>{text}</p>
     </div>
   );
 }
@@ -333,60 +314,61 @@ function GuideCard({ guide }: { guide: PublishedGuide }) {
   ].filter((snippet) => snippet.text.trim().length > 0);
 
   return (
-    <LhCard className="grid gap-5 p-5">
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap gap-2">
-            {[guide.roleName, guide.serviceScenario, guide.principleRef].filter(Boolean).map((tag) => (
-              <LhChip key={tag} tone="primary">
-                {tag}
-              </LhChip>
-            ))}
-            <LhStatusBadge tone="success">已发布</LhStatusBadge>
-          </div>
-          <h3 className="text-xl font-extrabold leading-snug text-ink">{guide.title}</h3>
-        </div>
-        <span className="text-sm font-extrabold text-muted">
+    <LhSubmissionCard
+      title={guide.title}
+      badges={
+        <>
+          {[guide.roleName, guide.serviceScenario, guide.principleRef].filter(Boolean).map((tag) => (
+            <LhChip key={tag} tone="primary">
+              {tag}
+            </LhChip>
+          ))}
+          <LhStatusBadge tone="success">已发布</LhStatusBadge>
+        </>
+      }
+      meta={
+        <>
           {new Date(guide.publishedAt).toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
-        </span>
-      </div>
-
-      <div className={cn("grid gap-3", snippets.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
+        </>
+      }
+      footer={
+        <>
+          <span>
+            {guide.storeName ? `${guide.storeName} · ` : ""}
+            {guide.submitterName}
+          </span>
+          <span data-lh-workshop-card-link>
+            可作为路引引用素材
+            <Icon icon={lighthouseIcons.arrowRightUp} />
+          </span>
+        </>
+      }
+    >
+      <div data-lh-workshop-snippet-grid data-count={snippets.length}>
         {snippets.map((snippet) => (
           <GuideSnippet key={snippet.label} label={snippet.label} tone={snippet.tone} text={snippet.text} />
         ))}
       </div>
-
-      <div className="flex flex-col gap-3 border-t border-line pt-4 text-sm font-bold text-muted sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          {guide.storeName ? `${guide.storeName} · ` : ""}
-          {guide.submitterName}
-        </span>
-        <span className="inline-flex items-center gap-2 text-primary-deep">
-          可作为路引引用素材
-          <Icon icon={lighthouseIcons.arrowRightUp} className="h-4 w-4" />
-        </span>
-      </div>
-    </LhCard>
+    </LhSubmissionCard>
   );
 }
 
 function StatusReference() {
   return (
-    <LhPanel className="p-5">
-      <h3 className="text-xl font-extrabold text-ink">状态系统</h3>
-      <p className="mt-2 text-sm leading-6 text-muted">颜色只表达类型，文案解释下一步。</p>
-      <div className="mt-5 grid gap-3">
-        {["draft", "pending_admin_review", "published", "admin_rejected"].map((status) => {
-          const meta = getStatusMeta(status);
-          return (
-            <div key={status} className="grid gap-2 rounded-sm border border-line bg-panel p-3">
-              <LhStatusBadge tone={meta.tone}>{meta.label}</LhStatusBadge>
-              <p className="text-sm leading-6 text-muted">{meta.description}</p>
-            </div>
-          );
-        })}
+    <LhPanel data-lh-workshop-side-panel>
+      <div data-lh-workshop-panel-heading>
+        <h3>状态系统</h3>
+        <p>颜色只表达类型，文案解释下一步。</p>
       </div>
+      <LhMetaList
+        items={["draft", "pending_admin_review", "published", "admin_rejected"].map((status) => {
+          const meta = getStatusMeta(status);
+          return {
+            label: <LhStatusBadge tone={meta.tone}>{meta.label}</LhStatusBadge>,
+            value: meta.description,
+          };
+        })}
+      />
     </LhPanel>
   );
 }
@@ -411,59 +393,47 @@ function PublicSection({
   onCreate: () => void;
 }) {
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="min-w-0 space-y-5">
-        <LhPanel className="p-5">
+    <section data-lh-workshop-two-column>
+      <div data-lh-workshop-main-column>
+        <LhPanel data-lh-workshop-filter-panel>
           <LhSectionHeader
             eyebrow="已发布指南"
             title="已发布指南"
             description="来自管理员审核发布的应做/避免内容。先筛选角色和场景，再进入可执行动作。"
             action={
-              <LhButton type="button" variant="primary" icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />} onClick={onCreate}>
+              <LhButton type="button" variant="primary" icon={<Icon icon={lighthouseIcons.add} />} onClick={onCreate}>
                 提交行动建议
               </LhButton>
             }
           />
-          <div className="mt-5 grid gap-4">
+          <div data-lh-workshop-filter-controls>
             <LhSearchBox
               aria-label="搜索岗位、场景或关键词"
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="搜索岗位、场景或关键词"
             />
-            <div className="flex max-w-full flex-wrap gap-2">
-              {roles.map((role) => (
-                <button
-                  type="button"
-                  key={role}
-                  onClick={() => onRoleChange(role)}
-                  className={cn(
-                    "min-h-9 rounded-sm border px-3 text-sm font-bold transition-[background,border-color,color]",
-                    selectedRole === role
-                      ? "border-primary bg-primary-soft text-primary-deep"
-                      : "border-line bg-panel text-muted hover:border-line-strong hover:text-ink",
-                  )}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
+            <LhSegmentedControl
+              data-lh-workshop-role-filter
+              label="岗位筛选"
+              options={roles.map((role) => ({ value: role, label: role }))}
+              value={selectedRole}
+              onChange={onRoleChange}
+            />
           </div>
         </LhPanel>
 
         {loading ? (
-          <StateNotice tone="info">
-            <Icon icon={lighthouseIcons.refresh} className="mr-2 inline h-4 w-4 animate-spin" />
-            正在加载行动指南
-          </StateNotice>
+          <StateNotice tone="info">正在加载行动指南</StateNotice>
         ) : guides.length > 0 ? (
           guides.map((guide) => <GuideCard key={guide.id} guide={guide} />)
         ) : (
-          <LhPanel className="border-dashed p-8 text-center">
-            <Icon icon={lighthouseIcons.document} className="mx-auto h-8 w-8 text-primary" />
-            <p className="mt-3 text-base font-bold text-ink">当前范围内还没有已发布指南。</p>
-            <p className="mt-2 text-sm leading-6 text-muted">提交通过审核后会出现在这里。</p>
-          </LhPanel>
+          <LhEmptyState
+            tone="primary"
+            icon={<Icon icon={lighthouseIcons.document} />}
+            title="当前范围内还没有已发布指南。"
+            description="提交通过审核后会出现在这里。"
+          />
         )}
       </div>
       <ContributionBoard items={leaderboard} />
@@ -487,7 +457,7 @@ function SubmissionForm({
   onCancelEdit: () => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="rounded-sm border border-line bg-surface p-5 text-ink shadow-lh-sm">
+    <form data-lh-workshop-form onSubmit={onSubmit}>
       <LhSectionHeader
         eyebrow="提交内容"
         title={editingSubmissionId ? "修改应做/避免" : "提交应做/避免"}
@@ -501,7 +471,7 @@ function SubmissionForm({
             <LhButton
               type="button"
               variant="quiet"
-              icon={<Icon icon={lighthouseIcons.close} className="h-4 w-4" />}
+              icon={<Icon icon={lighthouseIcons.close} />}
               onClick={onCancelEdit}
             >
               取消修改
@@ -509,7 +479,7 @@ function SubmissionForm({
           ) : null
         }
       />
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div data-lh-workshop-form-grid>
         {formFields.map(([field, label, helperText]) => (
           <LhTextField
             key={field}
@@ -520,7 +490,7 @@ function SubmissionForm({
           />
         ))}
       </div>
-      <div className="mt-4 grid gap-4">
+      <div data-lh-workshop-form-stack>
         <LhTextArea
           label="应做：应该做什么"
           helperText="写成一线可直接执行的动作。"
@@ -543,7 +513,7 @@ function SubmissionForm({
           rows={3}
         />
       </div>
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div data-lh-workshop-form-actions>
         <LhButton
           type="submit"
           disabled={submitting}
@@ -551,7 +521,7 @@ function SubmissionForm({
           icon={
             <Icon
               icon={submitting ? lighthouseIcons.refresh : lighthouseIcons.send}
-              className={cn("h-4 w-4", submitting && "animate-spin")}
+              className={submitting ? "animate-spin" : undefined}
             />
           }
         >
@@ -564,24 +534,23 @@ function SubmissionForm({
 
 function ReviewRules() {
   return (
-    <LhPanel className="p-5">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-info-soft text-info">
-          <Icon icon={lighthouseIcons.info} className="h-5 w-5" />
+    <LhPanel data-lh-workshop-side-panel>
+      <div data-lh-workshop-panel-header>
+        <span data-lh-workshop-panel-icon>
+          <Icon icon={lighthouseIcons.info} />
         </span>
         <div>
-          <h3 className="text-xl font-extrabold text-ink">初审规则</h3>
-          <p className="text-sm text-muted">先保证投稿能进入结构化审核。</p>
+          <h3>初审规则</h3>
+          <p>先保证投稿能进入结构化审核。</p>
         </div>
       </div>
-      <div className="grid gap-3">
-        {["至少填写应做或避免一项", "未与已发布指南重复", "可执行动作明确"].map((item) => (
-          <div key={item} className="grid grid-cols-[24px_minmax(0,1fr)] gap-3 rounded-sm border border-line bg-panel p-3">
-            <Icon icon={lighthouseIcons.status} className="mt-0.5 h-5 w-5 text-success" />
-            <span className="text-sm font-bold leading-6 text-ink-soft">{item}</span>
-          </div>
-        ))}
-      </div>
+      <LhMetaList
+        items={["至少填写应做或避免一项", "未与已发布指南重复", "可执行动作明确"].map((item) => ({
+          icon: <Icon icon={lighthouseIcons.status} />,
+          label: item,
+          value: "进入结构化审核前必须满足。",
+        }))}
+      />
     </LhPanel>
   );
 }
@@ -602,7 +571,7 @@ function SubmitSection({
   onCancelEdit: () => void;
 }) {
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <section data-lh-workshop-two-column>
       <SubmissionForm
         form={form}
         editingSubmissionId={editingSubmissionId}
@@ -619,33 +588,40 @@ function SubmitSection({
 function SubmissionRecord({ item, onEdit }: { item: Submission; onEdit: (submission: Submission) => void }) {
   const meta = getStatusMeta(item.status);
   return (
-    <LhCard className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-      <div className="min-w-0">
-        <div className="mb-3 flex flex-wrap gap-2">
+    <LhSubmissionCard
+      title={item.title}
+      badges={
+        <>
           <StatusBadge status={item.status} />
           <LhChip tone="primary">{item.roleName}</LhChip>
           {item.serviceScenario && <LhChip tone="neutral">{item.serviceScenario}</LhChip>}
-        </div>
-        <h3 className="text-xl font-extrabold leading-snug text-ink">{item.title}</h3>
-        <p className="mt-2 text-sm font-bold text-muted">最近更新：{new Date(item.updatedAt).toLocaleString("zh-CN")}</p>
-        <p className="mt-2 text-sm leading-6 text-muted">{meta.description}</p>
+        </>
+      }
+      meta={
+        <>
+          最近更新：{new Date(item.updatedAt).toLocaleString("zh-CN")}
+        </>
+      }
+      action={
+        isSubmissionEditable(item.status) ? (
+          <LhButton
+            type="button"
+            variant="secondary"
+            icon={<Icon icon={lighthouseIcons.edit} />}
+            onClick={() => onEdit(item)}
+          >
+            {item.status === "draft" ? "继续编辑" : "修改后重提"}
+          </LhButton>
+        ) : null
+      }
+    >
+      <p data-lh-workshop-card-note>{meta.description}</p>
         {item.aiReviewResult && !item.aiReviewResult.passed && (
-          <p className="mt-3 rounded-sm border border-danger/25 bg-danger-soft p-3 text-sm font-bold leading-6 text-danger">
+          <p data-lh-workshop-rejection>
             退回原因：{item.aiReviewResult.reason}
           </p>
         )}
-      </div>
-      {isSubmissionEditable(item.status) && (
-        <LhButton
-          type="button"
-          variant="secondary"
-          icon={<Icon icon={lighthouseIcons.edit} className="h-4 w-4" />}
-          onClick={() => onEdit(item)}
-        >
-          {item.status === "draft" ? "继续编辑" : "修改后重提"}
-        </LhButton>
-      )}
-    </LhCard>
+    </LhSubmissionCard>
   );
 }
 
@@ -664,24 +640,24 @@ function PersonalSection({
   }, {});
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-      <LhPanel className="p-5">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-sm border border-line bg-surface-quiet text-primary-deep">
-            <Icon icon={lighthouseIcons.user} className="h-6 w-6" />
+    <section data-lh-workshop-personal-layout>
+      <LhPanel data-lh-workshop-side-panel>
+        <div data-lh-workshop-panel-header>
+          <span data-lh-workshop-panel-icon>
+            <Icon icon={lighthouseIcons.user} />
           </span>
           <div>
-            <h2 className="text-xl font-extrabold text-ink">我的提交</h2>
-            <p className="text-sm text-muted">当前演示用户</p>
+            <h2>我的提交</h2>
+            <p>当前演示用户</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div data-lh-workshop-stat-grid>
           {["draft", "pending_admin_review", "published", "admin_rejected"].map((status) => {
             const meta = getStatusMeta(status);
             return (
-              <div key={status} className="rounded-sm border border-line bg-panel p-3">
-                <p className="text-2xl font-extrabold text-ink">{counts[status] ?? 0}</p>
-                <p className="mt-1 text-xs font-bold text-muted">{meta.label}</p>
+              <div key={status} data-lh-workshop-stat>
+                <p>{counts[status] ?? 0}</p>
+                <span>{meta.label}</span>
               </div>
             );
           })}
@@ -689,23 +665,21 @@ function PersonalSection({
         <LhButton
           type="button"
           variant="primary"
-          className="mt-5 w-full"
-          icon={<Icon icon={lighthouseIcons.add} className="h-4 w-4" />}
+          data-lh-workshop-full-button
+          icon={<Icon icon={lighthouseIcons.add} />}
           onClick={onCreate}
         >
           新建提交
         </LhButton>
       </LhPanel>
 
-      <LhPanel className="p-5">
+      <LhPanel data-lh-workshop-record-panel>
         <LhSectionHeader eyebrow="个人记录" title="提交记录" description="草稿、待审核、已发布、需修改都在这里回看。" />
-        <div className="mt-5 grid gap-4">
+        <div data-lh-workshop-card-list>
           {submissions.length > 0 ? (
             submissions.map((item) => <SubmissionRecord key={item.id} item={item} onEdit={onEdit} />)
           ) : (
-            <p className="rounded-sm border border-dashed border-line bg-surface-quiet p-5 text-sm leading-6 text-muted">
-              还没有提交记录。先从提交区创建一条岗位应做/避免。
-            </p>
+            <LhEmptyState title="还没有提交记录" description="先从提交区创建一条岗位应做/避免。" />
           )}
         </div>
       </LhPanel>
@@ -850,7 +824,7 @@ export function WorkshopClient() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl min-w-0">
+    <div data-lh-workshop-page data-lh-page-archetype="workflow">
       <WorkshopHero onCreate={startNewSubmission} />
       <SectionTabs sections={visibleSections} current={section} onChange={setSection} />
 
@@ -891,11 +865,10 @@ export function WorkshopClient() {
         </section>
       )}
 
-      <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="rounded-sm border border-line bg-surface-quiet p-4 text-sm font-bold leading-6 text-muted">
-          <Icon icon={lighthouseIcons.workshop} className="mr-2 inline h-4 w-4 text-primary" />
+      <div data-lh-workshop-footer-grid>
+        <LhStateNotice tone="neutral" icon={<Icon icon={lighthouseIcons.workshop} />}>
           当前页面展示已发布指南、贡献榜单和个人提交记录。
-        </div>
+        </LhStateNotice>
         <StatusReference />
       </div>
     </div>

@@ -28,6 +28,20 @@ Existing primitives:
 - `LhContentProse`
 - `LhStateNotice`
 - `LhEmptyState`
+- `LhChatShell`
+- `LhChatHeader`
+- `LhChatMain`
+- `LhChatFooter`
+- `LhChatInputShell`
+- `LhChatTextarea`
+- `LhChatSubmitButton`
+- `LhMessageRow`
+- `LhMessageAvatar`
+- `LhMessageBubble`
+- `LhSuggestionList`
+- `LhMetaList`
+- `LhSegmentedControl`
+- `LhSubmissionCard`
 
 These are the runtime base. The design system should strengthen their semantics before adding many new primitives.
 
@@ -56,6 +70,8 @@ Every component contract should define anatomy, variants, states, accessibility,
 | Content prose | Semantic headings, paragraphs, lists, quote, divider. | Preserve heading order and readable line length; do not encode action state. | Forms, data tables, dense control groups, or decorative card copy. |
 | State notice | Tone, optional icon, title, message, action. | Warning and danger announce as alerts; color is paired with text and icon. | Empty states or persistent page instructions. |
 | Empty state | Optional icon, title, description, action region. | Name the current scope and provide the next useful action when available. | Error alerts, loading skeletons, or normal content cards. |
+| Chat | Shell, header, scroll body, footer input, message rows, suggestions. | Input remains keyboard submit-able; suggested questions are buttons; message role is explicit. | Generic cards, decorative quote layouts, or non-conversational lists. |
+| Workflow collection | Segments, metadata rows, submission cards, actions. | Segments expose `aria-pressed`; cards keep status/action regions explicit. | Chat, prose, or purely decorative homepage blocks. |
 
 ## Typography Contract
 
@@ -74,6 +90,8 @@ Reusable components consume runtime typography tokens instead of raw Tailwind ty
 | `LhContentProse` | editorial reading | `--type-reading / --leading-reading`, compact uses `--type-body` | headings `--weight-extrabold` | Markdown and long-form case text use semantic tags; visual classes live in the prose wrapper. |
 | `LhStateNotice` | UI sans | body uses `--type-body`, title uses `--type-control` | title `--weight-extrabold` | Status/recovery messages use semantic tone text tokens and role defaults. |
 | `LhEmptyState` | UI sans plus optional icon | title uses `--title-card`, description uses `--type-body` | title `--weight-extrabold` | Empty states are composed regions, not dashed cards built per page. |
+| `LhChat*` / `LhMessage*` | editorial chat plus UI controls | input and assistant prose use `--type-reading`; labels use `--type-caption` | tokenized weights only | Conversational surfaces should not define local text sizes or bubble styling in page files. |
+| `LhMetaList` / `LhSegmentedControl` / `LhSubmissionCard` | UI workflow | labels use `--type-control`, meta uses `--type-caption`, titles use `--title-card` | tokenized weights only | Workflow pages should not define local title, badge, tab, or card typography. |
 | Navigation shell | UI sans | sub-label `--type-control`, label `--type-caption` | sub-label `--weight-extrabold`, label `--weight-bold` | Navigation is product chrome, not editorial serif copy. |
 
 Shared primitives and the navigation shell should not contain `text-xs`, `text-sm`, `text-base`, `font-bold`, `font-extrabold`, or `leading-6` as their source of truth. Use CSS variables or data-attribute defaults so a visual-spec change can be applied centrally.
@@ -249,6 +267,35 @@ Rules:
 - Active filters appear as removable tags.
 - A clear-all action appears when two or more filters are active.
 - Preserve filter and view state when users move between list and detail pages where practical.
+
+## Workflow Collections
+
+Runtime base: `LhMetaList`, `LhSegmentedControl`, and `LhSubmissionCard`.
+
+Use for Workshop-style flows where users switch scope, compare status, submit structured content, and review reusable guidance.
+
+Rules:
+
+- `LhSegmentedControl` owns tabs, role filters, and compact view scopes. Active state uses `aria-pressed` plus Classic Amber selected color.
+- `LhMetaList` owns small status summaries, contribution rows, rule lists, and sidebar metadata. Do not rebuild these rows with page-local grid, border, type, and color classes.
+- `LhSubmissionCard` owns guide cards and submission records: badges first, title, metadata, body, action, footer.
+- Workflow pages can use layout hooks such as `data-lh-workshop-two-column`, but type size, weight, radius, shadow, and tone live in `globals.css`.
+- Migrated Workshop files are covered by the design-system test migration list. They should not reintroduce local Tailwind text sizes, raw font weights, ad hoc rounded corners, `shadow-lh-*`, arbitrary gradients, or local icon sizing.
+
+## Chat And Assistant Surfaces
+
+Runtime base: `LhChatShell`, `LhChatHeader`, `LhChatMain`, `LhChatFooter`, `LhChatInputShell`, `LhChatTextarea`, `LhChatSubmitButton`, `LhMessageRow`, `LhMessageAvatar`, `LhMessageBubble`, and `LhSuggestionList`.
+
+Use for Hermit-like assistant interfaces where the user submits a scenario and receives structured guidance.
+
+Rules:
+
+- The chat shell owns layout regions: header, scroll body, footer, and input.
+- Message role is explicit through `data-role`, not only bubble color or alignment.
+- User and assistant bubbles share radius, border, surface, typography, and shadow logic from tokens.
+- Suggested questions are real buttons and keep focus-visible behavior.
+- Markdown renderers output semantic tags only; message prose styling lives in the message wrapper.
+- Chat components are migrated files: do not add local `text-sm`, `text-xl`, `font-extrabold`, `rounded-sm`, `shadow-lh-*`, or arbitrary gradient backgrounds in Hermit chat components.
 
 ## Data Table And Collections
 

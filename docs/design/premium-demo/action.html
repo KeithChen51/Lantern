@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>笃行 | 内部实践 (Premium Demo)</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    .action-hero {
+      background: #eee0c9;
+      color: var(--color-ink-base);
+      padding: var(--space-4xl) var(--page-inset);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .action-hero-inner {
+      max-width: var(--grid-max-width);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-2xl);
+    }
+
+    @media (min-width: 1024px) {
+      .action-hero-inner {
+        grid-template-columns: 1fr 300px;
+        align-items: start;
+      }
+    }
+
+    .action-title {
+      font-family: var(--font-serif);
+      font-size: var(--text-display-section);
+      line-height: 1.2;
+      font-weight: 700;
+      margin-bottom: var(--space-lg);
+      color: var(--color-ink-base);
+    }
+
+    .action-desc {
+      font-size: var(--text-xl);
+      line-height: 1.8;
+      color: var(--color-ink-soft);
+      max-width: 42rem;
+    }
+
+    .training-sidebar {
+      background: white;
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .training-sidebar h2 {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--color-brand-primary);
+      font-weight: 800;
+      margin-bottom: var(--space-md);
+    }
+
+    .training-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      counter-reset: steps;
+    }
+
+    .training-list li {
+      position: relative;
+      padding-left: 28px;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--color-ink-base);
+      line-height: 1.6;
+    }
+
+    .training-list li::before {
+      counter-increment: steps;
+      content: counter(steps);
+      position: absolute;
+      left: 0;
+      top: 2px;
+      width: 20px;
+      height: 20px;
+      background: var(--color-bg-paper);
+      color: var(--color-brand-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .case-main {
+      padding: var(--space-4xl) var(--page-inset);
+      background: var(--color-bg-paper);
+    }
+
+    .case-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3xl);
+    }
+
+    .case-header {
+      border-bottom: 2px solid var(--color-line);
+      padding-bottom: var(--space-xl);
+    }
+
+    .case-kicker {
+      font-size: var(--text-xs);
+      color: var(--color-brand-primary);
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-sm);
+    }
+
+    .case-title {
+      font-family: var(--font-serif);
+      font-size: var(--text-4xl);
+      line-height: 1.3;
+      color: var(--color-ink-base);
+      margin-bottom: var(--space-md);
+    }
+
+    .case-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 12px;
+      background: white;
+      color: var(--color-ink-soft);
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--color-line);
+    }
+
+    .brief-panel {
+      background: white;
+      border-radius: var(--radius-md);
+      padding: var(--space-xl);
+      border-left: 4px solid var(--color-brand-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brief-panel p {
+      font-size: var(--text-base);
+      line-height: 1.7;
+      color: var(--color-ink-soft);
+      margin-bottom: var(--space-sm);
+    }
+    .brief-panel p strong { color: var(--color-ink-base); }
+
+    .editorial-content p {
+      font-size: var(--text-lg);
+      line-height: 2;
+      color: var(--color-ink-base);
+      margin-bottom: var(--space-lg);
+      text-indent: 2em;
+    }
+
+    .section-title {
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+      margin-top: var(--space-2xl);
+      padding-bottom: var(--space-sm);
+      border-bottom: 2px solid var(--color-line);
+    }
+
+    .frame-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .frame-card {
+      background: white;
+      padding: var(--space-lg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-line);
+    }
+
+    .frame-card h4 {
+      font-size: var(--text-lg);
+      font-weight: 800;
+      color: var(--color-ink-base);
+      margin-bottom: var(--space-xs);
+    }
+
+    .frame-card .focus {
+      font-size: var(--text-xs);
+      color: var(--color-brand-primary);
+      margin-bottom: var(--space-md);
+      font-weight: 700;
+    }
+
+    .frame-card .question {
+      font-size: var(--text-sm);
+      color: var(--color-ink-soft);
+      line-height: 1.6;
+    }
+
+    .node-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-line);
+      overflow: hidden;
+      margin-bottom: var(--space-xl);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .node-header {
+      background: var(--color-bg-night);
+      color: white;
+      padding: var(--space-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .node-header h3 {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .node-status {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .node-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--color-line);
+    }
+
+    .option-col {
+      background: white;
+      padding: var(--space-lg);
+    }
+
+    .option-col h4 {
+      font-size: var(--text-md);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+      color: var(--color-ink-base);
+    }
+
+    .node-final {
+      padding: var(--space-lg);
+      background: #fdfaf6;
+      border-top: 1px solid var(--color-line);
+    }
+
+    .node-final strong {
+      color: var(--color-brand-primary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .bullet-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .bullet-list li {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: var(--space-sm);
+      font-size: var(--text-base);
+      line-height: 1.7;
+      color: var(--color-ink-soft);
+    }
+
+    .bullet-list li::before {
+      content: "•";
+      color: var(--color-brand-primary);
+      font-size: 24px;
+      position: absolute;
+      left: 0;
+      top: -4px;
+    }
+
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+    }
+
+    .takeaway-item {
+      background: white;
+      padding: var(--space-lg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-line);
+    }
+
+    .takeaway-item h4 {
+      font-size: var(--text-md);
+      font-weight: 800;
+      color: var(--color-ink-base);
+      margin-bottom: var(--space-sm);
+    }
+
+    .takeaway-item p {
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      color: var(--color-ink-soft);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: var(--space-lg);
+      background: white;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-line);
+    }
+
+    .data-table th, .data-table td {
+      padding: var(--space-md) var(--space-lg);
+      text-align: left;
+      border-bottom: 1px solid var(--color-line);
+    }
+
+    .data-table th {
+      background: #fdfaf6;
+      font-size: var(--text-xs);
+      font-weight: 800;
+      color: var(--color-muted);
+    }
+
+    .data-table td {
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      color: var(--color-ink-soft);
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar" aria-label="主导航">
+      <a class="brand-mark" href="index.html" aria-label="灯塔平台首页">
+        <span class="mark-glyph" aria-hidden="true"></span>
+        <span>灯塔 Lighthouse</span>
+      </a>
+      <nav class="nav-pill" aria-label="页面导航">
+        <a href="index.html">本心</a>
+        <a href="mirror.html">镜鉴</a>
+        <a href="action.html" style="color: var(--color-ink-base); background: var(--color-ink-inverse);">笃行</a>
+        <a href="hermit.html">路引</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="action-hero">
+        <div class="action-hero-inner">
+          <div class="reveal">
+            <h1 class="action-title">回到决策的十字路口，<br>看清楚我们的理念和权衡。</h1>
+            <p class="action-desc">笃行记录内部已经发生的服务实践。重点不是把案例讲完，而是回到真实政策、真实门店和真实客户场景里，看客户体验是否被守住，门店是否具备执行条件，政策指标是否真的服务于客户价值。</p>
+          </div>
+          <aside class="training-sidebar reveal stagger-1">
+            <h2>笃行案例训练流</h2>
+            <ol class="training-list">
+              <li>先读清楚客户问题和触发条件</li>
+              <li>再拆出客户、门店、政策、指标四类视角</li>
+              <li>最后判断最终做法是否守住客户价值</li>
+            </ol>
+          </aside>
+        </div>
+      </section>
+
+      <section class="case-main">
+        <div class="case-inner">
+          <header class="case-header reveal">
+            <p class="case-kicker">MAY 2026 · INTERNAL DRAFT</p>
+            <h2 class="case-title">是否为代驾司机设置合作伙伴休息区</h2>
+            <div class="case-tags">
+              <span class="tag">客户体验</span>
+              <span class="tag">合作伙伴</span>
+              <span class="tag">服务边界</span>
+              <span class="tag">口碑网络</span>
+              <span class="tag">成本投资</span>
+            </div>
+          </header>
+
+          <div class="brief-panel reveal">
+            <p><strong>一句话总结：</strong>复盘门店是否应为代驾司机提供独立休息区：看清成本、边界和长期口碑之间的取舍。</p>
+            <p><strong>学习目标：</strong>帮助门店把眼前成本放回服务链条里判断，理解善待合作伙伴不是额外人情，而是客户体验和口碑网络的一部分。</p>
+            <p><strong>案例问题：</strong>我们是否要花费额外的成本给代驾司机提供单独的合作伙伴休息区？</p>
+          </div>
+
+          <div class="editorial-content reveal stagger-1">
+            <h3 class="section-title" style="margin-top: 0">背景与触发点</h3>
+            <p style="text-indent: 0; font-weight: 700; background: white; padding: var(--space-lg); border-radius: 8px;">
+              周日下午，代驾张师傅完成了车辆交接，打开手机准备抢单。店里休息区似乎还有空位，张师傅蹲在屋檐下，看着外面的大太阳没有说话。<br><br>
+              <strong>触发点：</strong>门店需要在当场做出判断：请司机师傅到店里坐坐，喝杯水，让他体面舒适地等；还是礼貌完成接车交接，让他在店外阴凉处等一会儿。
+            </p>
+
+            <h3 class="section-title">现场判断</h3>
+            <p>这时，我们面临两个选择：选择A，请司机师傅到店里坐坐，喝杯水，让他体面舒适地等。选择B，礼貌接车、交接完成，他可以在店外等。门外有阴凉的地方，师傅过一会儿就走了，不至于被暴晒。</p>
+            <p>有些人或许会选择B，因为有两个无法回避的问题。第一是成本。服务店的每一平米，都折算在租金里。用来接待代驾司机，这坪效怎么算？水、电、保洁，样样都是钱。</p>
+            <p>第二是边界。我们的服务对象是车主，代驾司机既不是我们的客户，也不是我们的供应商。服务的边界一旦打破，谁来兜底？门店的定位和服务标准会不会一点点模糊掉？</p>
+            <p>这两点，从企业经营的角度，看上去非常理性，也很难直接驳倒。但这不是人情和道理的单选题，我们不妨把视野拉远，看看门店处在一张什么样的社会网络里。</p>
+            <p>代驾司机是车主把车交给门店的最后一棒，是车主信任链条的延伸。我们善待司机，店里的其他车主在潜意识里会得到一个信号：这家店，对我的人不错，那对我的车也不会差。</p>
+            <p>反之，如果一个代驾司机每个月都为我们服务，却只能在门外站着，他很难在同行群里夸奖我们，也更容易产生坏情绪。这份坏情绪会直接传递给终端客户，让我们花费更多精力去处理客诉。</p>
+            <p>门店周边的活跃代驾司机不过几十人，他们的服务面向周边所有车主。代驾司机是我们长期的合作伙伴，也是提升服务体验的关键人物。我们有必要为代驾司机提供休息、等待的场地。</p>
+            <p>那么，如何设置合作伙伴休息区，才能兼顾客户与司机的体验？如果直接把司机请进客休区，可能会占用客户空间，部分司机也会因为觉得不自在而不愿意去。因此，我们拿出一片独立区域专门作为合作伙伴休息区，并提供饮用水、沙发和充电口，用极低的成本投入进行体验投资。</p>
+            <p>选A还是选B，关键不在于成本或边界本身，而在于你如何看待谁是你的客户、如何看待成本和投资。</p>
+          </div>
+
+          <div class="reveal">
+            <h3 class="section-title">四个分析视角</h3>
+            <div class="frame-grid">
+              <div class="frame-card">
+                <h4>成本视角</h4>
+                <div class="focus">坪效、水电、保洁都是真实支出</div>
+                <div class="question">这片空间到底是消耗成本，还是改善取送车体验的投资？</div>
+              </div>
+              <div class="frame-card">
+                <h4>边界视角</h4>
+                <div class="focus">代驾司机不是直接付费客户</div>
+                <div class="question">服务边界该按交易关系划定，还是按客户信任链条划定？</div>
+              </div>
+              <div class="frame-card">
+                <h4>客户视角</h4>
+                <div class="focus">客户会观察门店如何对待“我的人”</div>
+                <div class="question">善待代驾司机，会不会让车主更相信门店也会善待自己的车？</div>
+              </div>
+              <div class="frame-card">
+                <h4>网络视角</h4>
+                <div class="focus">几十名活跃司机影响周边车主口碑</div>
+                <div class="question">一个长期接触门店的人，是不是也在参与传播我们的服务体验？</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="reveal">
+            <h3 class="section-title">决策节点推演</h3>
+
+            <div class="node-card">
+              <div class="node-header">
+                <h3>现场选择：请进来坐还是让他在店外等</h3>
+                <span class="node-status">已落地</span>
+              </div>
+              <div class="node-options">
+                <div class="option-col">
+                  <h4>选择A</h4>
+                  <p class="text-sm">请司机师傅到店里坐坐，提供饮用水和等候空间。</p>
+                </div>
+                <div class="option-col">
+                  <h4>选择B</h4>
+                  <p class="text-sm">礼貌完成交接，让他在店外等候。</p>
+                </div>
+              </div>
+              <div class="node-final">
+                <strong>最终选择：选择 A</strong>
+                <p>把代驾司机视为客户信任链条的延伸。</p>
+              </div>
+            </div>
+
+            <div class="node-card">
+              <div class="node-header">
+                <h3>边界重估：谁算服务链条上的一环</h3>
+                <span class="node-status" style="background: rgba(199,120,24,0.3)">需持续观察</span>
+              </div>
+              <div class="node-options">
+                <div class="option-col">
+                  <h4>选项A</h4>
+                  <p class="text-sm">只按付费关系定义客户。</p>
+                </div>
+                <div class="option-col">
+                  <h4>选项B</h4>
+                  <p class="text-sm">按信任链条定义服务对象。</p>
+                </div>
+              </div>
+              <div class="node-final">
+                <strong>最终选择：选项 B</strong>
+                <p>按信任链条重新理解服务对象。</p>
+              </div>
+            </div>
+
+            <div class="node-card">
+              <div class="node-header">
+                <h3>空间设置：共用客休区还是独立合作伙伴区</h3>
+                <span class="node-status">已落地</span>
+              </div>
+              <div class="node-options">
+                <div class="option-col">
+                  <h4>选项A</h4>
+                  <p class="text-sm">直接共用客户休息区。</p>
+                </div>
+                <div class="option-col">
+                  <h4>选项B</h4>
+                  <p class="text-sm">设置独立合作伙伴休息区。</p>
+                </div>
+              </div>
+              <div class="node-final">
+                <strong>最终选择：选项 B</strong>
+                <p>设置独立合作伙伴休息区。用清晰空间承接善意。</p>
+              </div>
+            </div>
+
+            <div class="node-card">
+              <div class="node-header">
+                <h3>成本判断：费用还是体验投资</h3>
+                <span class="node-status" style="background: rgba(199,120,24,0.3)">需持续观察</span>
+              </div>
+              <div class="node-options">
+                <div class="option-col">
+                  <h4>选项A</h4>
+                  <p class="text-sm">只看即时成本。</p>
+                </div>
+                <div class="option-col">
+                  <h4>选项B</h4>
+                  <p class="text-sm">看长期体验回报。</p>
+                </div>
+              </div>
+              <div class="node-final">
+                <strong>最终选择：选项 B</strong>
+                <p>把这笔投入视为体验投资，不是为非客户买单，而是为信任建设投资。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="reveal">
+            <h3 class="section-title">成效与总结</h3>
+            <h4 style="margin-bottom:16px;">积极结果</h4>
+            <ul class="bullet-list">
+              <li>善意是可传递的。代驾师傅把善意带到取送车服务当中，客户也更愿意使用该服务。</li>
+              <li>取送车进店的渗透率逐渐增长后，门店可以削峰填谷，提升维保效率。</li>
+              <li>客户看到了善，也体验到更高品质的服务，更容易成为忠实客户。</li>
+            </ul>
+
+            <h4 style="margin:32px 0 16px;">门店启示</h4>
+            <div class="takeaway-grid">
+              <div class="takeaway-item">
+                <h4>客户不只在交易关系里</h4>
+                <p>每一个能影响决策、能传播口碑的人，都是服务链条上的一环。</p>
+              </div>
+              <div class="takeaway-item">
+                <h4>善意需要有边界地落地</h4>
+                <p>不是把所有人都请进客休区，而是用独立可维护的空间让善意不破坏秩序。</p>
+              </div>
+              <div class="takeaway-item">
+                <h4>低成本投入也可能是体验投资</h4>
+                <p>饮用水、沙发看似小成本，但会影响合作伙伴情绪和客户信任。</p>
+              </div>
+              <div class="takeaway-item">
+                <h4>合作伙伴情绪会进入客户体验</h4>
+                <p>长期合作的人如果在门外站着，很难主动说好话；体面照顾会传递善意。</p>
+              </div>
+            </div>
+
+            <h4 style="margin:32px 0 16px;">可复用原则</h4>
+            <ul class="bullet-list">
+              <li>凡是影响客户决策和口碑的人，都要被看作服务链条的一环。</li>
+              <li>成本判断不能只看当下支出，也要看长期信任、效率和客诉成本。</li>
+              <li>善意不是无限开放边界，而是用清晰空间和规则让彼此都体面。</li>
+              <li>门店周边的稳定合作伙伴，是服务体验的外部延伸。</li>
+            </ul>
+          </div>
+
+          <div class="reveal">
+            <h3 class="section-title">案例学习框架</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>案例学习结构</th>
+                  <th>本页如何处理</th>
+                  <th>迁移目标</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>问题与触发</strong></td>
+                  <td>首屏直接呈现案例问题和训练目标。</td>
+                  <td>先进入判断，不先进入长文叙事。</td>
+                </tr>
+                <tr>
+                  <td><strong>决策节点</strong></td>
+                  <td>卡片右侧固定预览关键节点。</td>
+                  <td>让读者知道这个案例要练什么。</td>
+                </tr>
+                <tr>
+                  <td><strong>后续承接</strong></td>
+                  <td>详情页连接最终做法、门店启示和可复用原则。</td>
+                  <td>把案例沉淀成笃行与共创可复用材料。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const items = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } });
+    }, { root: null, rootMargin: '0px', threshold: 0.15 });
+    items.forEach((item) => observer.observe(item));
+  </script>
+</body>
+</html>

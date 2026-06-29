@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>灯塔平台首页 Demo | 品牌精神封面</title>
+  <meta name="description" content="灯塔平台首页品牌精神封面与精诚服务全新服务价值框架叙事 demo。" />
+  <style>
+    :root {
+      --paper: #f7f0e2;
+      --paper-deep: #eee0c9;
+      --ink: #2b2924;
+      --ink-soft: #5f584d;
+      --muted: #8b8275;
+      --amber: #c77818;
+      --amber-deep: #8a4a10;
+      --amber-light: #f5c778;
+      --brass: #a57332;
+      --mist: rgba(255, 248, 230, 0.72);
+      --line: rgba(88, 70, 44, 0.16);
+      --night: #172027;
+      --night-2: #27313a;
+      --hero-image: url("../../public/lighthouse-home-hero-bg-v2-realistic-shore.png");
+      --page-inset: clamp(40px, 4.8vw, 96px);
+      --content-width: 1180px;
+      --sans: "PingFang SC", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+      --serif: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", SimSun, serif;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(circle at 78% 3%, rgba(255, 214, 139, 0.38), transparent 34rem),
+        linear-gradient(180deg, #f7f0e2 0%, #f1e5d1 46%, #f8f3e8 100%);
+      color: var(--ink);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        radial-gradient(rgba(79, 58, 26, 0.2) 0.55px, transparent 0.55px),
+        radial-gradient(rgba(255, 255, 255, 0.55) 0.45px, transparent 0.45px);
+      background-position: 0 0, 12px 16px;
+      background-size: 24px 24px, 31px 31px;
+      mix-blend-mode: multiply;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid rgba(199, 120, 24, 0.92);
+      outline-offset: 4px;
+      box-shadow: 0 0 0 8px rgba(245, 199, 120, 0.2);
+    }
+
+    .site-shell {
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 28px;
+      left: 50%;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: calc(100vw - var(--page-inset) * 2);
+      transform: translateX(-50%);
+      color: rgba(255, 251, 241, 0.92);
+      pointer-events: none;
+    }
+
+    .brand-mark,
+    .nav-pill {
+      pointer-events: auto;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-transform: none;
+    }
+
+    .mark-glyph {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255, 238, 190, 0.55);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245, 199, 120, 0.26), rgba(255, 255, 255, 0.04) 54%, transparent 64%);
+      box-shadow: 0 0 26px rgba(238, 178, 82, 0.24);
+    }
+
+    .mark-glyph::before,
+    .mark-glyph::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 245, 220, 0.9);
+    }
+
+    .mark-glyph::before {
+      bottom: 8px;
+      width: 8px;
+      height: 15px;
+      clip-path: polygon(28% 0, 72% 0, 100% 100%, 0 100%);
+    }
+
+    .mark-glyph::after {
+      top: 8px;
+      width: 14px;
+      height: 3px;
+      border-radius: 999px;
+    }
+
+    .nav-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px;
+      border: 1px solid rgba(255, 246, 226, 0.52);
+      border-radius: 999px;
+      background: rgba(255, 248, 230, 0.82);
+      color: #463823;
+      box-shadow: 0 18px 60px rgba(33, 24, 12, 0.18);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-pill a {
+      padding: 11px 17px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(55, 45, 30, 0.78);
+      transition: color 280ms var(--ease), background 280ms var(--ease), transform 280ms var(--ease);
+    }
+
+    .nav-pill a:hover {
+      color: #251d12;
+      background: rgba(255, 255, 255, 0.62);
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 148px var(--page-inset) 88px;
+      isolation: isolate;
+      background:
+        linear-gradient(90deg, rgba(10, 16, 18, 0.58) 0%, rgba(19, 22, 20, 0.24) 45%, rgba(247, 240, 226, 0.04) 100%),
+        linear-gradient(180deg, rgba(11, 18, 24, 0.28), rgba(18, 21, 20, 0.1) 42%, rgba(247, 240, 226, 0.38) 100%),
+        var(--hero-image);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .hero::before {
+      content: none;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, transparent 78%, var(--paper) 100%);
+      pointer-events: none;
+    }
+
+    .lighthouse-scene {
+      position: absolute;
+      top: 12%;
+      right: 12%;
+      width: 210px;
+      height: 180px;
+      display: none;
+      opacity: 0.82;
+      transform: scale(0.72);
+      transform-origin: top right;
+    }
+
+    .lighthouse {
+      position: absolute;
+      right: 28px;
+      bottom: 6px;
+      width: 36px;
+      height: 94px;
+      background: linear-gradient(90deg, #27251f, #5c4933 48%, #1e1d1a);
+      clip-path: polygon(34% 0, 66% 0, 86% 100%, 14% 100%);
+      filter: drop-shadow(0 8px 26px rgba(33, 20, 8, 0.42));
+    }
+
+    .lighthouse::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -13px;
+      width: 50px;
+      height: 18px;
+      transform: translateX(-50%);
+      border-radius: 16px 16px 4px 4px;
+      background: #2b261d;
+    }
+
+    .lighthouse::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 4px;
+      width: 14px;
+      height: 9px;
+      transform: translateX(-50%);
+      border-radius: 2px;
+      background: #ffd98a;
+      box-shadow: 0 0 42px 18px rgba(255, 204, 115, 0.58);
+    }
+
+    .distant-shore {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 186px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(32, 27, 18, 0.48);
+      filter: blur(1px);
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+      width: calc(100vw - var(--page-inset) * 2);
+      text-align: left;
+      transform: translateY(-7vh);
+    }
+
+    .hero-copy::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: -72px;
+      left: -56px;
+      width: min(860px, 72vw);
+      height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(12, 17, 18, 0.42), rgba(12, 17, 18, 0.2) 48%, transparent 72%);
+      filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .hero-kicker {
+      margin: 0 0 24px;
+      color: rgba(255, 239, 201, 0.74);
+      font-size: clamp(15px, 1.25vw, 20px);
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      opacity: 1;
+    }
+
+    .hero-title {
+      margin: 0;
+      color: rgba(255, 248, 225, 0.96);
+      font-family: var(--serif);
+      font-size: clamp(42px, 5.2vw, 78px);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: 0.045em;
+      text-shadow:
+        0 1px 0 rgba(70, 40, 10, 0.18),
+        0 24px 58px rgba(0, 0, 0, 0.26),
+        0 0 34px rgba(255, 215, 142, 0.18);
+      opacity: 1;
+    }
+
+    .hero-title .value-word {
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .scroll-note {
+      position: absolute;
+      left: var(--page-inset);
+      bottom: clamp(42px, 6vh, 72px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+      width: min(300px, calc(100vw - var(--page-inset) * 2));
+      padding-top: 14px;
+      border-top: 1px solid rgba(113, 83, 36, 0.36);
+      color: rgba(71, 55, 31, 0.74);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0;
+      transition: color 240ms var(--ease), border-color 240ms var(--ease), transform 240ms var(--ease);
+    }
+
+    .scroll-note::before {
+      content: none;
+    }
+
+    .scroll-note::after {
+      content: "↓";
+      font-size: 16px;
+      line-height: 1;
+      transform: translateY(-1px);
+      transition: transform 240ms var(--ease);
+    }
+
+    .scroll-note:hover {
+      color: #3f2d15;
+      border-color: rgba(113, 83, 36, 0.58);
+      transform: translateY(-1px);
+    }
+
+    .scroll-note:hover::after {
+      transform: translateY(2px);
+    }
+
+    .bg-switcher {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 45;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255, 246, 226, 0.42);
+      border-radius: 999px;
+      background: rgba(31, 28, 22, 0.58);
+      color: rgba(255, 248, 226, 0.82);
+      box-shadow: 0 18px 52px rgba(24, 18, 10, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .bg-switcher button {
+      min-width: 38px;
+      height: 32px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: inherit;
+      font: 700 12px/1 var(--sans);
+      cursor: pointer;
+      transition: background 220ms var(--ease), color 220ms var(--ease), transform 220ms var(--ease);
+    }
+
+    .bg-switcher button:hover,
+    .bg-switcher button.is-active {
+      background: rgba(255, 246, 226, 0.92);
+      color: #3a2c1b;
+      transform: translateY(-1px);
+    }
+
+    .section {
+      position: relative;
+      padding: clamp(92px, 10vw, 152px) var(--page-inset);
+    }
+
+    .section-inner {
+      width: min(var(--content-width), calc(100vw - var(--page-inset) * 2));
+      margin: 0 auto;
+    }
+
+    .section-kicker {
+      margin: 0 0 22px;
+      color: var(--amber-deep);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      margin: 0;
+      max-width: 820px;
+      font-family: var(--serif);
+      font-size: clamp(34px, 4.6vw, 72px);
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+
+    .lead-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(340px, 0.68fr);
+      gap: clamp(48px, 7vw, 104px);
+      align-items: start;
+    }
+
+    .body-copy {
+      display: grid;
+      gap: 22px;
+      color: var(--ink-soft);
+      font-size: clamp(17px, 1.34vw, 21px);
+      line-height: 1.92;
+    }
+
+    .body-copy p {
+      margin: 0;
+    }
+
+    .year-panel {
+      position: sticky;
+      top: 132px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .year-panel strong {
+      display: block;
+      margin-bottom: 14px;
+      font-family: var(--serif);
+      font-size: clamp(70px, 9vw, 138px);
+      font-weight: 700;
+      line-height: 0.9;
+      color: rgba(154, 91, 22, 0.88);
+    }
+
+    .year-panel span {
+      display: block;
+      max-width: 330px;
+      color: var(--ink-soft);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .trust-section {
+      background:
+        radial-gradient(circle at 86% 8%, rgba(240, 189, 104, 0.24), transparent 30rem),
+        linear-gradient(180deg, #fffaf0 0%, #f5ebd9 100%);
+    }
+
+    .trust-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: clamp(42px, 8vw, 120px);
+      align-items: center;
+    }
+
+    .trust-statement {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(32px, 4.2vw, 64px);
+      font-weight: 700;
+      line-height: 1.18;
+      color: #342a1b;
+    }
+
+    .trust-statement em {
+      color: var(--amber-deep);
+      font-style: normal;
+    }
+
+    .principle-band {
+      color: #fff8e8;
+      background:
+        linear-gradient(90deg, rgba(10, 16, 19, 0.9) 0%, rgba(20, 22, 20, 0.78) 46%, rgba(72, 47, 23, 0.34) 100%),
+        linear-gradient(180deg, rgba(14, 17, 17, 0.94) 0%, rgba(24, 22, 18, 0.72) 52%, rgba(20, 19, 17, 0.9) 100%),
+        var(--hero-image);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .principle-band .section-kicker {
+      color: rgba(245, 199, 120, 0.92);
+    }
+
+    .principle-band .section-title {
+      color: #fff4d8;
+      max-width: 930px;
+    }
+
+    .principle-body {
+      display: grid;
+      grid-template-columns: minmax(0, 0.74fr) minmax(0, 1fr);
+      gap: clamp(42px, 7vw, 100px);
+      margin-top: 54px;
+    }
+
+    .principle-quote {
+      margin: 0;
+      color: rgba(255, 244, 216, 0.78);
+      font-size: clamp(18px, 1.55vw, 24px);
+      line-height: 1.88;
+    }
+
+    .jing-cheng {
+      display: grid;
+      gap: 24px;
+    }
+
+    .definition {
+      padding: 0 0 24px;
+      border-bottom: 1px solid rgba(255, 244, 216, 0.18);
+    }
+
+    .definition h3 {
+      margin: 0 0 14px;
+      font-family: var(--serif);
+      font-size: clamp(34px, 4vw, 56px);
+      line-height: 1;
+      color: #ffd88d;
+    }
+
+    .definition p {
+      margin: 0;
+      color: rgba(255, 248, 232, 0.78);
+      font-size: 17px;
+      line-height: 1.86;
+    }
+
+    .values-section {
+      background:
+        linear-gradient(90deg, rgba(147, 104, 45, 0.09) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, #f8f1e4 0%, #fffaf1 100%);
+      background-size: 118px 100%, auto;
+    }
+
+    .value-path {
+      margin-top: 70px;
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .value-row {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: clamp(32px, 6vw, 92px);
+      padding: clamp(34px, 5vw, 62px) 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .value-row h3 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(34px, 4.8vw, 68px);
+      font-weight: 700;
+      line-height: 1.04;
+      color: var(--ink);
+    }
+
+    .value-row h3 span {
+      display: block;
+      margin-top: 12px;
+      color: var(--amber-deep);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .value-row p {
+      max-width: 760px;
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: clamp(17px, 1.25vw, 20px);
+      line-height: 1.9;
+    }
+
+    .long-term {
+      background:
+        radial-gradient(circle at 24% 12%, rgba(255, 215, 134, 0.24), transparent 28rem),
+        linear-gradient(180deg, #fff9ed 0%, #efe1ca 100%);
+    }
+
+    .closing-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.56fr);
+      gap: clamp(44px, 8vw, 120px);
+      align-items: end;
+    }
+
+    .closing-line {
+      margin: 58px 0 0;
+      max-width: 960px;
+      font-family: var(--serif);
+      font-size: clamp(32px, 5vw, 78px);
+      font-weight: 700;
+      line-height: 1.18;
+      color: #2e271c;
+    }
+
+    .entry-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .entry-list a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(93, 68, 33, 0.18);
+      color: #3d3020;
+      font-size: 18px;
+      transition: color 260ms var(--ease), transform 260ms var(--ease);
+    }
+
+    .entry-list a::after {
+      content: "→";
+      color: var(--amber-deep);
+      transform: translateX(0);
+      transition: transform 260ms var(--ease);
+    }
+
+    .entry-list a:hover {
+      color: var(--amber-deep);
+      transform: translateX(3px);
+    }
+
+    .entry-list a:hover::after {
+      transform: translateX(6px);
+    }
+
+    .footer {
+      padding: 34px 28px 44px;
+      color: rgba(255, 248, 230, 0.72);
+      background: #181d1c;
+    }
+
+    .footer-inner {
+      width: min(1180px, calc(100vw - 56px));
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      font-size: 13px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 900ms var(--ease), transform 900ms var(--ease);
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      :root {
+        --page-inset: 18px;
+      }
+
+      .topbar {
+        top: 18px;
+        width: calc(100vw - var(--page-inset) * 2);
+      }
+
+      .nav-pill {
+        display: none;
+      }
+
+      .hero {
+        padding-inline: var(--page-inset);
+      }
+
+      .hero-title {
+        letter-spacing: 0.04em;
+      }
+
+      .lead-grid,
+      .trust-layout,
+      .principle-body,
+      .closing-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .year-panel {
+        position: static;
+      }
+
+      .value-row {
+        grid-template-columns: 1fr;
+      }
+
+      .section-inner,
+      .footer-inner {
+        width: min(100%, var(--content-width));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar" aria-label="主导航">
+      <a class="brand-mark" href="#top" aria-label="灯塔平台首页">
+        <span class="mark-glyph" aria-hidden="true"></span>
+        <span>灯塔 Lighthouse</span>
+      </a>
+      <nav class="nav-pill" aria-label="页面导航">
+        <a href="#top">本心</a>
+        <a href="#why">镜鉴</a>
+        <a href="#practice">笃行</a>
+        <a href="#meaning">路引</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="lighthouse-scene" aria-hidden="true">
+          <div class="distant-shore"></div>
+          <div class="lighthouse"></div>
+        </div>
+        <div class="hero-copy">
+          <p class="hero-kicker">精诚服务品牌再出发</p>
+          <h1 class="hero-title" id="hero-title">
+            <span class="value-word">求真</span>、<span class="value-word">尽善</span>、<span class="value-word">致美</span>、<span class="value-word">大爱</span>、<span class="value-word">幸福</span>
+          </h1>
+        </div>
+        <a class="scroll-note" href="#values">查看价值路径</a>
+      </section>
+
+      <div class="bg-switcher" aria-label="Demo 底图切换">
+        <button class="is-active" type="button" data-bg="../../public/lighthouse-home-hero-bg-v2-realistic-shore.png">海</button>
+        <button type="button" data-bg="../../public/lighthouse-home-hero-bg-v6-eastern-mountain-sea.png">山</button>
+      </div>
+
+      <section class="section" id="why">
+        <div class="section-inner lead-grid">
+          <div class="reveal">
+            <p class="section-kicker">01 / WHY AGAIN</p>
+            <h2 class="section-title">二十年之后，精诚服务站在新的起点。</h2>
+            <div class="body-copy" style="margin-top: 42px;">
+              <p>2026年，精诚服务迎来品牌成立二十周年。站在新的起点，我们正式启动服务品牌升级，发布全新服务价值框架：求真、尽善、致美、大爱、幸福。</p>
+              <p>二十年深耕，精诚服务伴随中国汽车后市场从粗放走向精细、从规模扩张走向品质竞争。如何让每一次服务不止于交付结果，还能沉淀客户信任，正在成为长期经营必须回答的问题。</p>
+            </div>
+          </div>
+          <aside class="year-panel reveal" aria-label="时间注记">
+            <strong>2026</strong>
+            <span>品牌成立二十周年不是终点，而是把经验转化为共同语言、行动准则与长期信任系统的新开始。</span>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section trust-section">
+        <div class="section-inner trust-layout">
+          <h2 class="trust-statement reveal">信任不是服务之后的自然结果，<em>而是需要被经营的核心资产。</em></h2>
+          <div class="body-copy reveal">
+            <p>它不可透支，无法速成，只能在长期交付中被积累、被验证、被兑现。</p>
+            <p>精诚服务要构建的，正是一套能持续经营信任资产的组织系统：从提供功能型服务，走向建立价值型关系，以当下的确定性对抗未来的不确定。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section principle-band" id="meaning">
+        <div class="section-inner">
+          <p class="section-kicker reveal">02 / NOT A SLOGAN</p>
+          <h2 class="section-title reveal">这不是一次口号更替，而是“精”与“诚”的内涵延伸。</h2>
+          <div class="principle-body">
+            <p class="principle-quote reveal">此次升级不是新增一套额外要求，而是把精诚服务二十年来在客户接待、维修交付、协同复盘、团队管理中形成的经验，沉淀为一套共同语言和行动准则。</p>
+            <div class="jing-cheng">
+              <article class="definition reveal">
+                <h3>精</h3>
+                <p>代表极致的追求与行动。专业判断、认真执行、持续改善，最终体现在清晰的流程、合理的排产、顺畅的协作和稳定的交付之上。</p>
+              </article>
+              <article class="definition reveal">
+                <h3>诚</h3>
+                <p>代表内在的价值与品格。真实、善意、秩序和关怀，不停留在态度层面，而贯穿于客户关系、员工支持和组织管理之中。</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section values-section" id="values">
+        <div class="section-inner">
+          <p class="section-kicker reveal">03 / VALUE PATH</p>
+          <h2 class="section-title reveal">求真、尽善、致美、大爱、幸福，是精诚服务的价值路径。</h2>
+          <div class="value-path">
+            <article class="value-row reveal">
+              <h3>求真<span>truth</span></h3>
+              <p>尊重事实、规律和真实处境。面对客户，要如实说明车况、费用、依据、进度、风险和不确定性；面对团队，要讲清目标、规则和评价标准。</p>
+            </article>
+            <article class="value-row reveal">
+              <h3>尽善<span>better choice</span></h3>
+              <p>在规则、成本、效率和资源约束之间，选择更有益于人、更有利于长期信任的做法。不是无原则让利，也不是一味迁就，而是在标准允许的范围内多解释一步、多协调一步。</p>
+            </article>
+            <article class="value-row reveal">
+              <h3>致美<span>order</span></h3>
+              <p>让服务不止于完成，更抵达专业与秩序。对客户而言，美是流程清晰、现场有序、交付从容；对员工而言，美是专业工位、顺畅协作和有尊严的劳动。</p>
+            </article>
+            <article class="value-row reveal">
+              <h3>大爱<span>care</span></h3>
+              <p>在规则和流程之内，看见人的处境、尊严、安全和长期关系。它不让个人独自承担系统问题，也把企业经营放在更长远的公共责任之中。</p>
+            </article>
+            <article class="value-row reveal">
+              <h3>幸福<span>arrival</span></h3>
+              <p>是求真、尽善、致美、大爱最终要抵达的状态。对客户是安心和托付，对员工是被支持、被尊重、能成长，对组织是服务体系可持续和长期价值。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section long-term" id="practice">
+        <div class="section-inner closing-panel">
+          <div class="reveal">
+            <p class="section-kicker">04 / LONG-TERMISM</p>
+            <h2 class="section-title">让价值观进入体系，让商业向善从理念走向实践。</h2>
+            <p class="closing-line">求真不虚，尽善不空，致美不浮，大爱不泛，让幸福从愿景进入每一次服务。</p>
+          </div>
+          <nav class="entry-list reveal" aria-label="进入其他页面">
+            <a href="/guide">路引</a>
+            <a href="/action">行动</a>
+            <a href="/hermit">隐者</a>
+            <a href="/workshop">工坊</a>
+          </nav>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>灯塔平台首页 Demo</span>
+        <span>基于《关于发布精诚服务全新服务价值框架的通知》</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const items = document.querySelectorAll(".reveal");
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { threshold: 0.16 });
+
+    items.forEach((item) => observer.observe(item));
+
+    const bgButtons = document.querySelectorAll("[data-bg]");
+    bgButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        document.documentElement.style.setProperty("--hero-image", `url("${button.dataset.bg}")`);
+        bgButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+      });
+    });
+  </script>
+</body>
+</html>

@@ -5,9 +5,15 @@ import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import { LhPanel, LhStatusBadge } from "@/components/ui/lighthouse-primitives";
+import {
+  LhChatFooter,
+  LhChatHeader,
+  LhChatMain,
+  LhChatShell,
+  LhStatusBadge,
+  LhSuggestionList,
+} from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { cn } from "@/lib/utils";
 
 const SUGGESTED_QUESTIONS = [
   "客户一直追问交车时间，但车间还没有最终结论，服务顾问应该怎么回应？",
@@ -45,41 +51,35 @@ export function ChatPanel() {
   }
 
   return (
-    <LhPanel data-lh-hermit-panel elevated className="grid w-full overflow-hidden border-line-strong bg-panel lg:h-[calc(100vh-104px)] lg:min-h-[620px] lg:grid-rows-[auto_minmax(0,1fr)_auto]">
-      <header data-lh-hermit-panel-header className="border-b border-line bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface-quiet))] px-5 py-4 md:px-6">
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
-              <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
+    <LhChatShell data-lh-hermit-panel>
+      <LhChatHeader data-lh-hermit-panel-header>
+        <div data-lh-chat-header-layout>
+          <div data-lh-chat-header-title-row>
+            <span data-lh-chat-header-icon>
+              <Icon icon={lighthouseIcons.hermit} />
             </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="whitespace-nowrap text-xl font-extrabold leading-tight text-ink md:text-2xl">路引 AI 对话助手</h1>
+            <div data-lh-chat-header-copy>
+              <div data-lh-chat-title-row>
+                <h1 data-lh-chat-title>路引 AI 对话助手</h1>
                 <LhStatusBadge tone="success">知识已接入</LhStatusBadge>
               </div>
-              <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-muted md:text-sm">
+              <p data-lh-chat-description>
                 直接描述服务场景，路引会按事实、判断依据和下一步话术来回应。
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div data-lh-chat-header-status>
             <LhStatusBadge tone={isLoading ? "warning" : "success"}>{isLoading ? "生成中" : "可提问"}</LhStatusBadge>
-            <span className="text-xs font-bold leading-5 text-muted">Enter 发送 · Shift + Enter 换行</span>
+            <span>Enter 发送 · Shift + Enter 换行</span>
           </div>
         </div>
-      </header>
+      </LhChatHeader>
 
-      <main
+      <LhChatMain
         data-lh-hermit-main
         ref={scrollRef}
-        className="min-h-0 overflow-y-auto bg-[linear-gradient(180deg,var(--color-panel),var(--color-surface)_62%,var(--color-surface-quiet))] px-4 py-5 md:px-6"
       >
-        <div
-          className={cn(
-            "mx-auto grid max-w-4xl gap-5",
-            !hasMessages && "min-h-full content-center py-5 md:py-8",
-          )}
-        >
+        <div data-lh-chat-scroll-content data-empty={!hasMessages ? "true" : undefined}>
           {!hasMessages ? (
             <EmptyChatStart
               input={input}
@@ -97,16 +97,16 @@ export function ChatPanel() {
             </>
           )}
         </div>
-      </main>
+      </LhChatMain>
 
       {hasMessages && (
-      <footer data-lh-hermit-footer className="bg-surface-quiet px-4 py-4 md:px-6">
-        <div className="mx-auto max-w-4xl">
+      <LhChatFooter data-lh-hermit-footer>
+        <div data-lh-chat-footer-inner>
           <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
         </div>
-      </footer>
+      </LhChatFooter>
       )}
-    </LhPanel>
+    </LhChatShell>
   );
 }
 
@@ -124,59 +124,37 @@ function EmptyChatStart({
   onSuggestedQuestion: (question: string) => void;
 }) {
   return (
-    <section data-lh-hermit-empty className="grid gap-4">
-      <article data-lh-hermit-empty-copy className="grid gap-3 text-center">
-        <span data-lh-hermit-empty-icon className="mx-auto flex h-11 w-11 items-center justify-center rounded-sm bg-action text-panel shadow-lh-sm">
-          <Icon icon={lighthouseIcons.hermit} className="h-5 w-5" />
+    <section data-lh-hermit-empty>
+      <article data-lh-hermit-empty-copy>
+        <span data-lh-hermit-empty-icon>
+          <Icon icon={lighthouseIcons.hermit} />
         </span>
         <div>
-          <h2 className="text-2xl font-extrabold leading-tight text-ink">把服务场景直接发给路引</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm font-bold leading-7 text-ink-soft md:text-base">
+          <h2>把服务场景直接发给路引</h2>
+          <p>
             说明客户状态、限制条件和你卡住的判断，路引会按事实、维度、依据和下一步动作回应。
           </p>
         </div>
-        <div data-lh-hermit-empty-tags className="flex flex-wrap justify-center gap-2 text-xs font-extrabold text-muted">
-          <span className="rounded-sm border border-line bg-surface px-2.5 py-1">可追问</span>
-          <span className="rounded-sm border border-line bg-surface px-2.5 py-1">会标出证据不足</span>
-          <span className="rounded-sm border border-line bg-surface px-2.5 py-1">输出可执行动作</span>
+        <div data-lh-hermit-empty-tags>
+          <span>可追问</span>
+          <span>会标出证据不足</span>
+          <span>输出可执行动作</span>
         </div>
       </article>
 
-      <div className="mx-auto w-full max-w-3xl">
+      <div data-lh-hermit-empty-input>
         <ChatInput value={input} onChange={onInputChange} onSubmit={onSubmit} isLoading={isLoading} />
-        <SuggestedQuestions onSelect={onSuggestedQuestion} disabled={isLoading} />
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold leading-5 text-muted">
+        <LhSuggestionList
+          label="推荐问题"
+          icon={<Icon data-lh-suggestion-heading-icon icon={lighthouseIcons.send} />}
+          questions={SUGGESTED_QUESTIONS}
+          onSelect={onSuggestedQuestion}
+          disabled={isLoading}
+        />
+        <div data-lh-hermit-empty-guidance>
           <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
           <span>路引不替代现场责任与最终决策。</span>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function SuggestedQuestions({ onSelect, disabled }: { onSelect: (question: string) => void; disabled: boolean }) {
-  return (
-    <section data-lh-hermit-suggestions className="mt-3" aria-label="推荐问题">
-      <div className="mb-2 flex items-center gap-2 text-xs font-extrabold text-muted">
-        <Icon icon={lighthouseIcons.send} className="h-3.5 w-3.5 text-primary" />
-        推荐问题
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-        {SUGGESTED_QUESTIONS.map((question) => (
-          <button
-            data-lh-hermit-suggested-question
-            key={question}
-            type="button"
-            onClick={() => onSelect(question)}
-            disabled={disabled}
-            className={cn(
-              "rounded-sm border border-transparent px-2 py-1.5 text-left text-xs font-bold leading-5 text-muted transition-[background,border-color,color] duration-150",
-              "hover:border-line hover:bg-panel hover:text-primary-deep disabled:cursor-not-allowed disabled:opacity-55",
-            )}
-          >
-            {question}
-          </button>
-        ))}
       </div>
     </section>
   );

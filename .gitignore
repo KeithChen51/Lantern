@@ -52,6 +52,9 @@ knowledge-vectors.json
 # Local code understanding artifacts
 .understand-anything/
 
+# Local Codex worker artifacts
+/.codex/
+
 # Local reference materials
 /references/
 

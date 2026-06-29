@@ -29,7 +29,9 @@ The active platform palette is Classic Amber: a warm paper surface with amber ac
 | Page | `--color-page` | `#f3efe0` | App background and large warm paper regions. |
 | Page start | `--color-page-start` | `#f8f3e5` | Top gradient and hero background start. |
 | Page end | `--color-page-end` | `#eee6d0` | Bottom gradient and page depth. |
-| Surface | `--color-surface` | `rgba(255, 255, 255, 0.4)` | Cards, panels, readable blocks. |
+| Surface | `--color-surface` | `rgba(255, 255, 255, 0.64)` | Cards, panels, readable blocks. |
+| Surface solid | `--lh-surface-solid` | `rgba(255, 255, 255, 0.76)` | Stable work surfaces such as Hermit and dense workflow panels. |
+| Surface reading | `--lh-surface-reading` | `rgba(255, 255, 255, 0.52)` | Supporting reading blocks, side notes, and restrained secondary panels. |
 | Surface quiet | `--color-surface-quiet` | `color-mix(in srgb, #d97706 8%, #f3efe0)` | Subtle section bands, inactive fills. |
 | Ink | `--color-ink` | `#2c2c2c` | Primary text, important icons. |
 | Ink soft | `--color-ink-soft` | `color-mix(in srgb, #2c2c2c 74%, white)` | Secondary headings and supporting text. |
@@ -265,9 +267,11 @@ Default UI surfaces are solid, readable, and lightly bounded.
 | --- | --- | --- |
 | `--border-thin` | `1px` | Default borders. |
 | `--border-strong` | `3px` | Selected row accent or active region marker. |
-| `--shadow-sm` | `0 2px 10px rgba(0, 0, 0, 0.02)` | Default cards, panels, table shells. |
-| `--shadow-md` | `0 8px 30px rgba(0, 0, 0, 0.04)` | Hovered clickable cards and elevated panels. |
-| `--shadow-deck` | `0 18px 42px rgba(0, 0, 0, 0.05)` | Hero aside, deck panels, rare raised summary blocks. |
+| `--shadow-sm` | `0 6px 18px rgba(86, 64, 32, 0.04)` | Default cards, panels, table shells. |
+| `--lh-page-shadow` | `0 10px 30px rgba(86, 64, 32, 0.06)` | Hover and raised page regions. |
+| `--lh-work-shadow` | `0 16px 42px rgba(76, 54, 26, 0.08)` | Stable work surfaces that need stronger containment. |
+| `--shadow-md` | `0 10px 30px rgba(86, 64, 32, 0.06)` | Hovered clickable cards and elevated panels. |
+| `--shadow-deck` | `0 16px 42px rgba(76, 54, 26, 0.08)` | Hero aside, deck panels, rare raised summary blocks and stable work surfaces. |
 | `--focus-outline` | `2px solid #9b5c14` | Required visible focus outline. |
 | `--focus-offset` | `3px` | Required gap between control and focus outline. |
 | `--shadow-focus` | `0 0 0 3px rgba(217, 119, 6, 0.18)` | Secondary focus halo; never the only focus indicator. |

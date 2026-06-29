@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>灯塔平台 | 平台模块中心 (Modules Portal)</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* 针对 Portal 的特定布局样式，大部分复用 styles.css 的 Token */
+    .portal-hero {
+      position: relative;
+      min-height: 50vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(180deg, var(--color-bg-night-deep) 0%, var(--color-bg-night) 100%);
+      color: var(--color-ink-inverse);
+      padding: var(--space-4xl) var(--page-inset);
+      overflow: hidden;
+    }
+    .portal-hero::before {
+      content: ""; position: absolute; inset: 0;
+      background: url("../../../public/lighthouse-home-hero-bg-v2-realistic-shore.png") center/cover;
+      opacity: 0.3; filter: saturate(0) contrast(1.2); mix-blend-mode: overlay;
+    }
+
+    .portal-title {
+      position: relative; z-index: 2;
+      font-family: var(--font-serif);
+      font-size: var(--text-display-section);
+      margin: 0 0 var(--space-sm);
+    }
+    .portal-desc {
+      position: relative; z-index: 2;
+      font-size: var(--text-lg);
+      color: var(--color-ink-inverse-soft);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--space-lg);
+      padding: var(--space-3xl) var(--page-inset);
+      background: var(--color-bg-paper);
+      position: relative;
+      z-index: 10;
+    }
+
+    .module-card {
+      background: #ffffff;
+      border: 1px solid var(--color-line-dark);
+      border-radius: 16px;
+      padding: var(--space-xl) var(--space-lg);
+      transition: all var(--duration-base) var(--ease-premium);
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+    .module-card::before {
+      content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+      background: var(--color-brand-primary);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform var(--duration-base) var(--ease-premium);
+    }
+    .module-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.08);
+    }
+    .module-card:hover::before { transform: scaleX(1); }
+
+    .module-icon {
+      font-size: 2.5rem;
+      margin-bottom: var(--space-md);
+      color: var(--color-brand-primary);
+    }
+    .module-title {
+      font-family: var(--font-serif);
+      font-size: var(--text-2xl);
+      color: var(--color-ink-base);
+      margin: 0 0 var(--space-xs);
+    }
+    .module-en {
+      font-size: var(--text-xs);
+      color: var(--color-brand-active);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: var(--space-md);
+      display: block;
+    }
+    .module-info {
+      font-size: var(--text-base);
+      color: var(--color-ink-soft);
+      line-height: 1.8;
+      margin: 0 0 var(--space-lg);
+    }
+    .module-link {
+      display: inline-flex; align-items: center;
+      font-size: var(--text-sm); font-weight: 700;
+      color: var(--color-ink-base);
+      transition: color var(--duration-fast) var(--ease-premium);
+    }
+    .module-link::after {
+      content: "→"; margin-left: 8px; color: var(--color-brand-primary);
+      transition: transform var(--duration-fast) var(--ease-premium);
+    }
+    .module-card:hover .module-link { color: var(--color-brand-primary); }
+    .module-card:hover .module-link::after { transform: translateX(4px); }
+
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar" aria-label="主导航">
+      <a class="brand-mark" href="index.html" aria-label="灯塔平台首页">
+        <span class="mark-glyph" aria-hidden="true"></span>
+        <span>灯塔 Lighthouse</span>
+      </a>
+      <nav class="nav-pill" aria-label="页面导航">
+        <a href="index.html">品牌精神封面</a>
+        <a href="design-system.html">视觉规范</a>
+        <a href="modules-hub.html" style="color: var(--color-ink-base); background: var(--color-ink-inverse);">平台模块</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="portal-hero">
+        <div class="reveal">
+          <h1 class="portal-title">企业文化数字平台</h1>
+          <p class="portal-desc">帮助用户学习新服务理念、查阅标杆与实践案例、共创一线行为规范，并通过智能路引辅助决策。</p>
+        </div>
+      </section>
+
+      <section class="modules-grid">
+
+        <article class="module-card reveal stagger-1">
+          <div class="module-icon">💡</div>
+          <h2 class="module-title">本心</h2>
+          <span class="module-en">Heart</span>
+          <p class="module-info">新服务理念官网与学习入口。承载“我们相信什么”，展现全新服务价值框架与品牌精神。</p>
+          <a href="#" class="module-link">进入学习</a>
+        </article>
+
+        <article class="module-card reveal stagger-2">
+          <div class="module-icon">🪞</div>
+          <h2 class="module-title">镜鉴</h2>
+          <span class="module-en">Mirror</span>
+          <p class="module-info">外部标杆案例与行业观察数据库。承载“别人有哪些值得参考的实践”，提供可借鉴的行业级服务案例。</p>
+          <a href="#" class="module-link">查看标杆</a>
+        </article>
+
+        <article class="module-card reveal stagger-3">
+          <div class="module-icon">🚀</div>
+          <h2 class="module-title">笃行</h2>
+          <span class="module-en">Action</span>
+          <p class="module-info">内部服务实践案例库。承载“我们已经做出了什么”，沉淀一线员工和管理者的真实优秀实践。</p>
+          <a href="#" class="module-link">浏览实践</a>
+        </article>
+
+        <article class="module-card reveal">
+          <div class="module-icon">🛠️</div>
+          <h2 class="module-title">共创</h2>
+          <span class="module-en">Workshop</span>
+          <p class="module-info">面向一线岗位的 Do & Don't 执行指南共创机制。承载“我们如何一起把理念转化为具体的岗位动作”。</p>
+          <a href="#" class="module-link">参与共创</a>
+        </article>
+
+        <article class="module-card reveal stagger-1">
+          <div class="module-icon">🧭</div>
+          <h2 class="module-title">路引</h2>
+          <span class="module-en">Hermit</span>
+          <p class="module-info">汽车品牌售后服务文化领域的智能助手 (AI)。基于理念、案例、规范与实践内容，辅助您理解、查询和决策。</p>
+          <a href="#" class="module-link">对话路引</a>
+        </article>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

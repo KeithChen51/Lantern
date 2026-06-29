@@ -34,6 +34,27 @@ function extractCssBlock(source: string, selector: string, mustContain?: string)
   return block ?? "";
 }
 
+const migratedDesignSystemFiles = [
+  "src/app/hermit/page.tsx",
+  "src/components/hermit/ChatPanel.tsx",
+  "src/components/hermit/ChatInput.tsx",
+  "src/components/hermit/MessageBubble.tsx",
+  "src/app/workshop/WorkshopClient.tsx",
+] as const;
+
+const forbiddenLocalVisualUtilities = [
+  /\btext-(?:xs|sm|base|lg|xl|2xl|3xl)\b/,
+  /\bfont-(?:bold|extrabold|black)\b/,
+  /\brounded-sm\b/,
+  /\bshadow-lh(?:-sm|-md|-deck)?\b/,
+  /\b[hw]-(?:3\.5|4|5|9)\b/,
+  /bg-\[linear-gradient/,
+  /text-primary-deep/,
+  /text-muted/,
+  /text-ink-soft/,
+  /style=\{\{[^}]*?(?:borderColor|boxShadow|background|color):/,
+] as const;
+
 describe("lighthouse design system contract", () => {
   it("exposes Classic Amber as the only runtime theme through globals and Tailwind aliases", () => {
     const globals = readProjectFile("src/app/globals.css");
@@ -156,8 +177,9 @@ describe("lighthouse design system contract", () => {
       'html[data-lighthouse-interface="classic"] [data-lh-page-hero]',
       'html[data-lighthouse-interface="classic"] [data-lh-card]',
       "font-family: var(--font-serif-stack);",
-      "background: rgba(255, 255, 255, 0.4);",
-      "box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);",
+      "--lh-surface: rgba(255, 255, 255, 0.64);",
+      "--lh-surface-solid: rgba(255, 255, 255, 0.76);",
+      "--lh-work-shadow: 0 16px 42px rgba(76, 54, 26, 0.08);",
       "drop-shadow(0 0 8px rgba(217, 119, 6, 0.5))",
     ].forEach((token) => {
       expect(globals).toContain(token);
@@ -195,6 +217,10 @@ describe("lighthouse design system contract", () => {
     const chatPanel = readProjectFile("src/components/hermit/ChatPanel.tsx");
     const chatInput = readProjectFile("src/components/hermit/ChatInput.tsx");
     const messageBubble = readProjectFile("src/components/hermit/MessageBubble.tsx");
+    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const chatPanelContract = `${chatPanel}\n${primitives}`;
+    const chatInputContract = `${chatInput}\n${primitives}`;
+    const messageBubbleContract = `${messageBubble}\n${primitives}`;
 
     [
       "data-lh-hermit-page",
@@ -204,6 +230,7 @@ describe("lighthouse design system contract", () => {
       "data-lh-hermit-title-en",
       "data-lh-hermit-description",
       "data-lh-hermit-chat-frame",
+      'data-lh-page-archetype="tool-workspace"',
     ].forEach((token) => {
       expect(hermitPage).toContain(token);
     });
@@ -213,34 +240,94 @@ describe("lighthouse design system contract", () => {
       "data-lh-hermit-panel-header",
       "data-lh-hermit-main",
       "data-lh-hermit-empty",
-      "data-lh-hermit-suggested-question",
+      "LhSuggestionList",
       "data-lh-hermit-footer",
     ].forEach((token) => {
       expect(chatPanel).toContain(token);
     });
 
-    ["data-lh-chat-input", "data-lh-chat-textarea", "data-lh-chat-submit"].forEach((token) => {
-      expect(chatInput).toContain(token);
+    ["data-lh-chat-input", "data-lh-chat-input-grid", "data-lh-chat-textarea", "data-lh-chat-submit"].forEach((token) => {
+      expect(chatInputContract).toContain(token);
     });
 
-    ["data-lh-message-row", "data-lh-message-avatar", "data-lh-message-bubble"].forEach((token) => {
-      expect(messageBubble).toContain(token);
+    ["data-lh-message-row", "data-lh-message-avatar", "data-lh-message-bubble", "data-lh-message-prose"].forEach((token) => {
+      expect(messageBubbleContract).toContain(token);
+    });
+
+    ["data-lh-suggestion-list", "data-lh-hermit-suggested-question"].forEach((token) => {
+      expect(chatPanelContract).toContain(token);
+    });
+
+    [
+      "LhChatShell",
+      "LhChatHeader",
+      "LhChatMain",
+      "LhChatFooter",
+      "LhChatInputShell",
+      "LhChatTextarea",
+      "LhChatSubmitButton",
+      "LhMessageRow",
+      "LhMessageAvatar",
+      "LhMessageBubble",
+      "LhSuggestionList",
+    ].forEach((token) => {
+      expect(primitives).toContain(token);
     });
 
     [
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-page]',
+      'html[data-lighthouse-interface="classic"] [data-lh-chat-shell][data-lh-panel]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-panel][data-lh-panel]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-panel-header]',
+      'html[data-lighthouse-interface="classic"] [data-lh-chat-scroll-content]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-main]',
       'html[data-lighthouse-interface="classic"] [data-lh-chat-input]',
+      'html[data-lighthouse-interface="classic"] [data-lh-suggestion-button]',
       'html[data-lighthouse-interface="classic"] [data-lh-message-bubble]',
+      'html[data-lighthouse-interface="classic"] [data-lh-message-prose]',
       "--font-noto-stack:",
       "--font-noto: var(--font-noto-stack);",
       "font-family: var(--font-noto-stack);",
-      "box-shadow: none;",
-      "display: none;",
-      "background: transparent;",
+      "background: var(--lh-surface-solid);",
+      "box-shadow: var(--lh-work-shadow);",
+      "display: block;",
     ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+  });
+
+  it("lets Workshop inherit shared page-level primitives before full page migration", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const workshop = readProjectFile("src/app/workshop/WorkshopClient.tsx");
+    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const contract = `${workshop}\n${primitives}`;
+
+    [
+      "LhMetaList",
+      "LhSegmentedControl",
+      "LhSubmissionCard",
+      "LhStateNotice",
+      "LhEmptyState",
+    ].forEach((token) => {
+      expect(workshop).toContain(token);
+    });
+
+    [
+      "data-lh-meta-list",
+      "data-lh-segmented-control",
+      "data-lh-segment",
+      "data-lh-submission-card",
+      "data-lh-submission-card-header",
+      "data-lh-submission-card-footer",
+      "data-lh-workshop-page",
+      "data-lh-workshop-section-tabs",
+      "data-lh-workshop-two-column",
+      "data-lh-workshop-filter-panel",
+      "data-lh-workshop-form",
+      "data-lh-workshop-card-list",
+      "data-lh-workshop-footer-grid",
+    ].forEach((token) => {
+      expect(contract).toContain(token);
       expect(globals).toContain(token);
     });
   });
@@ -288,6 +375,16 @@ describe("lighthouse design system contract", () => {
       "--text-title-page: var(--title-page);",
     ].forEach((token) => {
       expect(globals).toContain(token);
+    });
+  });
+
+  it("keeps migrated pages from defining local visual utilities after migration", () => {
+    migratedDesignSystemFiles.forEach((file) => {
+      const source = readProjectFile(file);
+
+      forbiddenLocalVisualUtilities.forEach((pattern) => {
+        expect(source, `${file} should inherit visual styles from Lighthouse primitives instead of ${pattern}`).not.toMatch(pattern);
+      });
     });
   });
 
@@ -343,6 +440,69 @@ describe("lighthouse design system contract", () => {
     expect(bodyBlock).not.toContain("var(--color-page-end) 100%");
     expect(bodyBeforeBlock).toContain("background: transparent;");
     expect(bodyBeforeBlock).not.toContain("--lh-body-accent-rgb");
+  });
+
+  it("binds migrated pages to runtime page archetypes instead of one-off visual treatments", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const heartPage = readProjectFile("src/app/heart/page.tsx");
+    const hermitPage = readProjectFile("src/app/hermit/page.tsx");
+    const actionPage = readProjectFile("src/app/action/page.tsx");
+    const workshopPage = readProjectFile("src/app/workshop/WorkshopClient.tsx");
+    const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
+    const patternsDoc = readProjectFile("docs/design/patterns.md");
+
+    [
+      'data-lh-page-archetype="cultural-reading"',
+      'data-lh-page-archetype="tool-workspace"',
+      'data-lh-page-archetype="case-workflow"',
+      'data-lh-page-archetype="workflow"',
+    ].forEach((token) => {
+      expect(`${heartPage}\n${hermitPage}\n${actionPage}\n${workshopPage}\n${visualSpec}\n${patternsDoc}`).toContain(token);
+    });
+
+    [
+      '[data-lh-page-archetype="cultural-reading"]',
+      '[data-lh-page-archetype="tool-workspace"]',
+      '[data-lh-page-archetype="case-workflow"]',
+      '[data-lh-page-archetype="workflow"]',
+      "--lh-ink-readable: rgba(44, 44, 44, 0.76);",
+      "--lh-surface-reading: rgba(255, 255, 255, 0.52);",
+      "--lh-page-shadow: 0 10px 30px rgba(86, 64, 32, 0.06);",
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+
+    expect(actionPage).toContain("data-lh-action-card");
+    expect(actionPage).toContain("data-lh-action-question");
+    expect(actionPage).toContain("data-lh-action-keynodes");
+    expect(hermitPage).not.toContain('className="hidden"');
+    expect(globals).not.toContain("filter: blur(3px)");
+  });
+
+  it("documents page-level style contracts for Heart and Hermit before page-specific styling", () => {
+    const heartPage = readProjectFile("src/app/heart/page.tsx");
+    const hermitPage = readProjectFile("src/app/hermit/page.tsx");
+    const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
+    const patternsDoc = readProjectFile("docs/design/patterns.md");
+
+    [
+      'data-lh-page="heart"',
+      'data-lh-page="hermit"',
+    ].forEach((token) => {
+      expect(`${heartPage}\n${hermitPage}\n${visualSpec}\n${patternsDoc}`).toContain(token);
+    });
+
+    [
+      "Page style contract",
+      "本心 / Heart",
+      "路引 / Hermit",
+      "首屏",
+      "禁用",
+      "Hidden context header",
+      "Five independent value themes",
+    ].forEach((token) => {
+      expect(`${visualSpec}\n${patternsDoc}`).toContain(token);
+    });
   });
 
   it("keeps the Heart homepage cohesive as an editorial prologue instead of colored card fragments", () => {

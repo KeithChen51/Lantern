@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>灯塔平台 | 视觉规范 (Design System)</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-lg); }
+    .color-swatch { border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--color-line-dark); }
+    .color-box { height: 100px; width: 100%; }
+    .color-info { padding: var(--space-sm); background: #fff; font-family: var(--font-sans); }
+    .color-name { font-weight: 700; font-size: var(--text-sm); margin-bottom: 4px; }
+    .color-value { color: var(--color-ink-soft); font-size: var(--text-xs); }
+
+    .typo-row { margin-bottom: var(--space-md); border-bottom: 1px solid var(--color-line-dark); padding-bottom: var(--space-sm); }
+    .typo-label { font-size: var(--text-xs); color: var(--color-brand-primary); text-transform: uppercase; margin-bottom: 8px; }
+
+    .space-row { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm); }
+    .space-box { background: var(--color-brand-primary); border-radius: 4px; }
+    .space-label { font-size: var(--text-sm); font-family: var(--font-sans); width: 120px; }
+
+    .glass-demo-bg {
+      background: url("../../../public/lighthouse-home-hero-bg-v2-realistic-shore.png") center/cover;
+      padding: var(--space-3xl); border-radius: 16px; margin-top: var(--space-md);
+      display: flex; gap: var(--space-xl);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand-mark" href="index.html">
+      <span class="mark-glyph" aria-hidden="true"></span>
+      <span>灯塔 Lighthouse | 视觉规范</span>
+    </a>
+  </header>
+
+  <main class="ds-container" style="padding-top: 120px;">
+
+    <section class="ds-section">
+      <div class="ds-subtitle">01 / Color System</div>
+      <h2 class="ds-title">色彩规范</h2>
+      <div class="token-grid">
+        <div class="color-swatch">
+          <div class="color-box" style="background: var(--color-brand-primary)"></div>
+          <div class="color-info"><div class="color-name">Brand Primary</div><div class="color-value">var(--color-brand-primary)</div></div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: var(--color-brand-hover)"></div>
+          <div class="color-info"><div class="color-name">Brand Hover</div><div class="color-value">var(--color-brand-hover)</div></div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: var(--color-brand-active)"></div>
+          <div class="color-info"><div class="color-name">Brand Active</div><div class="color-value">var(--color-brand-active)</div></div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: var(--color-bg-paper)"></div>
+          <div class="color-info"><div class="color-name">Paper Base</div><div class="color-value">var(--color-bg-paper)</div></div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: var(--color-bg-night)"></div>
+          <div class="color-info"><div class="color-name">Night Base</div><div class="color-value">var(--color-bg-night)</div></div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-box" style="background: var(--color-ink-base)"></div>
+          <div class="color-info"><div class="color-name">Ink Base</div><div class="color-value">var(--color-ink-base)</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-section">
+      <div class="ds-subtitle">02 / Typography Scale</div>
+      <h2 class="ds-title">流式排版系统</h2>
+
+      <div class="typo-row">
+        <div class="typo-label">Display Hero (Fluid Serif) - var(--text-display-hero)</div>
+        <div style="font-family: var(--font-serif); font-size: var(--text-display-hero); font-weight: 700;">灯塔 Lighthouse</div>
+      </div>
+      <div class="typo-row">
+        <div class="typo-label">Heading 1 (Serif) - var(--text-4xl)</div>
+        <div style="font-family: var(--font-serif); font-size: var(--text-4xl); font-weight: 700;">求真、尽善、致美</div>
+      </div>
+      <div class="typo-row">
+        <div class="typo-label">Heading 2 (Serif) - var(--text-3xl)</div>
+        <div style="font-family: var(--font-serif); font-size: var(--text-3xl); font-weight: 700;">服务品牌升级实践</div>
+      </div>
+      <div class="typo-row">
+        <div class="typo-label">Heading 3 (Serif) - var(--text-2xl)</div>
+        <div style="font-family: var(--font-serif); font-size: var(--text-2xl); font-weight: 700;">信任资产经营</div>
+      </div>
+      <div class="typo-row">
+        <div class="typo-label">Body Large (Sans) - var(--text-lg)</div>
+        <div style="font-family: var(--font-sans); font-size: var(--text-lg);">代表极致的追求与行动。专业判断、认真执行、持续改善。</div>
+      </div>
+      <div class="typo-row">
+        <div class="typo-label">Body Base (Sans) - var(--text-base)</div>
+        <div style="font-family: var(--font-sans); font-size: var(--text-base);">在规则、成本、效率和资源约束之间，选择更有益于人、更有利于长期信任的做法。</div>
+      </div>
+    </section>
+
+    <section class="ds-section">
+      <div class="ds-subtitle">03 / Spacing System</div>
+      <h2 class="ds-title">空间与间距栅格</h2>
+
+      <div class="space-row"><div class="space-label">--space-xs (8px)</div><div class="space-box" style="width: 8px; height: 16px;"></div></div>
+      <div class="space-row"><div class="space-label">--space-sm (16px)</div><div class="space-box" style="width: 16px; height: 16px;"></div></div>
+      <div class="space-row"><div class="space-label">--space-md (24px)</div><div class="space-box" style="width: 24px; height: 16px;"></div></div>
+      <div class="space-row"><div class="space-label">--space-lg (32px)</div><div class="space-box" style="width: 32px; height: 16px;"></div></div>
+      <div class="space-row"><div class="space-label">--space-xl (48px)</div><div class="space-box" style="width: 48px; height: 16px;"></div></div>
+      <div class="space-row"><div class="space-label">--space-2xl (64px)</div><div class="space-box" style="width: 64px; height: 16px;"></div></div>
+    </section>
+
+    <section class="ds-section" style="border: none;">
+      <div class="ds-subtitle">04 / Motion & Glassmorphism</div>
+      <h2 class="ds-title">毛玻璃材质与微交互</h2>
+      <p style="color: var(--color-ink-soft); font-size: var(--text-lg);">全局统一使用 <code>cubic-bezier(0.22, 1, 0.36, 1)</code> 阻尼曲线。悬浮卡片体验极度平滑的升降与光影变化。</p>
+
+      <div class="glass-demo-bg">
+        <div class="nav-pill" style="align-self: flex-start;">
+          <a href="#">深色毛玻璃 (Glass Dark Token)</a>
+        </div>
+
+        <div class="glass-card" style="width: 300px;">
+          <h3 style="color: #ffd88d;">浅色毛玻璃</h3>
+          <p>Glass Light Token. 应用于暗色背景上的卡片展示。带高斯模糊与内高光边框。</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

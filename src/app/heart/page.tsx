@@ -165,7 +165,7 @@ const visibleGuideSections = guideSections.filter((section) => section.href !== 
 
 export default function HeartPage() {
   return (
-    <div data-lh-heart-page className="pb-16">
+    <div data-lh-heart-page data-lh-page="heart" data-lh-page-archetype="cultural-reading" className="pb-16">
       <LhPageHero
         data-lh-heart-hero
         title={

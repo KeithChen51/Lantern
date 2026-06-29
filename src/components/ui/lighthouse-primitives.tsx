@@ -405,6 +405,201 @@ export const LhSearchBox = React.forwardRef<HTMLInputElement, Omit<LhTextFieldPr
 );
 LhSearchBox.displayName = "LhSearchBox";
 
+export const LhChatShell = React.forwardRef<HTMLDivElement, LhPanelProps>(
+  ({ className, ...props }, ref) => (
+    <LhPanel
+      data-lh-chat-shell
+      elevated
+      ref={ref}
+      className={cn("w-full", className)}
+      {...props}
+    />
+  ),
+);
+LhChatShell.displayName = "LhChatShell";
+
+export const LhChatHeader = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+  ({ className, ...props }, ref) => <header data-lh-chat-header ref={ref} className={className} {...props} />,
+);
+LhChatHeader.displayName = "LhChatHeader";
+
+export const LhChatMain = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+  ({ className, ...props }, ref) => <main data-lh-chat-main ref={ref} className={className} {...props} />,
+);
+LhChatMain.displayName = "LhChatMain";
+
+export const LhChatFooter = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+  ({ className, ...props }, ref) => <footer data-lh-chat-footer ref={ref} className={className} {...props} />,
+);
+LhChatFooter.displayName = "LhChatFooter";
+
+export const LhChatInputShell = React.forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElement>>(
+  ({ className, ...props }, ref) => <form data-lh-chat-input ref={ref} className={className} {...props} />,
+);
+LhChatInputShell.displayName = "LhChatInputShell";
+
+export const LhChatTextarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
+  ({ className, ...props }, ref) => <textarea data-lh-chat-textarea ref={ref} className={className} {...props} />,
+);
+LhChatTextarea.displayName = "LhChatTextarea";
+
+export const LhChatSubmitButton = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+  ({ className, ...props }, ref) => <button data-lh-chat-submit ref={ref} className={className} {...props} />,
+);
+LhChatSubmitButton.displayName = "LhChatSubmitButton";
+
+export interface LhMessageRowProps extends React.HTMLAttributes<HTMLElement> {
+  messageRole: "assistant" | "user";
+}
+
+export function LhMessageRow({ className, messageRole, ...props }: LhMessageRowProps) {
+  return <article data-lh-message-row data-role={messageRole} className={className} {...props} />;
+}
+
+export interface LhMessageAvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: "assistant" | "user";
+}
+
+export function LhMessageAvatar({ className, variant = "assistant", ...props }: LhMessageAvatarProps) {
+  return <span data-lh-message-avatar data-variant={variant} className={className} {...props} />;
+}
+
+export interface LhMessageBubbleProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "assistant" | "user" | "typing";
+}
+
+export function LhMessageBubble({ className, variant = "assistant", ...props }: LhMessageBubbleProps) {
+  return <div data-lh-message-bubble data-variant={variant} className={className} {...props} />;
+}
+
+export interface LhSuggestionListProps {
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+  questions: readonly string[];
+  disabled?: boolean;
+  onSelect: (question: string) => void;
+}
+
+export function LhSuggestionList({ label, icon, questions, disabled = false, onSelect }: LhSuggestionListProps) {
+  return (
+    <section data-lh-suggestion-list data-lh-hermit-suggestions aria-label={String(label)}>
+      <div data-lh-suggestion-heading>
+        {icon}
+        {label}
+      </div>
+      <div data-lh-suggestion-items>
+        {questions.map((question) => (
+          <button
+            data-lh-suggestion-button
+            data-lh-hermit-suggested-question
+            key={question}
+            type="button"
+            onClick={() => onSelect(question)}
+            disabled={disabled}
+          >
+            {question}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export interface LhMetaListItem {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+export interface LhMetaListProps extends React.HTMLAttributes<HTMLDListElement> {
+  items: readonly LhMetaListItem[];
+  columns?: 1 | 2;
+}
+
+export function LhMetaList({ className, items, columns = 1, ...props }: LhMetaListProps) {
+  return (
+    <dl data-lh-meta-list data-columns={columns} className={className} {...props}>
+      {items.map((item, index) => (
+        <div data-lh-meta-item key={index}>
+          {item.icon && <span data-lh-meta-icon>{item.icon}</span>}
+          <span data-lh-meta-copy>
+            <dt>{item.label}</dt>
+            <dd>{item.value}</dd>
+          </span>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+export interface LhSegmentedControlOption<T extends string> {
+  value: T;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+export interface LhSegmentedControlProps<T extends string> extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
+  label: string;
+  options: readonly LhSegmentedControlOption<T>[];
+  value: T;
+  onChange: (value: T) => void;
+}
+
+export function LhSegmentedControl<T extends string>({
+  className,
+  label,
+  options,
+  value,
+  onChange,
+  ...props
+}: LhSegmentedControlProps<T>) {
+  return (
+    <div data-lh-segmented-control className={className} role="group" aria-label={label} {...props}>
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <button
+            data-lh-segment
+            data-active={active ? "true" : undefined}
+            key={option.value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(option.value)}
+          >
+            {option.icon}
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export interface LhSubmissionCardProps extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
+  title: React.ReactNode;
+  badges?: React.ReactNode;
+  meta?: React.ReactNode;
+  action?: React.ReactNode;
+  footer?: React.ReactNode;
+}
+
+export function LhSubmissionCard({ className, title, badges, meta, action, footer, children, ...props }: LhSubmissionCardProps) {
+  return (
+    <LhCard data-lh-submission-card className={className} {...props}>
+      <div data-lh-submission-card-header>
+        <span data-lh-submission-card-copy>
+          {badges && <span data-lh-submission-card-badges>{badges}</span>}
+          <h3>{title}</h3>
+          {meta && <span data-lh-submission-card-meta>{meta}</span>}
+        </span>
+        {action}
+      </div>
+      {children && <div data-lh-submission-card-body>{children}</div>}
+      {footer && <div data-lh-submission-card-footer>{footer}</div>}
+    </LhCard>
+  );
+}
+
 export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;

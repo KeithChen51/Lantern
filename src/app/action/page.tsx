@@ -26,7 +26,7 @@ export default async function ActionPage() {
   const actionCases = await getPublicActionCaseSummaries();
 
   return (
-    <div className="space-y-8 pb-12">
+    <div data-lh-action-page data-lh-page-archetype="case-workflow" className="space-y-8 pb-12">
       <LhPageHero
         title="回到决策的十字路口，看清楚我们的理念和权衡。"
         description={
@@ -48,7 +48,7 @@ export default async function ActionPage() {
         <div className="grid gap-5">
           {actionCases.map((actionCase) => (
             <Link key={actionCase.slug} href={actionCase.href} className="group block">
-              <LhCard className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md lg:grid-cols-[minmax(0,1fr)_360px]">
+              <LhCard data-lh-action-card className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-[var(--lh-card-hover-shadow)] lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="grid min-w-0 grid-rows-[auto_1fr_auto] gap-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <LhChip tone="primary">{actionCase.date}</LhChip>
@@ -63,18 +63,18 @@ export default async function ActionPage() {
                   </div>
 
                   <div>
-                    <h2 className="max-w-4xl text-2xl font-extrabold leading-tight text-ink md:text-3xl">
+                    <h2 className="max-w-4xl text-[length:var(--title-section)] font-[var(--weight-extrabold)] leading-[1.14] text-ink">
                       {actionCase.title}
                     </h2>
-                    <p className="mt-5 max-w-3xl text-base leading-8 text-ink-soft">{actionCase.summary}</p>
-                    <div className="mt-5 rounded-sm border border-line bg-surface-quiet p-4">
-                      <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">案例问题</p>
-                      <p className="mt-2 text-sm leading-7 text-ink-soft">{actionCase.question}</p>
+                    <p className="mt-5 max-w-3xl text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink-readable">{actionCase.summary}</p>
+                    <div data-lh-action-question className="mt-5 rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet p-4">
+                      <p className="text-[length:var(--type-caption)] font-[var(--weight-extrabold)] tracking-[var(--tracking-kicker)] text-primary-text">案例问题</p>
+                      <p className="mt-2 text-[length:var(--type-body)] leading-[var(--leading-reading)] text-ink-secondary">{actionCase.question}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between border-t border-line pt-4">
-                    <span className="text-sm font-bold text-muted">笃行学习卡</span>
+                    <span className="text-[length:var(--type-control)] font-[var(--weight-bold)] text-ink-tertiary">笃行学习卡</span>
                     <LhChip tone="primary" className="min-h-9 px-3">
                       <Icon icon={lighthouseIcons.document} className="h-4 w-4" />
                       查看复盘
@@ -82,19 +82,19 @@ export default async function ActionPage() {
                   </div>
                 </div>
 
-                <aside className="rounded-sm border border-line bg-surface-quiet p-5">
-                  <p className="text-xs font-extrabold tracking-[0.14em] text-primary-deep">关键节点</p>
+                <aside data-lh-action-keynodes className="rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet p-5">
+                  <p className="text-[length:var(--type-caption)] font-[var(--weight-extrabold)] tracking-[var(--tracking-kicker)] text-primary-text">关键节点</p>
                   <ol className="mt-4 grid gap-3">
                     {actionCase.highlights.map((highlight, index) => (
-                      <li key={highlight} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-sm leading-6 text-ink-soft">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-line bg-panel text-xs font-extrabold text-primary-deep">
+                      <li key={highlight} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-secondary">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-[var(--lh-control-radius)] border border-line bg-panel text-[length:var(--type-caption)] font-[var(--weight-extrabold)] text-primary-text">
                           {index + 1}
                         </span>
                         <span>{highlight}</span>
                       </li>
                     ))}
                   </ol>
-                  <p className="mt-5 border-t border-line pt-4 text-xs leading-6 text-muted">
+                  <p className="mt-5 border-t border-line pt-4 text-[length:var(--type-caption)] leading-[var(--leading-caption)] text-ink-tertiary">
                     维护字段：背景与触发、认知冲突、关键选择、客户影响、门店能力、风险控制、来源材料。
                   </p>
                 </aside>

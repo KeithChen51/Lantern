@@ -16,6 +16,23 @@ This document defines page and workflow patterns for the Lighthouse platform. It
 | Workshop | Co-create and submit practice guidance | Workflow-led, role-aware, status-visible. |
 | Admin | Maintain content and review submissions | Dense, neutral, operational. |
 
+## Runtime Page Archetypes
+
+Runtime pages should declare their page type before adding local visual rules. The archetype is a layout and hierarchy contract, not a theme switch.
+
+| Archetype | Runtime hook | Current pages | Contract |
+| --- | --- | --- | --- |
+| Cultural reading | `data-lh-page-archetype="cultural-reading"` | Heart/Home | Editorial title, readable prose, sparse guide links, no decorative card wall or value-color themes. |
+| Tool workspace | `data-lh-page-archetype="tool-workspace"` | Hermit | Visible context header, stable work surface, persistent input, clear empty/loading/error states. |
+| Case workflow | `data-lh-page-archetype="case-workflow"` | Action | Main reading column plus supporting rail; case question, key nodes, and metadata do not compete at equal weight. |
+| Workflow | `data-lh-page-archetype="workflow"` | Workshop | Segments, filters, submission cards, and state notices inherit shared primitives and tokenized density. |
+
+Rules:
+
+- Do not create a new archetype for one page until the pattern appears in at least two places or has a clear product-level role.
+- Archetypes may tune spacing, surface strength, and reading width; they must not introduce a new color palette.
+- Page-local typography, shadows, radius, and transparent surface rules are migration debt unless promoted into primitives or archetype CSS.
+
 ## Global Shell
 
 The shell should help users answer three questions: where am I, what is active, and what will my action affect?
@@ -38,6 +55,19 @@ Rules:
 ## Heart Pattern
 
 Heart is a value-introduction and light guide surface. It can carry the warmest visual treatment in the platform, but it is still a product page, not a VI showcase.
+
+Page style contract:
+
+| Item | Contract |
+| --- | --- |
+| Runtime hook | `data-lh-page="heart"` + `data-lh-page-archetype="cultural-reading"` |
+| Page job | Establish why the platform exists and give the rest of the product a shared value baseline. |
+| First screen | Large serif proposition, restrained reading-path aside, no feature-card grid before the cultural thesis is understood. |
+| Reading rhythm | Hero -> prologue -> origin -> value ledger -> downstream guide -> closing line. Each block should feel like the next paragraph of one argument. |
+| Visual weight | The main sentence and section claims carry weight. Cards, chips, icons, and guide links stay secondary. |
+| Components | `LhPageHero`, `LhSectionHeader`, `LhChip`, `LhDataTableShell`; value content uses page-specific `data-lh-heart-*` hooks, not generic card grids. |
+| Motion | One-time, subtle entrance only. Motion must never make content unreadable or depend on blur. |
+| Forbidden | Five independent value themes, decorative glow, dense module cards, oversized buttons, service-brand VI controls, or new color palettes. |
 
 Use:
 
@@ -106,6 +136,19 @@ Rules:
 
 Hermit is a domain-specific automotive after-sales service culture assistant. It is not a generic FAQ bot and not yet an autonomous agent.
 
+Page style contract:
+
+| Item | Contract |
+| --- | --- |
+| Runtime hook | `data-lh-page="hermit"` + `data-lh-page-archetype="tool-workspace"` |
+| Page job | Help users ask about a concrete service situation and receive an answer grounded in principles, related cases, and next action. |
+| First screen | Compact context title, stable chat work surface, visible input affordance, and a small set of high-quality suggested questions. |
+| Work rhythm | Context -> input -> assistant response -> source/logic -> next step. The page should feel like a dependable workbench, not a campaign page. |
+| Visual weight | The input and latest answer are primary. Suggestions, status, and helper copy stay secondary. |
+| Components | `LhChatShell`, `LhChatHeader`, `LhChatMain`, `LhChatFooter`, `LhChatInputShell`, `LhMessageBubble`, `LhSuggestionList`, `LhStateNotice` when needed. |
+| Motion | Local interaction feedback only: focus, hover, loading, and message arrival. No decorative ambient animation. |
+| Forbidden | Hidden context header, empty landing-style hero, decorative prompt chips, anonymous chat bubbles without role/source structure, or broad-agent positioning. |
+
 Answer shape should support:
 
 - Direct answer.
@@ -124,6 +167,11 @@ UI requirements:
 - Loading and retry states are clear.
 - User and assistant message bubbles use readable contrast and shared tokens.
 - Domain scope should remain visible in empty states and helper copy.
+
+Runtime migration rule:
+
+- Hermit chat uses `LhChat*`, `LhMessage*`, and `LhSuggestionList` primitives. Page files keep behavior, data flow, and role semantics; visual styling belongs to `globals.css` token rules and component primitives.
+- Migrated Hermit files are covered by the design-system test migration list. They should not reintroduce local Tailwind text sizes, raw font weights, ad hoc rounded corners, `shadow-lh-*`, or arbitrary gradient backgrounds.
 
 Knowledge boundary for v1:
 
@@ -161,6 +209,13 @@ Avoid:
 - Forum-style social mechanics as the default model.
 - Multi-role permission complexity before it is needed.
 - Decorative contribution cards that obscure review status.
+
+Runtime migration rule:
+
+- Workshop public pages use `LhSegmentedControl` for section and role filters, `LhMetaList` for contribution/status/rule rows, and `LhSubmissionCard` for published guides and submission records.
+- Page files keep workflow state, API calls, and user actions. Visual styling belongs to `globals.css` token rules and component primitives.
+- Migrated Workshop files are covered by the design-system test migration list. They should not reintroduce local Tailwind text sizes, raw font weights, ad hoc rounded corners, `shadow-lh-*`, arbitrary gradients, or local icon sizing.
+- Admin Workshop remains a later migration surface; do not treat its current density or local classes as the public Workshop visual contract.
 
 ## Admin And Content Maintenance
 
