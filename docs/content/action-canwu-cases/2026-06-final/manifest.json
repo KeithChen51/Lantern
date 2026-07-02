@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "contentSetId": "action-canwu-cases-2026-06-final",
+  "title": "一般参悟案例-格式统一版",
+  "receivedInRepoDate": "2026-07-02",
+  "sourceStatus": "final_confirmed_source",
+  "integrationState": "staged_not_imported",
+  "targetModule": "action",
+  "targetModuleName": "笃行",
+  "sourceArchive": "一般参悟案例-格式统一版.zip",
+  "archiveSha256": "42375C571A848F53086D8D9EEED30159E1F41A3F592AE0A43E09587002C0591A",
+  "sourceRoot": "source/一般参悟案例-格式统一版",
+  "notes": [
+    "This batch is the canonical incoming source for future Action import work.",
+    "The files are staged for project awareness and traceability, not yet published as structured Action content.",
+    "Do not mutate the source files in place during later conversion work."
+  ],
+  "items": [
+    {
+      "order": 1,
+      "title": "诚信经营——“强管控”还是“不管控”",
+      "file": "source/一般参悟案例-格式统一版/一、 诚信经营——“强管控”还是“不管控”.md"
+    },
+    {
+      "order": 2,
+      "title": "是否应该为取送车司机设立休息区",
+      "file": "source/一般参悟案例-格式统一版/二、 是否应该为取送车司机设立休息区.md"
+    },
+    {
+      "order": 3,
+      "title": "取送车客诉的处理原则定义",
+      "file": "source/一般参悟案例-格式统一版/三、 取送车客诉的处理原则定义.md"
+    },
+    {
+      "order": 4,
+      "title": "门店没有合适的空间时，服务顾问是否可以在接待台吃饭？",
+      "file": "source/一般参悟案例-格式统一版/四、 门店没有合适的空间时，服务顾问是否可以在接待台吃饭？.md"
+    },
+    {
+      "order": 5,
+      "title": "车间降温的抉择——是“成本负担”还是“效能投资”？",
+      "file": "source/一般参悟案例-格式统一版/五、 车间降温的抉择——是“成本负担”还是“效能投资”？.md"
+    },
+    {
+      "order": 6,
+      "title": "通往客休区的楼梯——“过度追求面积利用率”的代价",
+      "file": "source/一般参悟案例-格式统一版/六、 通往客休区的楼梯——“过度追求面积利用率”的代价.md"
+    },
+    {
+      "order": 7,
+      "title": "服务顾问身后的空间——给专业留出呼吸感",
+      "file": "source/一般参悟案例-格式统一版/七、 服务顾问身后的空间——给专业留出呼吸感.md"
+    },
+    {
+      "order": 8,
+      "title": "茶几上的插座与主动服务三原则",
+      "file": "source/一般参悟案例-格式统一版/八、 茶几上的插座与主动服务三原则.md"
+    },
+    {
+      "order": 9,
+      "title": "客户休息区的售卖边界——是补充选择还是体验破坏？",
+      "file": "source/一般参悟案例-格式统一版/九、 客户休息区的售卖边界——是补充选择还是体验破坏？.md"
+    },
+    {
+      "order": 10,
+      "title": "保养周期撮合——给客户少一次打扰的价值",
+      "file": "source/一般参悟案例-格式统一版/十、 保养周期撮合——给客户少一次打扰的价值.md"
+    },
+    {
+      "order": 11,
+      "title": "当门店已达到权限开通标准，区域是否应该额外提高门槛？（仅事业部内发布）",
+      "file": "source/一般参悟案例-格式统一版/十一、 当门店已达到权限开通标准，区域是否应该额外提高门槛？（仅事业部内发布）.md"
+    },
+    {
+      "order": 12,
+      "title": "在快速扩店的进程中，其他品牌转化而来的门店，硬装是否要全部推倒重来？",
+      "file": "source/一般参悟案例-格式统一版/十二、 在快速扩店的进程中，其他品牌转化而来的门店，硬装是否要全部推倒重来？.md"
+    },
+    {
+      "order": 13,
+      "title": "同一集团内紧邻的不同品牌服务店，是否可以合并运营？合并的边界在哪里？",
+      "file": "source/一般参悟案例-格式统一版/十三、 同一集团内紧邻的不同品牌服务店，是否可以合并运营？合并的边界在哪里？.md"
+    },
+    {
+      "order": 14,
+      "title": "服务人员工作期间佩戴执法记录仪是否适宜",
+      "file": "source/一般参悟案例-格式统一版/十四、 服务人员工作期间佩戴执法记录仪是否适宜.md"
+    },
+    {
+      "order": 15,
+      "title": "营运车与私家车的服务渠道是否应该分开？",
+      "file": "source/一般参悟案例-格式统一版/十五、 营运车与私家车的服务渠道是否应该分开？.md"
+    },
+    {
+      "order": 16,
+      "title": "为什么服务店要在节假日进行个性化氛围布置",
+      "file": "source/一般参悟案例-格式统一版/十六、为什么服务店要在节假日进行个性化氛围布置.md"
+    },
+    {
+      "order": 17,
+      "title": "延保产品能不能驻场销售？",
+      "file": "source/一般参悟案例-格式统一版/十七、 延保产品能不能驻场销售？.md"
+    },
+    {
+      "order": 18,
+      "title": "“成本包袱”还是“情感资产”？——经营承压时，精诚吧标准降不降？",
+      "file": "source/一般参悟案例-格式统一版/十八、 “成本包袱”还是“情感资产”？——经营承压时，精诚吧标准降不降？.md"
+    },
+    {
+      "order": 19,
+      "title": "极端天气救援，如何避免员工“用爱发电”？",
+      "file": "source/一般参悟案例-格式统一版/十九、 极端天气救援，如何避免员工“用爱发电”？.md"
+    },
+    {
+      "order": 20,
+      "title": "电商平台价格内卷下，轮胎定价策略的多轮调整",
+      "file": "source/一般参悟案例-格式统一版/二十、 电商平台价格内卷下，轮胎定价策略的多轮调整.md"
+    }
+  ]
+}

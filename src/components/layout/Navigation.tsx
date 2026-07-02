@@ -30,6 +30,7 @@ interface NavigationProps {
   onTogglePin: () => void;
   isMobileOpen: boolean;
   onMobileClose: () => void;
+  isHomeSurface?: boolean;
 }
 
 function isItemActive(pathname: string, href: string) {
@@ -297,8 +298,9 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
   }, [pathname]);
 
   return (
-    <div className={cn("relative", className)}>
+    <div data-lh-sidebar-notifications className={cn("relative", className)}>
       <button
+        data-lh-sidebar-notification-button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
@@ -309,7 +311,7 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
         title="通知"
       >
         <Icon icon={lighthouseIcons.bell} className="h-5 w-5" />
-        <span className="absolute left-8 top-2 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />
+        <span data-lh-sidebar-notification-dot className="absolute left-8 top-2 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />
         {isExpanded && <span className="text-left">消息提醒</span>}
       </button>
 
@@ -381,23 +383,76 @@ function NavLinks({
   });
 }
 
-export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose }: NavigationProps) {
+export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose, isHomeSurface = false }: NavigationProps) {
   const pathname = usePathname();
   const isExpanded = isPinned;
+  const desktopSidebarRef = React.useRef<HTMLElement | null>(null);
+  const desktopSidebarStyle = {
+    width: isExpanded ? "var(--lh-classic-sidebar-width)" : "var(--lh-classic-sidebar-collapsed-width)",
+    ...(isHomeSurface
+      ? {
+          "--lh-home-nav-progress": "0%",
+          "--lh-home-nav-progress-value": 0,
+        }
+      : {}),
+  } as React.CSSProperties;
+
+  React.useEffect(() => {
+    const node = desktopSidebarRef.current;
+    if (!node) {
+      return;
+    }
+
+    if (!isHomeSurface) {
+      node.style.removeProperty("--lh-home-nav-progress");
+      node.style.removeProperty("--lh-home-nav-progress-value");
+      return;
+    }
+
+    let animationFrame = 0;
+
+    const updateProgress = () => {
+      animationFrame = 0;
+      const viewportHeight = window.innerHeight || 1;
+      const progress = Math.min(Math.max(window.scrollY / (viewportHeight * 0.72), 0), 1);
+      node.style.setProperty("--lh-home-nav-progress", `${(progress * 100).toFixed(1)}%`);
+      node.style.setProperty("--lh-home-nav-progress-value", progress.toFixed(3));
+    };
+
+    const scheduleUpdate = () => {
+      if (animationFrame === 0) {
+        animationFrame = window.requestAnimationFrame(updateProgress);
+      }
+    };
+
+    updateProgress();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (animationFrame !== 0) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [isHomeSurface]);
 
   return (
     <>
       <nav
+        ref={desktopSidebarRef}
         data-lh-sidebar
         data-expanded={isExpanded ? "true" : "false"}
-        style={{ width: isExpanded ? "var(--lh-classic-sidebar-width)" : "var(--lh-classic-sidebar-collapsed-width)" }}
+        data-home-surface={isHomeSurface ? "true" : undefined}
+        style={desktopSidebarStyle}
         className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-200 ease-out md:flex"
         aria-label="主导航"
       >
         <Logo isExpanded={isExpanded} onTogglePin={onTogglePin} />
         <SidebarSearch isExpanded={isExpanded} className={isExpanded ? "mt-5" : "mt-4"} />
 
-        <div className="mt-6 flex flex-1 flex-col gap-2">
+        <div data-lh-sidebar-nav-group className="mt-6 flex flex-1 flex-col gap-2">
           <NavLinks isExpanded={isExpanded} pathname={pathname} />
         </div>
 
@@ -433,7 +488,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose 
           </div>
           <SidebarSearch isExpanded onNavigate={onMobileClose} className="mt-5" />
 
-          <div className="mt-6 flex flex-1 flex-col gap-2">
+          <div data-lh-sidebar-nav-group className="mt-6 flex flex-1 flex-col gap-2">
             <NavLinks isExpanded pathname={pathname} onNavigate={onMobileClose} />
           </div>
 

@@ -17,22 +17,63 @@ const revealObserver = new IntersectionObserver((entries) => {
 
 revealItems.forEach((item) => revealObserver.observe(item));
 
-// 背景切换逻辑
-const bgButtons = document.querySelectorAll('[data-bg]');
-const root = document.documentElement;
 const heroBg = document.getElementById('hero-bg');
 
-bgButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    const newBg = `url("${button.dataset.bg}")`;
-    root.style.setProperty('--hero-image', newBg);
+// 顶部搜索与消息浮层
+const popoverToggles = document.querySelectorAll('[data-popover-toggle]');
+const popoverPanels = document.querySelectorAll('[data-popover-panel]');
 
-    if (heroBg) {
-      heroBg.style.backgroundImage = newBg;
+function closeAllPopovers(exceptId = '') {
+  popoverToggles.forEach((toggle) => {
+    const targetId = toggle.getAttribute('data-popover-toggle');
+    if (targetId === exceptId) return;
+    toggle.setAttribute('aria-expanded', 'false');
+  });
+
+  popoverPanels.forEach((panel) => {
+    if (panel.id === exceptId) return;
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+  });
+}
+
+popoverToggles.forEach((toggle) => {
+  toggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const targetId = toggle.getAttribute('data-popover-toggle');
+    const panel = targetId ? document.getElementById(targetId) : null;
+    if (!panel) return;
+
+    const nextOpen = toggle.getAttribute('aria-expanded') !== 'true';
+    closeAllPopovers(targetId);
+    toggle.setAttribute('aria-expanded', String(nextOpen));
+    panel.classList.toggle('is-open', nextOpen);
+    panel.setAttribute('aria-hidden', String(!nextOpen));
+
+    if (nextOpen) {
+      panel.querySelector('input')?.focus();
     }
+  });
+});
 
-    bgButtons.forEach((item) => item.classList.remove('is-active'));
-    button.classList.add('is-active');
+document.addEventListener('click', (event) => {
+  if (!(event.target instanceof Element)) return;
+  if (event.target.closest('.utility-popover')) return;
+  closeAllPopovers();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeAllPopovers();
+});
+
+const demoSearchInput = document.querySelector('[data-demo-search]');
+const demoSearchResults = document.querySelectorAll('[data-demo-search-results] a');
+
+demoSearchInput?.addEventListener('input', (event) => {
+  const query = event.target.value.trim().toLowerCase();
+  demoSearchResults.forEach((item) => {
+    const text = item.textContent.toLowerCase();
+    item.classList.toggle('is-hidden', Boolean(query) && !text.includes(query));
   });
 });
 

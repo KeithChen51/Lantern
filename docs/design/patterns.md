@@ -52,9 +52,9 @@ Rules:
 - Use clear region boundaries for sidebars, review panels, and scoped edit forms.
 - Avoid changing global navigation based on local page state.
 
-## Heart Pattern
+## Home / Heart Pattern
 
-Heart is a value-introduction and light guide surface. It can carry the warmest visual treatment in the platform, but it is still a product page, not a VI showcase.
+Home is the upgraded Heart page. The top navigation label `本心` points to the homepage anchor and narrative body, not to a duplicate peer page. It can carry the warmest and most brand-like treatment in the platform, but it is still a Lighthouse product surface, not a service-brand VI showcase.
 
 Page style contract:
 
@@ -62,11 +62,11 @@ Page style contract:
 | --- | --- |
 | Runtime hook | `data-lh-page="heart"` + `data-lh-page-archetype="cultural-reading"` |
 | Page job | Establish why the platform exists and give the rest of the product a shared value baseline. |
-| First screen | Large serif proposition, restrained reading-path aside, no feature-card grid before the cultural thesis is understood. |
-| Reading rhythm | Hero -> prologue -> origin -> value ledger -> downstream guide -> closing line. Each block should feel like the next paragraph of one argument. |
+| First screen | Full-viewport brand-spirit cover with a realistic lighthouse / sea background, warm veil, subdued immersive sidebar, small kicker `精诚服务品牌再出发`, and one large serif value line: `求真、尽善、致美、大爱、幸福`. |
+| Reading rhythm | Brand cover -> prologue / restart context -> origin -> value path / ledger -> downstream guide -> closing line. Each block should feel like the next paragraph of one argument. |
 | Visual weight | The main sentence and section claims carry weight. Cards, chips, icons, and guide links stay secondary. |
-| Components | `LhPageHero`, `LhSectionHeader`, `LhChip`, `LhDataTableShell`; value content uses page-specific `data-lh-heart-*` hooks, not generic card grids. |
-| Motion | One-time, subtle entrance only. Motion must never make content unreadable or depend on blur. |
+| Components | `HomeBrandHero`, `LhSectionHeader`, `LhChip`, `LhDataTableShell`; value content uses page-specific `data-lh-home-brand-*` and `data-lh-heart-*` hooks, not generic card grids. |
+| Motion | One-time subtle entrance plus restrained scroll depth on the cover. Motion must never make content unreadable or depend on blur. |
 | Forbidden | Five independent value themes, decorative glow, dense module cards, oversized buttons, service-brand VI controls, or new color palettes. |
 
 Use:
@@ -89,13 +89,15 @@ Avoid:
 
 Runtime home pattern:
 
-- Home currently routes to Heart, so Heart carries first-impression responsibility.
-- `data-lh-heart-page` owns the page rhythm: hero, prologue, origin, value scroll, downstream guide, and closing sentence.
+- Home and Heart are one surface. `data-lh-heart-page` owns the full page rhythm, while `data-lh-home-brand-hero` owns only the first-screen brand cover.
+- `data-lh-home-brand-bg` uses a single approved background image for the cover. Do not layer a CSS lighthouse, duplicate beam, extra glow, or separate illustrated mark on top of the image.
+- `data-home-surface="true"` is allowed on the sidebar only for this cover context. It transitions back to the operational shell through `--lh-home-nav-progress` as the page returns to warm paper.
 - `data-lh-heart-prologue` and `data-lh-heart-origin` use editorial separators and reading-width copy before any operational entry points.
 - `data-lh-heart-value-scroll` keeps 求真、尽善、致美、大爱、幸福 in one visual system; it uses amber and warm paper tokens only.
 - `data-lh-heart-guide-list` is a navigation list, not a card deck. It should feel like a continuation path after reading, not a competing feature grid.
 - Heart motion uses `--lh-motion-*` and `--lh-ease-*` tokens. Motion should clarify reading order and interaction feedback, not decorate.
 - Entrance animation is allowed once on page load for hero and major sections; repeated or looping motion is not allowed.
+- Scroll-driven motion is allowed only for cover depth and the sidebar surface transition. Other product pages should not use scroll-driven chrome changes.
 - Hover motion may use opacity and transform only. It must not change layout dimensions, spacing, or content order.
 - `prefers-reduced-motion` must disable Heart page motion and keep all content immediately available.
 

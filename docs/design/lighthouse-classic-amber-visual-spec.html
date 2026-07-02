@@ -874,9 +874,13 @@
               <li><b>UI 字体</b><span><code>--font-hei</code>：苹方优先，用于导航、表单、按钮、后台表格和普通 UI 正文。</span></li>
               <li><b>标题字体</b><span><code>--font-serif</code>：思源宋优先，用于页面主标题、价值阅读标题和编辑性段落。</span></li>
               <li><b>排版基准</b><span>正文从 15-16px 起步，控件 14px，说明文字 12-13px；页面标题只在真正的顶层场景使用 40-72px，不复制到模块标题。</span></li>
-              <li><b>文化序章</b><span>首页/本心页可使用更克制的 36-57px 思源宋主句，固定为两行表达，避免字号过大压碎后续内容。</span></li>
+              <li><b>首页封面</b><span>首页/本心首屏可使用 64-100px 思源宋品牌主张，一整行横排优先；第二屏开始回到常规阅读层级。</span></li>
               <li><b>阅读行高</b><span>正文 1.7-1.8，控件 1.4-1.5，标题 1.12-1.2。行距服务阅读，不为装饰拉开。</span></li>
             </ul>
+          </div>
+          <div class="grid two" aria-label="homepage brand typography contract">
+            <article class="card"><h3>Home Brand Display</h3><p>首页即本心。首屏价值主张 <code>求真、尽善、致美、大爱、幸福</code> 使用思源宋、约 64-100px、700 字重和更舒展的行高。它只属于首页品牌精神封面，不是普通页面标题 token。</p></article>
+            <article class="card"><h3>Runtime Hook</h3><p><code>data-lh-home-brand-title</code> 管住首页封面大字；第二屏开始回到 Classic Amber 的阅读字号、节奏和暖纸面。不要把该字号复制到卡片、后台、空状态或普通详情页。</p></article>
           </div>
           <article class="heading-system">
             <h3>标题层级样式</h3>
@@ -885,7 +889,7 @@
               <div class="heading-row">
                 <span class="heading-role"><b>Display / Hero</b><code>--title-display</code></span>
                 <strong class="heading-sample heading-display">灯塔平台视觉规范</strong>
-                <span class="heading-note">思源宋，40-72px，900，1.04。只用于首屏、价值阅读封面和空状态主句；首页/本心文化序章收至 36-57px。</span>
+                <span class="heading-note">思源宋，40-72px，700/900，1.04。用于普通首屏、价值阅读封面和空状态主句；首页品牌封面另用 Home Brand Display。</span>
               </div>
               <div class="heading-row">
                 <span class="heading-role"><b>Page Title</b><code>--title-page</code></span>
@@ -994,6 +998,11 @@
             <div class="shell-rule"><b>Tablet</b>横屏可保留侧栏；竖屏过渡为紧凑顶部栏和底部导航，不让内容被窄侧栏挤压。</div>
             <div class="shell-rule"><b>Mobile</b>底部五入口导航，触控目标不低于 44px；主操作靠近内容或底部，避免依赖 hover。</div>
             <div class="shell-rule"><b>Content</b>不同终端共享同一信息架构，但页面骨架可以重排：桌面主从布局，移动端单列纵向阅读。</div>
+          </div>
+
+          <div class="grid two">
+            <article class="card"><h3>Operational Shell</h3><p>默认产品壳层使用奶油色浮动侧栏、Solar 图标、搜索、通知、清晰 focus 和固定导航顺序。镜鉴、笃行、路引、Workshop、Admin 和详情页都使用这一状态。</p></article>
+            <article class="card"><h3>Immersive Home Shell</h3><p>首页/本心封面可通过 <code>data-home-surface="true"</code> 降低侧栏存在感，并用 <code>--lh-home-nav-progress</code> 随滚动自然回到 Operational Shell。它不是全站深色模式。</p></article>
           </div>
 
           <div class="grid two">
@@ -1111,6 +1120,10 @@
               <li><b>反馈动效</b>必须跟随组件状态：hover、pressed、focus-visible、selected、loading。没有状态含义的漂浮、闪烁和循环动画禁止使用。</li>
               <li><b>可访问性</b>必须响应 <code>prefers-reduced-motion</code>。开启 reduced motion 后，内容应立即可见，交互仍保留颜色、边框和焦点反馈。</li>
             </ul>
+            <article class="motion-demo">
+              <h3>Homepage Scroll Transition</h3>
+              <p>首页/本心封面允许两类滚动叙事：背景和文字的轻微层次移动，以及侧栏从暗色沉浸态过渡到奶油色运营态。其他页面不使用滚动驱动的全局导航变色。</p>
+            </article>
           </div>
         </div>
       </section>
@@ -1120,9 +1133,9 @@
         <div class="section-body pattern-system">
           <article class="home-pattern">
             <div>
-              <h3>Home / Heart Cultural Prologue</h3>
-              <p>当前首页进入本心页，因此本心页承担第一印象。它不是功能卡片目录，而是平台理念的文化序章：先给出一句明确主张，再让价值、来源、行动入口逐层出现。</p>
-              <div class="home-flow" aria-label="home page pattern flow"><span>Hero 主句</span><span>Prologue 序章</span><span>Origin 来源</span><span>Values 阅读</span><span>Guides 行动</span><span>Closing 收束</span></div>
+              <h3>Home / Heart Brand Prologue</h3>
+              <p>首页就是本心的升级版。首屏是品牌精神封面：远处灯塔、海面雾光、浅色大字和低存在感导航；第二屏开始进入精诚服务价值框架叙事，并回到 Classic Amber 的暖纸阅读系统。</p>
+              <div class="home-flow" aria-label="home page pattern flow"><span>Brand Cover</span><span>Restart Context</span><span>Origin 来源</span><span>Value Path</span><span>Guides 行动</span><span>Closing 收束</span></div>
             </div>
             <strong class="home-title-sample"><span>于此，回答“精诚服务”</span><span>为什么再次出发。</span></strong>
           </article>

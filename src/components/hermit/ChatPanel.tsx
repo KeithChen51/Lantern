@@ -2,33 +2,78 @@
 
 import { useChat } from "@ai-sdk/react";
 import { Icon } from "@iconify/react";
+import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import {
-  LhChatFooter,
-  LhChatHeader,
-  LhChatMain,
-  LhChatShell,
-  LhStatusBadge,
-  LhSuggestionList,
-} from "@/components/ui/lighthouse-primitives";
+import { LhStatusBadge } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 
 const SUGGESTED_QUESTIONS = [
-  "客户一直追问交车时间，但车间还没有最终结论，服务顾问应该怎么回应？",
-  "一个案例里同时有真实告知、客户关怀和门店成本，主维度怎么判断？",
-  "客户利益和员工承压发生冲突时，如何区分善和爱？",
-  "如果证据不足，路引应该先向我追问哪些事实？",
+  "交车时间还没结论，客户一直追问时怎么回应？",
+  "客户诉求和门店成本冲突时，先判断什么？",
+  "客户情绪已经上来，第一句话怎么稳住？",
 ];
+
+function getLocalGreeting(date = new Date()) {
+  const hour = date.getHours();
+
+  if (hour >= 22 || hour < 5) return "深夜辛苦了";
+  if (hour >= 18) return "晚上好";
+  if (hour >= 14) return "下午好";
+  if (hour >= 11) return "中午好";
+  return "早上好";
+}
+
+function getTextContent(message: UIMessage) {
+  return message.parts
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+}
+
+function getConversationTitle(messages: UIMessage[]) {
+  const firstUserMessage = messages.find((message) => message.role === "user");
+  const text = firstUserMessage ? getTextContent(firstUserMessage).trim() : "";
+  if (!text) return "当前服务场景";
+  return text.length > 34 ? `${text.slice(0, 34)}…` : text;
+}
+
+function isVisibleMessage(message: UIMessage) {
+  return message.role !== "assistant" || getTextContent(message).trim().length > 0;
+}
+
+function shouldShowThinkingIndicator(messages: UIMessage[], isLoading: boolean) {
+  if (!isLoading) return false;
+
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage) return true;
+  if (lastMessage.role !== "assistant") return true;
+
+  return getTextContent(lastMessage).trim().length === 0;
+}
 
 export function ChatPanel() {
   const { messages, sendMessage, status } = useChat();
   const [input, setInput] = useState("");
+  const [greeting, setGreeting] = useState("您好");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isLoading = status === "submitted" || status === "streaming";
   const hasMessages = messages.length > 0;
+  const conversationTitle = getConversationTitle(messages);
+  const visibleMessages = messages.filter(isVisibleMessage);
+  const showThinkingIndicator = shouldShowThinkingIndicator(messages, isLoading);
+
+  useEffect(() => {
+    function updateGreeting() {
+      setGreeting(getLocalGreeting());
+    }
+
+    updateGreeting();
+    const timer = window.setInterval(updateGreeting, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -50,73 +95,67 @@ export function ChatPanel() {
     sendMessage({ text: question });
   }
 
+  if (!hasMessages) {
+    return (
+      <EmptyChatStart
+        greeting={greeting}
+        input={input}
+        isLoading={isLoading}
+        onInputChange={setInput}
+        onSubmit={handleSubmit}
+        onSuggestedQuestion={handleSuggestedQuestion}
+      />
+    );
+  }
+
   return (
-    <LhChatShell data-lh-hermit-panel>
-      <LhChatHeader data-lh-hermit-panel-header>
-        <div data-lh-chat-header-layout>
-          <div data-lh-chat-header-title-row>
-            <span data-lh-chat-header-icon>
-              <Icon icon={lighthouseIcons.hermit} />
-            </span>
-            <div data-lh-chat-header-copy>
-              <div data-lh-chat-title-row>
-                <h1 data-lh-chat-title>路引 AI 对话助手</h1>
-                <LhStatusBadge tone="success">知识已接入</LhStatusBadge>
-              </div>
-              <p data-lh-chat-description>
-                直接描述服务场景，路引会按事实、判断依据和下一步话术来回应。
-              </p>
-            </div>
-          </div>
-          <div data-lh-chat-header-status>
-            <LhStatusBadge tone={isLoading ? "warning" : "success"}>{isLoading ? "生成中" : "可提问"}</LhStatusBadge>
-            <span>Enter 发送 · Shift + Enter 换行</span>
+    <section data-lh-hermit-conversation aria-label="路引当前对话">
+      <div data-lh-hermit-conversation-bar>
+        <div data-lh-hermit-conversation-title>
+          <span data-lh-hermit-conversation-icon>
+            <Icon icon={lighthouseIcons.hermit} />
+          </span>
+          <div data-lh-hermit-conversation-copy>
+            <span data-lh-hermit-conversation-kicker>当前场景</span>
+            <strong data-lh-hermit-conversation-topic>{conversationTitle}</strong>
           </div>
         </div>
-      </LhChatHeader>
+        <div data-lh-hermit-conversation-status>
+          <LhStatusBadge tone={isLoading ? "warning" : "neutral"}>{isLoading ? "生成中" : "可追问"}</LhStatusBadge>
+          <span>本心 · 镜鉴 · 笃行</span>
+        </div>
+      </div>
 
-      <LhChatMain
+      <div
         data-lh-hermit-main
         ref={scrollRef}
       >
-        <div data-lh-chat-scroll-content data-empty={!hasMessages ? "true" : undefined}>
-          {!hasMessages ? (
-            <EmptyChatStart
-              input={input}
-              isLoading={isLoading}
-              onInputChange={setInput}
-              onSubmit={handleSubmit}
-              onSuggestedQuestion={handleSuggestedQuestion}
-            />
-          ) : (
-            <>
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
-              {isLoading && messages[messages.length - 1]?.role !== "assistant" && <TypingIndicator />}
-            </>
-          )}
+        <div data-lh-chat-scroll-content>
+          {visibleMessages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          {showThinkingIndicator && <TypingIndicator label="思考中" />}
         </div>
-      </LhChatMain>
+      </div>
 
-      {hasMessages && (
-      <LhChatFooter data-lh-hermit-footer>
-        <div data-lh-chat-footer-inner>
+      <footer data-lh-hermit-footer>
+        <div data-lh-hermit-composer>
           <ChatInput value={input} onChange={setInput} onSubmit={handleSubmit} isLoading={isLoading} />
         </div>
-      </LhChatFooter>
-      )}
-    </LhChatShell>
+      </footer>
+    </section>
   );
 }
 
 function EmptyChatStart({
+  greeting,
   input,
   isLoading,
   onInputChange,
   onSubmit,
   onSuggestedQuestion,
 }: {
+  greeting: string;
   input: string;
   isLoading: boolean;
   onInputChange: (value: string) => void;
@@ -124,36 +163,26 @@ function EmptyChatStart({
   onSuggestedQuestion: (question: string) => void;
 }) {
   return (
-    <section data-lh-hermit-empty>
-      <article data-lh-hermit-empty-copy>
-        <span data-lh-hermit-empty-icon>
-          <Icon icon={lighthouseIcons.hermit} />
-        </span>
-        <div>
-          <h2>把服务场景直接发给路引</h2>
-          <p>
-            说明客户状态、限制条件和你卡住的判断，路引会按事实、维度、依据和下一步动作回应。
-          </p>
+    <section data-lh-hermit-start aria-labelledby="hermit-start-title">
+      <div data-lh-hermit-start-inner>
+        <h2 id="hermit-start-title" data-lh-hermit-start-title>
+          <span data-lh-hermit-greeting>{greeting}</span>，我们来讨论什么服务场景？
+        </h2>
+        <div data-lh-hermit-start-input>
+          <ChatInput value={input} onChange={onInputChange} onSubmit={onSubmit} isLoading={isLoading} />
         </div>
-        <div data-lh-hermit-empty-tags>
-          <span>可追问</span>
-          <span>会标出证据不足</span>
-          <span>输出可执行动作</span>
-        </div>
-      </article>
-
-      <div data-lh-hermit-empty-input>
-        <ChatInput value={input} onChange={onInputChange} onSubmit={onSubmit} isLoading={isLoading} />
-        <LhSuggestionList
-          label="推荐问题"
-          icon={<Icon data-lh-suggestion-heading-icon icon={lighthouseIcons.send} />}
-          questions={SUGGESTED_QUESTIONS}
-          onSelect={onSuggestedQuestion}
-          disabled={isLoading}
-        />
-        <div data-lh-hermit-empty-guidance>
-          <span>建议包含：客户状态、时间线、门店限制、已做动作。</span>
-          <span>路引不替代现场责任与最终决策。</span>
+        <div data-lh-hermit-start-examples aria-label="可直接提问">
+          {SUGGESTED_QUESTIONS.map((question) => (
+            <button
+              data-lh-hermit-start-example
+              key={question}
+              type="button"
+              onClick={() => onSuggestedQuestion(question)}
+              disabled={isLoading}
+            >
+              {question}
+            </button>
+          ))}
         </div>
       </div>
     </section>

@@ -173,7 +173,9 @@ describe("lighthouse design system contract", () => {
       'html[data-lighthouse-interface="classic"] [data-lh-shell]',
       'html[data-lighthouse-interface="classic"] [data-lh-header-bar]',
       'html[data-lighthouse-interface="classic"] [data-lh-sidebar]',
+      'html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile])',
       'html[data-lighthouse-interface="classic"] [data-lh-nav-link]',
+      'html[data-lighthouse-interface="classic"] [data-lh-home-brand-hero]',
       'html[data-lighthouse-interface="classic"] [data-lh-page-hero]',
       'html[data-lighthouse-interface="classic"] [data-lh-card]',
       "font-family: var(--font-serif-stack);",
@@ -187,8 +189,11 @@ describe("lighthouse design system contract", () => {
 
     [
       "data-lh-shell",
+      "data-lh-home-shell",
       "data-lh-main",
+      "data-lh-home-main",
       "data-lh-main-frame",
+      "React.useState(false)",
       "md:pl-[var(--lh-classic-main-offset)]",
       "md:pl-[var(--lh-classic-main-collapsed-offset)]",
     ].forEach((token) => {
@@ -199,7 +204,14 @@ describe("lighthouse design system contract", () => {
       expect(header).toContain(token);
     });
 
-    ["data-lh-sidebar", "data-lh-logo", "data-lh-nav-link", "data-lh-sidebar-toggle"].forEach((token) => {
+    [
+      "data-lh-sidebar",
+      "data-lh-logo",
+      "data-lh-nav-link",
+      "data-lh-sidebar-toggle",
+      "data-lh-sidebar-nav-group",
+      "data-lh-sidebar-notification-button",
+    ].forEach((token) => {
       expect(navigation).toContain(token);
     });
 
@@ -228,7 +240,6 @@ describe("lighthouse design system contract", () => {
       "data-lh-hermit-title",
       "data-lh-hermit-title-cn",
       "data-lh-hermit-title-en",
-      "data-lh-hermit-description",
       "data-lh-hermit-chat-frame",
       'data-lh-page-archetype="tool-workspace"',
     ].forEach((token) => {
@@ -236,14 +247,34 @@ describe("lighthouse design system contract", () => {
     });
 
     [
-      "data-lh-hermit-panel",
-      "data-lh-hermit-panel-header",
+      "getLocalGreeting",
+      "isVisibleMessage",
+      "shouldShowThinkingIndicator",
+      "visibleMessages",
+      "showThinkingIndicator",
+      "深夜辛苦了",
+      "我们来讨论什么服务场景？",
+      "data-lh-hermit-start",
+      "data-lh-hermit-start-inner",
+      "data-lh-hermit-start-title",
+      "data-lh-hermit-greeting",
+      "data-lh-hermit-start-input",
+      "data-lh-hermit-start-examples",
+      "data-lh-hermit-start-example",
+      "getConversationTitle",
+      "data-lh-hermit-conversation",
+      "data-lh-hermit-conversation-bar",
+      "data-lh-hermit-conversation-topic",
+      "data-lh-hermit-conversation-status",
       "data-lh-hermit-main",
-      "data-lh-hermit-empty",
-      "LhSuggestionList",
       "data-lh-hermit-footer",
+      "data-lh-hermit-composer",
     ].forEach((token) => {
       expect(chatPanel).toContain(token);
+    });
+
+    ["LhChatShell", "LhChatHeader", "LhChatFooter", "data-lh-hermit-panel-header"].forEach((token) => {
+      expect(chatPanel).not.toContain(token);
     });
 
     ["data-lh-chat-input", "data-lh-chat-input-grid", "data-lh-chat-textarea", "data-lh-chat-submit"].forEach((token) => {
@@ -254,7 +285,11 @@ describe("lighthouse design system contract", () => {
       expect(messageBubbleContract).toContain(token);
     });
 
-    ["data-lh-suggestion-list", "data-lh-hermit-suggested-question"].forEach((token) => {
+    expect(messageBubbleContract).toContain("data-lh-message-meta-note");
+    expect(messageBubbleContract).toContain('label = "思考中"');
+    expect(chatPanel).toContain('<TypingIndicator label="思考中" />');
+
+    ["data-lh-hermit-start-example", "data-lh-hermit-start-examples"].forEach((token) => {
       expect(chatPanelContract).toContain(token);
     });
 
@@ -269,28 +304,29 @@ describe("lighthouse design system contract", () => {
       "LhMessageRow",
       "LhMessageAvatar",
       "LhMessageBubble",
-      "LhSuggestionList",
     ].forEach((token) => {
       expect(primitives).toContain(token);
     });
 
     [
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-page]',
-      'html[data-lighthouse-interface="classic"] [data-lh-chat-shell][data-lh-panel]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-panel][data-lh-panel]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-panel-header]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation-bar]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-composer]',
       'html[data-lighthouse-interface="classic"] [data-lh-chat-scroll-content]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-start]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-start-title]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-start-example]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-main]',
       'html[data-lighthouse-interface="classic"] [data-lh-chat-input]',
-      'html[data-lighthouse-interface="classic"] [data-lh-suggestion-button]',
       'html[data-lighthouse-interface="classic"] [data-lh-message-bubble]',
+      'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation] [data-lh-message-bubble]',
       'html[data-lighthouse-interface="classic"] [data-lh-message-prose]',
       "--font-noto-stack:",
       "--font-noto: var(--font-noto-stack);",
       "font-family: var(--font-noto-stack);",
-      "background: var(--lh-surface-solid);",
-      "box-shadow: var(--lh-work-shadow);",
-      "display: block;",
+      "border-color: transparent !important;",
+      "box-shadow: none !important;",
     ].forEach((token) => {
       expect(globals).toContain(token);
     });
@@ -507,8 +543,10 @@ describe("lighthouse design system contract", () => {
 
   it("keeps the Heart homepage cohesive as an editorial prologue instead of colored card fragments", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
+    const homeBrandHero = readProjectFile("src/components/heart/HomeBrandHero.tsx");
     const globals = readProjectFile("src/app/globals.css");
     const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
+    const heartSurface = `${heartPage}\n${homeBrandHero}`;
 
     [
       "data-lh-heart-page",
@@ -517,12 +555,19 @@ describe("lighthouse design system contract", () => {
       "data-lh-heart-value-scroll",
       "data-lh-heart-guide-list",
       "data-lh-heart-closing",
-      "data-lh-heart-title-line",
+      "data-lh-home-brand-hero",
+      "data-lh-home-brand-bg",
+      "data-lh-home-brand-veil",
+      "data-lh-home-brand-title",
+      "data-lh-home-brand-path",
     ].forEach((token) => {
-      expect(heartPage).toContain(token);
+      expect(heartSurface).toContain(token);
       expect(globals).toContain(`[${token}]`);
     });
 
+    expect(homeBrandHero).toContain("requestAnimationFrame");
+    expect(homeBrandHero).toContain("prefers-reduced-motion: reduce");
+    expect(heartPage).not.toContain("LhPageHero");
     expect(heartPage).not.toContain("valueToneStyles");
     expect(heartPage).not.toContain("--value-color");
     expect(heartPage).not.toContain("bg-[linear-gradient(135deg,var(--color-primary-deep),var(--color-primary))]");
@@ -536,9 +581,77 @@ describe("lighthouse design system contract", () => {
     expect(globals).toContain("transition: background-color var(--lh-motion-medium) var(--lh-ease-standard), border-color var(--lh-motion-medium) var(--lh-ease-standard), transform var(--lh-motion-medium) var(--lh-ease-out);");
     expect(visualSpec).toContain('<section id="motion" class="section">');
     expect(visualSpec).toContain("--lh-motion-fast: 160ms;");
-    expect(visualSpec).toContain("首页/本心文化序章收至 36-57px");
-    expect(visualSpec).toContain("Home / Heart Cultural Prologue");
+    expect(visualSpec).toContain("Home Brand Display");
+    expect(visualSpec).toContain("data-lh-home-brand-title");
+    expect(visualSpec).toContain("64-100px");
+    expect(visualSpec).toContain("Immersive Home Shell");
+    expect(visualSpec).toContain("Home / Heart Brand Prologue");
     expect(visualSpec).toContain("prefers-reduced-motion");
+  });
+
+  it("keeps the homepage sidebar subdued on the dark hero and restores the normal shell on scroll", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const appShell = readProjectFile("src/components/layout/AppShell.tsx");
+    const navigation = readProjectFile("src/components/layout/Navigation.tsx");
+
+    [
+      "isHomeSurface={isHomeSurface}",
+      'pathname === "/" || pathname === "/heart"',
+    ].forEach((token) => {
+      expect(appShell).toContain(token);
+    });
+
+    [
+      "isHomeSurface?: boolean",
+      "desktopSidebarRef",
+      "--lh-home-nav-progress",
+      "--lh-home-nav-progress-value",
+      "window.requestAnimationFrame",
+      'data-home-surface={isHomeSurface ? "true" : undefined}',
+    ].forEach((token) => {
+      expect(navigation).toContain(token);
+    });
+
+    [
+      '[data-lh-sidebar][data-home-surface="true"][data-expanded="false"]:not([data-mobile])',
+      "--lh-home-nav-progress",
+      "--lh-home-nav-progress-value",
+      "color-mix(in srgb, rgba(250, 244, 229, 0.94) var(--lh-home-nav-progress, 0%), rgba(35, 35, 31, 0.34))",
+      "[data-lh-sidebar-search-trigger]",
+      "[data-lh-sidebar-notification-button]",
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+
+    expect(globals).not.toContain('[data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-nav-link] { color: color-mix');
+  });
+
+  it("keeps the visual system docs aligned with the homepage brand cover and shell variants", () => {
+    const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
+    const tokens = readProjectFile("docs/design/tokens.md");
+    const components = readProjectFile("docs/design/components.md");
+    const patterns = readProjectFile("docs/design/patterns.md");
+    const doDont = readProjectFile("docs/design/do-dont.md");
+    const docs = `${visualSpec}\n${tokens}\n${components}\n${patterns}\n${doDont}`;
+
+    [
+      "Home Brand Display",
+      "Home / Heart Brand Prologue",
+      "Operational Shell",
+      "Immersive Home Shell",
+      "data-lh-home-brand-title",
+      'data-home-surface="true"',
+      "--lh-home-nav-progress",
+      "Homepage / Heart may use scroll progress",
+      "Home and Heart are one surface",
+      "single approved background image",
+    ].forEach((token) => {
+      expect(docs).toContain(token);
+    });
+
+    expect(docs).not.toContain("Home currently routes to Heart");
+    expect(docs).not.toContain("Home / Heart Cultural Prologue");
+    expect(docs).not.toContain("36-57px");
   });
 
   it("does not mount runtime theme or typeface switching in the app shell", () => {

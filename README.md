@@ -106,6 +106,8 @@ npm run start  # 启动生产服务
 
 ```text
 docs/
+  content/
+    action-canwu-cases/      # 已确认、待进入 Action / 笃行的参悟案例内容源
   lighthouse-workshop-co-creation-report.md  # 共创机制方案汇报文档
   plans/
     2026-05-14-lighthouse-production-architecture-v0.1.md
@@ -134,6 +136,7 @@ scripts/
 ## 当前实现状态
 
 - 已有 `Heart / 本心`、`Mirror / 镜鉴`、`Action / 笃行`、`Workshop / 共创`、`Hermit / 路引` 页面或预览内容。
+- 已归档 `一般参悟案例-格式统一版` 最终稿，位置见 `docs/content/action-canwu-cases/2026-06-final/`；当前是待进入 `Action / 笃行` 的内容源，尚未作为结构化页面或管理端发布内容上线。
 - `Hermit` 已具备基于本地知识源的 RAG 对话链路。
 - `Workshop / 共创` 已接入 Phase 1 API：提交、AI 初审占位、管理员审核、编辑后发布、公共指南和贡献榜单。
 - 后台管理页位于 `/admin/workshop`，当前使用品牌方最高管理员占位身份。
@@ -152,6 +155,7 @@ scripts/
 ## 下一步建议
 
 - 将首页调整为 `Heart / 本心`，使平台第一入口回到服务理念。
+- 将 `docs/content/action-canwu-cases/2026-06-final/` 中的 20 个最终参悟案例转换为 `Action / 笃行` 结构化内容。
 - 将 `Workshop / 共创` demo 接入真实数据结构、服务端持久化和管理员审核后台。
 - 设计管理员审核后台、发布流程和驳回反馈模板。
 - 将已发布 Do & Don't 内容纳入 Hermit 推荐与知识源规划。

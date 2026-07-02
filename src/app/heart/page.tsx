@@ -3,9 +3,9 @@ import { Icon } from "@iconify/react";
 import {
   LhChip,
   LhDataTableShell,
-  LhPageHero,
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
+import { HomeBrandHero } from "@/components/heart/HomeBrandHero";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { isPublicWorkshopEnabled } from "@/config/features";
 
@@ -153,45 +153,12 @@ const guideSections = [
   },
 ];
 
-const readingPath = [
-  "先理解为什么要持续经营客户信任",
-  "再看求真、尽善、致美、大爱、幸福如何进入服务体系",
-  PUBLIC_WORKSHOP_ENABLED
-    ? "最后进入案例、实践、共创和问答，回到具体场景中判断"
-    : "最后进入案例、实践和问答，回到具体场景中判断",
-];
-
 const visibleGuideSections = guideSections.filter((section) => section.href !== "/workshop" || PUBLIC_WORKSHOP_ENABLED);
 
 export default function HeartPage() {
   return (
     <div data-lh-heart-page data-lh-page="heart" data-lh-page-archetype="cultural-reading" className="pb-16">
-      <LhPageHero
-        data-lh-heart-hero
-        title={
-          <>
-            <span data-lh-heart-title-line>于此，回答“精诚服务”</span>
-            <span data-lh-heart-title-line>为什么再次出发。</span>
-          </>
-        }
-        description={
-          <>
-            <p>
-              汽车后市场服务日趋同质化，竞争加剧，服务和价格再难形成长期护城河。客户关系的经营质量，正在成为长期经营的分水岭。
-            </p>
-            <p>
-              “本心”讨论的，正是精诚服务如何持续经营客户信任：从提供功能型服务，走向建立价值型关系。
-            </p>
-            <p>
-              {PUBLIC_WORKSHOP_ENABLED
-                ? "先理解求真、尽善、致美、大爱、幸福，再去看案例、实践、共创和问答，后面的内容才有共同的出发点。"
-                : "先理解求真、尽善、致美、大爱、幸福，再去看案例、实践和问答，后面的内容才有共同的出发点。"}
-            </p>
-          </>
-        }
-        asideTitle="阅读路径"
-        asideItems={readingPath.map((item) => ({ title: item }))}
-      />
+      <HomeBrandHero />
 
       <section data-lh-heart-prologue>
         <div data-lh-heart-prologue-lead>
@@ -216,26 +183,26 @@ export default function HeartPage() {
           <p data-lh-heart-kicker>核心</p>
           <h2>精诚服务的核心</h2>
           <p>
-            新的服务价值框架并非对“精诚”的重写，而是对其内涵的延伸，把“精于勤，诚于心”的朴素共识进一步转化为可理解、可判断、可执行的价值路径。
+            新的服务价值框架并非对“精诚”的重写，而是对其内涵的升华，把“精于勤，诚于心”的朴素共识进一步转化为可理解、可判断、可执行的价值路径。
           </p>
         </div>
         <div data-lh-heart-origin-pair>
           <article>
             <h3>精</h3>
             <p>
-              精，代表极致的追求与行动。专业判断、认真执行、持续改善，最终体现在清楚的流程、合理的排产、顺畅的协作和稳定的交付上。
+              精，代表极致的追求与行动。专业判断、认真执行、持续改善，最终体现在清晰的流程、合理的排产、顺畅的协作和更高质量的交付之上，服务之美在严谨与从容中自然流露。
             </p>
           </article>
           <article>
             <h3>诚</h3>
             <p>
-              诚，代表内在的价值与品格。真实、善意、秩序和关怀，不停留在态度上，而体现在客户关系、员工支持和组织管理里。
+              诚，代表内在的价值与品格。真实、善意、秩序和关怀，不停留在态度层面，而贯穿于客户关系、员工支持和组织管理之中；在真实处见诚意，在善意中见秩序，去伪存真，美美与客。
             </p>
           </article>
         </div>
       </section>
 
-      <section data-lh-heart-values>
+      <section id="heart-values" data-lh-heart-values>
         <LhSectionHeader
           eyebrow="价值路径"
           title="求真、尽善、致美、大爱、幸福"

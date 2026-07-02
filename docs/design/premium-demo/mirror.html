@@ -317,13 +317,63 @@
         <span>灯塔 Lighthouse</span>
       </a>
 
-      <nav class="nav-pill" aria-label="页面导航">
+      <button class="mobile-menu-btn" aria-label="打开菜单">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.6" fill="none"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+
+      <div class="topbar-actions">
+        <nav class="nav-pill" aria-label="页面导航">
+          <a href="index.html">本心</a>
+          <a href="mirror.html" class="is-active">镜鉴</a>
+          <a href="action.html">笃行</a>
+          <a href="hermit.html">路引</a>
+        </nav>
+
+        <div class="utility-actions" aria-label="全局工具">
+          <div class="utility-popover">
+            <button class="utility-button" type="button" data-popover-toggle="search-popover" aria-expanded="false" aria-controls="search-popover" aria-label="打开搜索">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+            </button>
+            <div class="utility-panel search-panel" id="search-popover" data-popover-panel aria-hidden="true">
+              <label class="search-field">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+                <input type="search" placeholder="搜索本心、镜鉴、笃行、路引" data-demo-search />
+              </label>
+              <div class="search-results" data-demo-search-results>
+                <a href="index.html"><strong>本心</strong><span>价值起点：理解精诚服务的判断标准。</span></a>
+                <a href="mirror.html"><strong>镜鉴</strong><span>外部标杆：看行业观察、标杆企业和服务案例。</span></a>
+                <a href="action.html"><strong>笃行</strong><span>内部实践：复盘真实服务场景和判断训练。</span></a>
+                <a href="hermit.html"><strong>路引</strong><span>AI问答：描述服务场景，获得判断依据和下一步话术。</span></a>
+              </div>
+            </div>
+          </div>
+
+          <div class="utility-popover">
+            <button class="utility-button" type="button" data-popover-toggle="notice-popover" aria-expanded="false" aria-controls="notice-popover" aria-label="打开消息提醒">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 10.5a6 6 0 1 0-12 0c0 3.7-1.5 5.2-2.4 6.1-.4.4-.1 1.1.5 1.1h15.8c.6 0 .9-.7.5-1.1-.9-.9-2.4-2.4-2.4-6.1Z"></path><path d="M9.8 20.2a2.4 2.4 0 0 0 4.4 0"></path></svg>
+              <span class="notice-dot" aria-hidden="true"></span>
+            </button>
+            <div class="utility-panel notice-panel" id="notice-popover" data-popover-panel aria-hidden="true">
+              <p class="utility-panel-title">今日可处理</p>
+              <ul>
+                <li>路引已可直接接收服务场景，并按事实、依据和下一步话术回应。</li>
+                <li>镜鉴与笃行分别用于外部标杆和内部实践复盘。</li>
+                <li>首页将承接本心内容，作为价值路径的共同入口。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="mobile-nav-drawer" aria-hidden="true">
+      <nav aria-label="移动端导航">
         <a href="index.html">本心</a>
-        <a href="mirror.html" style="color: var(--color-ink-base); background: var(--color-ink-inverse);">镜鉴</a>
+        <a href="mirror.html" class="is-active">镜鉴</a>
         <a href="action.html">笃行</a>
         <a href="hermit.html">路引</a>
       </nav>
-    </header>
+    </div>
 
     <main>
       <section class="mirror-hero">
@@ -558,5 +608,6 @@
     }, { root: null, rootMargin: '0px', threshold: 0.15 });
     items.forEach((item) => observer.observe(item));
   </script>
+  <script src="scripts.js"></script>
 </body>
 </html>

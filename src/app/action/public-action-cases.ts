@@ -1,5 +1,5 @@
 import { actionCaseService, type ActionCaseCoverImage, type ActionCaseRecord } from "@/modules/content";
-import { ACTION_CASES, type ActionCase, getActionCaseBySlug } from "./action-cases";
+import { ACTION_CASES, type ActionCase, getActionCaseBySlug, isMarkdownActionCase } from "./action-cases";
 
 export type PublicActionCaseSummary = {
   source: "managed" | "static";
@@ -26,6 +26,13 @@ export type PublicActionCaseDetail =
     };
 
 function staticSummary(actionCase: ActionCase): PublicActionCaseSummary {
+  const highlights = isMarkdownActionCase(actionCase)
+    ? actionCase.headings
+        .filter((heading) => heading.level === 2)
+        .slice(0, 4)
+        .map((heading) => heading.title)
+    : actionCase.decisionNodes.map((decision) => decision.title);
+
   return {
     source: "static",
     slug: actionCase.slug,
@@ -37,7 +44,7 @@ function staticSummary(actionCase: ActionCase): PublicActionCaseSummary {
     summary: actionCase.brief.oneLine,
     question: actionCase.brief.caseQuestion,
     coverImageUrl: actionCase.metadata.imageUrl ?? null,
-    highlights: actionCase.decisionNodes.map((decision) => decision.title),
+    highlights,
   };
 }
 

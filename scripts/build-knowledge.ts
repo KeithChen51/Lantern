@@ -9,7 +9,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { ContentStatus, ContentType, PrismaClient } from "@prisma/client";
-import { ACTION_CASES } from "../src/app/action/action-cases";
+import { ACTION_CASES, isMarkdownActionCase, isStructuredActionCase } from "../src/app/action/action-cases";
 import {
   buildKnowledgeChunks,
   formatActionCaseKnowledgeDocuments,
@@ -213,7 +213,17 @@ async function main() {
 
   const documents = [
     ...readStaticMarkdownDocuments(),
-    ...formatActionCaseKnowledgeDocuments(ACTION_CASES),
+    ...formatActionCaseKnowledgeDocuments(ACTION_CASES.filter(isStructuredActionCase)),
+    ...ACTION_CASES.filter(isMarkdownActionCase).map((actionCase) =>
+      formatMarkdownKnowledgeDocument({
+        id: `action-case:${actionCase.slug}`,
+        source: `Action 案例库 / ${actionCase.metadata.title}`,
+        sourceType: "action_case",
+        evidenceTier: actionCase.metadata.status === "published" ? "exact" : "analogous",
+        title: actionCase.metadata.title,
+        content: actionCase.markdown,
+      }),
+    ),
     ...(await readDatabaseKnowledgeDocuments()),
   ];
 

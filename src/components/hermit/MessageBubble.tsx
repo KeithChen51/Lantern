@@ -4,11 +4,9 @@ import { Icon } from "@iconify/react";
 import ReactMarkdown from "react-markdown";
 import type { UIMessage } from "ai";
 import {
-  LhChip,
   LhMessageAvatar,
   LhMessageBubble as LhMessageBubbleFrame,
   LhMessageRow,
-  LhStatusBadge,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
@@ -22,10 +20,6 @@ function getTextContent(message: UIMessage): string {
     .filter((part): part is { type: "text"; text: string } => part.type === "text")
     .map((part) => part.text)
     .join("");
-}
-
-function isEvidenceInsufficient(text: string) {
-  return /证据不足|缺少|无法判断|还需要|还缺少|不能直接下结论/.test(text);
 }
 
 function AssistantAvatar() {
@@ -62,18 +56,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     );
   }
 
-  const needsEvidence = isEvidenceInsufficient(text);
-
   return (
     <LhMessageRow messageRole="assistant">
       <AssistantAvatar />
       <LhMessageBubbleFrame>
         <div data-lh-message-meta>
           <strong>路引</strong>
-          <LhChip tone="neutral">AI 回答</LhChip>
-          <LhStatusBadge tone={needsEvidence ? "warning" : "success"}>
-            {needsEvidence ? "证据不足" : "可继续判断"}
-          </LhStatusBadge>
+          <span data-lh-message-meta-note>框架建议</span>
         </div>
         <div data-lh-message-prose>
           <ReactMarkdown
@@ -97,14 +86,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   );
 }
 
-export function TypingIndicator() {
+export function TypingIndicator({ label = "思考中" }: { label?: string }) {
   return (
     <LhMessageRow messageRole="assistant">
       <AssistantAvatar />
       <LhMessageBubbleFrame variant="typing">
         <span data-lh-message-typing>
           <Icon data-lh-message-typing-icon icon={lighthouseIcons.refresh} className={cn("animate-spin")} />
-          路引正在整理事实和依据
+          {label}
         </span>
       </LhMessageBubbleFrame>
     </LhMessageRow>

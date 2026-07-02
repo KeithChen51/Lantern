@@ -93,6 +93,7 @@ Reusable components consume runtime typography tokens instead of raw Tailwind ty
 | `LhChat*` / `LhMessage*` | editorial chat plus UI controls | input and assistant prose use `--type-reading`; labels use `--type-caption` | tokenized weights only | Conversational surfaces should not define local text sizes or bubble styling in page files. |
 | `LhMetaList` / `LhSegmentedControl` / `LhSubmissionCard` | UI workflow | labels use `--type-control`, meta uses `--type-caption`, titles use `--title-card` | tokenized weights only | Workflow pages should not define local title, badge, tab, or card typography. |
 | Navigation shell | UI sans | sub-label `--type-control`, label `--type-caption` | sub-label `--weight-extrabold`, label `--weight-bold` | Navigation is product chrome, not editorial serif copy. |
+| Home brand cover | Source Han Serif SC display plus UI sans kicker/path | brand title follows `data-lh-home-brand-title`; kicker/path use UI tokens | title `--weight-bold`, kicker `--weight-black` | Homepage / Heart first screen only. It is a brand-spirit cover, not a reusable page hero primitive. |
 
 Shared primitives and the navigation shell should not contain `text-xs`, `text-sm`, `text-base`, `font-bold`, `font-extrabold`, or `leading-6` as their source of truth. Use CSS variables or data-attribute defaults so a visual-spec change can be applied centrally.
 
@@ -369,6 +370,20 @@ Rules:
 - Primary nav remains stable across modules.
 - Deep pages show a back link or breadcrumb.
 - Actions state their scope before the user commits.
+
+Shell surface variants:
+
+| Variant | Required behavior | Misuse boundary |
+| --- | --- | --- |
+| Operational shell | Default cream floating sidebar, stable Solar icons, search, notification, active module state, focus ring, and keyboard behavior. | Do not restyle per page to express local mood. |
+| Immersive home shell | Homepage cover may darken and reduce the same sidebar surface with `data-home-surface="true"`, then transition back to the operational shell with `--lh-home-nav-progress`. | Do not use it as a dark-mode shell, a campaign navigation, or a style for Hermit / Workshop / admin pages. |
+
+Rules:
+
+- The immersive shell is a surface treatment of the existing navigation component. It does not change nav labels, icon mappings, hit targets, or ordering.
+- Search and notifications remain shell utilities and must stay visually aligned with the nav items in both shell variants.
+- The transition from immersive to operational is allowed only on Homepage / Heart, where the first screen has a dark image cover and the following content returns to warm paper.
+- Any future shell variant must be documented here before runtime CSS is added.
 
 ## Acceptance Checklist
 

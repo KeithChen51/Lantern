@@ -48,7 +48,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="直接向路引提问，或描述一个具体服务场景..."
+            placeholder="描述客户状态、门店限制和你要判断的点……"
             disabled={isLoading}
             rows={1}
           />

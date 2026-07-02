@@ -1,0 +1,1483 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lighthouse Amber Visual System | 灯塔平台新版视觉系统候选稿</title>
+  <meta name="description" content="灯塔平台 Lighthouse Amber 统一视觉系统候选稿，用同一套视觉语言连接首页、本心叙事、镜鉴、笃行、路引与运营工作台。" />
+  <style>
+    :root {
+      color-scheme: light;
+
+      --ink-950: #11181b;
+      --ink-900: #172126;
+      --ink-800: #202b2f;
+      --ink-700: #2d332f;
+      --ink-600: #4e5149;
+      --ink-500: #6f6b5f;
+      --ink-300: #a89f8f;
+      --paper-50: #fbf7ee;
+      --paper-100: #f6efe1;
+      --paper-200: #efe4cc;
+      --paper-300: #e2d2ad;
+      --amber-700: #9b5c14;
+      --amber-600: #b96f17;
+      --amber-500: #c77818;
+      --amber-300: #e8a14a;
+      --amber-150: #f2d8a5;
+      --brass-700: #806744;
+      --brass-300: #c7ad80;
+      --danger-700: #965040;
+      --line-dark: rgba(66, 52, 32, 0.16);
+      --line-light: rgba(255, 255, 255, 0.2);
+      --mist-dark: rgba(18, 24, 27, 0.58);
+      --mist-panel: rgba(22, 27, 29, 0.72);
+      --mist-soft: rgba(255, 255, 255, 0.14);
+
+      --font-sans: "PingFang SC", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+
+      --page-inset: clamp(24px, 4.8vw, 88px);
+      --max: 1180px;
+      --radius-xs: 6px;
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-pill: 999px;
+      --shadow-paper: 0 18px 60px rgba(47, 39, 24, 0.1);
+      --shadow-float: 0 28px 80px rgba(10, 14, 17, 0.28);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper-100);
+      color: var(--ink-900);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      font-family: var(--font-sans);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(232, 161, 74, 0.16), transparent 30%),
+        linear-gradient(180deg, #182226 0%, var(--paper-100) 660px, var(--paper-100) 100%);
+      color: var(--ink-900);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    button, input { font: inherit; }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--amber-500);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 5px rgba(199, 120, 24, 0.22);
+    }
+
+    .topbar {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      z-index: 20;
+      width: calc(100vw - var(--page-inset) * 2);
+      max-width: 1320px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .brand-mark,
+    .nav-cluster,
+    .utility-button { pointer-events: auto; }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 5px 14px 5px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-pill);
+      background: rgba(19, 24, 26, 0.44);
+      color: rgba(255, 250, 238, 0.9);
+      box-shadow: var(--shadow-float);
+      backdrop-filter: blur(18px) saturate(120%);
+    }
+
+    .brand-glyph {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(255, 232, 180, 0.5);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232, 161, 74, 0.4), rgba(255, 255, 255, 0.06) 55%, transparent 70%);
+      box-shadow: 0 0 24px rgba(232, 161, 74, 0.28);
+    }
+
+    .brand-glyph::before,
+    .brand-glyph::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff4d8;
+    }
+
+    .brand-glyph::before {
+      bottom: 7px;
+      width: 7px;
+      height: 13px;
+      clip-path: polygon(28% 0, 72% 0, 100% 100%, 0 100%);
+    }
+
+    .brand-glyph::after {
+      top: 7px;
+      width: 12px;
+      height: 2px;
+      border-radius: var(--radius-pill);
+    }
+
+    .brand-text {
+      display: grid;
+      gap: 1px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1.1;
+    }
+
+    .brand-text span {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .nav-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-pill);
+      background: rgba(20, 24, 28, 0.48);
+      color: rgba(255, 250, 238, 0.82);
+      box-shadow: 0 16px 54px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px) saturate(120%);
+    }
+
+    .nav-cluster a {
+      min-width: 62px;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      color: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      transition: background 220ms var(--ease), color 220ms var(--ease), transform 220ms var(--ease);
+    }
+
+    .nav-cluster a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .nav-cluster a[aria-current="page"] {
+      background: #fffaf0;
+      color: var(--ink-900);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .utility-button {
+      width: 42px;
+      height: 42px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 50%;
+      background: rgba(20, 24, 28, 0.5);
+      color: rgba(255, 250, 238, 0.86);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(18px) saturate(120%);
+    }
+
+    .utility-button svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 760px;
+      display: grid;
+      align-items: end;
+      overflow: hidden;
+      padding: 150px var(--page-inset) 92px;
+      color: #fff7e5;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(13, 22, 27, 0.94) 0%, rgba(13, 22, 27, 0.72) 38%, rgba(13, 22, 27, 0.28) 78%),
+        linear-gradient(180deg, rgba(13, 22, 27, 0.28) 0%, rgba(13, 22, 27, 0.16) 55%, var(--paper-100) 100%),
+        url("../../../public/lighthouse-home-hero-bg-v2-realistic-shore.png") center / cover;
+      transform: scale(1.02);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 220px;
+      background: linear-gradient(180deg, transparent, var(--paper-100));
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      width: min(var(--max), 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: clamp(42px, 7vw, 118px);
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 20px;
+      color: var(--amber-150);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 980px;
+      font-family: var(--font-serif);
+      font-size: clamp(56px, 7vw, 108px);
+      font-weight: 900;
+      line-height: 1.04;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .hero-lede {
+      margin: 30px 0 0;
+      max-width: 720px;
+      color: rgba(255, 250, 238, 0.78);
+      font-size: clamp(17px, 1.3vw, 21px);
+      font-weight: 600;
+      line-height: 1.9;
+    }
+
+    .system-card {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 22px;
+      background: rgba(18, 24, 27, 0.52);
+      box-shadow: var(--shadow-float);
+      backdrop-filter: blur(24px) saturate(120%);
+      padding: 22px;
+    }
+
+    .system-card b {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--amber-150);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .system-card p {
+      margin: 0;
+      color: rgba(255, 250, 238, 0.76);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.75;
+    }
+
+    .page {
+      position: relative;
+      z-index: 2;
+      padding: 0 var(--page-inset) 90px;
+    }
+
+    .container {
+      width: min(var(--max), 100%);
+      margin: 0 auto;
+    }
+
+    .section {
+      padding: 86px 0;
+      border-bottom: 1px solid var(--line-dark);
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: minmax(0, 0.84fr) minmax(280px, 0.56fr);
+      gap: clamp(32px, 5vw, 76px);
+      align-items: end;
+      margin-bottom: 36px;
+    }
+
+    .section-kicker {
+      margin: 0 0 12px;
+      color: var(--amber-700);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: clamp(34px, 4.4vw, 64px);
+      font-weight: 900;
+      line-height: 1.12;
+      color: var(--ink-900);
+      text-wrap: balance;
+    }
+
+    .section-header p {
+      margin: 0;
+      color: var(--ink-600);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.9;
+    }
+
+    .thesis-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .thesis-card,
+    .rule-card,
+    .token-card,
+    .component-card {
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.32);
+      box-shadow: var(--shadow-paper);
+    }
+
+    .thesis-card {
+      min-height: 250px;
+      padding: 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .thesis-card strong,
+    .rule-card strong,
+    .token-card strong,
+    .component-card strong {
+      display: block;
+      color: var(--ink-900);
+      font-family: var(--font-serif);
+      font-size: 26px;
+      line-height: 1.18;
+    }
+
+    .thesis-card span {
+      color: var(--amber-700);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .thesis-card p,
+    .rule-card p,
+    .component-card p {
+      margin: 18px 0 0;
+      color: var(--ink-600);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.78;
+    }
+
+    .spectrum {
+      display: grid;
+      gap: 18px;
+    }
+
+    .spectrum-row {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr) 180px;
+      gap: 20px;
+      align-items: stretch;
+      min-height: 154px;
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.28);
+      overflow: hidden;
+      box-shadow: var(--shadow-paper);
+    }
+
+    .spectrum-name {
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      padding: 24px;
+      background: var(--ink-900);
+      color: #fff6df;
+    }
+
+    .spectrum-row:nth-child(2) .spectrum-name { background: var(--paper-200); color: var(--ink-900); }
+    .spectrum-row:nth-child(3) .spectrum-name { background: #fffaf0; color: var(--ink-900); }
+
+    .spectrum-name b {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .spectrum-name span {
+      color: currentColor;
+      opacity: 0.58;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .spectrum-body {
+      padding: 24px 4px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+    }
+
+    .spectrum-body p {
+      margin: 0;
+      color: var(--ink-600);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.72;
+    }
+
+    .spectrum-meter {
+      padding: 24px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      color: var(--ink-600);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .meter {
+      height: 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(47, 39, 24, 0.1);
+      overflow: hidden;
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--amber-700), var(--amber-300));
+    }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .token-card {
+      overflow: hidden;
+      background: #fffaf0;
+    }
+
+    .swatch {
+      height: 112px;
+      border-bottom: 1px solid var(--line-dark);
+    }
+
+    .token-card div:last-child {
+      padding: 18px;
+    }
+
+    .token-card code {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink-500);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .material-board {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+
+    .material-stage {
+      min-height: 430px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background:
+        linear-gradient(90deg, rgba(16, 24, 28, 0.82), rgba(16, 24, 28, 0.28)),
+        url("../../../public/lighthouse-home-hero-bg-v6-eastern-mountain-sea.png") center / cover;
+      box-shadow: var(--shadow-float);
+      color: #fff8e8;
+      padding: 28px;
+      display: grid;
+      align-content: end;
+    }
+
+    .floating-nav-demo {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      display: inline-flex;
+      gap: 2px;
+      padding: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-pill);
+      background: rgba(20, 24, 28, 0.52);
+      backdrop-filter: blur(18px);
+    }
+
+    .floating-nav-demo span {
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      color: rgba(255, 250, 238, 0.75);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .floating-nav-demo span:first-child {
+      background: #fffaf0;
+      color: var(--ink-900);
+    }
+
+    .material-stage h3 {
+      margin: 0;
+      max-width: 560px;
+      font-family: var(--font-serif);
+      font-size: clamp(34px, 4vw, 58px);
+      line-height: 1.08;
+    }
+
+    .material-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .rule-card,
+    .component-card {
+      padding: 24px;
+    }
+
+    .rule-card ul,
+    .component-card ul {
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 11px;
+    }
+
+    .rule-card li,
+    .component-card li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--ink-600);
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.65;
+    }
+
+    .rule-card li::before,
+    .component-card li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.72em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--amber-500);
+    }
+
+    .type-samples {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .type-card {
+      padding: 28px;
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-lg);
+      background: #fffaf0;
+      box-shadow: var(--shadow-paper);
+    }
+
+    .type-card.serif strong {
+      font-family: var(--font-serif);
+      font-size: clamp(36px, 4.5vw, 62px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .type-card.sans strong {
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .type-card strong {
+      display: block;
+      color: var(--ink-900);
+    }
+
+    .type-card p {
+      margin: 20px 0 0;
+      color: var(--ink-600);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.8;
+    }
+
+    .specimen-board {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .specimen-cover,
+    .specimen-stack article {
+      border: 1px solid var(--line-dark);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-paper);
+    }
+
+    .specimen-cover {
+      min-height: 520px;
+      padding: 30px;
+      display: grid;
+      align-content: end;
+      background:
+        linear-gradient(90deg, rgba(17, 24, 27, 0.86), rgba(17, 24, 27, 0.2)),
+        url("../../../public/lighthouse-home-hero-bg-v2-realistic-shore.png") center / cover;
+      color: #fff8e8;
+    }
+
+    .specimen-cover h3 {
+      margin: 0;
+      max-width: 680px;
+      font-family: var(--font-serif);
+      font-size: clamp(48px, 6vw, 86px);
+      font-weight: 700;
+      line-height: 1.06;
+    }
+
+    .specimen-cover p,
+    .specimen-stack p {
+      margin: 14px 0 0;
+      color: rgba(255, 250, 238, 0.72);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.78;
+    }
+
+    .specimen-label {
+      display: inline-flex;
+      width: fit-content;
+      margin-bottom: 18px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 244, 216, 0.26);
+      border-radius: var(--radius-pill);
+      color: rgba(255, 250, 238, 0.74);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .specimen-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .specimen-stack article {
+      min-height: 156px;
+      padding: 22px;
+      background: #fffaf0;
+    }
+
+    .specimen-stack article:nth-child(2) {
+      background: linear-gradient(135deg, #fffaf0, var(--paper-200));
+    }
+
+    .specimen-stack article:nth-child(3) {
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .specimen-stack h3 {
+      margin: 0;
+      color: var(--ink-900);
+      font-family: var(--font-serif);
+      font-size: 26px;
+      line-height: 1.14;
+    }
+
+    .specimen-stack p {
+      color: var(--ink-600);
+    }
+
+    .specimen-ui {
+      margin-top: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .specimen-ui-row {
+      display: grid;
+      grid-template-columns: 1fr 76px 46px;
+      gap: 8px;
+      align-items: center;
+      color: var(--ink-600);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .specimen-ui-row span {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(47, 39, 24, 0.06);
+    }
+
+    .specimen-chat {
+      display: grid;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .specimen-bubble {
+      width: fit-content;
+      max-width: 86%;
+      padding: 10px 12px;
+      border: 1px solid var(--line-dark);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--ink-600);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .specimen-bubble.answer {
+      justify-self: end;
+      background: rgba(199, 120, 24, 0.1);
+      color: var(--amber-700);
+    }
+
+    .page-examples {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .page-card {
+      min-height: 440px;
+      border: 1px solid var(--line-dark);
+      border-radius: 24px;
+      overflow: hidden;
+      background: #fffaf0;
+      box-shadow: var(--shadow-paper);
+      display: grid;
+      grid-template-rows: 170px 1fr;
+    }
+
+    .page-card-cover {
+      position: relative;
+      display: grid;
+      align-content: end;
+      padding: 22px;
+      background:
+        linear-gradient(90deg, rgba(17, 24, 27, 0.88), rgba(17, 24, 27, 0.18)),
+        url("../../../public/lighthouse-home-hero-bg-v3-sea-mist.png") center / cover;
+      color: #fff8e8;
+    }
+
+    .page-card:nth-child(2) .page-card-cover {
+      background: linear-gradient(135deg, var(--paper-200), #fffaf0);
+      color: var(--ink-900);
+    }
+
+    .page-card:nth-child(3) .page-card-cover {
+      background: linear-gradient(135deg, #fffaf0, var(--paper-200));
+      color: var(--ink-900);
+    }
+
+    .mini-pill {
+      width: 132px;
+      height: 28px;
+      margin-bottom: 32px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .page-card h3 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 28px;
+      line-height: 1.12;
+    }
+
+    .page-card-body {
+      padding: 22px;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+
+    .page-card-body p {
+      margin: 0;
+      color: var(--ink-600);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.72;
+    }
+
+    .mini-lines {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .mini-lines span {
+      display: block;
+      height: 9px;
+      border-radius: var(--radius-pill);
+      background: rgba(47, 39, 24, 0.11);
+    }
+
+    .mini-lines span:nth-child(2) { width: 76%; }
+    .mini-lines span:nth-child(3) { width: 54%; }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .component-card h3 {
+      margin: 0 0 16px;
+      font-family: var(--font-serif);
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .button-row,
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      background: var(--amber-600);
+      color: #fffaf0;
+      font-weight: 800;
+    }
+
+    .button.secondary {
+      border-color: var(--line-dark);
+      background: #fffaf0;
+      color: var(--ink-900);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid rgba(155, 92, 20, 0.18);
+      border-radius: var(--radius-pill);
+      background: rgba(199, 120, 24, 0.08);
+      color: var(--amber-700);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .chip.brass {
+      border-color: rgba(128, 103, 68, 0.22);
+      background: rgba(128, 103, 68, 0.08);
+      color: var(--brass-700);
+    }
+
+    .field-demo {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .field-demo label {
+      color: var(--ink-600);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .field-demo input {
+      min-height: 44px;
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-sm);
+      background: #fffaf0;
+      padding: 0 12px;
+      color: var(--ink-900);
+    }
+
+    .table-demo {
+      margin-top: 18px;
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .table-demo div {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-dark);
+      color: var(--ink-600);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .table-demo div:first-child {
+      background: rgba(199, 120, 24, 0.07);
+      color: var(--ink-900);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .table-demo div:last-child { border-bottom: 0; }
+
+    .motion-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .motion-card {
+      padding: 24px;
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-md);
+      background: #fffaf0;
+    }
+
+    .motion-card b {
+      display: block;
+      color: var(--ink-900);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .motion-card code {
+      display: block;
+      margin: 10px 0;
+      color: var(--amber-700);
+      font-size: 13px;
+    }
+
+    .motion-card p {
+      margin: 0;
+      color: var(--ink-600);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.68;
+    }
+
+    .contract {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 18px;
+    }
+
+    .contract-panel {
+      border-radius: 28px;
+      background: var(--ink-900);
+      color: #fff8e8;
+      padding: 32px;
+      box-shadow: var(--shadow-float);
+    }
+
+    .contract-panel h2 {
+      color: #fff8e8;
+      font-size: clamp(34px, 4vw, 56px);
+    }
+
+    .contract-panel p {
+      margin: 20px 0 0;
+      color: rgba(255, 250, 238, 0.7);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.85;
+    }
+
+    .contract-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .contract-list div {
+      padding: 18px 20px;
+      border: 1px solid var(--line-dark);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.34);
+      color: var(--ink-600);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.68;
+    }
+
+    .contract-list b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink-900);
+      font-size: 15px;
+    }
+
+    .footer {
+      padding: 42px var(--page-inset) 56px;
+      background: var(--paper-200);
+      color: var(--ink-500);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .footer-inner {
+      width: min(var(--max), 100%);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    @media (max-width: 980px) {
+      .nav-cluster { display: none; }
+      .hero-inner,
+      .section-header,
+      .material-board,
+      .type-samples,
+      .specimen-board,
+      .contract {
+        grid-template-columns: 1fr;
+      }
+      .thesis-grid,
+      .token-grid,
+      .page-examples,
+      .component-grid,
+      .motion-grid {
+        grid-template-columns: 1fr;
+      }
+      .spectrum-row {
+        grid-template-columns: 1fr;
+      }
+      .spectrum-body,
+      .spectrum-meter {
+        padding: 22px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero { min-height: 680px; padding-top: 120px; }
+      h1 { font-size: clamp(44px, 15vw, 64px); }
+      .utility-button { display: none; }
+      .section { padding: 62px 0; }
+      .footer-inner { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" aria-label="全局导航">
+    <a class="brand-mark" href="index.html" aria-label="返回灯塔平台首页">
+      <span class="brand-glyph" aria-hidden="true"></span>
+      <span class="brand-text">灯塔 Lighthouse<span>Amber System</span></span>
+    </a>
+    <div class="nav-wrap">
+      <nav class="nav-cluster" aria-label="平台主导航">
+        <a href="index.html" aria-current="page">本心</a>
+        <a href="mirror.html">镜鉴</a>
+        <a href="action.html">笃行</a>
+        <a href="hermit.html">路引</a>
+      </nav>
+      <button class="utility-button" type="button" aria-label="搜索">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+      </button>
+      <button class="utility-button" type="button" aria-label="消息">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 10.5a6 6 0 1 0-12 0c0 3.7-1.5 5.2-2.4 6.1-.4.4-.1 1.1.5 1.1h15.8c.6 0 .9-.7.5-1.1-.9-.9-2.4-2.4-2.4-6.1Z"></path><path d="M9.8 20.2a2.4 2.4 0 0 0 4.4 0"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">Lighthouse Amber Visual System</p>
+          <h1>同一束光，在不同页面保持同一种秩序。</h1>
+          <p class="hero-lede">新版视觉系统不把首页、内容页和工作页拆成三套风格，而是用同一组灯塔母题、琥珀色、暖纸材质、宋体标题、苹方控件和克制动效，形成从品牌精神到日常操作的连续体验。</p>
+        </div>
+        <aside class="system-card">
+          <b>Core Decision</b>
+          <p>首页可以最有画面感，但它不是例外。它只是 Lighthouse Amber 在最高表达强度下的状态；镜鉴、笃行、路引和后台使用同一视觉 DNA 的低强度版本。</p>
+        </aside>
+      </div>
+    </section>
+
+    <div class="page">
+      <div class="container">
+        <section class="section" id="thesis">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">01 / Thesis</p>
+              <h2>不是品牌封面一套，产品页面一套。</h2>
+            </div>
+            <p>系统的目标是避免割裂。所有页面共享同一视觉根系，只根据任务强度调节影像、材质、字号、密度和动效。</p>
+          </div>
+          <div class="thesis-grid">
+            <article class="thesis-card">
+              <span>Mother Motif</span>
+              <strong>灯塔、光、雾、纸、琥珀、秩序</strong>
+              <p>所有页面都从这六个母题出发。首页表现“远方与光”，内容页表现“纸面与阅读”，工作页表现“方向与判断”。</p>
+            </article>
+            <article class="thesis-card">
+              <span>Shared Components</span>
+              <strong>同一导航、同一字体系、同一组件逻辑</strong>
+              <p>导航不是页面装饰，而是系统框架。搜索、消息、焦点、按钮、标签、表格都继承同一套参数。</p>
+            </article>
+            <article class="thesis-card">
+              <span>Governed Intensity</span>
+              <strong>变化的是强度，不是风格</strong>
+              <p>Immersive、Editorial、Operational 是一个滑杆上的三个档位，不是三个主题包。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="spectrum">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">02 / Expression Spectrum</p>
+              <h2>三种表达强度，共用一套系统。</h2>
+            </div>
+            <p>首页首屏可以有影像和雾光；价值正文回到暖纸和阅读节奏；路引、Workshop、后台进入更密集的工作界面。它们的差别应该像同一种材料的不同加工方式。</p>
+          </div>
+          <div class="spectrum">
+            <article class="spectrum-row">
+              <div class="spectrum-name"><span>Highest</span><b>Immersive</b></div>
+              <div class="spectrum-body">
+                <p>用于首页首屏、本心关键封面、重大品牌叙事。允许影像、暗色雾面、灯塔光束、超大宋体主句和一次性入场动效。</p>
+                <p>不能扩散到表格、后台、普通卡片和所有弹层。</p>
+              </div>
+              <div class="spectrum-meter">visual intensity<div class="meter"><span style="width: 96%"></span></div></div>
+            </article>
+            <article class="spectrum-row">
+              <div class="spectrum-name"><span>Middle</span><b>Editorial</b></div>
+              <div class="spectrum-body">
+                <p>用于本心正文、价值框架、镜鉴案例、笃行复盘。使用暖纸底、宋体标题、长文行高、稀疏分区和少量琥珀提示。</p>
+                <p>它保留文化感，但不把每段内容都做成海报。</p>
+              </div>
+              <div class="spectrum-meter">visual intensity<div class="meter"><span style="width: 58%"></span></div></div>
+            </article>
+            <article class="spectrum-row">
+              <div class="spectrum-name"><span>Lowest</span><b>Operational</b></div>
+              <div class="spectrum-body">
+                <p>用于路引、Workshop、后台、表格、表单、消息流。以苹方、低阴影、细边框、可见焦点和清晰状态为主。</p>
+                <p>它不失去品牌，只是把光收进交互细节和判断秩序里。</p>
+              </div>
+              <div class="spectrum-meter">visual intensity<div class="meter"><span style="width: 32%"></span></div></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="tokens">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">03 / Color Tokens</p>
+              <h2>颜色不是主题切换，而是场景分工。</h2>
+            </div>
+            <p>深夜墨色负责灯塔与沉浸，暖纸色负责阅读，琥珀负责方向和激活，黄铜负责辅助状态。五个价值词保留小标签映射，不成为页面主色。</p>
+          </div>
+          <div class="token-grid">
+            <article class="token-card"><div class="swatch" style="background:#172126"></div><div><strong>深夜墨色</strong><code>--lh-ink-night</code></div></article>
+            <article class="token-card"><div class="swatch" style="background:#f6efe1"></div><div><strong>暖纸底色</strong><code>--lh-paper</code></div></article>
+            <article class="token-card"><div class="swatch" style="background:#c77818"></div><div><strong>琥珀光色</strong><code>--lh-amber</code></div></article>
+            <article class="token-card"><div class="swatch" style="background:#806744"></div><div><strong>黄铜辅助</strong><code>--lh-brass-text</code></div></article>
+          </div>
+        </section>
+
+        <section class="section" id="material">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">04 / Material System</p>
+              <h2>玻璃、雾光和纸面要有明确职责。</h2>
+            </div>
+            <p>旧规范担心玻璃变成装饰，这是对的。新版不是放开使用，而是规定玻璃只属于浮动导航、搜索、消息、封面控制和少量沉浸叠层。</p>
+          </div>
+          <div class="material-board">
+            <div class="material-stage">
+              <div class="floating-nav-demo"><span>本心</span><span>镜鉴</span><span>笃行</span><span>路引</span></div>
+              <h3>影像和雾光只用于建立方向感，不代替内容秩序。</h3>
+            </div>
+            <div class="material-stack">
+              <article class="rule-card">
+                <strong>允许</strong>
+                <ul>
+                  <li>首页首屏和关键封面使用影像、暗色雾面和远处灯塔。</li>
+                  <li>浮动导航、搜索、消息和临时工具使用半透墨色玻璃。</li>
+                  <li>内容阅读和工作区回到暖纸、白面、细边框和低阴影。</li>
+                </ul>
+              </article>
+              <article class="rule-card">
+                <strong>禁止</strong>
+                <ul>
+                  <li>把所有卡片、表格、表单都做成玻璃。</li>
+                  <li>用低透明度文字制造高级感，导致可读性下降。</li>
+                  <li>给每个模块单独换背景、换主题色、换导航样式。</li>
+                </ul>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="type">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">05 / Typography</p>
+              <h2>文化感要从字体系贯穿，而不是只停在首页。</h2>
+            </div>
+            <p>思源宋承担价值表达和阅读标题，苹方承担操作、导航、正文和数据。首页只是字号最大，其他页面仍然保留同一语气。</p>
+          </div>
+          <div class="type-samples">
+            <article class="type-card serif">
+              <strong>求真、尽善、致美、大爱、幸福</strong>
+              <p>Serif display 用于首页主句、价值框架标题、案例页核心判断、空状态主句。它提供文化重量，但不能滥用到所有卡片标题。</p>
+            </article>
+            <article class="type-card sans">
+              <strong>搜索本心、镜鉴、笃行、路引</strong>
+              <p>Sans UI 用于导航、按钮、表单、表格、聊天、状态和正文说明。它保证平台日常使用时的清晰和密度。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="specimens">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">06 / System Specimens</p>
+              <h2>先看同一系统如何覆盖四类界面。</h2>
+            </div>
+            <p>这一段来自 GLM 短任务产出的结构方向：用 specimens 把品牌封面、叙事阅读、运营表格和路引对话并排放在同一套视觉语言里。它不是新增风格，而是验证这套视觉系统能否跨页面成立。</p>
+          </div>
+          <div class="specimen-board">
+            <article class="specimen-cover">
+              <span class="specimen-label">Brand cover</span>
+              <h3>求真、尽善、致美、大爱、幸福</h3>
+              <p>首页可以拥有最高视觉强度：影像、远处灯塔、雾光和宋体主句共同建立品牌精神，但导航、焦点、文字秩序仍然继承平台规则。</p>
+            </article>
+            <div class="specimen-stack">
+              <article>
+                <span class="specimen-label" style="color:var(--amber-700);border-color:rgba(199,120,24,.22)">Editorial</span>
+                <h3>通知正文与白皮书叙事</h3>
+                <p>进入第二屏后，系统从沉浸封面降到纸面阅读：更长行距、更稳定的段落宽度、少量琥珀标注和克制分隔。</p>
+              </article>
+              <article>
+                <span class="specimen-label" style="color:var(--amber-700);border-color:rgba(199,120,24,.22)">Operational</span>
+                <h3>镜鉴、笃行、后台工作台</h3>
+                <p>工作页以信息密度和清晰状态优先，不再堆叠大图，但保留暖纸底、黄铜辅助、同一 focus 与状态色。</p>
+                <div class="specimen-ui" aria-hidden="true">
+                  <div class="specimen-ui-row"><span>服务案例</span><span>待复盘</span><span>查看</span></div>
+                  <div class="specimen-ui-row"><span>路引知识</span><span>已接入</span><span>编辑</span></div>
+                </div>
+              </article>
+              <article>
+                <span class="specimen-label" style="color:var(--amber-700);border-color:rgba(199,120,24,.22)">Assistant</span>
+                <h3>路引消息与搜索</h3>
+                <p>搜索、消息和智能问答放在右上角工具区，交互轻、反馈稳，不再使用独立的聊天产品视觉。</p>
+                <div class="specimen-chat" aria-hidden="true">
+                  <div class="specimen-bubble">怎样理解“尽善”？</div>
+                  <div class="specimen-bubble answer">先给出定义，再连接服务场景。</div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="pages">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">07 / Page Archetypes</p>
+              <h2>三个页面示例必须像同一个系统。</h2>
+            </div>
+            <p>下面不是三个视觉方向，而是同一系统在不同任务里的降噪结果。导航、字体、颜色、边框、半径和焦点规则保持一致。</p>
+          </div>
+          <div class="page-examples">
+            <article class="page-card">
+              <div class="page-card-cover">
+                <div class="mini-pill"></div>
+                <h3>Immersive 首页</h3>
+              </div>
+              <div class="page-card-body">
+                <p>首屏承载品牌精神和价值主句。影像负责氛围，内容仍左对齐、留白清晰、导航稳定。</p>
+                <div class="mini-lines"><span></span><span></span><span></span></div>
+              </div>
+            </article>
+            <article class="page-card">
+              <div class="page-card-cover">
+                <div class="mini-pill"></div>
+                <h3>Editorial 叙事</h3>
+              </div>
+              <div class="page-card-body">
+                <p>本心正文、通知内容、镜鉴和笃行长文使用纸面、宋体标题、稳定行高和少量琥珀标注。</p>
+                <div class="mini-lines"><span></span><span></span><span></span></div>
+              </div>
+            </article>
+            <article class="page-card">
+              <div class="page-card-cover">
+                <div class="mini-pill"></div>
+                <h3>Operational 工作</h3>
+              </div>
+              <div class="page-card-body">
+                <p>路引、Workshop、后台不做海报化，但保留同一导航、琥珀激活、暖纸底和清晰焦点。</p>
+                <div class="mini-lines"><span></span><span></span><span></span></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="components">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">08 / Component Rules</p>
+              <h2>组件负责把品牌气质落到日常操作。</h2>
+            </div>
+            <p>如果只有首页好看，系统仍然失败。按钮、输入、标签、表格和消息气泡必须继承同一套琥珀、纸面、半径、焦点与状态逻辑。</p>
+          </div>
+          <div class="component-grid">
+            <article class="component-card">
+              <h3>Buttons</h3>
+              <p>主按钮使用琥珀底，次按钮使用纸面和细边框。loading 保持宽度，disabled 不只靠透明度。</p>
+              <div class="button-row"><span class="button">确认发布</span><span class="button secondary">保存草稿</span></div>
+            </article>
+            <article class="component-card">
+              <h3>Fields</h3>
+              <p>输入控件保持暖纸或白面底，focus 使用 2px 琥珀 outline + offset + halo，不用只靠柔光。</p>
+              <div class="field-demo"><label for="demo-field">场景描述</label><input id="demo-field" value="客户持续追问交车时间，需要清晰回应。" /></div>
+            </article>
+            <article class="component-card">
+              <h3>Chips</h3>
+              <p>价值词颜色只用于小标签、筛选和来源标记。不要让五个价值词变成五套页面主题。</p>
+              <div class="chip-row"><span class="chip">求真</span><span class="chip brass">尽善</span><span class="chip">致美</span><span class="chip brass">大爱</span></div>
+            </article>
+            <article class="component-card">
+              <h3>Tables</h3>
+              <p>Operational 页面用数据密度建立信任。表头、状态、批量操作和空状态都要有清晰层级。</p>
+              <div class="table-demo"><div><span>模块</span><span>状态</span><span>动作</span></div><div><span>路引知识</span><span>已接入</span><span>查看</span></div><div><span>笃行案例</span><span>待复盘</span><span>编辑</span></div></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="motion">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">09 / Motion And Access</p>
+              <h2>动效服务阅读顺序和状态反馈。</h2>
+            </div>
+            <p>首页可以有一次性分层进入，但系统不能靠循环动画制造高级感。所有动画必须可关闭、可理解，并且不阻挡内容。</p>
+          </div>
+          <div class="motion-grid">
+            <article class="motion-card"><b>Entrance</b><code>420-700ms / ease-out</code><p>首页主句、叙事 section、重要空状态可一次性进入，表现阅读顺序。</p></article>
+            <article class="motion-card"><b>Interaction</b><code>160-240ms / transform + opacity</code><p>hover、pressed、selected、popover 使用轻微位移、透明度和颜色变化。</p></article>
+            <article class="motion-card"><b>Accessibility</b><code>prefers-reduced-motion</code><p>尊重 reduced motion；焦点、错误、加载不能只用动画表达。</p></article>
+          </div>
+        </section>
+
+        <section class="section" id="contract">
+          <div class="contract">
+            <div class="contract-panel">
+              <p class="section-kicker">10 / Migration Contract</p>
+              <h2>后续迁移按系统强度，而不是按页面喜好。</h2>
+              <p>每个页面先判断任务：建立精神、沉淀内容，还是完成工作。然后选择对应强度，并继承同一套导航、token、字体、组件和动效。</p>
+            </div>
+            <div class="contract-list">
+              <div><b>首页 / 本心</b>允许 Immersive 首屏，但第二屏之后进入 Editorial；不能把所有内容做成封面。</div>
+              <div><b>镜鉴 / 笃行</b>以 Editorial 为主，案例详情和复盘段落用长文排版，状态和入口使用 Operational 组件。</div>
+              <div><b>路引 / Workshop / 后台</b>以 Operational 为主，但保持琥珀激活、暖纸底、宋体关键标题和同一导航。</div>
+              <div><b>全局规则</b>新样式必须先进入视觉系统，再进入 runtime token 和 primitive；禁止页面局部发明第二套 UI。</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Lighthouse Amber Visual System Candidate</span>
+      <span>One system: Immersive / Editorial / Operational</span>
+    </div>
+  </footer>
+</body>
+</html>

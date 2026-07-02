@@ -107,12 +107,14 @@ Recommended size scale:
 | H3 | `--type-h3` | `25px / 30px` | Local subsection heading. |
 | H2 | `--type-h2` | `31px / 35px` | Page section heading. |
 | Display | `--type-display` | `40px` to `72px / 1.04` | Top-level page title only. |
+| Home Brand Display | page-specific rule | `64px` to `100px / 1.16` desktop target | Homepage brand-spirit cover only; not a reusable product heading token. |
 
 Heading style roles:
 
 | Role | Token | Font | Size / line height | Weight | Use |
 | --- | --- | --- | --- | --- | --- |
-| Display / Hero | `--title-display` | Source Han Serif SC | `40px` to `72px / 1.04` | `900` | First-screen title, value-reading cover, empty-state main sentence. |
+| Home Brand Display | `data-lh-home-brand-title` | Source Han Serif SC | `64px` to `100px / 1.16` on desktop | `700` | Homepage / Heart brand-spirit cover: `求真、尽善、致美、大爱、幸福`. This is a page-specific display rule, not a global title token. |
+| Display / Hero | `--title-display` | Source Han Serif SC | `40px` to `72px / 1.04` | `700` or `900` by page role | First-screen product title, value-reading cover, empty-state main sentence. Do not copy the homepage brand scale into ordinary pages. |
 | Page Title | `--title-page` | Source Han Serif SC | `32px` to `44px / 1.1` | `900` | Product page main title; one per page. |
 | Section Title | `--title-section` | Source Han Serif SC | `31px / 1.14` | `700` | Main section title inside a page or spec document. |
 | Subsection | `--title-subsection` | Source Han Serif SC | `25px / 1.2` | `700` | Secondary group title inside a section. |
@@ -122,6 +124,7 @@ Heading style roles:
 Rules:
 
 - A view should normally use no more than Display/Page, Section, and Card title levels at once.
+- Homepage / Heart may use the Home Brand Display rule once, on the first screen only. The second screen and below return to normal Classic Amber reading typography.
 - Use Kicker labels sparingly for structure, not for decorative numbering.
 - Do not create one-off heading sizes between the defined title roles.
 - Product controls and dense admin surfaces should prefer PingFang SC card titles when serif headings feel too editorial.
@@ -194,6 +197,22 @@ Classic Amber uses a stable desktop-first grid rather than exploratory asymmetri
 | `--grid-content-max` | `1220px` | Primary page content width. |
 
 The HTML visual spec uses a `248px` local sidebar only because the document navigation labels are longer than the app navigation labels.
+
+### Shell Surface Variants
+
+The product shell has one component model with two surface states. These are not two different navigation systems.
+
+| Variant | Runtime hook | Surface | Use |
+| --- | --- | --- | --- |
+| Operational shell | default `data-lh-sidebar` | Warm paper / cream floating rail | All product pages: Mirror, Action, Workshop, Hermit, admin, details, forms, and tables. |
+| Immersive home shell | `data-home-surface="true"` + `--lh-home-nav-progress` | Dark low-contrast glass at the homepage cover, returning to operational cream as the user scrolls | Homepage / Heart first screen only. |
+
+Rules:
+
+- `--lh-home-nav-progress` is a runtime state variable, not a theme token. It exists only to transition the same sidebar component from immersive cover treatment to operational treatment.
+- Search, notifications, logo, active nav, and inactive nav must transition together. Do not restyle only the nav links.
+- Other pages must not set `data-home-surface`; the dark shell is not a global dark mode.
+- The sidebar content model, icon set, touch targets, focus ring, and keyboard behavior remain identical across both variants.
 
 ### 2. Content Grid
 
@@ -323,6 +342,7 @@ Rules:
 
 - Motion should use runtime `--lh-motion-*` and `--lh-ease-*` tokens, not ad hoc durations.
 - One-time entrance motion is allowed for Heart/Home hero and major editorial sections.
+- Homepage / Heart may use scroll progress for two narrative effects only: subtle hero depth and the immersive-to-operational sidebar transition.
 - Hover motion may use opacity and transform only; it must not change element dimensions, spacing, or content order.
 - Respect `prefers-reduced-motion`; non-essential entrance and hover motion must be disabled.
 

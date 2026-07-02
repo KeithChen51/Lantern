@@ -27,6 +27,7 @@
 | Use `--type-*`, `--title-*`, `--leading-*`, and `--weight-*` in reusable primitives and navigation. | Hard-code `text-xs`, `text-sm`, `font-bold`, or `leading-6` as the source of truth in shared UI. |
 | Keep PingFang SC first in the sans stack and Source Han Serif SC first in the serif stack. | Reintroduce Aptos, Playfair Display, or runtime typeface switching into platform UI. |
 | Keep normal text readable with strong enough contrast. | Hide important constraints or metadata in low-opacity text. |
+| Use the large Source Han Serif display line only for the homepage / Heart brand cover. | Reuse the homepage display scale for ordinary page titles, cards, admin panels, or empty states. |
 
 ## Components
 
@@ -63,6 +64,7 @@
 | Use panels for bounded work areas and cards for repeated items. | Put cards inside cards or style whole page sections as floating cards. |
 | Use solid surfaces, borders, and stable spacing. | Use glass blur, decorative gradients, or glow as default product styling. |
 | Keep page backgrounds quiet: warm paper, solid surfaces, and a restrained border system. | Add global grid texture, radial amber glow, or repeated translucent floating sections by default. |
+| Let the homepage cover use a single approved lighthouse / sea background image with a veil for readability. | Add a second CSS lighthouse, duplicate beam, extra glow, or decorative image layer over the cover. |
 | Keep admin and data tools denser and quieter than public reading pages. | Use landing-page hero composition for admin, review, or maintenance workflows. |
 | Use stable card tracks and fixed control heights. | Let dynamic labels, hover states, or badges resize the layout. |
 
@@ -80,6 +82,8 @@
 | Do | Don't |
 | --- | --- |
 | Let Heart feel warmer and more editorial while staying inside platform UI rules. | Treat Heart as a full VI showroom or add unapproved value-system naming layers. |
+| Treat Home and Heart as one brand-spirit prologue: cover first, then Classic Amber reading flow. | Build a duplicate Heart page or turn the homepage into a feature-card directory. |
+| Use the immersive dark sidebar only on the homepage cover, then transition back to the operational cream shell. | Apply the dark/glass shell to Hermit, Workshop, admin, detail pages, or general product chrome. |
 | Let Hermit show direct answer, principle basis, related cases/norms, and next action. | Frame Hermit as a generic FAQ bot or a fully autonomous agent. |
 | Keep Workshop centered on frontline co-creation, Do/Don't guidance, submission, personal area, and admin curation. | Expand Workshop into a broad forum or complex multi-role system by default. |
 | Keep Admin dense, neutral, status-first, and review-oriented. | Use decorative cards and amber glow to create hierarchy in admin work. |

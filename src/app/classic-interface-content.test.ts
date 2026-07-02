@@ -17,11 +17,13 @@ describe("classic interface content guardrails", () => {
   });
 
   it("keeps the current Action case instead of restoring backup branch content", () => {
-    const cases = readProjectFile("src/app/action/action-cases.ts");
+    const cases = readProjectFile("src/app/action/final-canwu-action-cases.generated.json");
+    const caseModule = readProjectFile("src/app/action/action-cases.ts");
 
     expect(cases).toContain("driver-partner-rest-area");
-    expect(cases).toContain("是否为代驾司机设置合作伙伴休息区");
+    expect(cases).toContain("是否应该为取送车司机设立休息区");
     expect(cases).not.toContain("substitute-vehicle-policy");
+    expect(caseModule).toContain("FINAL_CANWU_ACTION_CASES");
   });
 
   it("keeps current Hermit persistence modules", () => {
