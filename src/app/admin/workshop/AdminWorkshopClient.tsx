@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import {
   LhButton,
   LhChip,
+  LhLoadingGlyph,
   LhPanel,
   LhSectionHeader,
   LhStatusBadge,
@@ -133,7 +134,7 @@ function AdminHeader({
           <LhButton
             type="button"
             variant="secondary"
-            icon={<Icon icon={lighthouseIcons.refresh} className={cn("h-4 w-4", loading && "animate-spin")} />}
+            icon={loading ? <LhLoadingGlyph label="正在刷新" /> : <Icon icon={lighthouseIcons.refresh} className="h-4 w-4" />}
             onClick={onRefresh}
             disabled={loading}
           >
@@ -304,9 +305,7 @@ function ActionPanel({
           type="button"
           disabled={isBusy}
           variant="primary"
-          icon={
-            <Icon icon={isBusy ? lighthouseIcons.refresh : lighthouseIcons.publish} className={cn("h-4 w-4", isBusy && "animate-spin")} />
-          }
+          icon={isBusy ? <LhLoadingGlyph label="正在发布" /> : <Icon icon={lighthouseIcons.publish} className="h-4 w-4" />}
           onClick={onPublish}
         >
           编辑后发布
@@ -505,7 +504,7 @@ export function AdminWorkshopClient({ embedded = false }: AdminWorkshopClientPro
 
         {loading ? (
           <StateNotice tone="info">
-            <Icon icon={lighthouseIcons.refresh} className="mr-2 inline h-4 w-4 animate-spin" />
+            <LhLoadingGlyph label="正在加载" className="mr-2 inline-flex" />
             正在加载待审核提交
           </StateNotice>
         ) : submissions.length === 0 ? (

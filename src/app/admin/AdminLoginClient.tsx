@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Icon } from "@iconify/react";
-import { LhButton, LhCard, LhCallout, LhPageHero, LhTextField } from "@/components/ui/lighthouse-primitives";
+import { LhButton, LhCard, LhCallout, LhLoadingGlyph, LhPageHero, LhTextField } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 
 export function AdminLoginClient() {
@@ -58,7 +58,7 @@ export function AdminLoginClient() {
             type="submit"
             variant="primary"
             disabled={isSubmitting || password.trim().length === 0}
-            icon={<Icon icon={isSubmitting ? lighthouseIcons.refresh : lighthouseIcons.admin} className={isSubmitting ? "h-4 w-4 animate-spin" : "h-4 w-4"} />}
+            icon={isSubmitting ? <LhLoadingGlyph label="正在验证" /> : <Icon icon={lighthouseIcons.admin} className="h-4 w-4" />}
           >
             进入后台
           </LhButton>

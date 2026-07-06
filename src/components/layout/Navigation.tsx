@@ -8,6 +8,7 @@ import { Icon } from "@iconify/react";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { isPublicWorkshopEnabled } from "@/config/features";
+import { useLhScrollProgress } from "@/hooks/use-lighthouse-motion";
 import { cn } from "@/lib/utils";
 import { getHeaderSearchMatches, resolveHeaderSearch } from "./header-search";
 import { getVisibleNavItems } from "./navigation-model";
@@ -72,15 +73,15 @@ function Logo({
         data-expanded="false"
         type="button"
         onClick={onTogglePin}
-        className="group grid min-h-12 grid-cols-1 items-center justify-items-center rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
+        className="group grid min-h-12 grid-cols-1 items-center justify-items-center rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
         aria-label="展开侧栏"
         title="展开侧栏"
       >
         <span className="relative flex h-10 w-10 items-center justify-center">
-          <LighthouseMark className="h-10 w-10 transition-[opacity,transform] duration-150 group-hover:scale-95 group-hover:opacity-0 group-focus-visible:scale-95 group-focus-visible:opacity-0" />
+          <LighthouseMark className="h-10 w-10 transition-[opacity,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-out)] group-hover:scale-95 group-hover:opacity-0 group-focus-visible:scale-95 group-focus-visible:opacity-0" />
           <Icon
             icon={lighthouseIcons.expandSidebar}
-            className="absolute h-6 w-6 scale-90 text-[var(--color-action-deep)] opacity-0 drop-shadow-[0_2px_4px_rgba(217,119,6,0.24)] transition-[color,opacity,transform] duration-150 group-hover:scale-100 group-hover:opacity-100 group-hover:text-[var(--color-action)] group-focus-visible:scale-100 group-focus-visible:opacity-100 group-focus-visible:text-[var(--color-action)]"
+            className="absolute h-6 w-6 scale-90 text-[var(--color-action-deep)] opacity-0 drop-shadow-[0_2px_4px_rgba(217,119,6,0.24)] transition-[color,opacity,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-out)] group-hover:scale-100 group-hover:opacity-100 group-hover:text-[var(--color-action)] group-focus-visible:scale-100 group-focus-visible:opacity-100 group-focus-visible:text-[var(--color-action)]"
           />
         </span>
       </button>
@@ -93,7 +94,7 @@ function Logo({
         data-lh-logo
         data-expanded="true"
         href="/"
-        className="grid min-h-12 grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-3 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-colors hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
+        className="grid min-h-12 grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-3 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
         aria-label="灯塔首页"
       >
         <LighthouseMark className="h-12 w-8" />
@@ -108,7 +109,7 @@ function Logo({
           data-lh-logo-toggle
           type="button"
           onClick={onTogglePin}
-          className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[var(--color-action-deep)] drop-shadow-[0_2px_4px_rgba(217,119,6,0.24)] transition-[color,opacity,transform] duration-150 hover:text-[var(--color-action)] focus-visible:text-[var(--color-action)]"
+          className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[var(--color-action-deep)] drop-shadow-[0_2px_4px_rgba(217,119,6,0.24)] transition-[color,opacity,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:text-[var(--color-action)] focus-visible:text-[var(--color-action)]"
           aria-label="收起侧栏"
           title="收起侧栏"
         >
@@ -168,14 +169,18 @@ function SidebarSearch({ isExpanded, onNavigate, className }: { isExpanded: bool
           type="button"
           data-lh-sidebar-search-trigger
           onClick={() => setIsSearchOpen((prev) => !prev)}
-          className="grid min-h-11 w-full items-center justify-items-center rounded-[var(--lh-control-radius)] border border-transparent text-[var(--color-deck-text-soft)] transition-colors hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action"
+          className="grid min-h-11 w-full items-center justify-items-center rounded-[var(--lh-control-radius)] border border-transparent text-[var(--color-deck-text-soft)] transition-[background,border-color,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action"
+          aria-expanded={isSearchOpen}
           aria-label="打开搜索"
           title="搜索"
         >
           <Icon icon={lighthouseIcons.search} className="h-5 w-5" />
         </button>
         {isSearchOpen && (
-          <div className="absolute left-[calc(100%+0.5rem)] top-0 z-20 w-72 rounded-[var(--lh-card-radius)] border border-line bg-panel p-2 shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
+          <div
+            data-lh-popover
+            className="absolute left-[calc(100%+0.5rem)] top-0 z-20 w-72 rounded-[var(--lh-card-radius)] border border-line bg-panel p-2 shadow-[var(--lh-card-hover-shadow)] [--lh-popover-origin:left_top] [backdrop-filter:var(--lh-shell-blur)]"
+          >
             <SidebarSearchPanel
               query={query}
               setQuery={setQuery}
@@ -255,11 +260,14 @@ function SidebarSearchPanel({
           }}
           type="text"
           placeholder={SEARCH_PLACEHOLDER}
-          className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-9 pr-3 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-ink transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-line-strong focus-visible:border-[var(--lh-focus-outline)] focus-visible:bg-panel"
+          className="h-10 w-full rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet pl-9 pr-3 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-ink transition-[background,border-color,box-shadow] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] placeholder:text-muted hover:border-line-strong focus-visible:border-[var(--lh-focus-outline)] focus-visible:bg-panel"
         />
       </div>
       {(isOpen || searchFeedback) && (searchFeedback || query.trim()) && (
-        <div className="absolute left-0 top-full z-20 mt-2 w-[min(22rem,calc(100vw-32px))] overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-panel text-[length:var(--type-body)] shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]">
+        <div
+          data-lh-popover
+          className="absolute left-0 top-full z-20 mt-2 w-[min(22rem,calc(100vw-32px))] overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-panel text-[length:var(--type-body)] shadow-[var(--lh-card-hover-shadow)] [--lh-popover-origin:left_top] [backdrop-filter:var(--lh-shell-blur)]"
+        >
           {searchFeedback && (
             <p className="border-b border-line bg-surface-quiet px-3 py-2 text-[length:var(--type-label)] font-[var(--weight-bold)] leading-[var(--leading-label)] text-muted" aria-live="polite">
               {searchFeedback}
@@ -273,7 +281,7 @@ function SidebarSearchPanel({
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => onTarget(target.href, target.label)}
-                  className="grid gap-0.5 rounded-[var(--lh-control-radius)] px-3 py-2 text-left transition-colors hover:bg-primary-soft focus-visible:bg-primary-soft"
+                  className="grid gap-0.5 rounded-[var(--lh-control-radius)] px-3 py-2 text-left transition-[background,color] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:bg-primary-soft focus-visible:bg-primary-soft"
                 >
                   <span className="text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-ink">{target.label}</span>
                   <span className="text-[length:var(--type-label)] font-[var(--weight-bold)] leading-[var(--leading-label)] text-muted">{target.description}</span>
@@ -303,8 +311,9 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
         data-lh-sidebar-notification-button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
         className={cn(
-          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-colors hover:bg-[var(--lh-deck-panel-hover)] hover:text-action",
+          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-[background,border-color,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
         )}
         aria-label="通知"
@@ -317,8 +326,9 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
 
       {isOpen && (
         <div
+          data-lh-popover
           className={cn(
-            "absolute bottom-12 z-20 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]",
+            "absolute bottom-12 z-20 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft shadow-[var(--lh-card-hover-shadow)] [--lh-popover-origin:left_bottom] [backdrop-filter:var(--lh-shell-blur)]",
             isExpanded ? "left-0" : "left-[calc(100%+0.5rem)]",
           )}
         >
@@ -356,7 +366,7 @@ function NavLinks({
         href={item.href}
         onClick={onNavigate}
         className={cn(
-          "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow] duration-150",
+          "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)]",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
             ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
@@ -397,45 +407,23 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
       : {}),
   } as React.CSSProperties;
 
-  React.useEffect(() => {
-    const node = desktopSidebarRef.current;
-    if (!node) {
-      return;
-    }
-
-    if (!isHomeSurface) {
-      node.style.removeProperty("--lh-home-nav-progress");
-      node.style.removeProperty("--lh-home-nav-progress-value");
-      return;
-    }
-
-    let animationFrame = 0;
-
-    const updateProgress = () => {
-      animationFrame = 0;
-      const viewportHeight = window.innerHeight || 1;
-      const progress = Math.min(Math.max(window.scrollY / (viewportHeight * 0.72), 0), 1);
+  useLhScrollProgress({
+    enabled: isHomeSurface,
+    range: 0.72,
+    respectReducedMotion: false,
+    onProgress: (progress) => {
+      const node = desktopSidebarRef.current;
+      if (!node) return;
       node.style.setProperty("--lh-home-nav-progress", `${(progress * 100).toFixed(1)}%`);
       node.style.setProperty("--lh-home-nav-progress-value", progress.toFixed(3));
-    };
+    },
+  });
 
-    const scheduleUpdate = () => {
-      if (animationFrame === 0) {
-        animationFrame = window.requestAnimationFrame(updateProgress);
-      }
-    };
-
-    updateProgress();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    return () => {
-      if (animationFrame !== 0) {
-        window.cancelAnimationFrame(animationFrame);
-      }
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
+  React.useEffect(() => {
+    const node = desktopSidebarRef.current;
+    if (!node || isHomeSurface) return;
+    node.style.removeProperty("--lh-home-nav-progress");
+    node.style.removeProperty("--lh-home-nav-progress-value");
   }, [isHomeSurface]);
 
   return (
@@ -446,7 +434,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         data-expanded={isExpanded ? "true" : "false"}
         data-home-surface={isHomeSurface ? "true" : undefined}
         style={desktopSidebarStyle}
-        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-200 ease-out md:flex"
+        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] md:flex"
         aria-label="主导航"
       >
         <Logo isExpanded={isExpanded} onTogglePin={onTogglePin} />
@@ -461,7 +449,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
 
       <div
         className={cn(
-          "fixed inset-0 z-50 bg-ink/30 transition-opacity duration-200 md:hidden",
+          "fixed inset-0 z-50 bg-ink/30 transition-opacity duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-standard)] md:hidden",
           isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
@@ -470,7 +458,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
           data-lh-sidebar
           data-mobile="true"
           className={cn(
-            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] transition-transform duration-200 ease-out [backdrop-filter:var(--lh-shell-blur)]",
+            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] transition-transform duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] [backdrop-filter:var(--lh-shell-blur)]",
             isMobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
           aria-label="移动端主导航"

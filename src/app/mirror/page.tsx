@@ -71,7 +71,7 @@ export default function MirrorPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           {caseCards.map((card) => {
             const content = (
-              <LhCard className="grid min-h-[300px] grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow] duration-150 hover:border-line-strong hover:shadow-lh-md">
+              <LhCard className="grid min-h-[300px] grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-line-strong hover:shadow-lh-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <LhChip tone={card.href ? "success" : "neutral"}>{card.status}</LhChip>

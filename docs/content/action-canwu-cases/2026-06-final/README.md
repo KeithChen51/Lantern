@@ -10,9 +10,9 @@ This folder stores the finalized 参悟 case batch that will later be updated in
 - Target module: `Action / 笃行`
 - Received in repo: 2026-07-02
 - Original archive: `一般参悟案例-格式统一版.zip`
-- Archive SHA-256: `42375C571A848F53086D8D9EEED30159E1F41A3F592AE0A43E09587002C0591A`
+- Archive SHA-256: `71A84039AA2F6B02BBD34C0D1A49BBF0E34AC387A5E6E04B54BD55CCCA2A5AEA`
 - Extracted source: `source/一般参悟案例-格式统一版/`
-- File count: 20 Markdown files
+- File count: 18 Markdown files
 
 ## Handling Rules
 
@@ -39,7 +39,5 @@ This folder stores the finalized 参悟 case batch that will later be updated in
 14. `十四、 服务人员工作期间佩戴执法记录仪是否适宜.md`
 15. `十五、 营运车与私家车的服务渠道是否应该分开？.md`
 16. `十六、为什么服务店要在节假日进行个性化氛围布置.md`
-17. `十七、 延保产品能不能驻场销售？.md`
-18. `十八、 “成本包袱”还是“情感资产”？——经营承压时，精诚吧标准降不降？.md`
-19. `十九、 极端天气救援，如何避免员工“用爱发电”？.md`
-20. `二十、 电商平台价格内卷下，轮胎定价策略的多轮调整.md`
+17. `十八、 “成本包袱”还是“情感资产”？——经营承压时，精诚吧标准降不降？.md`
+18. `十九、 极端天气救援，如何避免员工“用爱发电”？.md`

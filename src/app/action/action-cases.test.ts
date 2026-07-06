@@ -3,7 +3,7 @@ import { ACTION_CASES, type ActionCase, getActionCaseBySlug, isMarkdownActionCas
 
 describe("action cases", () => {
   it("publishes the finalized canwu batch as Action cases", () => {
-    expect(ACTION_CASES).toHaveLength(20);
+    expect(ACTION_CASES).toHaveLength(18);
     expect(ACTION_CASES.every((item) => item.metadata.status === "published")).toBe(true);
 
     const first = getActionCaseBySlug("integrity-product-control") as ActionCase | undefined;

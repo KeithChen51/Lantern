@@ -96,6 +96,7 @@ Runtime home pattern:
 - `data-lh-heart-value-scroll` keeps 求真、尽善、致美、大爱、幸福 in one visual system; it uses amber and warm paper tokens only.
 - `data-lh-heart-guide-list` is a navigation list, not a card deck. It should feel like a continuation path after reading, not a competing feature grid.
 - Heart motion uses `--lh-motion-*` and `--lh-ease-*` tokens. Motion should clarify reading order and interaction feedback, not decorate.
+- Heart scroll motion must use `useLhElementScrollProgress`; the global shell transition must use `useLhScrollProgress`. Do not create page-local scroll listeners.
 - Entrance animation is allowed once on page load for hero and major sections; repeated or looping motion is not allowed.
 - Scroll-driven motion is allowed only for cover depth and the sidebar surface transition. Other product pages should not use scroll-driven chrome changes.
 - Hover motion may use opacity and transform only. It must not change layout dimensions, spacing, or content order.
@@ -173,6 +174,7 @@ UI requirements:
 Runtime migration rule:
 
 - Hermit chat uses `LhChat*`, `LhMessage*`, and `LhSuggestionList` primitives. Page files keep behavior, data flow, and role semantics; visual styling belongs to `globals.css` token rules and component primitives.
+- Hermit auto-scroll respects `useLhReducedMotion`; loading or typing indicators use `LhLoadingGlyph`, not page-local spinner classes.
 - Migrated Hermit files are covered by the design-system test migration list. They should not reintroduce local Tailwind text sizes, raw font weights, ad hoc rounded corners, `shadow-lh-*`, or arbitrary gradient backgrounds.
 
 Knowledge boundary for v1:
@@ -306,3 +308,4 @@ Design changes should land in the system before they land as page-local styling.
 | New primitive | Update `components.md` with anatomy, states, accessibility, and misuse boundaries before adding code. |
 | New page skeleton | Update this file with task, layout, state, and mobile collapse rules. |
 | Deprecated style | Add the replacement rule to `do-dont.md` and remove page-local examples over time. |
+| New motion behavior | Add a token or hook contract first, then add the migrated files to `src/components/ui/lighthouse-design-system.test.ts`. |

@@ -8,12 +8,13 @@
   "targetModule": "action",
   "targetModuleName": "笃行",
   "sourceArchive": "一般参悟案例-格式统一版.zip",
-  "archiveSha256": "42375C571A848F53086D8D9EEED30159E1F41A3F592AE0A43E09587002C0591A",
+  "archiveSha256": "71A84039AA2F6B02BBD34C0D1A49BBF0E34AC387A5E6E04B54BD55CCCA2A5AEA",
   "sourceRoot": "source/一般参悟案例-格式统一版",
   "notes": [
     "This batch is the canonical incoming source for future Action import work.",
     "The files are staged for project awareness and traceability, not yet published as structured Action content.",
-    "Do not mutate the source files in place during later conversion work."
+    "Do not mutate the source files in place during later conversion work.",
+    "Two imported items were removed from the source archive, active extracted source, and Action data by owner request on 2026-07-06."
   ],
   "items": [
     {
@@ -97,11 +98,6 @@
       "file": "source/一般参悟案例-格式统一版/十六、为什么服务店要在节假日进行个性化氛围布置.md"
     },
     {
-      "order": 17,
-      "title": "延保产品能不能驻场销售？",
-      "file": "source/一般参悟案例-格式统一版/十七、 延保产品能不能驻场销售？.md"
-    },
-    {
       "order": 18,
       "title": "“成本包袱”还是“情感资产”？——经营承压时，精诚吧标准降不降？",
       "file": "source/一般参悟案例-格式统一版/十八、 “成本包袱”还是“情感资产”？——经营承压时，精诚吧标准降不降？.md"
@@ -110,11 +106,6 @@
       "order": 19,
       "title": "极端天气救援，如何避免员工“用爱发电”？",
       "file": "source/一般参悟案例-格式统一版/十九、 极端天气救援，如何避免员工“用爱发电”？.md"
-    },
-    {
-      "order": 20,
-      "title": "电商平台价格内卷下，轮胎定价策略的多轮调整",
-      "file": "source/一般参悟案例-格式统一版/二十、 电商平台价格内卷下，轮胎定价策略的多轮调整.md"
     }
   ]
 }

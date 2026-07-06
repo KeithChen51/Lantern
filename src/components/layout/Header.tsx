@@ -16,7 +16,7 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
       data-lh-header
       data-sidebar-pinned={isSidebarPinned ? "true" : "false"}
       className={cn(
-        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 bg-gradient-to-b from-page via-page/85 to-transparent px-4 pt-3 transition-[padding] duration-200 ease-out md:hidden",
+        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 bg-gradient-to-b from-page via-page/85 to-transparent px-4 pt-3 transition-[padding] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] md:hidden",
         isSidebarPinned ? "md:pl-[var(--lh-classic-main-offset)]" : "md:pl-[var(--lh-classic-main-collapsed-offset)]",
       )}
     >

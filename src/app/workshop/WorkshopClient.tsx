@@ -8,6 +8,7 @@ import {
   LhButton,
   LhChip,
   LhEmptyState,
+  LhLoadingGlyph,
   LhMetaList,
   LhPageHero,
   LhPanel,
@@ -518,12 +519,7 @@ function SubmissionForm({
           type="submit"
           disabled={submitting}
           variant="primary"
-          icon={
-            <Icon
-              icon={submitting ? lighthouseIcons.refresh : lighthouseIcons.send}
-              className={submitting ? "animate-spin" : undefined}
-            />
-          }
+          icon={submitting ? <LhLoadingGlyph label="正在提交" /> : <Icon icon={lighthouseIcons.send} />}
         >
           {editingSubmissionId ? "保存并重新初审" : "提交并进入初审"}
         </LhButton>

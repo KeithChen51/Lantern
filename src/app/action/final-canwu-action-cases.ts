@@ -28,10 +28,8 @@ const METADATA_BY_ORDER: Record<number, { shortTitle: string; tags: string[] }> 
   14: { shortTitle: "执法记录仪边界", tags: ["记录仪", "服务沟通", "隐私边界"] },
   15: { shortTitle: "营运车渠道分流", tags: ["营运车", "渠道分流", "服务效率"] },
   16: { shortTitle: "节假日氛围布置", tags: ["节假日", "氛围布置", "体验传播"] },
-  17: { shortTitle: "延保驻场销售", tags: ["延保", "驻场销售", "能力建设"] },
   18: { shortTitle: "精诚吧标准", tags: ["精诚吧", "体验标准", "经营承压"] },
   19: { shortTitle: "极端天气救援", tags: ["极端天气", "员工保障", "救援服务"] },
-  20: { shortTitle: "轮胎定价策略", tags: ["轮胎业务", "价格策略", "服务价值"] },
 };
 
 const COMMON_TAGS = ["参悟案例", "精诚服务", "内部实践"];

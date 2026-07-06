@@ -42,6 +42,32 @@ const migratedDesignSystemFiles = [
   "src/app/workshop/WorkshopClient.tsx",
 ] as const;
 
+const migratedMotionContractFiles = [
+  "src/components/layout/Navigation.tsx",
+  "src/components/layout/AppShell.tsx",
+  "src/components/layout/Header.tsx",
+  "src/components/ui/lighthouse-primitives.tsx",
+  "src/components/ui/FeatureCard.tsx",
+  "src/components/heart/HomeBrandHero.tsx",
+  "src/components/hermit/ChatPanel.tsx",
+  "src/components/hermit/ChatInput.tsx",
+  "src/components/hermit/MessageBubble.tsx",
+  "src/app/action/page.tsx",
+  "src/app/mirror/page.tsx",
+  "src/app/workshop/WorkshopClient.tsx",
+  "src/app/admin/AdminHome.tsx",
+  "src/app/admin/AdminLoginClient.tsx",
+  "src/app/admin/action-cases/AdminActionCasesClient.tsx",
+  "src/app/admin/workshop/AdminWorkshopClient.tsx",
+] as const;
+
+const forbiddenLocalMotionUtilities = [
+  /\bduration-(?:150|200|300|500|700)\b/,
+  /\banimate-spin\b/,
+  /\btransition-all\b/,
+  /transition:\s*all/,
+] as const;
+
 const forbiddenLocalVisualUtilities = [
   /\btext-(?:xs|sm|base|lg|xl|2xl|3xl)\b/,
   /\bfont-(?:bold|extrabold|black)\b/,
@@ -122,6 +148,7 @@ describe("lighthouse design system contract", () => {
       "--lh-ease-out: cubic-bezier(0.22, 1, 0.36, 1);",
       "--lh-ease-standard: cubic-bezier(0.25, 1, 0.5, 1);",
       "--lh-motion-fast: 160ms;",
+      "--lh-motion-popover: 180ms;",
       "--lh-motion-medium: 280ms;",
       "--lh-motion-slow: 520ms;",
     ].forEach((token) => {
@@ -130,6 +157,7 @@ describe("lighthouse design system contract", () => {
 
     [
       "`--lh-motion-fast` | `160ms`",
+      "`--lh-motion-popover` | `180ms`",
       "`--lh-motion-medium` | `280ms`",
       "`--lh-motion-slow` | `520ms`",
       "`--lh-ease-standard` | `cubic-bezier(0.25, 1, 0.5, 1)`",
@@ -144,6 +172,72 @@ describe("lighthouse design system contract", () => {
     expect(focusVisibleBlock).toContain("outline-offset: var(--lh-focus-offset);");
     expect(focusVisibleBlock).toContain("box-shadow: var(--shadow-focus);");
     expect(focusVisibleBlock).not.toContain("outline: none;");
+  });
+
+  it("defines the runtime motion contract before page-level animation work", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const motionHooks = readProjectFile("src/hooks/use-lighthouse-motion.ts");
+    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const navigation = readProjectFile("src/components/layout/Navigation.tsx");
+    const chatPanel = readProjectFile("src/components/hermit/ChatPanel.tsx");
+    const tokensDoc = readProjectFile("docs/design/tokens.md");
+    const componentsDoc = readProjectFile("docs/design/components.md");
+    const patternsDoc = readProjectFile("docs/design/patterns.md");
+    const doDontDoc = readProjectFile("docs/design/do-dont.md");
+
+    [
+      "export function useLhReducedMotion",
+      "export function useLhScrollProgress",
+      "export function useLhElementScrollProgress",
+      'window.matchMedia("(prefers-reduced-motion: reduce)")',
+      "window.requestAnimationFrame",
+      'window.addEventListener("scroll", scheduleUpdate, { passive: true })',
+    ].forEach((token) => {
+      expect(motionHooks).toContain(token);
+    });
+
+    [
+      "[data-lh-popover]",
+      "@keyframes lh-popover-enter",
+      "[data-lh-loading-glyph]",
+      "@keyframes lh-loading-rotate",
+      "--lh-motion-popover: 180ms;",
+      "@media (prefers-reduced-motion: reduce)",
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+
+    [
+      "export function LhLoadingGlyph",
+      "data-lh-loading-glyph",
+      "role=\"status\"",
+      "aria-label={label}",
+    ].forEach((token) => {
+      expect(primitives).toContain(token);
+    });
+
+    [
+      "useLhScrollProgress",
+      "data-lh-popover",
+      "aria-expanded={isSearchOpen}",
+      "aria-expanded={isOpen}",
+    ].forEach((token) => {
+      expect(navigation).toContain(token);
+    });
+
+    expect(chatPanel).toContain('behavior: prefersReducedMotion ? "auto" : "smooth"');
+    expect(globals).not.toContain("transition-property: width, height, top, left, padding");
+    expect(globals).not.toContain("transition-duration: 300ms");
+
+    [
+      "Runtime scroll effects use `useLhScrollProgress` or `useLhElementScrollProgress`",
+      "Anchored popovers use `[data-lh-popover]`",
+      "Loading indicators use `LhLoadingGlyph`",
+      "New motion behavior",
+      "naked `duration-150`, `duration-300`, `transition-all`, or `transition: all`",
+    ].forEach((token) => {
+      expect(`${tokensDoc}\n${componentsDoc}\n${patternsDoc}\n${doDontDoc}`).toContain(token);
+    });
   });
 
   it("defines Classic Amber as the fixed interface layer", () => {
@@ -233,6 +327,10 @@ describe("lighthouse design system contract", () => {
     const chatPanelContract = `${chatPanel}\n${primitives}`;
     const chatInputContract = `${chatInput}\n${primitives}`;
     const messageBubbleContract = `${messageBubble}\n${primitives}`;
+    const hermitCss = globals.slice(
+      globals.indexOf('html[data-lighthouse-interface="classic"] [data-lh-hermit-page]'),
+      globals.indexOf('html[data-lighthouse-interface="classic"] [data-lh-meta-list]'),
+    );
 
     [
       "data-lh-hermit-page",
@@ -260,7 +358,6 @@ describe("lighthouse design system contract", () => {
       "data-lh-hermit-greeting",
       "data-lh-hermit-start-input",
       "data-lh-hermit-start-examples",
-      "data-lh-hermit-start-example",
       "getConversationTitle",
       "data-lh-hermit-conversation",
       "data-lh-hermit-conversation-bar",
@@ -269,9 +366,17 @@ describe("lighthouse design system contract", () => {
       "data-lh-hermit-main",
       "data-lh-hermit-footer",
       "data-lh-hermit-composer",
+      "LhSuggestionList",
+      "hideLabel",
+      "交车时间未定，客户持续追问",
+      "客户诉求与门店成本冲突",
+      "客户情绪升高，先稳住第一句话",
     ].forEach((token) => {
       expect(chatPanel).toContain(token);
     });
+
+    expect(chatPanel).not.toContain("<button");
+    expect(chatPanel).not.toMatch(/data-lh-hermit-start-example(?:[\s=>]|$)/);
 
     ["LhChatShell", "LhChatHeader", "LhChatFooter", "data-lh-hermit-panel-header"].forEach((token) => {
       expect(chatPanel).not.toContain(token);
@@ -286,10 +391,17 @@ describe("lighthouse design system contract", () => {
     });
 
     expect(messageBubbleContract).toContain("data-lh-message-meta-note");
+    expect(messageBubbleContract).toContain("splitAssistantAnswer");
+    expect(messageBubbleContract).toContain("data-lh-answer-structure");
+    expect(messageBubbleContract).toContain("data-lh-answer-section");
+    expect(messageBubbleContract).toContain("直接建议");
+    expect(messageBubbleContract).toContain("判断依据");
+    expect(messageBubbleContract).toContain("相关案例 / 规范");
+    expect(messageBubbleContract).toContain("下一步动作");
     expect(messageBubbleContract).toContain('label = "思考中"');
     expect(chatPanel).toContain('<TypingIndicator label="思考中" />');
 
-    ["data-lh-hermit-start-example", "data-lh-hermit-start-examples"].forEach((token) => {
+    ["LhSuggestionList", "data-lh-suggestion-list", "data-lh-suggestion-button", "data-lh-hermit-start-examples"].forEach((token) => {
       expect(chatPanelContract).toContain(token);
     });
 
@@ -304,6 +416,7 @@ describe("lighthouse design system contract", () => {
       "LhMessageRow",
       "LhMessageAvatar",
       "LhMessageBubble",
+      "LhSuggestionList",
     ].forEach((token) => {
       expect(primitives).toContain(token);
     });
@@ -316,12 +429,17 @@ describe("lighthouse design system contract", () => {
       'html[data-lighthouse-interface="classic"] [data-lh-chat-scroll-content]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-start]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-start-title]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-start-example]',
+      'html[data-lighthouse-interface="classic"] [data-lh-suggestion-button]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-main]',
       'html[data-lighthouse-interface="classic"] [data-lh-chat-input]',
       'html[data-lighthouse-interface="classic"] [data-lh-message-bubble]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation] [data-lh-message-bubble]',
       'html[data-lighthouse-interface="classic"] [data-lh-message-prose]',
+      'html[data-lighthouse-interface="classic"] [data-lh-answer-structure]',
+      'html[data-lighthouse-interface="classic"] [data-lh-answer-section]',
+      "@keyframes lh-message-enter",
+      "prefers-reduced-motion: no-preference",
+      "prefers-reduced-motion: reduce",
       "--font-noto-stack:",
       "--font-noto: var(--font-noto-stack);",
       "font-family: var(--font-noto-stack);",
@@ -330,6 +448,17 @@ describe("lighthouse design system contract", () => {
     ].forEach((token) => {
       expect(globals).toContain(token);
     });
+
+    ["0 30px", "0 36px", "0 24px 70px", "0 28px 78px"].forEach((token) => {
+      expect(hermitCss).not.toContain(token);
+    });
+
+    expect(hermitCss).not.toMatch(/\[data-lh-chat-textarea\][^{]*:focus[\s\S]{0,180}outline:\s*0/);
+    expect(hermitCss).toContain("outline: 2px solid var(--lh-focus-outline);");
+    expect(hermitCss).toContain("outline-offset: var(--lh-focus-offset);");
+    expect(hermitCss).toContain("box-shadow: var(--shadow-focus);");
+    expect(chatInput).not.toContain("outline-none");
+    expect(`${chatPanel}\n${chatInput}\n${messageBubble}`).not.toMatch(/\banimate-/);
   });
 
   it("lets Workshop inherit shared page-level primitives before full page migration", () => {
@@ -420,6 +549,16 @@ describe("lighthouse design system contract", () => {
 
       forbiddenLocalVisualUtilities.forEach((pattern) => {
         expect(source, `${file} should inherit visual styles from Lighthouse primitives instead of ${pattern}`).not.toMatch(pattern);
+      });
+    });
+  });
+
+  it("keeps migrated motion surfaces on the Lighthouse runtime contract", () => {
+    migratedMotionContractFiles.forEach((file) => {
+      const source = readProjectFile(file);
+
+      forbiddenLocalMotionUtilities.forEach((pattern) => {
+        expect(source, `${file} should use motion tokens and shared primitives instead of ${pattern}`).not.toMatch(pattern);
       });
     });
   });
@@ -544,6 +683,7 @@ describe("lighthouse design system contract", () => {
   it("keeps the Heart homepage cohesive as an editorial prologue instead of colored card fragments", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
     const homeBrandHero = readProjectFile("src/components/heart/HomeBrandHero.tsx");
+    const motionHooks = readProjectFile("src/hooks/use-lighthouse-motion.ts");
     const globals = readProjectFile("src/app/globals.css");
     const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
     const heartSurface = `${heartPage}\n${homeBrandHero}`;
@@ -565,8 +705,9 @@ describe("lighthouse design system contract", () => {
       expect(globals).toContain(`[${token}]`);
     });
 
-    expect(homeBrandHero).toContain("requestAnimationFrame");
-    expect(homeBrandHero).toContain("prefers-reduced-motion: reduce");
+    expect(homeBrandHero).toContain("useLhElementScrollProgress");
+    expect(motionHooks).toContain("requestAnimationFrame");
+    expect(motionHooks).toContain("prefers-reduced-motion: reduce");
     expect(heartPage).not.toContain("LhPageHero");
     expect(heartPage).not.toContain("valueToneStyles");
     expect(heartPage).not.toContain("--value-color");
@@ -587,12 +728,17 @@ describe("lighthouse design system contract", () => {
     expect(visualSpec).toContain("Immersive Home Shell");
     expect(visualSpec).toContain("Home / Heart Brand Prologue");
     expect(visualSpec).toContain("prefers-reduced-motion");
+    expect(visualSpec).toContain("data-motion-preview");
+    expect(visualSpec).toContain("data-motion-loading-toggle");
+    expect(visualSpec).toContain("data-scroll-preview");
+    expect(visualSpec).toContain("loading-glyph");
   });
 
   it("keeps the homepage sidebar subdued on the dark hero and restores the normal shell on scroll", () => {
     const globals = readProjectFile("src/app/globals.css");
     const appShell = readProjectFile("src/components/layout/AppShell.tsx");
     const navigation = readProjectFile("src/components/layout/Navigation.tsx");
+    const motionHooks = readProjectFile("src/hooks/use-lighthouse-motion.ts");
 
     [
       "isHomeSurface={isHomeSurface}",
@@ -606,11 +752,13 @@ describe("lighthouse design system contract", () => {
       "desktopSidebarRef",
       "--lh-home-nav-progress",
       "--lh-home-nav-progress-value",
-      "window.requestAnimationFrame",
+      "useLhScrollProgress",
       'data-home-surface={isHomeSurface ? "true" : undefined}',
     ].forEach((token) => {
       expect(navigation).toContain(token);
     });
+
+    expect(motionHooks).toContain("window.requestAnimationFrame");
 
     [
       '[data-lh-sidebar][data-home-surface="true"][data-expanded="false"]:not([data-mobile])',
@@ -701,6 +849,7 @@ describe("lighthouse design system contract", () => {
       "LhContentProse",
       "LhStateNotice",
       "LhEmptyState",
+      "LhLoadingGlyph",
     ].forEach((componentName) => {
       expect(primitives).toMatch(new RegExp(`export (?:const|function) ${componentName}\\b`));
     });

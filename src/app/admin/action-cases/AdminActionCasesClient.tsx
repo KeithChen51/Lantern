@@ -8,6 +8,7 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
+  LhLoadingGlyph,
   LhSectionHeader,
   LhStatusBadge,
   LhTextArea,
@@ -222,7 +223,7 @@ export function AdminActionCasesClient() {
               type="button"
               variant="secondary"
               disabled={busy === "parse"}
-              icon={<Icon icon={busy === "parse" ? lighthouseIcons.refresh : lighthouseIcons.document} className={busy === "parse" ? "h-4 w-4 animate-spin" : "h-4 w-4"} />}
+              icon={busy === "parse" ? <LhLoadingGlyph label="正在解析" /> : <Icon icon={lighthouseIcons.document} className="h-4 w-4" />}
               onClick={() => void parseMarkdown()}
             >
               解析 Markdown
@@ -231,7 +232,7 @@ export function AdminActionCasesClient() {
               type="button"
               variant="primary"
               disabled={busy === "save"}
-              icon={<Icon icon={busy === "save" ? lighthouseIcons.refresh : lighthouseIcons.save} className={busy === "save" ? "h-4 w-4 animate-spin" : "h-4 w-4"} />}
+              icon={busy === "save" ? <LhLoadingGlyph label="正在保存" /> : <Icon icon={lighthouseIcons.save} className="h-4 w-4" />}
               onClick={() => void saveDraft()}
             >
               保存草稿
@@ -240,7 +241,7 @@ export function AdminActionCasesClient() {
               type="button"
               variant="signal"
               disabled={!form.id || busy === "publish"}
-              icon={<Icon icon={busy === "publish" ? lighthouseIcons.refresh : lighthouseIcons.publish} className={busy === "publish" ? "h-4 w-4 animate-spin" : "h-4 w-4"} />}
+              icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : <Icon icon={lighthouseIcons.publish} className="h-4 w-4" />}
               onClick={() => void publishCurrent()}
             >
               发布

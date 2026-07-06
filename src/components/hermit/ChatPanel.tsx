@@ -6,13 +6,14 @@ import type { UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import { LhStatusBadge } from "@/components/ui/lighthouse-primitives";
+import { LhStatusBadge, LhSuggestionList } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { useLhReducedMotion } from "@/hooks/use-lighthouse-motion";
 
 const SUGGESTED_QUESTIONS = [
-  "交车时间还没结论，客户一直追问时怎么回应？",
-  "客户诉求和门店成本冲突时，先判断什么？",
-  "客户情绪已经上来，第一句话怎么稳住？",
+  "交车时间未定，客户持续追问",
+  "客户诉求与门店成本冲突",
+  "客户情绪升高，先稳住第一句话",
 ];
 
 function getLocalGreeting(date = new Date()) {
@@ -58,6 +59,7 @@ export function ChatPanel() {
   const [input, setInput] = useState("");
   const [greeting, setGreeting] = useState("您好");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useLhReducedMotion();
 
   const isLoading = status === "submitted" || status === "streaming";
   const hasMessages = messages.length > 0;
@@ -78,9 +80,9 @@ export function ChatPanel() {
   useEffect(() => {
     const element = scrollRef.current;
     if (element && (hasMessages || isLoading)) {
-      element.scrollTo({ top: element.scrollHeight, behavior: "smooth" });
+      element.scrollTo({ top: element.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
     }
-  }, [hasMessages, isLoading, messages, status]);
+  }, [hasMessages, isLoading, messages, prefersReducedMotion, status]);
 
   function handleSubmit() {
     if (!input.trim() || isLoading) return;
@@ -171,18 +173,14 @@ function EmptyChatStart({
         <div data-lh-hermit-start-input>
           <ChatInput value={input} onChange={onInputChange} onSubmit={onSubmit} isLoading={isLoading} />
         </div>
-        <div data-lh-hermit-start-examples aria-label="可直接提问">
-          {SUGGESTED_QUESTIONS.map((question) => (
-            <button
-              data-lh-hermit-start-example
-              key={question}
-              type="button"
-              onClick={() => onSuggestedQuestion(question)}
-              disabled={isLoading}
-            >
-              {question}
-            </button>
-          ))}
+        <div data-lh-hermit-start-examples>
+          <LhSuggestionList
+            label="可直接提问"
+            questions={SUGGESTED_QUESTIONS}
+            disabled={isLoading}
+            hideLabel
+            onSelect={onSuggestedQuestion}
+          />
         </div>
       </div>
     </section>

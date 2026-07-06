@@ -48,7 +48,7 @@ export default async function ActionPage() {
         <div className="grid gap-5">
           {actionCases.map((actionCase) => (
             <Link key={actionCase.slug} href={actionCase.href} className="group block">
-              <LhCard data-lh-action-card className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-[var(--lh-card-hover-shadow)] lg:grid-cols-[minmax(0,1fr)_360px]">
+              <LhCard data-lh-action-card className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] group-hover:border-line-strong group-hover:shadow-[var(--lh-card-hover-shadow)] lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="grid min-w-0 grid-rows-[auto_1fr_auto] gap-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <LhChip tone="primary">{actionCase.date}</LhChip>

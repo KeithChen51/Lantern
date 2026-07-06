@@ -28,6 +28,7 @@ Existing primitives:
 - `LhContentProse`
 - `LhStateNotice`
 - `LhEmptyState`
+- `LhLoadingGlyph`
 - `LhChatShell`
 - `LhChatHeader`
 - `LhChatMain`
@@ -60,7 +61,7 @@ Every component contract should define anatomy, variants, states, accessibility,
 
 | Component family | Required anatomy | Accessibility rule | Do not use for |
 | --- | --- | --- | --- |
-| Button | Container, label, optional Solar icon, loading affordance. | Keyboard focus uses 2px outline + 3px offset + halo; disabled reason where unclear; loading width preserved. | Passive labels or broad navigation descriptions. |
+| Button | Container, label, optional Solar icon, `LhLoadingGlyph` when busy. | Keyboard focus uses 2px outline + 3px offset + halo; disabled reason where unclear; loading width preserved. | Passive labels or broad navigation descriptions. |
 | Icon button | 36px or 44px target, 20px icon, accessible label. | `aria-label` is required; tooltip for unfamiliar icons. | Ambiguous destructive actions without confirmation. |
 | Field | Label, control, helper text, validation/error message. | `aria-describedby` for helper/error, `aria-invalid` for invalid fields. | Placeholder-only labels. |
 | Chip / Badge | Text label, optional dot/icon, semantic wrapper. | Do not rely on color alone for state meaning. | Merging status, category, role, metric, and code into one generic style. |
@@ -70,6 +71,7 @@ Every component contract should define anatomy, variants, states, accessibility,
 | Content prose | Semantic headings, paragraphs, lists, quote, divider. | Preserve heading order and readable line length; do not encode action state. | Forms, data tables, dense control groups, or decorative card copy. |
 | State notice | Tone, optional icon, title, message, action. | Warning and danger announce as alerts; color is paired with text and icon. | Empty states or persistent page instructions. |
 | Empty state | Optional icon, title, description, action region. | Name the current scope and provide the next useful action when available. | Error alerts, loading skeletons, or normal content cards. |
+| Loading glyph | One inline glyph with status label, currentColor, and fixed `1em` box. | Must have an accessible label; reduced motion stops rotation while preserving state text. | Page-specific spinners, decorative loops, progress bars, or skeleton screens. |
 | Chat | Shell, header, scroll body, footer input, message rows, suggestions. | Input remains keyboard submit-able; suggested questions are buttons; message role is explicit. | Generic cards, decorative quote layouts, or non-conversational lists. |
 | Workflow collection | Segments, metadata rows, submission cards, actions. | Segments expose `aria-pressed`; cards keep status/action regions explicit. | Chat, prose, or purely decorative homepage blocks. |
 
@@ -90,6 +92,7 @@ Reusable components consume runtime typography tokens instead of raw Tailwind ty
 | `LhContentProse` | editorial reading | `--type-reading / --leading-reading`, compact uses `--type-body` | headings `--weight-extrabold` | Markdown and long-form case text use semantic tags; visual classes live in the prose wrapper. |
 | `LhStateNotice` | UI sans | body uses `--type-body`, title uses `--type-control` | title `--weight-extrabold` | Status/recovery messages use semantic tone text tokens and role defaults. |
 | `LhEmptyState` | UI sans plus optional icon | title uses `--title-card`, description uses `--type-body` | title `--weight-extrabold` | Empty states are composed regions, not dashed cards built per page. |
+| `LhLoadingGlyph` | Inherits parent text context | `1em` glyph box | inherits | Loading icons do not define page typography; the surrounding button/notice owns label size and weight. |
 | `LhChat*` / `LhMessage*` | editorial chat plus UI controls | input and assistant prose use `--type-reading`; labels use `--type-caption` | tokenized weights only | Conversational surfaces should not define local text sizes or bubble styling in page files. |
 | `LhMetaList` / `LhSegmentedControl` / `LhSubmissionCard` | UI workflow | labels use `--type-control`, meta uses `--type-caption`, titles use `--title-card` | tokenized weights only | Workflow pages should not define local title, badge, tab, or card typography. |
 | Navigation shell | UI sans | sub-label `--type-control`, label `--type-caption` | sub-label `--weight-extrabold`, label `--weight-bold` | Navigation is product chrome, not editorial serif copy. |
@@ -136,6 +139,7 @@ Rules:
 - A page should normally have one visually dominant primary action.
 - Destructive actions require `danger`; irreversible destructive actions also require confirmation.
 - Loading state disables the button and preserves width where possible.
+- Loading icons use `LhLoadingGlyph`; do not add local `animate-spin`, local durations, or custom SVG rotation.
 - Icon-only actions use `LhIconButton`, not a text button with hidden text.
 - Amber button/link text smaller than `18px` uses `--color-primary-text`, not raw `--color-primary`.
 - Danger button/link text smaller than `18px` uses `--color-danger-text`, not raw `--color-danger`.

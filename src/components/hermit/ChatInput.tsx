@@ -2,9 +2,8 @@
 
 import { Icon } from "@iconify/react";
 import { useEffect, useRef, type FormEvent, type KeyboardEvent } from "react";
-import { LhChatInputShell, LhChatSubmitButton, LhChatTextarea } from "@/components/ui/lighthouse-primitives";
+import { LhChatInputShell, LhChatSubmitButton, LhChatTextarea, LhLoadingGlyph } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   value: string;
@@ -48,7 +47,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="描述客户状态、门店限制和你要判断的点……"
+            placeholder="描述客户状态、现场限制和需要判断的问题"
             disabled={isLoading}
             rows={1}
           />
@@ -59,7 +58,11 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: ChatInputPro
           aria-label={isLoading ? "正在生成" : "发送"}
           title={isLoading ? "正在生成" : "发送"}
         >
-          <Icon data-lh-chat-submit-icon icon={isLoading ? lighthouseIcons.refresh : lighthouseIcons.send} className={cn(isLoading && "animate-spin")} />
+          {isLoading ? (
+            <LhLoadingGlyph data-lh-chat-submit-icon label="正在生成" />
+          ) : (
+            <Icon data-lh-chat-submit-icon icon={lighthouseIcons.send} />
+          )}
         </LhChatSubmitButton>
       </div>
     </LhChatInputShell>

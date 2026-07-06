@@ -41,7 +41,7 @@ export function AdminHome() {
         <div className="grid gap-5 md:grid-cols-2">
           {adminAreas.map((area) => (
             <Link key={area.href} href={area.href} className="group block">
-              <LhCard className="grid min-h-56 grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow] duration-150 group-hover:border-line-strong group-hover:shadow-lh-md">
+              <LhCard className="grid min-h-56 grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] group-hover:border-line-strong group-hover:shadow-lh-md">
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-[var(--lh-control-radius)] border border-primary/20 bg-primary-soft text-primary-deep">
                     <Icon icon={area.icon} className="h-5 w-5" />

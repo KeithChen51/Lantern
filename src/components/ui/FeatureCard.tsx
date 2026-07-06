@@ -20,7 +20,7 @@ export function FeatureCard({
   return (
     <article
       className={cn(
-        "group relative grid overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)] transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--lh-card-hover-shadow)] md:aspect-[1.618/1] md:grid-cols-[61.8%_minmax(0,1fr)]",
+        "group relative grid overflow-hidden rounded-[var(--lh-card-radius)] border border-line bg-surface text-ink shadow-[var(--lh-card-shadow)] transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--lh-card-hover-shadow)] md:aspect-[1.618/1] md:grid-cols-[61.8%_minmax(0,1fr)]",
         className,
       )}
     >
@@ -31,7 +31,7 @@ export function FeatureCard({
             alt={title}
             fill
             sizes="(max-width: 768px) 100vw, 60vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+            className="object-cover transition-transform duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex h-full min-h-[190px] items-center justify-center bg-surface-quiet text-sm font-bold text-primary-deep">
@@ -51,7 +51,7 @@ export function FeatureCard({
 
         <div className="flex items-center justify-between border-t border-line pt-3 text-xs font-bold uppercase tracking-[0.14em] text-primary-deep">
           <span>查看案例</span>
-          <span aria-hidden="true" className="h-px w-8 bg-primary transition-[width] duration-200 group-hover:w-12" />
+          <span aria-hidden="true" className="h-px w-12 origin-left scale-x-75 bg-primary transition-transform duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-out)] group-hover:scale-x-100" />
         </div>
       </div>
     </article>

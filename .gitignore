@@ -64,5 +64,35 @@ knowledge-vectors.json
 /output/
 /.playwright-cli/
 
+# Local planning and non-runtime creative artifacts
+/docs/plans/
+/docs/design/premium-demo/
+/videos/
+
+# Brand VI and training materials live outside the Lighthouse app repo
+/docs/brand/vi-assets/
+/docs/brand/*VI*.html
+/docs/brand/*VI*.md
+/docs/brand/*visual-identity*.html
+/docs/training/
+
+# Public design explorations and retired static assets
+/public/app-icon-concepts/
+/public/oa-home-lighthouse-banner*
+/public/oa-wechat-cover-900x383*
+/public/oa-lighthouse-transparent.png
+/public/dealer-service-keyword-poster.png
+/public/lighthouse-home-hero-bg-v1.png
+/public/lighthouse-home-hero-bg-v3-sea-mist.png
+/public/lighthouse-home-hero-bg-v6-eastern-mountain-sea.png
+/public/v3_*.webp
+/public/pang-dong-lai.jpg
+/public/胖东来企业全面调研报告.md
+/public/file.svg
+/public/globe.svg
+/public/next.svg
+/public/vercel.svg
+/public/window.svg
+
 # Local Netlify folder
 .netlify

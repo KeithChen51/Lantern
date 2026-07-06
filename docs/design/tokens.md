@@ -333,6 +333,7 @@ Motion should clarify state changes without making the product feel animated for
 | Token | Value | Use |
 | --- | --- | --- |
 | `--lh-motion-fast` | `160ms` | Hover and immediate micro-feedback. |
+| `--lh-motion-popover` | `180ms` | Search, notification, and anchored disclosure popovers. |
 | `--lh-motion-medium` | `280ms` | Row, card, guide-link, and local state transitions. |
 | `--lh-motion-slow` | `520ms` | One-time page or major-section entrance choreography. |
 | `--lh-ease-standard` | `cubic-bezier(0.25, 1, 0.5, 1)` | Color, border, opacity, and shadow transitions. |
@@ -341,6 +342,9 @@ Motion should clarify state changes without making the product feel animated for
 Rules:
 
 - Motion should use runtime `--lh-motion-*` and `--lh-ease-*` tokens, not ad hoc durations.
+- Runtime scroll effects use `useLhScrollProgress` or `useLhElementScrollProgress`; page files must not create their own scroll listeners.
+- Anchored popovers use `[data-lh-popover]` with an origin token. They enter through opacity and transform, never layout or blur.
+- Loading indicators use `LhLoadingGlyph` so spinner timing, size, reduced-motion behavior, and accessible label stay consistent.
 - One-time entrance motion is allowed for Heart/Home hero and major editorial sections.
 - Homepage / Heart may use scroll progress for two narrative effects only: subtle hero depth and the immersive-to-operational sidebar transition.
 - Hover motion may use opacity and transform only; it must not change element dimensions, spacing, or content order.

@@ -4,7 +4,7 @@
 
 | Do | Don't |
 | --- | --- |
-| Use `docs/brand/` for official service-brand VI assets, lockups, fonts, and brand-facing materials. | Move VI assets into platform UI folders just because the app mentions the service brand. |
+| Keep official service-brand VI assets outside this app repo in the adjacent Lantern brand workspace. | Move VI assets into platform UI folders just because the app mentions the service brand. |
 | Use `docs/design/` and `src/components/ui/` for platform controls, layout, state, and interaction rules. | Let a campaign H5 or poster define app shell, buttons, tables, or admin UI. |
 | Classify new design artifacts as `service-brand-vi`, `lighthouse-product-ui`, or `campaign-or-output-artifact`. | Add ambiguous visual files without a layer or source-of-truth note. |
 
@@ -47,6 +47,16 @@
 | Pair state colors with labels, icons, dots, or placement. | Communicate success, danger, selection, or progress by color alone. |
 | Preserve control width during loading and prevent duplicate submit. | Let loading labels resize buttons or leave users unsure what is processing. |
 | Explain disabled actions when the reason is not obvious. | Disable controls with opacity only and no recovery path. |
+
+## Motion
+
+| Do | Don't |
+| --- | --- |
+| Use `--lh-motion-*` and `--lh-ease-*` tokens for hover, press, popover, card, and shell transitions. | Add naked `duration-150`, `duration-300`, `transition-all`, or `transition: all` in migrated surfaces. |
+| Use `useLhScrollProgress` or `useLhElementScrollProgress` for approved scroll-driven effects. | Add page-local scroll listeners or unbounded `requestAnimationFrame` loops. |
+| Use `[data-lh-popover]` for search, notification, and anchored disclosure entrances. | Let popovers blink in, scale from center, or animate layout properties. |
+| Use `LhLoadingGlyph` for inline loading icons and respect reduced motion. | Add local `animate-spin`, custom spinners, or looping decorative motion in buttons and notices. |
+| Keep frequent actions snappy and mostly color/opacity based; press feedback must not shift layout. | Add cinematic or scroll effects to workbench pages, admin flows, tables, or repeated controls. |
 
 ## Content And Recovery
 

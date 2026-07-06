@@ -64,7 +64,7 @@ export const LhButton = React.forwardRef<HTMLButtonElement, LhButtonProps>(
       data-lh-button
       ref={ref}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:translate-y-px active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100",
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -94,7 +94,7 @@ export const LhIconButton = React.forwardRef<HTMLButtonElement, LhIconButtonProp
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] leading-[var(--leading-control)] transition-[background,border-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55",
+        "inline-flex shrink-0 items-center justify-center rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] leading-[var(--leading-control)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:translate-y-px active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100",
         size === "sm" ? "h-9 w-9 text-[length:var(--type-control)]" : "h-11 w-11 text-[length:var(--type-reading)]",
         buttonVariants[variant],
         className,
@@ -106,6 +106,18 @@ export const LhIconButton = React.forwardRef<HTMLButtonElement, LhIconButtonProp
   ),
 );
 LhIconButton.displayName = "LhIconButton";
+
+export interface LhLoadingGlyphProps extends React.HTMLAttributes<HTMLSpanElement> {
+  label?: string;
+}
+
+export function LhLoadingGlyph({ className, label = "Loading", ...props }: LhLoadingGlyphProps) {
+  return (
+    <span data-lh-loading-glyph role="status" aria-label={label} className={cn("inline-flex items-center justify-center", className)} {...props}>
+      <Icon icon={lighthouseIcons.refresh} aria-hidden="true" />
+    </span>
+  );
+}
 
 export interface LhPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   elevated?: boolean;
@@ -191,7 +203,7 @@ export function LhBackLink({ className, icon, children, ...props }: LhBackLinkPr
     <Link
       data-lh-back-link
       className={cn(
-        "inline-flex min-h-10 items-center gap-2 rounded-[var(--lh-control-radius)] border border-line bg-panel px-3 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text transition-[background,border-color,box-shadow,color] duration-150 hover:border-line-strong hover:bg-primary-soft",
+        "inline-flex min-h-10 items-center gap-2 rounded-[var(--lh-control-radius)] border border-line bg-panel px-3 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-line-strong hover:bg-primary-soft active:translate-y-px active:scale-[0.985]",
         className,
       )}
       {...props}
@@ -477,16 +489,19 @@ export interface LhSuggestionListProps {
   icon?: React.ReactNode;
   questions: readonly string[];
   disabled?: boolean;
+  hideLabel?: boolean;
   onSelect: (question: string) => void;
 }
 
-export function LhSuggestionList({ label, icon, questions, disabled = false, onSelect }: LhSuggestionListProps) {
+export function LhSuggestionList({ label, icon, questions, disabled = false, hideLabel = false, onSelect }: LhSuggestionListProps) {
   return (
     <section data-lh-suggestion-list data-lh-hermit-suggestions aria-label={String(label)}>
-      <div data-lh-suggestion-heading>
-        {icon}
-        {label}
-      </div>
+      {!hideLabel && (
+        <div data-lh-suggestion-heading>
+          {icon}
+          {label}
+        </div>
+      )}
       <div data-lh-suggestion-items>
         {questions.map((question) => (
           <button
