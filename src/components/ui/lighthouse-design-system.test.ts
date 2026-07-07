@@ -520,7 +520,13 @@ describe("lighthouse design system contract", () => {
   it("keeps a fixed body typeface without runtime typeface switching", () => {
     const globals = readProjectFile("src/app/globals.css");
 
-    expect(globals).toContain('--font-hei-stack: "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans SC", sans-serif;');
+    expect(globals).toContain('@font-face');
+    expect(globals).toContain('font-family: "Source Han Sans SC";');
+    expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf") format("opentype")');
+    expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype")');
+    expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype")');
+    expect(globals).toContain('url("/fonts/brand/smiley-sans/SmileySans-Oblique.woff2") format("woff2")');
+    expect(globals).toContain('--font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;');
     expect(globals).toContain('--font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;');
     expect(globals).toContain('--font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;');
     expect(globals).toContain("--font-sans-stack: var(--font-hei-stack);");

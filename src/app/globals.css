@@ -1,5 +1,45 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Source Han Sans SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Source Han Sans SC"),
+    url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Source Han Sans SC";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    local("Source Han Sans SC Medium"),
+    url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Source Han Sans SC";
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src:
+    local("Source Han Sans SC Bold"),
+    url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Smiley Sans";
+  font-style: oblique;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Smiley Sans Oblique"),
+    url("/fonts/brand/smiley-sans/SmileySans-Oblique.woff2") format("woff2");
+}
+
 :root {
   --lh-ink: #2c2c2c;
   --lh-ink-soft: color-mix(in srgb, #2c2c2c 74%, white);
@@ -150,7 +190,7 @@
   --lh-motion-medium: 280ms;
   --lh-motion-slow: 520ms;
 
-  --font-hei-stack: "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+  --font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-sans-stack: var(--font-hei-stack);
