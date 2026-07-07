@@ -30,6 +30,7 @@ const BASE_URL = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
 const API_KEY = process.env.EMBEDDING_API_KEY || process.env.OPENAI_API_KEY || "";
 const MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
 const REQUIRE_DATABASE = process.env.HERMIT_KNOWLEDGE_REQUIRE_DATABASE === "true";
+const USE_PREBUILT_INDEX = process.env.HERMIT_KNOWLEDGE_USE_PREBUILT === "true";
 
 const CONTENT_TYPE_TO_SOURCE_TYPE: Partial<Record<ContentType, KnowledgeSourceType>> = {
   [ContentType.HEART]: "heart",
@@ -180,8 +181,57 @@ async function embed(texts: string[]): Promise<number[][]> {
     .map((d: { embedding: number[] }) => d.embedding);
 }
 
+function validatePrebuiltKnowledgeIndex() {
+  const relativeOutputPath = path.relative(process.cwd(), OUTPUT_PATH).replace(/\\/g, "/");
+  if (!fs.existsSync(OUTPUT_PATH)) {
+    throw new Error(
+      `HERMIT_KNOWLEDGE_USE_PREBUILT=true but ${relativeOutputPath} does not exist. Build the index locally first or unset HERMIT_KNOWLEDGE_USE_PREBUILT.`,
+    );
+  }
+
+  const raw = JSON.parse(fs.readFileSync(OUTPUT_PATH, "utf-8")) as {
+    model?: unknown;
+    dimension?: unknown;
+    chunks?: unknown;
+  };
+  if (typeof raw.model !== "string" || !raw.model.trim()) {
+    throw new Error(`Prebuilt ${relativeOutputPath} is missing a valid model field.`);
+  }
+  if (typeof raw.dimension !== "number" || !Number.isFinite(raw.dimension) || raw.dimension <= 0) {
+    throw new Error(`Prebuilt ${relativeOutputPath} is missing a valid positive dimension.`);
+  }
+  if (!Array.isArray(raw.chunks) || raw.chunks.length === 0) {
+    throw new Error(`Prebuilt ${relativeOutputPath} has no knowledge chunks.`);
+  }
+
+  const invalidChunk = raw.chunks.find((chunk) => {
+    if (!chunk || typeof chunk !== "object") return true;
+    const vector = (chunk as { vector?: unknown }).vector;
+    return !Array.isArray(vector) || vector.length !== raw.dimension;
+  });
+  if (invalidChunk) {
+    throw new Error(`Prebuilt ${relativeOutputPath} contains a chunk with an invalid vector dimension.`);
+  }
+
+  if (process.env.EMBEDDING_MODEL && process.env.EMBEDDING_MODEL !== raw.model) {
+    throw new Error(
+      `HERMIT_KNOWLEDGE_USE_PREBUILT=true but EMBEDDING_MODEL is "${process.env.EMBEDDING_MODEL}" while the prebuilt index model is "${raw.model}". Set EMBEDDING_MODEL to "${raw.model}" or rebuild the index with the deployment model.`,
+    );
+  }
+
+  console.log(
+    `Using prebuilt ${relativeOutputPath}: ${raw.chunks.length} chunks, dim=${raw.dimension}, model=${raw.model}.`,
+  );
+  console.log("Skipping embedding build because HERMIT_KNOWLEDGE_USE_PREBUILT=true.");
+}
+
 async function main() {
   console.log("Hermit Knowledge Base Builder\n");
+  if (USE_PREBUILT_INDEX) {
+    validatePrebuiltKnowledgeIndex();
+    return;
+  }
+
   console.log(`  Embedding API: ${BASE_URL}`);
   console.log(`  Model:         ${MODEL}\n`);
 

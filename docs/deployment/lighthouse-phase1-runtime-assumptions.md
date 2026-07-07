@@ -50,24 +50,35 @@ Before production rollout, run a real internal-model connection test with the fi
 
 ## Hermit Embedding And RAG
 
-Yes, the embedding model is needed for deployment if Hermit RAG is enabled.
+Yes, an embedding model is needed at runtime if Hermit RAG is enabled.
 
 The current RAG flow uses embeddings twice:
 
 1. During `npm run build`, `npm run build:knowledge` reads static Hermit knowledge, brand/normative markdown, static Action cases, and, when `DATABASE_URL` is available, published Workshop guides plus published managed content versions. It then calls the configured embedding API and writes `knowledge-vectors.json` into the build output.
 2. During runtime chat, every user query calls the same embedding API to produce a query vector and compare it with the built knowledge vectors.
 
-Therefore production, preview, and any private-cloud build host must configure:
+In normal deployment, production, preview, and any private-cloud build host must configure:
 
 - `EMBEDDING_BASE_URL`: the internal embedding endpoint root, normally ending in `/v1`.
 - `EMBEDDING_API_KEY`: the embedding endpoint credential. If omitted, the app falls back to `OPENAI_API_KEY`.
 - `EMBEDDING_MODEL`: the embedding model name used by the company gateway.
+- `HERMIT_KNOWLEDGE_USE_PREBUILT`: keep `false` for normal builds. Set `true` only when the deployment package already contains a validated `src/lib/hermit/knowledge/knowledge-vectors.json` and the build host should not call the embedding API.
 - `HERMIT_RAG_MIN_SCORE`: minimum cosine score for a chunk to enter the prompt.
 - `HERMIT_RAG_STRONG_SCORE`: score at which published practice, Action, or norm sources can be treated as exact evidence.
 - `HERMIT_RAG_OUT_OF_DOMAIN_SCORE`: stricter score required when the user query has no service-domain signal.
 - `HERMIT_KNOWLEDGE_REQUIRE_DATABASE`: keep `false` for preview builds that may not have migrated database content yet. Set `true` only when production builds must fail if database-backed Workshop/Content sources cannot be loaded.
 
 The embedding model used at build time and runtime must be the same model with the same vector dimension. Hermit stores the build-time model name and dimension in `knowledge-vectors.json`; runtime RAG will reject mismatched embedding configuration and continue the chat without retrieved context rather than using distorted similarity scores.
+
+If the internal embedding service is unstable only on the build host, use the prebuilt-index fallback:
+
+```bash
+HERMIT_KNOWLEDGE_USE_PREBUILT=true
+EMBEDDING_MODEL="<model stored in knowledge-vectors.json>"
+npm run build
+```
+
+This validates and packages the existing `knowledge-vectors.json` instead of regenerating it. It does not remove the runtime dependency on query embeddings: `/api/chat` still needs a working `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, and matching `EMBEDDING_MODEL` to retrieve context for each user question.
 
 Runtime retrieval is no longer raw top-K. It now applies service-domain detection, a minimum relevance threshold, a stronger out-of-domain threshold, and evidence tiering. If a question is unrelated or no chunk crosses the minimum score, Hermit does not inject the nearest weak snippets into the model prompt.
 
