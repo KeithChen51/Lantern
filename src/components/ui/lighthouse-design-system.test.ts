@@ -323,6 +323,7 @@ describe("lighthouse design system contract", () => {
     const chatPanel = readProjectFile("src/components/hermit/ChatPanel.tsx");
     const chatInput = readProjectFile("src/components/hermit/ChatInput.tsx");
     const messageBubble = readProjectFile("src/components/hermit/MessageBubble.tsx");
+    const systemPrompt = readProjectFile("src/lib/hermit/system-prompt.ts");
     const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
     const chatPanelContract = `${chatPanel}\n${primitives}`;
     const chatInputContract = `${chatInput}\n${primitives}`;
@@ -386,6 +387,10 @@ describe("lighthouse design system contract", () => {
       expect(chatInputContract).toContain(token);
     });
 
+    ["data-lh-focus-origin", "focusIntentRef", "onPointerDownCapture", "onKeyDownCapture", "onFocusCapture", "onBlurCapture"].forEach((token) => {
+      expect(chatInput).toContain(token);
+    });
+
     ["data-lh-message-row", "data-lh-message-avatar", "data-lh-message-bubble", "data-lh-message-prose"].forEach((token) => {
       expect(messageBubbleContract).toContain(token);
     });
@@ -394,6 +399,11 @@ describe("lighthouse design system contract", () => {
     expect(messageBubbleContract).toContain("splitAssistantAnswer");
     expect(messageBubbleContract).toContain("data-lh-answer-structure");
     expect(messageBubbleContract).toContain("data-lh-answer-section");
+    expect(messageBubbleContract).toContain('import remarkGfm from "remark-gfm"');
+    expect(messageBubbleContract).toContain("remarkPlugins={[remarkGfm]}");
+    expect(messageBubbleContract).toContain("normalizeMarkdownTableSeparators");
+    expect(messageBubbleContract).toContain("data-lh-message-table-wrap");
+    expect(messageBubbleContract).toContain("data-lh-message-table");
     expect(messageBubbleContract).toContain("直接建议");
     expect(messageBubbleContract).toContain("判断依据");
     expect(messageBubbleContract).toContain("相关案例 / 规范");
@@ -435,6 +445,8 @@ describe("lighthouse design system contract", () => {
       'html[data-lighthouse-interface="classic"] [data-lh-message-bubble]',
       'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation] [data-lh-message-bubble]',
       'html[data-lighthouse-interface="classic"] [data-lh-message-prose]',
+      'html[data-lighthouse-interface="classic"] [data-lh-message-table-wrap]',
+      'html[data-lighthouse-interface="classic"] [data-lh-message-table]',
       'html[data-lighthouse-interface="classic"] [data-lh-answer-structure]',
       'html[data-lighthouse-interface="classic"] [data-lh-answer-section]',
       "@keyframes lh-message-enter",
@@ -457,8 +469,16 @@ describe("lighthouse design system contract", () => {
     expect(hermitCss).toContain("outline: 2px solid var(--lh-focus-outline);");
     expect(hermitCss).toContain("outline-offset: var(--lh-focus-offset);");
     expect(hermitCss).toContain("box-shadow: var(--shadow-focus);");
+    expect(hermitCss).toContain('[data-lh-chat-input][data-lh-focus-origin="pointer"] [data-lh-chat-textarea]:focus-visible');
+    expect(hermitCss).toContain("outline-color: transparent;");
+    expect(hermitCss).toContain('[data-lh-chat-input][data-lh-focus-origin="keyboard"] [data-lh-chat-textarea]:focus-visible');
+    expect(hermitCss).toContain("outline: 2px solid color-mix(in srgb, var(--lh-focus-outline) 70%, transparent);");
+    expect(hermitCss).not.toMatch(/\[data-lh-chat-input\]\[data-lh-focus-origin="pointer"\][\s\S]{0,180}outline:\s*(?:0|none)/);
     expect(chatInput).not.toContain("outline-none");
     expect(`${chatPanel}\n${chatInput}\n${messageBubble}`).not.toMatch(/\banimate-/);
+    expect(systemPrompt).toContain("合法 GFM 表格语法");
+    expect(systemPrompt).toContain("|---|---|");
+    expect(systemPrompt).toContain("不要使用中文长横线");
   });
 
   it("lets Workshop inherit shared page-level primitives before full page migration", () => {

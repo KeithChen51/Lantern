@@ -2407,6 +2407,17 @@ html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation] [data-lh
   box-shadow: var(--shadow-focus);
 }
 
+html[data-lighthouse-interface="classic"] [data-lh-chat-input][data-lh-focus-origin="pointer"] [data-lh-chat-textarea]:focus-visible {
+  outline-color: transparent;
+  box-shadow: none;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-chat-input][data-lh-focus-origin="keyboard"] [data-lh-chat-textarea]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lh-focus-outline) 70%, transparent);
+  outline-offset: var(--lh-focus-offset);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation] [data-lh-chat-submit] {
   width: 2.75rem;
   height: 2.75rem;
@@ -2578,6 +2589,69 @@ html[data-lighthouse-interface="classic"] [data-lh-message-prose] blockquote {
   background: var(--color-surface-quiet);
   padding: 0.75rem 1rem;
   color: var(--color-muted);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table-wrap] {
+  max-width: 100%;
+  margin: 0.875rem 0 1rem;
+  overflow-x: auto;
+  border: 1px solid rgba(217, 119, 6, 0.14);
+  border-radius: var(--lh-control-radius);
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 4px 14px rgba(86, 64, 32, 0.035);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] {
+  width: 100%;
+  min-width: 30rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-sans-stack);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] thead {
+  background: rgba(217, 119, 6, 0.08);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] th,
+html[data-lighthouse-interface="classic"] [data-lh-message-table] td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid rgba(86, 64, 32, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] th {
+  color: var(--lh-primary-text);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-caption);
+  white-space: nowrap;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] td {
+  color: var(--lh-ink-readable);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] tbody tr:nth-child(even) {
+  background: rgba(255, 250, 239, 0.38);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] tbody td:first-child {
+  color: var(--color-ink);
+  font-weight: var(--weight-bold);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-message-table] p {
+  margin: 0;
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-message-prose] hr {

@@ -15,7 +15,6 @@ import {
   formatActionCaseKnowledgeDocuments,
   formatContentItemKnowledgeDocument,
   formatMarkdownKnowledgeDocument,
-  formatPublishedGuideKnowledgeDocument,
   type KnowledgeSourceDocument,
   type KnowledgeSourceType,
 } from "../src/lib/hermit/knowledge-builder";
@@ -32,21 +31,15 @@ const API_KEY = process.env.EMBEDDING_API_KEY || process.env.OPENAI_API_KEY || "
 const MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
 const REQUIRE_DATABASE = process.env.HERMIT_KNOWLEDGE_REQUIRE_DATABASE === "true";
 
-const CONTENT_TYPE_TO_SOURCE_TYPE: Record<ContentType, KnowledgeSourceType> = {
+const CONTENT_TYPE_TO_SOURCE_TYPE: Partial<Record<ContentType, KnowledgeSourceType>> = {
   [ContentType.HEART]: "heart",
   [ContentType.MIRROR_CASE]: "mirror_case",
   [ContentType.ACTION_CASE]: "action_case",
   [ContentType.NORM_FILE]: "norm_file",
-  [ContentType.WORKSHOP_GUIDE]: "workshop_guide",
   [ContentType.TRAINING]: "training",
 };
 
 const STATIC_EXTRA_MARKDOWN_FILES: Array<{ filePath: string; sourceType: KnowledgeSourceType; sourceLabel: string }> = [
-  {
-    filePath: path.join(process.cwd(), "docs/lighthouse-workshop-co-creation-report.md"),
-    sourceType: "workshop_guide",
-    sourceLabel: "Workshop 共创报告",
-  },
   {
     filePath: path.join(process.cwd(), "public/胖东来企业全面调研报告.md"),
     sourceType: "mirror_case",
@@ -114,58 +107,39 @@ async function readDatabaseKnowledgeDocuments(): Promise<KnowledgeSourceDocument
 
   const prisma = new PrismaClient();
   try {
-    const [guides, contentItems] = await Promise.all([
-      prisma.publishedGuide.findMany({
-        orderBy: { publishedAt: "desc" },
-      }),
-      prisma.contentItem.findMany({
-        where: {
-          status: ContentStatus.PUBLISHED,
-          publishedVersionId: { not: null },
-          contentType: {
-            in: [
-              ContentType.HEART,
-              ContentType.MIRROR_CASE,
-              ContentType.ACTION_CASE,
-              ContentType.NORM_FILE,
-              ContentType.WORKSHOP_GUIDE,
-              ContentType.TRAINING,
-            ],
-          },
+    const contentItems = await prisma.contentItem.findMany({
+      where: {
+        status: ContentStatus.PUBLISHED,
+        publishedVersionId: { not: null },
+        contentType: {
+          in: [
+            ContentType.HEART,
+            ContentType.MIRROR_CASE,
+            ContentType.ACTION_CASE,
+            ContentType.NORM_FILE,
+            ContentType.TRAINING,
+          ],
         },
-        include: { publishedVersion: true },
-        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-      }),
-    ]);
+      },
+      include: { publishedVersion: true },
+      orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+    });
 
-    return [
-      ...guides.map((guide) =>
-        formatPublishedGuideKnowledgeDocument({
-          id: guide.id,
-          title: guide.title,
-          roleName: guide.roleName,
-          serviceScenario: guide.serviceScenario,
-          principleRef: guide.principleRef,
-          doText: guide.doText,
-          howText: guide.howText,
-          dontText: guide.dontText,
-          publishedAt: guide.publishedAt,
+    return contentItems.flatMap((item) => {
+      const sourceType = CONTENT_TYPE_TO_SOURCE_TYPE[item.contentType];
+      if (!sourceType) return [];
+      const version = item.publishedVersion;
+      if (!version?.bodyMarkdown.trim()) return [];
+      return [
+        formatContentItemKnowledgeDocument({
+          id: item.id,
+          title: version.title || item.title,
+          contentType: sourceType,
+          bodyMarkdown: version.bodyMarkdown,
+          updatedAt: item.updatedAt,
         }),
-      ),
-      ...contentItems.flatMap((item) => {
-        const version = item.publishedVersion;
-        if (!version?.bodyMarkdown.trim()) return [];
-        return [
-          formatContentItemKnowledgeDocument({
-            id: item.id,
-            title: version.title || item.title,
-            contentType: CONTENT_TYPE_TO_SOURCE_TYPE[item.contentType],
-            bodyMarkdown: version.bodyMarkdown,
-            updatedAt: item.updatedAt,
-          }),
-        ];
-      }),
-    ];
+      ];
+    });
   } catch (error) {
     if (REQUIRE_DATABASE) throw error;
     console.warn("[Hermit Knowledge] Database sources skipped:", error);
