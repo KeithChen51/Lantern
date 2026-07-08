@@ -13,11 +13,11 @@ const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 const caseCards = [
   {
     title: "云游胖东来",
-    description: "深入胖东来的商业哲学，理解它如何把人本经营、员工体验和服务秩序连接起来。",
+    description: "把胖东来的公开事实拆成机制、条件和售后可用动作，作为服务文化转译的标杆案例卡。",
     date: "2026-01",
     href: "/mirror/pang-dong-lai",
     status: "可阅读",
-    dimensions: ["真诚", "员工关怀", "服务秩序"],
+    dimensions: ["机制拆解", "售后迁移", "路引提问"],
   },
   {
     title: "其他案例待沉淀",
@@ -33,8 +33,8 @@ const compareRows = [
   ["案例来源", "外部企业公开材料、行业观察、媒体报道", "帮助团队形成可讨论的参考对象"],
   ["阅读目标", "提取服务文化、组织管理和动作设计", "避免简单赞美或机械照搬"],
   [
-    "迁移方式",
-    "先识别原则，再看本地服务场景是否成立",
+    "拆解方式",
+    "先识别事实、机制和成立条件，再转成售后动作",
     PUBLIC_WORKSHOP_ENABLED ? "连接笃行、共创与路引" : "连接笃行与路引",
   ],
 ];
