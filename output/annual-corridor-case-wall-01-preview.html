@@ -43,7 +43,6 @@
       --order-gray: #595757;
       --paper: #FBFAF6;
       --paper-shadow: #F1EEE7;
-      --kindness-gold: #BE9457;
       --text: rgba(20, 27, 37, 0.92);
       --muted: rgba(89, 87, 87, 0.82);
       --quiet: rgba(89, 87, 87, 0.58);
@@ -61,7 +60,7 @@
       margin: 0;
       color: var(--text);
       background:
-        radial-gradient(circle at 10% 0%, rgba(190, 148, 87, 0.13), transparent 28%),
+        radial-gradient(circle at 10% 0%, rgba(89, 87, 87, 0.08), transparent 28%),
         linear-gradient(180deg, var(--paper) 0%, var(--paper-shadow) 100%);
       font-family: var(--font-body);
       letter-spacing: 0;
@@ -180,26 +179,15 @@
       background: var(--seal-red);
     }
 
-    .case-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 10px;
-      padding-top: 4px;
-      color: var(--quiet);
-      font-family: var(--font-latin);
-      font-size: clamp(11px, 1vw, 14px);
-      font-weight: 600;
-      line-height: 1.2;
-    }
-
     .case-number {
+      display: block;
+      padding-top: 4px;
       color: var(--seal-red);
       font-size: clamp(22px, 2.8vw, 42px);
+      font-family: var(--font-latin);
+      font-weight: 600;
       line-height: 1;
     }
-
-    .case-label { white-space: nowrap; }
 
     .case-copy {
       display: flex;
@@ -226,20 +214,11 @@
       line-height: 1.72;
     }
 
-    .case-footer {
+    .case-qr {
       display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 12px;
+      justify-content: flex-end;
       padding-top: 14px;
       border-top: 1px dashed rgba(89, 87, 87, 0.28);
-    }
-
-    .case-footer small {
-      max-width: 8em;
-      color: var(--quiet);
-      font-size: clamp(10px, 0.9vw, 13px);
-      line-height: 1.5;
     }
 
     .qr-entry {
@@ -261,7 +240,7 @@
     .qr-entry:hover { color: var(--trust-ink); }
 
     .qr-entry:focus-visible {
-      outline: 2px solid var(--kindness-gold);
+      outline: 2px solid var(--seal-red);
       outline-offset: 5px;
       border-radius: 2px;
     }
@@ -328,47 +307,149 @@
         </p>
       </header>
 
-      <div class="case-grid" id="case-grid"></div>
+      <div class="case-grid" id="case-grid">
+        <article class="case-card" aria-labelledby="case-title-01">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">01</span>
+          <div class="case-copy">
+            <h2 id="case-title-01">诚信经营</h2>
+            <p>用诊断、透明告知和客户确认守住推荐边界，让客户在充分理解后作出选择。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：诚信经营">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-02">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">02</span>
+          <div class="case-copy">
+            <h2 id="case-title-02">取送车司机休息区</h2>
+            <p>为取送车司机设置体面等待空间，让服务链条上的协作者也被认真接待。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：取送车司机休息区">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-03">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">03</span>
+          <div class="case-copy">
+            <h2 id="case-title-03">取送车客诉处理</h2>
+            <p>承担应承担的责任，明确补偿边界，不以无原则妥协换取一时满意。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：取送车客诉处理">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-04">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">04</span>
+          <div class="case-copy">
+            <h2 id="case-title-04">服务顾问用餐空间</h2>
+            <p>保障员工体面用餐，也保护接待现场的专业感知与客户体验。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：服务顾问用餐空间">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-05">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">05</span>
+          <div class="case-copy">
+            <h2 id="case-title-05">车间降温</h2>
+            <p>降温不是额外成本，而是关乎维修质量、安全和现场效能的长期投资。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：车间降温">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-06">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">06</span>
+          <div class="case-copy">
+            <h2 id="case-title-06">通往客休区的楼梯</h2>
+            <p>守住楼梯尺度、照明与防滑，让客户进入客休区前先感到安全与被尊重。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：通往客休区的楼梯">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-07">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">07</span>
+          <div class="case-copy">
+            <h2 id="case-title-07">顾问身后的空间</h2>
+            <p>给服务顾问留出转身空间，也为从容协作和服务质量留出余地。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：顾问身后的空间">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-08">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">08</span>
+          <div class="case-copy">
+            <h2 id="case-title-08">茶几上的插座</h2>
+            <p>让一线敢于发现并上报问题，也让善意反馈能够得到组织回应。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：茶几上的插座">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="case-card" aria-labelledby="case-title-09">
+          <span class="top-rule" aria-hidden="true"></span>
+          <span class="case-number">09</span>
+          <div class="case-copy">
+            <h2 id="case-title-09">客休区售卖边界</h2>
+            <p>保持休息空间的纯粹与克制，避免客户感到服务过程处处都在被推销。</p>
+          </div>
+          <div class="case-qr">
+            <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：客休区售卖边界">
+              <span class="qr-pattern" aria-hidden="true"></span>
+              <span>扫码阅读完整案例</span>
+            </button>
+          </div>
+        </article>
+      </div>
       <p id="qr-status" role="status" aria-live="polite"></p>
     </section>
   </main>
 
   <script>
-    const cases = [
-      { number: "01", title: "诚信经营", summary: "用诊断、透明告知和客户确认，守住推荐边界。" },
-      { number: "02", title: "取送车司机休息区", summary: "让服务链条上的协作者，也被体面接待。" },
-      { number: "03", title: "取送车客诉处理", summary: "承担应承担的责任，不以无原则妥协换满意。" },
-      { number: "04", title: "服务顾问用餐空间", summary: "保障员工体面用餐，也保护客户的专业感知。" },
-      { number: "05", title: "车间降温", summary: "降温不是成本负担，而是质量、安全与效能投资。" },
-      { number: "06", title: "通往客休区的楼梯", summary: "守住尺度、照明与防滑，守住客户的基础安全感。" },
-      { number: "07", title: "顾问身后的空间", summary: "给员工转身空间，也给服务质量留出余地。" },
-      { number: "08", title: "茶几上的插座", summary: "让一线敢于发现问题，也让善意反馈得到回应。" },
-      { number: "09", title: "客休区售卖边界", summary: "保持休息空间的纯粹，克制本身也是服务品质。" }
-    ];
-
     const grid = document.querySelector("#case-grid");
     const status = document.querySelector("#qr-status");
-
-    grid.innerHTML = cases.map((item) => `
-      <article class="case-card" aria-labelledby="case-title-${item.number}">
-        <span class="top-rule" aria-hidden="true"></span>
-        <div class="case-meta">
-          <span class="case-number">${item.number}</span>
-          <span class="case-label">案例卡</span>
-        </div>
-        <div class="case-copy">
-          <h2 id="case-title-${item.number}">${item.title}</h2>
-          <p>${item.summary}</p>
-        </div>
-        <footer class="case-footer">
-          <small>精诚服务<br />二十周年</small>
-          <button class="qr-entry" type="button" aria-label="扫码阅读完整案例：${item.title}">
-            <span class="qr-pattern" aria-hidden="true"></span>
-            <span>扫码阅读完整案例</span>
-          </button>
-        </footer>
-      </article>
-    `).join("");
 
     grid.addEventListener("click", (event) => {
       const button = event.target.closest(".qr-entry");
