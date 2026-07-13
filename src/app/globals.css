@@ -46,7 +46,7 @@
   --lh-ink-readable: rgba(44, 44, 44, 0.76);
   --lh-ink-secondary: rgba(44, 44, 44, 0.68);
   --lh-ink-tertiary: rgba(44, 44, 44, 0.58);
-  --lh-muted: color-mix(in srgb, #2c2c2c 58%, white);
+  --lh-muted: color-mix(in srgb, #2c2c2c 72%, white);
   --lh-faint: color-mix(in srgb, #2c2c2c 34%, white);
   --lh-page: #f3efe0;
   --lh-page-start: #f8f3e5;
@@ -69,6 +69,8 @@
   --lh-primary-text: #9b5c14;
   --lh-primary-deep: var(--lh-primary-text);
   --lh-primary-soft: rgba(217, 119, 6, 0.1);
+  --lh-on-primary: #242424;
+  --lh-primary-hover: #d27200;
   --lh-signal: #9b7a4c;
   --lh-brass-text: #806744;
   --lh-signal-deep: var(--lh-brass-text);
@@ -141,6 +143,8 @@
   --color-primary: var(--lh-primary);
   --color-primary-deep: var(--lh-primary-deep);
   --color-primary-text: var(--lh-primary-text);
+  --color-on-primary: var(--lh-on-primary);
+  --color-primary-hover: var(--lh-primary-hover);
   --color-primary-soft: var(--lh-primary-soft);
   --color-signal: var(--lh-signal);
   --color-signal-deep: var(--lh-signal-deep);
@@ -189,6 +193,12 @@
   --lh-motion-popover: 180ms;
   --lh-motion-medium: 280ms;
   --lh-motion-slow: 520ms;
+  --lh-form-label-control-gap: 0.5rem;
+  --lh-form-control-message-gap: 0.5rem;
+  --lh-form-message-gap: 0.5rem;
+  --lh-form-field-gap: 1.25rem;
+  --lh-form-content-action-gap: 1.5rem;
+  --lh-form-legend-choice-gap: 0.5rem;
 
   --font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
@@ -236,7 +246,7 @@ html[data-lighthouse-interface="classic"] {
   --lh-ink-readable: rgba(44, 44, 44, 0.76);
   --lh-ink-secondary: rgba(44, 44, 44, 0.68);
   --lh-ink-tertiary: rgba(44, 44, 44, 0.58);
-  --lh-muted: color-mix(in srgb, #2c2c2c 58%, white);
+  --lh-muted: color-mix(in srgb, #2c2c2c 72%, white);
   --lh-faint: color-mix(in srgb, #2c2c2c 34%, white);
   --lh-page: #f3efe0;
   --lh-page-start: #f8f3e5;
@@ -257,6 +267,8 @@ html[data-lighthouse-interface="classic"] {
   --lh-primary-text: #9b5c14;
   --lh-primary-deep: var(--lh-primary-text);
   --lh-primary-soft: rgba(217, 119, 6, 0.1);
+  --lh-on-primary: #242424;
+  --lh-primary-hover: #d27200;
   --lh-signal: #9b7a4c;
   --lh-brass-text: #806744;
   --lh-signal-deep: var(--lh-brass-text);
@@ -333,6 +345,8 @@ html[data-lighthouse-interface="classic"] {
   --color-primary: var(--lh-primary);
   --color-primary-deep: var(--lh-primary-deep);
   --color-primary-text: var(--lh-primary-text);
+  --color-on-primary: var(--lh-on-primary);
+  --color-primary-hover: var(--lh-primary-hover);
   --color-primary-soft: var(--lh-primary-soft);
   --color-signal: var(--lh-signal);
   --color-signal-deep: var(--lh-signal-deep);
@@ -434,6 +448,10 @@ html[data-lighthouse-interface="classic"] [data-lh-section-header] h2 {
   font-family: var(--font-serif-stack);
   color: var(--color-ink);
   letter-spacing: 0;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-operational-page-header] h1 {
+  font-family: var(--font-sans-stack);
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-main] {
@@ -633,7 +651,7 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false
   margin-inline: auto;
 }
 
-html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-sidebar-notifications] {
+html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-sidebar-utility-group] {
   display: grid;
   justify-items: center;
   margin-top: auto;
@@ -3371,6 +3389,121 @@ html[data-lighthouse-interface="classic"] [data-lh-workshop-full-button] {
   }
 }
 
+[data-lh-form-stack] {
+  display: grid;
+  min-width: 0;
+  gap: var(--lh-form-field-gap);
+}
+
+[data-lh-field] {
+  display: grid;
+  min-width: 0;
+}
+
+[data-lh-field-label] {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--lh-form-label-control-gap);
+  color: var(--color-ink);
+  font-size: var(--type-control);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-control);
+}
+
+[data-lh-field-optional] {
+  color: var(--color-muted);
+  font-size: var(--type-label);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-label);
+}
+
+[data-lh-field-label] + [data-lh-field-control-shell] {
+  margin-top: var(--lh-form-label-control-gap);
+}
+
+[data-lh-field-control-shell] {
+  display: block;
+  min-width: 0;
+}
+
+[data-lh-field-control] {
+  min-width: 0;
+  font-family: inherit;
+  font-size: var(--type-reading);
+  line-height: var(--leading-reading);
+  letter-spacing: 0;
+}
+
+[data-lh-field-control-shell] + [data-lh-field-messages] {
+  margin-top: var(--lh-form-control-message-gap);
+}
+
+[data-lh-field-messages] {
+  display: grid;
+  min-width: 0;
+  gap: var(--lh-form-message-gap);
+}
+
+[data-lh-field-help] {
+  color: var(--color-muted);
+  font-size: var(--type-label);
+  line-height: var(--leading-label);
+}
+
+[data-lh-field-error] {
+  color: var(--color-danger-text);
+  font-size: var(--type-label);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-label);
+}
+
+[data-lh-field-group] {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+[data-lh-field-legend] {
+  display: block;
+  width: 100%;
+  padding: 0;
+  color: var(--color-ink);
+  font-size: var(--type-control);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-control);
+}
+
+[data-lh-field-legend-row] {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--lh-form-label-control-gap);
+}
+
+[data-lh-choice-group] {
+  display: grid;
+  min-width: 0;
+  margin-top: var(--lh-form-legend-choice-gap);
+  gap: var(--lh-form-label-control-gap);
+}
+
+[data-lh-choice-group] + [data-lh-field-messages] {
+  margin-top: var(--lh-form-control-message-gap);
+}
+
+[data-lh-form-copy] {
+  min-width: 0;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+[data-lh-form-actions] {
+  min-width: 0;
+  margin-top: var(--lh-form-content-action-gap);
+}
+
 ::selection {
   background: var(--color-signal-soft);
   color: var(--color-ink);
@@ -3380,7 +3513,7 @@ button,
 input,
 textarea,
 select {
-  font: inherit;
+  font-family: inherit;
   letter-spacing: 0;
 }
 

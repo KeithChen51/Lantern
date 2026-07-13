@@ -10,7 +10,7 @@ type Tone = "neutral" | "primary" | "signal" | "success" | "warning" | "danger" 
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    "border-primary-deep bg-primary text-panel shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_16px_rgba(217,119,6,0.18)] hover:bg-primary-deep",
+    "border-primary-deep bg-primary text-[color:var(--color-on-primary)] shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_16px_rgba(217,119,6,0.18)] hover:bg-[color:var(--color-primary-hover)]",
   signal:
     "border-signal bg-signal-soft text-signal-text shadow-lh-sm hover:border-signal-deep hover:bg-primary-soft",
   secondary:
@@ -277,7 +277,7 @@ export function LhStateNotice({
       {icon && <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-[var(--lh-control-radius)] border border-current/20 bg-panel/40 text-[length:var(--type-reading)]">{icon}</span>}
       <span className="min-w-0">
         {title && <strong className="block text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-ink">{title}</strong>}
-        {children && <span className="mt-1 block text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft">{children}</span>}
+        {children && <span className={cn("block text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft", title && "mt-1")}>{children}</span>}
       </span>
       {action}
     </aside>
@@ -330,44 +330,108 @@ export function LhEmptyState({
 
 interface LhFieldShellProps {
   id?: string;
-  label?: string;
-  helperText?: string;
-  error?: string;
+  label?: React.ReactNode;
+  helperText?: React.ReactNode;
+  error?: React.ReactNode;
+  optionalLabel?: React.ReactNode;
   children: React.ReactNode;
 }
 
-function LhFieldShell({ id, label, helperText, error, children }: LhFieldShellProps) {
+function getFieldDescriptionIds(id: string | undefined, helperText: React.ReactNode, error: React.ReactNode, describedBy?: string) {
+  return [describedBy, id && helperText ? `${id}-helper` : undefined, id && error ? `${id}-error` : undefined].filter(Boolean).join(" ") || undefined;
+}
+
+function LhFieldShell({ id, label, helperText, error, optionalLabel, children }: LhFieldShellProps) {
   return (
-    <label className="grid gap-2" htmlFor={id}>
-      {label && <span className="text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-ink">{label}</span>}
-      {children}
+    <div data-lh-field>
+      {label && (
+        <label data-lh-field-label htmlFor={id}>
+          <span>{label}</span>
+          {optionalLabel && <span data-lh-field-optional>{optionalLabel}</span>}
+        </label>
+      )}
+      <span data-lh-field-control-shell>{children}</span>
       {(helperText || error) && (
-        <span className={cn("text-[length:var(--type-label)] leading-[var(--leading-label)]", error ? "font-[var(--weight-bold)] text-danger-text" : "text-muted")}>
-          {error ?? helperText}
+        <span data-lh-field-messages>
+          {helperText && <span data-lh-field-help id={id ? `${id}-helper` : undefined}>{helperText}</span>}
+          {error && <span data-lh-field-error id={id ? `${id}-error` : undefined} role="alert">{error}</span>}
         </span>
       )}
-    </label>
+    </div>
   );
 }
 
+export interface LhFieldGroupProps extends React.FieldsetHTMLAttributes<HTMLFieldSetElement> {
+  legend: React.ReactNode;
+  helperText?: React.ReactNode;
+  error?: React.ReactNode;
+  optionalLabel?: React.ReactNode;
+}
+
+export function LhFieldGroup({
+  className,
+  id,
+  legend,
+  helperText,
+  error,
+  optionalLabel,
+  children,
+  "aria-describedby": describedBy,
+  "aria-invalid": invalid,
+  ...props
+}: LhFieldGroupProps) {
+  return (
+    <fieldset
+      data-lh-field-group
+      id={id}
+      className={className}
+      aria-describedby={getFieldDescriptionIds(id, helperText, error, describedBy)}
+      aria-invalid={error ? true : invalid}
+      {...props}
+    >
+      <legend data-lh-field-legend>
+        <span data-lh-field-legend-row>
+          <span>{legend}</span>
+          {optionalLabel && <span data-lh-field-optional>{optionalLabel}</span>}
+        </span>
+      </legend>
+      {children}
+      {(helperText || error) && (
+        <span data-lh-field-messages>
+          {helperText && <span data-lh-field-help id={id ? `${id}-helper` : undefined}>{helperText}</span>}
+          {error && <span data-lh-field-error id={id ? `${id}-error` : undefined} role="alert">{error}</span>}
+        </span>
+      )}
+    </fieldset>
+  );
+}
+
+export const LhChoiceGroup = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => <div data-lh-choice-group ref={ref} className={className} {...props} />,
+);
+LhChoiceGroup.displayName = "LhChoiceGroup";
+
 export interface LhTextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  helperText?: string;
-  error?: string;
+  label?: React.ReactNode;
+  helperText?: React.ReactNode;
+  error?: React.ReactNode;
+  optionalLabel?: React.ReactNode;
   leftIcon?: React.ReactNode;
 }
 
 export const LhTextField = React.forwardRef<HTMLInputElement, LhTextFieldProps>(
-  ({ className, label, helperText, error, leftIcon, id, ...props }, ref) => (
-    <LhFieldShell id={id} label={label} helperText={helperText} error={error}>
+  ({ className, label, helperText, error, optionalLabel, leftIcon, id, "aria-describedby": describedBy, "aria-invalid": invalid, ...props }, ref) => (
+    <LhFieldShell id={id} label={label} helperText={helperText} error={error} optionalLabel={optionalLabel}>
       <span className="relative block">
         {leftIcon && <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-primary-text">{leftIcon}</span>}
         <input
+          data-lh-field-control
           ref={ref}
           id={id}
-          aria-invalid={Boolean(error)}
+          aria-describedby={getFieldDescriptionIds(id, helperText, error, describedBy)}
+          aria-invalid={error ? true : invalid}
           className={cn(
-            "min-h-12 w-full rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-4 text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink transition-[background,border-color,box-shadow] placeholder:text-muted focus-visible:border-[var(--lh-focus-outline)]",
+            "min-h-12 w-full rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-4 text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-primary/50 focus-visible:border-[var(--lh-focus-outline)] disabled:cursor-not-allowed disabled:opacity-60",
             leftIcon && "pl-10",
             error && "border-danger text-ink focus-visible:border-danger-text",
             className,
@@ -381,20 +445,23 @@ export const LhTextField = React.forwardRef<HTMLInputElement, LhTextFieldProps>(
 LhTextField.displayName = "LhTextField";
 
 export interface LhTextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
-  helperText?: string;
-  error?: string;
+  label?: React.ReactNode;
+  helperText?: React.ReactNode;
+  error?: React.ReactNode;
+  optionalLabel?: React.ReactNode;
 }
 
 export const LhTextArea = React.forwardRef<HTMLTextAreaElement, LhTextAreaProps>(
-  ({ className, label, helperText, error, id, ...props }, ref) => (
-    <LhFieldShell id={id} label={label} helperText={helperText} error={error}>
+  ({ className, label, helperText, error, optionalLabel, id, "aria-describedby": describedBy, "aria-invalid": invalid, ...props }, ref) => (
+    <LhFieldShell id={id} label={label} helperText={helperText} error={error} optionalLabel={optionalLabel}>
       <textarea
+        data-lh-field-control
         ref={ref}
         id={id}
-        aria-invalid={Boolean(error)}
+        aria-describedby={getFieldDescriptionIds(id, helperText, error, describedBy)}
+        aria-invalid={error ? true : invalid}
         className={cn(
-          "min-h-32 w-full resize-y rounded-[var(--lh-card-radius)] border border-line-strong bg-panel px-4 py-3 text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink transition-[background,border-color,box-shadow] placeholder:text-muted focus-visible:border-[var(--lh-focus-outline)]",
+          "min-h-32 w-full resize-y rounded-[var(--lh-card-radius)] border border-line-strong bg-panel px-4 py-3 text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink transition-[background,border-color,box-shadow] placeholder:text-muted hover:border-primary/50 focus-visible:border-[var(--lh-focus-outline)] disabled:cursor-not-allowed disabled:opacity-60",
           error && "border-danger text-ink focus-visible:border-danger-text",
           className,
         )}
@@ -622,6 +689,20 @@ export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivE
   action?: React.ReactNode;
 }
 
+export interface LhOperationalPageHeaderProps extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
+  title: React.ReactNode;
+  description?: React.ReactNode;
+}
+
+export function LhOperationalPageHeader({ className, title, description, ...props }: LhOperationalPageHeaderProps) {
+  return (
+    <header data-lh-operational-page-header className={cn("grid gap-3", className)} {...props}>
+      <h1 className="text-[length:var(--title-section)] font-[var(--weight-bold)] leading-[1.14] text-ink">{title}</h1>
+      {description && <p className="max-w-3xl text-[length:var(--type-body)] leading-[var(--leading-body)] text-muted">{description}</p>}
+    </header>
+  );
+}
+
 export function LhSectionHeader({ className, eyebrow, title, description, action, ...props }: LhSectionHeaderProps) {
   return (
     <div data-lh-section-header className={cn("grid gap-4 border-t border-line pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start", className)} {...props}>
@@ -661,7 +742,7 @@ export function LhCallout({ className, tone = "neutral", icon, title, action, ch
       {icon && <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-[var(--lh-control-radius)] border border-current/20 bg-panel/40 text-[length:var(--type-reading)]">{icon}</span>}
       <span className="min-w-0">
         {title && <strong className="block text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-ink">{title}</strong>}
-        {children && <span className="mt-1 block text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft">{children}</span>}
+        {children && <span className={cn("block text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft", title && "mt-1")}>{children}</span>}
       </span>
       {action}
     </aside>

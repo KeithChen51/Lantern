@@ -56,6 +56,7 @@ knowledge-vectors.json
 
 # Local Codex worker artifacts
 /.codex/
+/.superpowers/
 
 # Local reference materials
 /references/
@@ -66,6 +67,7 @@ knowledge-vectors.json
 
 # Local planning and non-runtime creative artifacts
 /docs/plans/
+/docs/superpowers/
 /docs/design/premium-demo/
 /videos/
 

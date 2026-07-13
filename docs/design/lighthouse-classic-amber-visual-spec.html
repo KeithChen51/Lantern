@@ -8,7 +8,9 @@
     :root {
       --lh-ink: #2c2c2c;
       --lh-ink-soft: color-mix(in srgb, #2c2c2c 74%, white);
-      --lh-muted: color-mix(in srgb, #2c2c2c 58%, white);
+      --lh-muted: color-mix(in srgb, #2c2c2c 72%, white);
+      --lh-on-primary: #242424;
+      --lh-primary-hover: #d27200;
       --lh-page: #f3efe0;
       --lh-page-start: #f8f3e5;
       --lh-page-end: #eee6d0;
@@ -59,6 +61,12 @@
       --space-8: 32px;
       --space-10: 40px;
       --space-12: 48px;
+      --lh-form-label-control-gap: 8px;
+      --lh-form-control-message-gap: 8px;
+      --lh-form-message-gap: 8px;
+      --lh-form-field-gap: 20px;
+      --lh-form-content-action-gap: 24px;
+      --lh-form-legend-choice-gap: 8px;
       --type-caption: 12px;
       --type-label: 13px;
       --type-control: 14px;
@@ -532,7 +540,7 @@
     .shadow-md { box-shadow: var(--shadow-md); }
     .shadow-deck { box-shadow: var(--shadow-deck); }
     .shadow-focus { border-color: rgba(217, 119, 6, 0.35); box-shadow: var(--shadow-focus); }
-    .shadow-button { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-panel); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
+    .shadow-button { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-on-primary); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
 
     .icon-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     .icon-tile { display: grid; gap: 10px; }
@@ -564,15 +572,16 @@
       transition: background-color var(--lh-motion-fast) var(--lh-ease-standard), border-color var(--lh-motion-fast) var(--lh-ease-standard), color var(--lh-motion-fast) var(--lh-ease-standard), box-shadow var(--lh-motion-fast) var(--lh-ease-standard);
     }
 
-    .button.primary { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-panel); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
+    .button.primary { border-color: var(--lh-primary-deep); background: var(--lh-primary); color: var(--lh-on-primary); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 16px rgba(217, 119, 6, 0.18); }
+    .button.primary:hover { background: var(--lh-primary-hover); }
     .button.secondary { border-color: var(--lh-line-strong); background: var(--lh-panel); color: var(--lh-primary-deep); box-shadow: var(--shadow-sm); }
     .button.quiet { border-color: var(--lh-line); background: var(--lh-surface-quiet); color: var(--lh-ink-soft); }
     .button.ghost { border-color: transparent; background: transparent; color: var(--lh-primary-deep); }
     .button.danger { border-color: rgba(184, 92, 70, 0.3); background: var(--lh-danger-soft); color: var(--lh-danger-text); }
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .field { display: grid; gap: var(--space-2); }
-    .field label { color: var(--lh-ink); font-size: var(--type-control); font-weight: var(--weight-black); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--lh-form-field-gap); }
+    .field { display: grid; gap: 0; }
+    .field label { color: var(--lh-ink); font-size: var(--type-control); font-weight: var(--weight-extrabold); line-height: 20px; }
 
     input,
     textarea {
@@ -583,13 +592,20 @@
       outline: 0;
       background: var(--lh-panel);
       color: var(--lh-ink);
-      font: var(--weight-regular) var(--type-body)/1.4 var(--font-hei);
+      font-family: var(--font-hei);
+      font-size: var(--type-reading);
+      font-weight: var(--weight-regular);
+      line-height: 28px;
       padding: 0 14px;
+      margin-top: var(--lh-form-label-control-gap);
     }
 
-    textarea { min-height: 110px; padding: 13px 14px; line-height: 1.7; resize: vertical; }
+    textarea { min-height: 110px; padding: 13px 14px; resize: vertical; }
     input:focus-visible, textarea:focus-visible { border-color: var(--lh-focus-outline); }
-    .helper { color: var(--lh-muted); font-size: var(--type-label); line-height: 1.6; }
+    .helper { margin-top: var(--lh-form-control-message-gap); color: var(--lh-muted); font-size: var(--type-label); line-height: 18px; }
+    .form-rhythm-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
+    .form-rhythm-item { display: grid; gap: 4px; border-top: 1px solid var(--lh-line); padding-top: var(--space-2); color: var(--lh-muted); font-size: var(--type-label); line-height: 18px; }
+    .form-rhythm-item code { color: var(--lh-primary-deep); overflow-wrap: anywhere; }
 
     .callout {
       display: grid;
@@ -732,7 +748,7 @@
       .page { grid-template-columns: 1fr; padding: var(--space-5); }
       .sidebar { position: relative; top: auto; min-height: auto; border-right: 0; border-bottom: 1px solid var(--lh-hairline); padding: 0 0 18px; }
       .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
-      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .motion-token-grid, .motion-principles, .motion-preview-grid, .scroll-preview, .home-pattern, .home-flow, .archetype-grid, .page-contract-grid, .pattern-card-grid, .rule-grid { grid-template-columns: 1fr; }
+      .grid.two, .grid.three, .token-grid, .color-architecture, .aux-token-plan, .aux-token-list li, .value-tag-grid, .value-tag-head, .value-tag-rules, .type-showcase, .scale-grid, .heading-row, .form-grid, .form-rhythm-grid, .shell-preview-grid, .desktop-shell, .desktop-content, .shell-rules, .grid-spec, .grid-metrics, .grid-patterns, .shadow-grid, .icon-grid, .matrix-grid, .state-strip, .anatomy-grid, .governance-flow, .motion-token-grid, .motion-principles, .motion-preview-grid, .scroll-preview, .home-pattern, .home-flow, .archetype-grid, .page-contract-grid, .pattern-card-grid, .rule-grid { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1112,7 +1128,7 @@
         <div class="section-body grid">
           <article class="card"><h3>Buttons</h3><p>主按钮只用于当前页面最重要动作；二级按钮用于普通操作；危险按钮用于删除、拒绝、撤销等高风险动作。</p><div class="button-row" style="margin-top:14px"><span class="button primary">主操作</span><span class="button secondary">二级操作</span><span class="button quiet">低强调</span><span class="button ghost">文字操作</span><span class="button danger">危险操作</span></div></article>
           <article class="card"><h3>Badges / Chips</h3><p>经典版当前将琥珀和铜褐作为主要状态表达。为保持现状，success、info、brass 仍使用同一铜褐家族；danger 单独使用砖红。</p><div class="chip-row" style="margin-top:14px"><span class="chip neutral">Neutral</span><span class="chip">Warning / Amber</span><span class="chip brass">Brass</span><span class="chip success">Success</span><span class="chip info">Info</span><span class="chip danger">Danger</span></div></article>
-          <article class="card"><h3>Form</h3><div class="form-grid" style="margin-top:14px"><div class="field"><label for="scenario">场景名称</label><input id="scenario" value="客户等待时间过长" /><span class="helper">输入应对应真实服务现场，不使用抽象口号。</span></div><div class="field"><label for="owner">提交角色</label><input id="owner" value="服务顾问" /><span class="helper">字段高度与按钮保持同一视觉节奏。</span></div><div class="field" style="grid-column:1 / -1"><label for="note">处理建议</label><textarea id="note">先确认客户的等待感受，再说明当前进度与下一步可选择方案。</textarea></div></div></article>
+          <article class="card"><h3>Form</h3><p><code>LhTextField</code>、<code>LhTextArea</code>、<code>LhFieldGroup</code> 与 <code>LhChoiceGroup</code> 共享同一套排版和垂直节奏合同。</p><div class="form-grid" style="margin-top:16px"><div class="field"><label for="scenario">场景名称</label><input id="scenario" value="客户等待时间过长" /><span class="helper">输入应对应真实服务现场，不使用抽象口号。</span></div><div class="field"><label for="owner">提交角色</label><input id="owner" value="服务顾问" /><span class="helper">字段高度与按钮保持同一视觉节奏。</span></div><div class="field" style="grid-column:1 / -1"><label for="note">处理建议</label><textarea id="note">先确认客户的等待感受，再说明当前进度与下一步可选择方案。</textarea></div></div><div class="form-rhythm-grid"><span class="form-rhythm-item"><code>--lh-form-label-control-gap</code><b>8px · label → control</b></span><span class="form-rhythm-item"><code>--lh-form-field-gap</code><b>20px · field → field</b></span><span class="form-rhythm-item"><code>--lh-form-content-action-gap</code><b>24px · content → action</b></span><span class="form-rhythm-item"><code>--lh-form-control-message-gap</code><b>8px · control → message</b></span><span class="form-rhythm-item"><code>--lh-form-message-gap</code><b>8px · helper → error</b></span><span class="form-rhythm-item"><code>--lh-form-legend-choice-gap</code><b>8px · legend → choices</b></span></div></article>
           <article class="callout"><span class="callout-icon"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2s10 4.477 10 10" opacity=".5"/><path fill="currentColor" d="M12 17.75a.75.75 0 0 0 .75-.75v-6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75M12 7a1 1 0 1 1 0 2a1 1 0 0 1 0-2"/></svg></span><span><strong>Classic Amber 的 callout 用于当前页面内的提示，不用于全局装饰。</strong><p>如果一个区块只是为了好看而加提示框，应改为普通段落或区域说明。</p></span></article>
           <div class="table-wrap"><table><thead><tr><th>Component</th><th>Token</th><th>Rule</th><th>Usage</th></tr></thead><tbody><tr><td>Card / Panel</td><td><code>--lh-card-radius</code></td><td>16px + light border + soft surface</td><td>案例卡、数据区、内容面板</td></tr><tr><td>Button / Input</td><td><code>--lh-control-radius</code></td><td>8px + consistent height rhythm</td><td>操作按钮、搜索、输入控件</td></tr><tr><td>Data table</td><td><code>--grid-table-min</code></td><td>720px minimum, 13px 16px cell padding</td><td>后台列表、审核队列、统计表</td></tr></tbody></table></div>
         </div>

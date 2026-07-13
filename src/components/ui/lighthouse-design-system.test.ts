@@ -174,6 +174,96 @@ describe("lighthouse design system contract", () => {
     expect(focusVisibleBlock).not.toContain("outline: none;");
   });
 
+  it("keeps operational forms readable and aligned with shared field primitives", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const tokensDoc = readProjectFile("docs/design/tokens.md");
+
+    [
+      "--lh-muted: color-mix(in srgb, #2c2c2c 72%, white);",
+      "--lh-on-primary: #242424;",
+      "--lh-primary-hover: #d27200;",
+      "--color-on-primary: var(--lh-on-primary);",
+      "--color-primary-hover: var(--lh-primary-hover);",
+      "font-family: inherit;",
+      'html[data-lighthouse-interface="classic"] [data-lh-operational-page-header] h1',
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+
+    expect(globals).not.toContain("font: inherit;");
+
+    [
+      "text-[color:var(--color-on-primary)]",
+      "hover:bg-[color:var(--color-primary-hover)]",
+      "export function LhOperationalPageHeader",
+      "data-lh-operational-page-header",
+      "data-lh-field",
+      "optionalLabel?: React.ReactNode",
+      "`${id}-helper`",
+      "`${id}-error`",
+    ].forEach((token) => {
+      expect(primitives).toContain(token);
+    });
+
+    [
+      "`--color-muted` | `color-mix(in srgb, #2c2c2c 72%, white)`",
+      "`--color-on-primary` | `#242424`",
+      "`--color-primary-hover` | `#d27200`",
+    ].forEach((token) => {
+      expect(tokensDoc).toContain(token);
+    });
+  });
+
+  it("defines the shared form rhythm contract across runtime, primitives, and design docs", () => {
+    const globals = readProjectFile("src/app/globals.css");
+    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
+    const tokensDoc = readProjectFile("docs/design/tokens.md");
+    const componentsDoc = readProjectFile("docs/design/components.md");
+    const doDontDoc = readProjectFile("docs/design/do-dont.md");
+    const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
+
+    [
+      "--lh-form-label-control-gap: 0.5rem;",
+      "--lh-form-control-message-gap: 0.5rem;",
+      "--lh-form-message-gap: 0.5rem;",
+      "--lh-form-field-gap: 1.25rem;",
+      "--lh-form-content-action-gap: 1.5rem;",
+      "--lh-form-legend-choice-gap: 0.5rem;",
+      "[data-lh-form-stack]",
+      "[data-lh-field-control]",
+      "[data-lh-field-messages]",
+      "[data-lh-field-group]",
+      "[data-lh-choice-group]",
+      "[data-lh-form-actions]",
+    ].forEach((token) => {
+      expect(globals).toContain(token);
+    });
+
+    [
+      "export function LhFieldGroup",
+      "export const LhChoiceGroup",
+      "data-lh-field-label",
+      "data-lh-field-control",
+      "data-lh-field-messages",
+      "data-lh-field-group",
+      "data-lh-field-legend",
+      "data-lh-choice-group",
+    ].forEach((token) => {
+      expect(primitives).toContain(token);
+    });
+
+    expect(primitives).toContain("helperText &&");
+    expect(primitives).toContain("error &&");
+    expect(primitives).not.toContain('data-lh-field className="grid gap-2"');
+
+    [tokensDoc, componentsDoc, doDontDoc, visualSpec].forEach((document) => {
+      expect(document).toContain("--lh-form-field-gap");
+      expect(document).toContain("LhFieldGroup");
+      expect(document).toContain("LhChoiceGroup");
+    });
+  });
+
   it("defines the runtime motion contract before page-level animation work", () => {
     const globals = readProjectFile("src/app/globals.css");
     const motionHooks = readProjectFile("src/hooks/use-lighthouse-motion.ts");
@@ -866,6 +956,8 @@ describe("lighthouse design system contract", () => {
       "LhStatusBadge",
       "LhTextField",
       "LhTextArea",
+      "LhFieldGroup",
+      "LhChoiceGroup",
       "LhSearchBox",
       "LhPageHero",
       "LhDataTableShell",

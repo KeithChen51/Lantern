@@ -1,6 +1,7 @@
 export type ErrorCode =
   | "bad_request"
   | "forbidden"
+  | "integration_error"
   | "invalid_transition"
   | "not_found"
   | "unauthorized"

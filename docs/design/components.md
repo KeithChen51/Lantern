@@ -18,7 +18,10 @@ Existing primitives:
 - `LhStatusBadge`
 - `LhTextField`
 - `LhTextArea`
+- `LhFieldGroup`
+- `LhChoiceGroup`
 - `LhSearchBox`
+- `LhOperationalPageHeader`
 - `LhSectionHeader`
 - `LhCallout`
 - `LhMetricTile`
@@ -85,6 +88,8 @@ Reusable components consume runtime typography tokens instead of raw Tailwind ty
 | `LhIconButton` | UI sans | `--type-control` or `--type-reading` glyph context | `--weight-extrabold` | Icon-only controls still inherit button typography and focus rules. |
 | `LhChip` / `LhStatusBadge` | UI sans | `--type-caption / --leading-caption` | `--weight-bold` | Small colored text must use readable semantic text tokens. |
 | `LhTextField` / `LhTextArea` | UI sans | labels use `--type-control`, helper uses `--type-label`, input uses `--type-reading` | label `--weight-extrabold`, helper `--weight-bold` only for errors | Placeholder is not a label; error text uses danger text token. |
+| `LhFieldGroup` / `LhChoiceGroup` | UI sans | legend uses `--type-control`, guidance uses `--type-label`, choices use control typography | legend `--weight-extrabold` | Radio and checkbox groups use semantic `fieldset`/`legend`; the explicit legend-to-choice distance is `--lh-form-legend-choice-gap`. |
+| `LhOperationalPageHeader` | UI sans | title uses `--title-section`, description uses `--type-body` | title `--weight-bold` | Forms, admin, tables, and other work surfaces use one semantic `h1` without editorial serif treatment. |
 | `LhSectionHeader` | serif title plus sans kicker | title uses `--title-section`, kicker uses `--title-kicker` | title `--weight-bold`, kicker `--weight-black` | Section hierarchy comes from title tokens, not one-off page sizes. |
 | `LhPageHero` | serif page title, sans controls | title uses `--title-page`, body uses `--type-reading` | title `--weight-black` | Page title is one per view; admin pages may use quieter page-level treatment. |
 | `LhDataTableShell` | UI sans | headers use `--type-caption`, cells use `--type-body` | header `--weight-black` | Tables are dense but still tokenized and readable. |
@@ -243,7 +248,7 @@ Do not use warning for pending. Do not use success for neutral "available" label
 
 ## Forms
 
-Runtime base: `LhTextField`, `LhTextArea`, `LhSearchBox`. Missing primitives to add later: select, checkbox, radio, switch, fieldset, error summary, combobox.
+Runtime base: `LhTextField`, `LhTextArea`, `LhFieldGroup`, `LhChoiceGroup`, `LhSearchBox`. Missing primitives to add later: select, checkbox, radio, switch, error summary, combobox.
 
 Field anatomy:
 
@@ -257,9 +262,12 @@ Rules:
 - Placeholder shows example format only; it is never the label.
 - Use `aria-describedby` for helper and error text.
 - Use `aria-invalid` for invalid fields.
+- Keep helper and error in the same message stack when both apply; validation must not remove the persistent guidance.
+- Use `--lh-form-label-control-gap`, `--lh-form-control-message-gap`, and `--lh-form-message-gap` for the internal field rhythm.
+- Use `--lh-form-field-gap` between complete fields and `--lh-form-content-action-gap` before the primary action area. A parent gap and child padding must not both represent the same distance.
 - Validate on blur by default; use debounced real-time validation for complex formats.
 - Short forms may disable submit until valid. Long forms should allow submit and scroll to the first error.
-- Related fields use `fieldset` and `legend`.
+- Related choices use `LhFieldGroup` and `LhChoiceGroup`, which preserve semantic `fieldset`/`legend` markup and an explicit `--lh-form-legend-choice-gap`.
 
 ## Search And Filters
 
@@ -346,12 +354,13 @@ Every error state should say what happened and what the user can do next.
 
 ## Page Hero And Section Header
 
-`LhPageHero` introduces the page task. It is not a marketing hero by default.
+`LhPageHero` introduces editorial or content-led page tasks. `LhOperationalPageHeader` introduces forms and work surfaces without an editorial hero treatment.
 
 Rules:
 
 - Page hero should answer: where am I, what is this for, what can I do next?
 - Keep page title to one clear idea.
+- Forms, admin, and table pages use `LhOperationalPageHeader` with a sans-serif `h1`.
 - Use section headers to structure work areas; avoid decorative cards used only for headings.
 - Serif or editorial emphasis is allowed on Heart-like content pages, but not on admin, forms, tables, or ordinary UI copy.
 

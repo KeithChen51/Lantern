@@ -35,13 +35,15 @@ The active platform palette is Classic Amber: a warm paper surface with amber ac
 | Surface quiet | `--color-surface-quiet` | `color-mix(in srgb, #d97706 8%, #f3efe0)` | Subtle section bands, inactive fills. |
 | Ink | `--color-ink` | `#2c2c2c` | Primary text, important icons. |
 | Ink soft | `--color-ink-soft` | `color-mix(in srgb, #2c2c2c 74%, white)` | Secondary headings and supporting text. |
-| Muted | `--color-muted` | `color-mix(in srgb, #2c2c2c 58%, white)` | Metadata, helper text, low-priority labels. |
+| Muted | `--color-muted` | `color-mix(in srgb, #2c2c2c 72%, white)` | Metadata, helper text, and low-priority labels that still meet normal-text contrast. |
 | Faint | `--color-faint` | `color-mix(in srgb, #2c2c2c 34%, white)` | Placeholder text and disabled labels. |
 | Line | `--color-line` | `rgba(44, 44, 44, 0.08)` | Default borders and dividers. |
 | Line strong | `--color-line-strong` | `rgba(217, 119, 6, 0.28)` | Active region boundaries and form borders. |
 | Primary | `--color-primary` | `#d97706` | Primary actions, active navigation, selected highlights. |
 | Primary deep / text | `--color-primary-deep`, `--color-primary-text` | `#9b5c14` | Hover/active state and small amber text that must pass contrast. |
 | Primary soft | `--color-primary-soft` | `rgba(217, 119, 6, 0.1)` | Selected backgrounds and low-emphasis active states. |
+| On primary | `--color-on-primary` | `#242424` | Text and icons on the Classic Amber primary action background. |
+| Primary hover | `--color-primary-hover` | `#d27200` | Primary-action hover background that retains normal-text contrast with `--color-on-primary`. |
 | Signal / Brass | `--color-signal`, `--color-brass` | `#9b7a4c` | Secondary signal, quiet success/info/brass labels. |
 | Signal text | `--color-signal-text`, `--color-brass-text` | `#806744` | Small success/info/brass text that must pass contrast. |
 | Danger text | `--color-danger-text` | `#965040` | Small error, destructive, and danger text that must pass contrast. |
@@ -172,6 +174,19 @@ Spacing rules:
 - Use `12px` and `16px` between related controls and repeated cards.
 - Use `24px` and `32px` between sections inside the same page.
 - Use `40px` and `48px` only for page-level separation, not inside dense product controls.
+
+Form rhythm uses semantic aliases over the same 4px scale. These tokens are a paired runtime contract with `LhTextField`, `LhTextArea`, `LhFieldGroup`, and `LhChoiceGroup`; pages must not replace them with local magic numbers.
+
+| Token | Value | Relationship |
+| --- | --- | --- |
+| `--lh-form-label-control-gap` | `8px` | Visible label to input/control. |
+| `--lh-form-control-message-gap` | `8px` | Control to helper/error message stack. |
+| `--lh-form-message-gap` | `8px` | Helper to error when both are visible. |
+| `--lh-form-field-gap` | `20px` | One complete field or field group to the next. |
+| `--lh-form-content-action-gap` | `24px` | Persistent explanation/notice to primary action area. |
+| `--lh-form-legend-choice-gap` | `8px` | `legend` to `LhChoiceGroup`; this must be explicit because fieldset formatting does not honor generic grid gap reliably. |
+
+The four form typography pairs are indivisible: label/legend `14/20`, optional/helper/error `13/18`, input/textarea `16/28`, and persistent explanatory copy `15/24`. Global resets may set `font-family`, but must not use a `font` shorthand that overwrites these line heights.
 
 Desktop is the current primary platform. Mobile rules are deferred, but desktop tokens must not make later mobile adaptation impossible.
 

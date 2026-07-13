@@ -38,6 +38,16 @@
 | Give every interactive component visible hover, focus-visible, disabled, and loading states where relevant. | Ship controls that only look correct in the default state. |
 | Use icon buttons for compact tool actions with accessible labels. | Use text labels inside rounded rectangles when a standard icon button is clearer. |
 
+## Form Rhythm
+
+| Do | Don't |
+| --- | --- |
+| Treat label `14/20`, helper/error/optional `13/18`, control `16/28`, and explanation `15/24` as inseparable typography pairs. | Set only a font size and allow a reset, `font` shorthand, or inherited line height to change the runtime result. |
+| Use `LhTextField`, `LhTextArea`, `LhFieldGroup`, and `LhChoiceGroup` with the `--lh-form-field-gap` family. | Rebuild label/control/helper/error stacks with page-local `gap-*`, margins, and padding. |
+| Keep helper and error visible together when both are useful, connected through `aria-describedby`. | Remove persistent guidance when validation appears or show errors away from the affected field. |
+| Give `legend` to choice-group spacing an explicit `--lh-form-legend-choice-gap`. | Assume generic fieldset grid gap will produce a reliable legend offset. |
+| Use one owner for each vertical distance, including the 24px content-to-action gap. | Let parent gap and child padding both express the same separation. |
+
 ## Accessibility And Interaction
 
 | Do | Don't |
