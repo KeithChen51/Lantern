@@ -104,11 +104,6 @@ const valueSections: ValueSection[] = [
 
 const dimensionNotes = [
   {
-    title: "五个词是一条路径",
-    description:
-      "求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。",
-  },
-  {
     title: "价值要进入组织能力",
     description:
       "这套路径贯穿服务客户、对待员工、组织协作和经营管理全过程。价值观要进入流程、授权、协作、复盘和保障机制，成为组织可以稳定兑现的服务能力。",
@@ -206,7 +201,6 @@ export default function HeartPage() {
         <LhSectionHeader
           eyebrow="价值路径"
           title="求真、尽善、致美、大爱、幸福"
-          description="求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。"
         />
 
         <div data-lh-heart-value-summary>
