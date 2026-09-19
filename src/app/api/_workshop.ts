@@ -1,7 +1,4 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { authRepository, createAuthService } from "@/modules/auth";
-import { createTenantService, tenantRepository } from "@/modules/tenant";
 import {
   createWorkshopService,
   workshopRepository,
@@ -12,38 +9,19 @@ import {
 import { AppError, toErrorResponse } from "@/shared/errors";
 import { optionalString, requireString } from "@/shared/validation";
 import { getWorkshopUnavailableMessage } from "./workshop-errors";
-import { getAdminPortalWorkshopAdminFromHeaders } from "./_admin";
 
-const authService = createAuthService(authRepository);
-const tenantService = createTenantService(tenantRepository);
 export const workshopService = createWorkshopService(workshopRepository);
 
-function assertDatabaseConfigured() {
-  if (!process.env.DATABASE_URL) {
-    throw new AppError("bad_request", getWorkshopUnavailableMessage(), 503);
-  }
+function assertWorkshopRemoved(): never {
+  throw new AppError("not_found", getWorkshopUnavailableMessage(), 404);
 }
 
 export async function getCurrentWorkshopUser(): Promise<WorkshopUser> {
-  assertDatabaseConfigured();
-  const requestHeaders = await headers();
-  const user = await authService.getCurrentUser({ headers: requestHeaders });
-  const scope = await tenantService.getUserOrgScope(user.id);
-
-  return {
-    id: user.id,
-    displayName: user.displayName,
-    role: scope.role,
-    scope,
-  };
+  return assertWorkshopRemoved();
 }
 
 export async function getCurrentWorkshopAdmin(): Promise<WorkshopUser> {
-  assertDatabaseConfigured();
-  const requestHeaders = await headers();
-  const portalAdmin = await getAdminPortalWorkshopAdminFromHeaders(requestHeaders);
-  if (portalAdmin) return portalAdmin;
-  throw new AppError("forbidden", "请输入管理密码后再访问后台。", 403);
+  return assertWorkshopRemoved();
 }
 
 export async function readDraftInput(request: Request, user: WorkshopUser): Promise<CreateWorkshopDraftInput> {

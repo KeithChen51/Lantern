@@ -1,13 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolveHeaderSearch } from "./header-search";
-
-const originalShowWorkshop = process.env.NEXT_PUBLIC_SHOW_WORKSHOP;
-
-afterEach(() => {
-  process.env.NEXT_PUBLIC_SHOW_WORKSHOP = originalShowWorkshop;
-});
 
 function readProjectFile(path: string) {
   return readFileSync(join(process.cwd(), path), "utf8");
@@ -24,15 +18,8 @@ describe("header search", () => {
 
   it("accepts partial mixed-case terms used by real users", () => {
     expect(resolveHeaderSearch("ai")?.href).toBe("/hermit");
-    expect(resolveHeaderSearch("审核")?.href).toBe("/admin/workshop");
-    expect(resolveHeaderSearch("指南")?.href).toBe("/admin/workshop");
-  });
-
-  it("routes public Workshop terms when the feature flag is enabled", () => {
-    process.env.NEXT_PUBLIC_SHOW_WORKSHOP = "true";
-
-    expect(resolveHeaderSearch("行动指南")?.href).toBe("/workshop");
-    expect(resolveHeaderSearch("共创")?.href).toBe("/workshop");
+    expect(resolveHeaderSearch("审核")).toBeNull();
+    expect(resolveHeaderSearch("指南")).toBeNull();
   });
 
   it("does not treat an empty query as a route match", () => {

@@ -1,4 +1,4 @@
-import { isPublicWorkshopEnabled } from "@/config/features";
+import { isGamesModuleEnabled } from "@/config/features";
 
 export type HeaderSearchTarget = {
   href: string;
@@ -28,20 +28,6 @@ const ACTION_SEARCH_TARGET: HeaderSearchTarget = {
   keywords: ["action", "笃行", "内部实践", "行动", "实践", "训练", "合作伙伴", "代驾", "休息区"],
 };
 
-const WORKSHOP_SEARCH_TARGET: HeaderSearchTarget = {
-  href: "/workshop",
-  label: "行动指南",
-  description: "提交和浏览岗位应做/避免建议。",
-  keywords: ["workshop", "共创", "行动指南", "do", "dont", "指南", "提交", "应做", "避免"],
-};
-
-const ADMIN_WORKSHOP_SEARCH_TARGET: HeaderSearchTarget = {
-  href: "/admin/workshop",
-  label: "指南审核",
-  description: "管理员审核和发布后台指南内容。",
-  keywords: ["admin", "审核", "管理", "发布", "队列", "管理员"],
-};
-
 const HERMIT_SEARCH_TARGET: HeaderSearchTarget = {
   href: "/hermit",
   label: "路引",
@@ -49,24 +35,22 @@ const HERMIT_SEARCH_TARGET: HeaderSearchTarget = {
   keywords: ["hermit", "路引", "AI问答", "ai问答", "ai", "问答", "决策", "对话"],
 };
 
-const BASE_HEADER_SEARCH_TARGETS: HeaderSearchTarget[] = [
-  HEART_SEARCH_TARGET,
-  MIRROR_SEARCH_TARGET,
-  ACTION_SEARCH_TARGET,
-  ADMIN_WORKSHOP_SEARCH_TARGET,
-  HERMIT_SEARCH_TARGET,
-];
+const GAMES_SEARCH_TARGET: HeaderSearchTarget = {
+  href: "/games",
+  label: "启航",
+  description: "文化游戏：在可参与的航程里体验服务理念与判断。",
+  keywords: ["games", "启航", "文化游戏", "游戏", "互动", "航程", "航海", "彼岸榜"],
+};
 
 export function getHeaderSearchTargets() {
-  if (!isPublicWorkshopEnabled()) return BASE_HEADER_SEARCH_TARGETS;
-  return [
+  const targets: HeaderSearchTarget[] = [
     HEART_SEARCH_TARGET,
     MIRROR_SEARCH_TARGET,
     ACTION_SEARCH_TARGET,
-    WORKSHOP_SEARCH_TARGET,
-    ADMIN_WORKSHOP_SEARCH_TARGET,
-    HERMIT_SEARCH_TARGET,
   ];
+  targets.push(HERMIT_SEARCH_TARGET);
+  if (isGamesModuleEnabled()) targets.push(GAMES_SEARCH_TARGET);
+  return targets;
 }
 
 function normalizeSearchTerm(value: string) {

@@ -32,13 +32,4 @@ describe("classic interface content guardrails", () => {
     expect(fs.existsSync(path.join(process.cwd(), "src/modules/hermit/types.ts"))).toBe(true);
   });
 
-  it("keeps Workshop sections in the current role-aware structure", () => {
-    const workshopSections = readProjectFile("src/app/workshop/workshop-sections.ts");
-
-    expect(workshopSections).toContain('export type WorkshopSectionId = "public" | "submit" | "personal" | "review"');
-    expect(workshopSections).toContain('{ id: "public"');
-    expect(workshopSections).toContain('{ id: "submit"');
-    expect(workshopSections).toContain('{ id: "personal"');
-    expect(workshopSections).toContain('{ id: "review"');
-  });
 });

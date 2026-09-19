@@ -6,8 +6,8 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { HomeBrandHero } from "@/components/heart/HomeBrandHero";
+import { HeartMotion } from "@/components/heart/HeartMotion";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { isPublicWorkshopEnabled } from "@/config/features";
 
 type ValueSection = {
   title: string;
@@ -19,8 +19,6 @@ type ValueSection = {
   society?: string;
   actions: string[];
 };
-
-const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const upgradeReasons = [
   {
@@ -110,10 +108,7 @@ const dimensionNotes = [
   },
   {
     title: "回到真实场景",
-    description:
-      PUBLIC_WORKSHOP_ENABLED
-        ? "接下来的案例、实践、共创和问答，不是把价值观停留在概念里，而是把它放回日常动作和共同规范中。"
-        : "接下来的案例、实践和问答，不是把价值观停留在概念里，而是把它放回日常动作和具体场景中。",
+    description: "接下来的案例、实践和问答，不是把价值观停留在概念里，而是把它放回日常动作和具体场景中。",
   },
 ];
 
@@ -133,13 +128,6 @@ const guideSections = [
     description: "回到我们自己的服务现场，复盘过去在哪些判断路口犹豫过、选择过、承担过。",
   },
   {
-    title: "基于共创的执行清单",
-    label: "共创",
-    href: "/workshop",
-    icon: lighthouseIcons.workshop,
-    description: "由一线和内部团队共同补充 Do & Don't，让规范从真实场景里长出来。",
-  },
-  {
     title: "常见问题与讨论",
     label: "路引",
     href: "/hermit",
@@ -148,12 +136,13 @@ const guideSections = [
   },
 ];
 
-const visibleGuideSections = guideSections.filter((section) => section.href !== "/workshop" || PUBLIC_WORKSHOP_ENABLED);
+const visibleGuideSections = guideSections;
 
 export default function HeartPage() {
   return (
     <div data-lh-heart-page data-lh-page="heart" data-lh-page-archetype="cultural-reading" className="pb-16">
       <HomeBrandHero />
+      <HeartMotion />
 
       <section data-lh-heart-prologue>
         <div data-lh-heart-prologue-lead>
@@ -215,6 +204,7 @@ export default function HeartPage() {
         <ol data-lh-heart-value-scroll>
           {valueSections.map((value, index) => (
             <li key={value.title} data-lh-heart-value-item>
+              <span data-lh-heart-value-surface aria-hidden="true" />
               <div data-lh-heart-value-heading>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <div>
@@ -296,7 +286,7 @@ export default function HeartPage() {
             <tr>
               <td>求真、尽善、致美、大爱、幸福</td>
               <td>作为从功能型服务走向价值型关系的判断路径。</td>
-              <td>{PUBLIC_WORKSHOP_ENABLED ? "用于案例复盘、路引问答与岗位 Do & Don't 共创。" : "用于案例复盘、路引问答与后续岗位 Do & Don't 梳理。"}</td>
+              <td>用于案例复盘、路引问答与后续岗位动作梳理。</td>
             </tr>
             <tr>
               <td>客户、员工、社会与组织视角</td>

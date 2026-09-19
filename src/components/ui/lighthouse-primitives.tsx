@@ -657,31 +657,6 @@ export function LhSegmentedControl<T extends string>({
   );
 }
 
-export interface LhSubmissionCardProps extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
-  title: React.ReactNode;
-  badges?: React.ReactNode;
-  meta?: React.ReactNode;
-  action?: React.ReactNode;
-  footer?: React.ReactNode;
-}
-
-export function LhSubmissionCard({ className, title, badges, meta, action, footer, children, ...props }: LhSubmissionCardProps) {
-  return (
-    <LhCard data-lh-submission-card className={className} {...props}>
-      <div data-lh-submission-card-header>
-        <span data-lh-submission-card-copy>
-          {badges && <span data-lh-submission-card-badges>{badges}</span>}
-          <h3>{title}</h3>
-          {meta && <span data-lh-submission-card-meta>{meta}</span>}
-        </span>
-        {action}
-      </div>
-      {children && <div data-lh-submission-card-body>{children}</div>}
-      {footer && <div data-lh-submission-card-footer>{footer}</div>}
-    </LhCard>
-  );
-}
-
 export interface LhSectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;

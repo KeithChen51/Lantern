@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { isPublicWorkshopEnabled } from "@/config/features";
 import { authRepository, isPreviewIdentityId, PREVIEW_IDENTITY_IDS, PREVIEW_USER_COOKIE } from "@/modules/auth";
 import type { AppRole } from "@/modules/tenant";
 import { AppError, toErrorResponse } from "@/shared/errors";
@@ -22,12 +21,7 @@ function getPrimaryRole(roles: AppRole[]): AppRole {
 function toPreviewIdentity(user: Awaited<ReturnType<typeof authRepository.findUserById>>): PreviewIdentity | null {
   if (!user) return null;
   const role = getPrimaryRole(user.roles);
-  const publicWorkshopEnabled = isPublicWorkshopEnabled();
-  let description = role === "highest_admin" ? "预览管理员能力" : "浏览内部预览内容";
-
-  if (publicWorkshopEnabled) {
-    description = role === "highest_admin" ? "审核、编辑并发布共创指南" : "提交应做/避免共创内容";
-  }
+  const description = role === "highest_admin" ? "预览管理员能力" : "浏览内部预览内容";
 
   return {
     id: user.id,

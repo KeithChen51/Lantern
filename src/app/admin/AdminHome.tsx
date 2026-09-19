@@ -11,13 +11,6 @@ const adminAreas = [
     icon: lighthouseIcons.action,
     status: "首版维护入口",
   },
-  {
-    title: "共创审核",
-    description: "审核一线提交的 Do / Don't 行动指南，确认后发布到共创公共区。",
-    href: "/admin/workshop",
-    icon: lighthouseIcons.workshop,
-    status: "已迁入后台",
-  },
 ];
 
 export function AdminHome() {
@@ -29,14 +22,14 @@ export function AdminHome() {
         title="内容维护后台"
         description={<p>这里只承载内部维护操作。普通内部人员继续通过原有页面访问内容，不需要账号登录。</p>}
         asideTitle="当前能力"
-        asideItems={[{ title: "笃行案例导入" }, { title: "草稿与发布" }, { title: "共创审核入口" }]}
+        asideItems={[{ title: "笃行案例导入" }, { title: "草稿与发布" }]}
       />
 
       <section className="space-y-5">
         <LhSectionHeader
           eyebrow="维护入口"
           title="选择要处理的内容"
-          description="首版先保持后台克制，只处理笃行案例和已有共创审核，不扩展为通用 CMS。"
+          description="首版先保持后台克制，只处理笃行案例维护，不扩展为通用 CMS。"
         />
         <div className="grid gap-5 md:grid-cols-2">
           {adminAreas.map((area) => (

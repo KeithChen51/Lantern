@@ -12,9 +12,6 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { isPublicWorkshopEnabled } from "@/config/features";
-
-const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const stats = [
   { label: "2025 年销售额", value: "200.35", unit: "亿元", note: "提前达成目标" },
@@ -32,7 +29,7 @@ const productCards = [
   },
   {
     title: "拆出机制",
-    description: "把员工体验、服务信任、现场秩序和组织共创拆成可讨论的结构。",
+    description: "把员工体验、服务信任和现场秩序拆成可讨论的结构。",
   },
   {
     title: "转成动作",
@@ -59,8 +56,8 @@ const mechanismCards = [
     title: "标准不是压住现场，而是托住现场",
     signal: "岗位职责、服务流程和突发事件处理都有动作颗粒度，但仍保留必要裁量空间。",
     condition: "流程要能反复修订，不能只由管理者一次写完后向下发放。",
-    transfer: "把高频售后场景拆成 Do / Don't，交给一线共创、审核后发布，而不是只写价值口号。",
-    tags: ["致美", "共创"],
+    transfer: "把高频售后场景拆成 Do / Don't，回到一线实践中持续复盘，而不是只写价值口号。",
+    tags: ["致美", "实践"],
   },
   {
     title: "商业模型为服务文化供能",
@@ -99,7 +96,7 @@ const transferRows = [
   [
     "优秀做法难以沉淀",
     "规则从现场多轮讨论中生成。",
-    PUBLIC_WORKSHOP_ENABLED ? "把可复用做法提交到共创，审核后形成岗位指南。" : "先沉淀为内部案例，再进入后续共创流程。",
+    "先沉淀为内部案例，再进入笃行与路引的复盘流程。",
     "不把案例停留在故事分享层面。",
   ],
 ];
@@ -119,9 +116,7 @@ const workflowSteps = [
   },
   {
     title: "4. 转为动作",
-    description: PUBLIC_WORKSHOP_ENABLED
-      ? "进入共创形成岗位 Do / Don't，或进入路引成为服务判断参照。"
-      : "先进入笃行与路引，形成内部案例和问答参照。",
+    description: "先进入笃行与路引，形成内部案例和问答参照。",
   },
 ];
 
@@ -141,7 +136,7 @@ const questionCards = [
     ],
   },
   {
-    title: "给共创沉淀",
+    title: "给内部沉淀",
     questions: [
       "哪些高频场景可以先写成 Do / Don't 清单？",
       "哪些做法只是胖东来的条件成立，不适合直接照搬？",
@@ -167,8 +162,8 @@ const toc = [
 ];
 
 export default function PangDongLaiPage() {
-  const workflowHref = PUBLIC_WORKSHOP_ENABLED ? "/workshop" : "/action";
-  const workflowLabel = PUBLIC_WORKSHOP_ENABLED ? "进入共创沉淀动作" : "进入笃行查看案例";
+  const workflowHref = "/action";
+  const workflowLabel = "进入笃行查看案例";
 
   return (
     <article className="pb-16">
@@ -208,7 +203,7 @@ export default function PangDongLaiPage() {
               <ul className="mt-4 grid gap-3 text-[length:var(--type-body)] leading-[var(--leading-body)] text-[color:var(--color-ink-soft)]">
                 <li>一组可复用机制卡</li>
                 <li>一张售后迁移矩阵</li>
-                <li>一组路引 / 共创问题</li>
+                <li>一组路引问题</li>
               </ul>
             </LhCard>
           </div>
@@ -325,7 +320,7 @@ export default function PangDongLaiPage() {
             id="transfer"
             eyebrow="迁移矩阵"
             title="转成汽车售后可以讨论的动作"
-            description="矩阵不是操作指令，而是给服务顾问、管理者和共创审核者的讨论起点。"
+            description="矩阵不是操作指令，而是给服务顾问和管理者的讨论起点。"
           >
             <LhDataTableShell>
               <table>
