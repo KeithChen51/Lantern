@@ -1,30 +1,35 @@
 import type { GameRegistryEntry } from "./types";
 
-/**
- * 游戏注册表。
- *
- * 骨架阶段为空数组：板块、导航和搜索已经就位，但还没有任何游戏"上线"。
- * 首发游戏"灯塔：服务文化之旅"会在其 game-core 迁移、统一身份与 MySQL
- * leaderboard 落地后，作为第一条注册项追加于此。
- *
- * 追加示例：
- *   {
- *     slug: "voyage",
- *     title: "灯塔：服务文化之旅",
- *     summary: "以同行者身份带服务船穿过真实服务矛盾。",
- *     href: "/games/voyage",
- *     status: "published",
- *     scoringContract: "voyage-happiness-v1",
- *   }
- */
-const GAME_REGISTRY: readonly GameRegistryEntry[] = [];
+// 预告阶段不提供游戏入口。正式接入时统一复用灯塔账号体系。
+const GAME_REGISTRY: readonly GameRegistryEntry[] = [
+  {
+    slug: "voyage",
+    title: "灯塔：服务文化之旅",
+    summary: "与同行者一起驶向灯塔。在真实的服务困境中作出选择，沿着航迹回看每一次判断。",
+    genre: "情境选择 · 航程探索",
+    status: "planned",
+    cover: {
+      src: "/images/games/service-voyage.webp",
+      alt: "概念插画：同行者乘船穿过海湾，驶向夕阳中的灯塔",
+    },
+  },
+  {
+    slug: "service-store",
+    title: "精诚服务店",
+    summary: "从一间服务店开始，在出牌、接待与经营取舍中照顾客户，也让每一份信任慢慢积累。",
+    genre: "卡牌策略 · 门店经营",
+    status: "planned",
+    cover: {
+      src: "/images/games/service-store.webp",
+      alt: "概念插画：汽车服务店内，服务顾问接待客户，技师检查车辆，桌上放着经营卡牌",
+    },
+  },
+];
 
-/** 返回所有已注册的文化游戏（按注册顺序）。骨架阶段返回空数组。 */
 export function listGames(): readonly GameRegistryEntry[] {
   return GAME_REGISTRY;
 }
 
-/** 按 slug 查找一个注册游戏。 */
 export function findGame(slug: string): GameRegistryEntry | null {
   return GAME_REGISTRY.find((entry) => entry.slug === slug) ?? null;
 }

@@ -16,6 +16,7 @@ export const lighthouseIcons = {
   heart: solarIcon("heart-bold"),
   mirror: solarIcon("book-2-bold"),
   action: solarIcon("bolt-bold"),
+  games: solarIcon("gamepad-bold"),
   hermit: solarIcon("magic-stick-3-bold"),
   search: solarIcon("magnifer-bold-duotone"),
   send: solarIcon("plain-bold"),
