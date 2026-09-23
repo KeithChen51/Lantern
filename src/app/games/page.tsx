@@ -1,95 +1,74 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@iconify/react";
-import {
-  LhCard,
-  LhChip,
-  LhEmptyState,
-  LhPageHero,
-  LhSectionHeader,
-} from "@/components/ui/lighthouse-primitives";
+import { LhCard, LhChip, LhEmptyState } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { isGamesModuleEnabled } from "@/config/features";
 import { listGames } from "@/modules/games";
 
 export default function GamesPage() {
-  if (!isGamesModuleEnabled()) {
-    notFound();
-  }
-
+  if (!isGamesModuleEnabled()) notFound();
   const games = listGames();
 
   return (
     <div className="space-y-8 pb-12">
-      <LhPageHero
-        eyebrow="启航"
-        icon={<Icon icon={lighthouseIcons.arrowRightUp} className="h-4 w-4" />}
-        title="把服务文化放回可参与的航程里。"
-        description={
-          <p>
-            启航是承载文化相关互动游戏的板块。每个游戏把服务理念放回真实判断与选择中，在不可回退的航程、结果反馈与航迹复盘中，让“求真、尽善、致美、大爱”可被体验、可被检验。
-          </p>
-        }
-        asideTitle="接入约定"
-        asideItems={[
-          { title: "可注册", description: "新游戏靠注册表条目接入，不改框架核心。" },
-          { title: "服务端计分", description: "分数由权威逻辑重算，客户端不提交分数。" },
-          { title: "统一身份与榜单", description: "留名与永久榜统一到主项目（待前置依赖落地）。" },
-        ]}
-      />
-
-      <section className="space-y-6">
-        <LhSectionHeader
-          eyebrow="游戏目录"
-          title="已上线的文化游戏"
-          description="首发游戏“灯塔：服务文化之旅”将在其计分核心迁移、统一身份与永久榜落地后接入。"
-        />
-
+      <header className="space-y-4 pt-5 md:pt-7">
+        <LhChip tone="primary">
+          <Icon icon={lighthouseIcons.games} className="h-4 w-4" />
+          启航 · 文化游戏
+        </LhChip>
+        <h1 data-lh-page-title className="text-[length:var(--title-page)] font-[var(--weight-black)] leading-[1.2] text-ink">
+          在选择与经营中，体验服务的意义。
+        </h1>
+        <p className="max-w-3xl text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink-soft">
+          一段驶向灯塔的航程，一间用心经营的服务店。两款互动游戏正在开发中，期待与你相遇。
+        </p>
+      </header>
+      <section aria-label="文化游戏目录" className="space-y-5">
         {games.length === 0 ? (
-          <LhEmptyState
-            tone="neutral"
-            icon={<Icon icon={lighthouseIcons.arrowRightUp} className="h-5 w-5" />}
-            title="还没有游戏上线"
-            description="板块框架已就位。首个文化游戏接入后，会在这里以可进入的卡片出现。"
-          />
+          <LhEmptyState tone="neutral" icon={<Icon icon={lighthouseIcons.games} className="h-5 w-5" />}
+            title="新的体验正在准备中" description="文化游戏将在这里与你见面。" />
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid items-stretch gap-6 md:grid-cols-2">
             {games.map((game) => {
+              const available = game.status === "published" && Boolean(game.href);
               const card = (
-                <LhCard key={game.slug} className="grid min-h-[220px] grid-rows-[auto_1fr_auto] gap-4 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-line-strong hover:shadow-lh-md">
-                  <div className="flex items-start justify-between gap-4">
-                    <LhChip tone={game.status === "published" ? "success" : "neutral"}>
-                      {game.status}
-                    </LhChip>
-                    <span className="text-sm font-extrabold text-muted">{game.slug}</span>
+                <LhCard className="flex h-full flex-col">
+                  <div className="relative aspect-[3/2] overflow-hidden border-b border-line bg-surface-quiet">
+                    <Image src={game.cover.src} alt={game.cover.alt} fill
+                      sizes="(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 600px"
+                      className="object-cover" />
+                    <div className="absolute left-4 top-4 rounded-[var(--lh-control-radius)] bg-panel shadow-lh-sm">
+                      <LhChip tone={available ? "success" : "neutral"}>
+                        {available ? "已上线" : "开发中"}
+                      </LhChip>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-extrabold leading-tight text-ink">{game.title}</h2>
-                    <p className="mt-3 text-base leading-8 text-ink-soft">{game.summary}</p>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-line pt-4">
-                    <span className="text-sm font-bold text-muted">启航内容卡</span>
-                    {game.status === "published" ? (
-                      <span className="inline-flex min-h-9 items-center justify-center rounded-sm border border-line-strong bg-panel px-3 text-xs font-bold text-primary-deep shadow-lh-sm">
-                        进入游戏
-                      </span>
-                    ) : (
-                      <span className="text-sm font-extrabold text-muted">未上线</span>
-                    )}
+                  <div className="flex flex-1 flex-col gap-3 p-5 md:p-6">
+                    <p className="text-[length:var(--type-caption)] font-[var(--weight-extrabold)] leading-[var(--leading-caption)] text-primary-text">{game.genre}</p>
+                    <h2 className="text-[length:var(--title-section)] font-[var(--weight-black)] leading-[1.3] text-ink">{game.title}</h2>
+                    <p className="flex-1 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft">{game.summary}</p>
+                    <div className="mt-2 flex items-center gap-2 border-t border-line pt-4 text-[length:var(--type-caption)] leading-[var(--leading-caption)] text-muted">
+                      <Icon icon={available ? lighthouseIcons.games : lighthouseIcons.clock} className="h-4 w-4 shrink-0" />
+                      <span>{available ? "进入游戏" : "敬请期待 · 暂未开放体验"}</span>
+                    </div>
                   </div>
                 </LhCard>
               );
-
-              return game.status === "published" && game.href ? (
-                <Link key={game.slug} href={game.href} className="block">
-                  {card}
-                </Link>
-              ) : (
-                <div key={game.slug}>{card}</div>
+              return (
+                <article key={game.slug}>
+                  {available && game.href ? (
+                    <Link href={game.href} className="block h-full rounded-[var(--lh-card-radius)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{card}</Link>
+                  ) : card}
+                </article>
               );
             })}
           </div>
         )}
+        <p className="text-[length:var(--type-caption)] leading-[var(--leading-caption)] text-muted">
+          封面为游戏概念插画，实际内容以正式开放版本为准。
+        </p>
       </section>
     </div>
   );
