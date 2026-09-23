@@ -8,6 +8,10 @@ import {
 import { HomeBrandHero } from "@/components/heart/HomeBrandHero";
 import { HeartMotion } from "@/components/heart/HeartMotion";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { ResourceView } from "@/components/knowledge/ResourceView";
+import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+
+export const dynamic = "force-dynamic";
 
 type ValueSection = {
   title: string;
@@ -138,7 +142,10 @@ const guideSections = [
 
 const visibleGuideSections = guideSections;
 
-export default function HeartPage() {
+export default async function HeartPage() {
+  if (isKnowledgeHubEnabled()) {
+    return <ResourceView resource={await getKnowledgeHub().get("brand-whitepaper")} />;
+  }
   return (
     <div data-lh-heart-page data-lh-page="heart" data-lh-page-archetype="cultural-reading" className="pb-16">
       <HomeBrandHero />

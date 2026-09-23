@@ -1,5 +1,6 @@
 import { actionCaseService, type ActionCaseCoverImage, type ActionCaseRecord } from "@/modules/content";
 import { ACTION_CASES, type ActionCase, getActionCaseBySlug, isMarkdownActionCase } from "./action-cases";
+import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
 
 export type PublicActionCaseSummary = {
   source: "managed" | "static";
@@ -65,6 +66,16 @@ function managedSummary(actionCase: ActionCaseRecord): PublicActionCaseSummary {
 }
 
 export async function getPublicActionCaseSummaries() {
+  if (isKnowledgeHubEnabled()) {
+    const hub = getKnowledgeHub();
+    const all: Awaited<ReturnType<typeof hub.search>>["items"] = [];
+    for (let offset = 0; ; offset += 100) {
+      const result = await hub.search({ type: "case", sort: "published", offset, limit: 100 });
+      all.push(...result.items);
+      if (all.length >= result.total) break;
+    }
+    return all.map((item): PublicActionCaseSummary => ({ source: "managed", slug: item.id, href: `/resources/${item.id}?version=${item.versionId}`, title: item.title, date: item.publishedAt.slice(0, 10), tags: item.tags, status: "published", summary: item.summary || item.excerpt, question: item.title, coverImageUrl: null, highlights: item.citation ? [item.citation.heading] : [] }));
+  }
   const managed = await actionCaseService.listPublishedActionCases().catch(() => []);
   return managed.length > 0 ? managed.map(managedSummary) : ACTION_CASES.map(staticSummary);
 }

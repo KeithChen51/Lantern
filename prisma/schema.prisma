@@ -8,6 +8,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Knowledge hub has no user/role dependencies in this phase. CLI and stdio MCP
+// are the maintenance boundary; HTTP exposes published resources only.
+model HubResource {
+  id                 String @id @db.VarChar(120)
+  type               String @db.VarChar(30)
+  title              String @db.VarChar(200)
+  summary            String @db.Text
+  tags               Json
+  source             String @db.Text
+  businessScope      String @db.Text
+  archived           Boolean @default(false)
+  publishedVersionId String? @db.VarChar(120)
+  createdAt          DateTime
+  updatedAt          DateTime
+  versions           HubVersion[]
+
+  @@index([type, archived])
+  @@map("hub_resources")
+}
+
+model HubVersion {
+  id            String @id @db.VarChar(120)
+  resourceId    String @db.VarChar(120)
+  number        Int
+  title         String @db.VarChar(200)
+  markdown      String @db.LongText
+  checksum      String @db.VarChar(64)
+  changeNote    String @db.Text
+  createdAt     DateTime
+  publishedAt   DateTime?
+  validity      String @db.VarChar(30)
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+  files         Json
+  citations     Json
+  resource      HubResource @relation(fields: [resourceId], references: [id])
+  outgoing      HubRelation[] @relation("HubRelationFrom")
+  incoming      HubRelation[] @relation("HubRelationTo")
+  provenance    HubProvenance[]
+
+  @@unique([resourceId, number])
+  @@unique([resourceId, checksum])
+  @@map("hub_versions")
+}
+
+model HubRelation {
+  id            String @id @db.VarChar(64)
+  fromVersionId String @db.VarChar(120)
+  toVersionId   String @db.VarChar(120)
+  kind          String @db.VarChar(30)
+  from          HubVersion @relation("HubRelationFrom", fields: [fromVersionId], references: [id])
+  to            HubVersion @relation("HubRelationTo", fields: [toVersionId], references: [id])
+
+  @@index([fromVersionId])
+  @@index([toVersionId])
+  @@map("hub_relations")
+}
+
+model HubInteraction {
+  id               String @id @db.VarChar(120)
+  source           String @db.VarChar(120)
+  externalId       String @db.VarChar(120)
+  checksum         String @db.VarChar(64)
+  scope            String @db.VarChar(30)
+  consentAt        DateTime
+  purpose          String @db.Text
+  messages         Json
+  resourceVersions Json
+  receivedAt       DateTime
+  provenance       HubProvenance[]
+
+  @@unique([source, externalId])
+  @@map("hub_interactions")
+}
+
+model HubProvenance {
+  versionId     String @db.VarChar(120)
+  interactionId String @db.VarChar(120)
+  messageIds    Json
+  version       HubVersion @relation(fields: [versionId], references: [id])
+  interaction   HubInteraction @relation(fields: [interactionId], references: [id])
+
+  @@id([versionId, interactionId])
+  @@map("hub_provenance")
+}
+
+model HubAudit {
+  id        String @id @db.VarChar(120)
+  action    String @db.VarChar(40)
+  targetId  String @db.VarChar(120)
+  detail    String @db.Text
+  createdAt DateTime
+
+  @@index([targetId, createdAt])
+  @@map("hub_audits")
+}
+
 enum RecordStatus {
   ACTIVE   @map("active")
   DISABLED @map("disabled")

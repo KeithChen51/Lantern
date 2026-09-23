@@ -360,7 +360,7 @@ export async function loadKnowledgeBase(): Promise<KnowledgeIndex | null> {
   }
 }
 
-function emptySearchResult(query: string): RagSearchResult {
+export function emptySearchResult(query: string): RagSearchResult {
   const config = readRagRetrievalConfig();
   const decision: RagRetrievalDecision = {
     status: "insufficient",
