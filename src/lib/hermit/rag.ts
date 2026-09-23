@@ -98,7 +98,6 @@ const SERVICE_DOMAIN_TERMS = [
   "标准",
   "案例",
   "Action",
-  "Workshop",
   "真",
   "善",
   "美",
@@ -106,7 +105,6 @@ const SERVICE_DOMAIN_TERMS = [
   "service",
   "customer",
   "dealer",
-  "workshop",
   "after-sales",
   "advisor",
   "handover",
@@ -362,7 +360,7 @@ export async function loadKnowledgeBase(): Promise<KnowledgeIndex | null> {
   }
 }
 
-function emptySearchResult(query: string): RagSearchResult {
+export function emptySearchResult(query: string): RagSearchResult {
   const config = readRagRetrievalConfig();
   const decision: RagRetrievalDecision = {
     status: "insufficient",

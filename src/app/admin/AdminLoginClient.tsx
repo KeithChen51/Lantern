@@ -38,7 +38,7 @@ export function AdminLoginClient() {
         icon={<Icon icon={lighthouseIcons.admin} className="h-4 w-4" />}
         eyebrow="Admin"
         title="管理后台"
-        description={<p>输入管理密码后，可以维护笃行案例，并进入共创审核区。</p>}
+        description={<p>输入管理密码后，可以维护笃行案例。</p>}
         asideTitle="访问规则"
         asideItems={[{ title: "24 小时有效" }, { title: "仅保护后台维护入口" }, { title: "不改变公开访问体验" }]}
       />

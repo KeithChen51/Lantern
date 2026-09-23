@@ -104,6 +104,12 @@ Runtime home pattern:
 
 ## Mirror And Action Patterns
 
+### Knowledge resource reading
+
+Hub-backed documents and cases use the existing cultural-reading / case-workflow archetypes. The shared ResourceView keeps an editorial title, a bounded reading column, and a quiet desktop contents rail; mobile contents collapse into a disclosure. Markdown headings link to original source lines, while the repeated document title is omitted only from rendering. Downloads and version-local citations retain the original content unchanged.
+
+Raw file paths, resource IDs, and citation IDs belong in the source disclosure at the end, not in the reading header or search excerpts. Source images that are unavailable are labeled as unavailable rather than rendered as broken links. The Home/Heart surface retains HomeBrandHero and its value-path anchor before the Hub-backed article.
+
 Mirror and Action are case and reflection surfaces. They should prioritize search, comparison, and reading continuity.
 
 List view:

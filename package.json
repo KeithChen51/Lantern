@@ -19,7 +19,10 @@
     "db:deploy": "prisma migrate deploy",
     "db:setup": "npm run db:deploy && npm run db:seed",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "hub": "tsx scripts/knowledge-hub.ts",
+    "hub:mcp": "tsx scripts/knowledge-mcp.ts",
+    "hub:import-existing": "tsx scripts/knowledge-import-existing.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -27,18 +30,22 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.47",
     "@ai-sdk/react": "^3.0.137",
+    "@gsap/react": "^2.1.2",
     "@iconify/react": "^6.0.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@prisma/client": "^6.19.3",
     "ai": "^6.0.135",
     "clsx": "^2.1.1",
     "gray-matter": "^4.0.3",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

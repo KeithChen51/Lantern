@@ -21,8 +21,8 @@ function loadHeartValues(): string {
  * Build the full system prompt for the Hermit agent.
  * @param ragContext - Retrieved knowledge snippets from RAG search
  */
-export function buildSystemPrompt(ragContext: string = ""): string {
-  const heartValues = loadHeartValues();
+export function buildSystemPrompt(ragContext: string = "", heartValuesOverride?: string): string {
+  const heartValues = heartValuesOverride ?? loadHeartValues();
 
   return `你是 Hermit（路引），Lantern 平台的智慧引导者。
 

@@ -963,6 +963,10 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-page] {
   background: var(--color-paper);
 }
 
+html[data-lighthouse-interface="classic"] [data-lh-main]:has([data-lh-heart-page]) {
+  overflow-x: clip;
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-heart-page] > :not([data-lh-home-brand-hero]) {
   width: min(calc(100% - clamp(2rem, 6vw, 7rem)), 80rem);
   margin-inline: auto;
@@ -1233,7 +1237,8 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-origin-pair] p {
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-values] {
   display: grid;
-  gap: 2rem;
+  gap: clamp(2rem, 3.5vw, 2.75rem);
+  scroll-margin-top: clamp(5.5rem, 8vw, 7rem);
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-summary] {
@@ -1261,11 +1266,10 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-value-summary] p {
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-scroll] {
   display: grid;
-  gap: 0;
+  gap: clamp(1rem, 2.2vw, 1.5rem);
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgba(217, 119, 6, 0.18);
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-item] {
@@ -1275,17 +1279,33 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-value-item] {
   display: grid;
   grid-template-columns: minmax(11rem, 0.28fr) minmax(0, 0.72fr);
   gap: clamp(1.5rem, 4vw, 3rem);
-  border-bottom: 1px solid rgba(44, 44, 44, 0.1);
-  padding: clamp(1.5rem, 4vw, 2.75rem) 0;
+  border: 1px solid rgba(155, 92, 20, 0.18);
+  border-radius: 1.25rem;
+  padding: clamp(1.75rem, 4vw, 3rem) clamp(1rem, 2.8vw, 2.25rem);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 1.25rem 3.5rem rgba(96, 65, 20, 0.055);
   transition: background-color var(--lh-motion-medium) var(--lh-ease-standard), border-color var(--lh-motion-medium) var(--lh-ease-standard), transform var(--lh-motion-medium) var(--lh-ease-out);
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-heart-value-surface] {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(217, 119, 6, 0.075) 68%, rgba(255, 255, 255, 0.38));
+  pointer-events: none;
+  transform-origin: left center;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]:nth-child(even) [data-lh-heart-value-surface] {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.095), rgba(255, 255, 255, 0.7) 70%, rgba(217, 119, 6, 0.035));
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]::before {
   content: "";
   position: absolute;
-  inset: 0 -1rem;
+  inset: 0;
   z-index: -1;
-  border-radius: 1rem;
+  border-radius: inherit;
   background: rgba(217, 119, 6, 0);
   opacity: 0;
   transition: opacity var(--lh-motion-medium) var(--lh-ease-standard), background-color var(--lh-motion-medium) var(--lh-ease-standard);
@@ -1294,9 +1314,9 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]::before {
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]::after {
   content: "";
   position: absolute;
-  inset: 0 -1rem;
+  inset: 0;
   z-index: -1;
-  border-radius: 1rem;
+  border-radius: inherit;
   background: linear-gradient(90deg, rgba(217, 119, 6, 0), rgba(217, 119, 6, 0.07), rgba(217, 119, 6, 0));
   opacity: 0;
   transform: translateX(-18%);
@@ -1304,8 +1324,8 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]::after {
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]:hover {
-  border-bottom-color: rgba(217, 119, 6, 0.2);
-  transform: translateX(0.35rem);
+  border-color: rgba(217, 119, 6, 0.24);
+  transform: translateY(-0.2rem);
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-value-item]:hover::before {
@@ -1661,6 +1681,15 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-closing] p {
   html[data-lighthouse-interface="classic"] [data-lh-heart-origin-pair] article + article {
     border-left: 0;
     border-top: 1px solid rgba(44, 44, 44, 0.08);
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-heart-value-scroll] {
+    gap: 1rem;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-heart-value-item] {
+    border-radius: 1rem;
+    padding: 1.5rem 0.875rem 1.75rem;
   }
 }
 
@@ -2928,315 +2957,6 @@ html[data-lighthouse-interface="classic"] [data-lh-segment][data-active="true"] 
   border-color: rgba(217, 119, 6, 0.28);
   background: var(--color-primary-soft);
   color: var(--lh-primary-text);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card] {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card-header] {
-  display: grid;
-  gap: 1rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card-copy] {
-  display: grid;
-  min-width: 0;
-  gap: 0.75rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card-badges] {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card] h3 {
-  font-size: var(--title-card);
-  font-weight: var(--weight-extrabold);
-  line-height: 1.22;
-  color: var(--color-ink);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card-meta] {
-  font-size: var(--type-caption);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-caption);
-  color: var(--color-muted);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card-body] {
-  display: grid;
-  gap: 1rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-submission-card-footer] {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  border-top: 1px solid var(--color-line);
-  padding-top: 1rem;
-  font-size: var(--type-control);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-control);
-  color: var(--color-muted);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-page] {
-  width: 100%;
-  max-width: 80rem;
-  min-width: 0;
-  margin-inline: auto;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-hero] {
-  margin-bottom: 1.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-hero-footer] {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-hero-footer] p {
-  font-size: var(--type-control);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-control);
-  color: var(--color-muted);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-section-tabs] {
-  margin-bottom: 2rem;
-  padding-bottom: 0.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-two-column],
-html[data-lighthouse-interface="classic"] [data-lh-workshop-footer-grid] {
-  display: grid;
-  gap: 1.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-main-column],
-html[data-lighthouse-interface="classic"] [data-lh-workshop-card-list] {
-  display: grid;
-  min-width: 0;
-  gap: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-filter-panel],
-html[data-lighthouse-interface="classic"] [data-lh-workshop-side-panel],
-html[data-lighthouse-interface="classic"] [data-lh-workshop-record-panel],
-html[data-lighthouse-interface="classic"] [data-lh-workshop-form] {
-  border: 1px solid var(--color-line);
-  border-radius: var(--lh-card-radius);
-  background: var(--color-surface);
-  padding: 1.25rem;
-  color: var(--color-ink);
-  box-shadow: var(--lh-card-shadow);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-notice] {
-  margin-bottom: 1.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-filter-controls],
-html[data-lighthouse-interface="classic"] [data-lh-workshop-form-stack] {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-role-filter] [data-lh-segment] {
-  min-height: 2.25rem;
-  padding-inline: 0.75rem;
-  font-size: var(--type-caption);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-caption);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-header] {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-icon] {
-  display: flex;
-  width: 2.5rem;
-  height: 2.5rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-line);
-  border-radius: var(--lh-control-radius);
-  background: var(--color-surface-quiet);
-  color: var(--lh-primary-text);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-icon] svg,
-html[data-lighthouse-interface="classic"] [data-lh-workshop-card-link] svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-header] h2,
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-header] h3,
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-heading] h3 {
-  font-size: var(--title-card);
-  font-weight: var(--weight-extrabold);
-  line-height: 1.2;
-  color: var(--color-ink);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-header] p,
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-heading] p {
-  margin-top: 0.25rem;
-  font-size: var(--type-control);
-  line-height: var(--leading-control);
-  color: var(--color-muted);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-panel-heading] {
-  margin-bottom: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-snippet-grid] {
-  display: grid;
-  gap: 0.75rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-snippet] {
-  min-width: 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--lh-control-radius);
-  background: var(--color-surface-quiet);
-  padding: 1rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-snippet] p {
-  margin-top: 0.75rem;
-  font-size: var(--type-body);
-  line-height: var(--leading-reading);
-  color: var(--color-ink-soft);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-card-link] {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--lh-primary-text);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-form-grid] {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-form-actions] {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-card-note] {
-  font-size: var(--type-control);
-  line-height: var(--leading-control);
-  color: var(--color-muted);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-rejection] {
-  border: 1px solid rgba(185, 28, 28, 0.25);
-  border-radius: var(--lh-control-radius);
-  background: var(--color-danger-soft);
-  padding: 0.75rem;
-  font-size: var(--type-control);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-control);
-  color: var(--lh-danger-text);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-personal-layout] {
-  display: grid;
-  gap: 1.5rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-stat-grid] {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-stat] {
-  border: 1px solid var(--color-line);
-  border-radius: var(--lh-control-radius);
-  background: var(--color-panel);
-  padding: 0.75rem;
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-stat] p {
-  font-size: var(--title-section);
-  font-weight: var(--weight-extrabold);
-  line-height: 1.1;
-  color: var(--color-ink);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-stat] span {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: var(--type-label);
-  font-weight: var(--weight-bold);
-  line-height: var(--leading-label);
-  color: var(--color-muted);
-}
-
-html[data-lighthouse-interface="classic"] [data-lh-workshop-full-button] {
-  width: 100%;
-  margin-top: 1.25rem;
-}
-
-@media (min-width: 640px) {
-  html[data-lighthouse-interface="classic"] [data-lh-submission-card-header] {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-submission-card-footer],
-  html[data-lighthouse-interface="classic"] [data-lh-workshop-hero-footer] {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-@media (min-width: 1024px) {
-  html[data-lighthouse-interface="classic"] [data-lh-workshop-snippet-grid][data-count="3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-workshop-snippet-grid]:not([data-count="3"]) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-workshop-footer-grid] {
-    grid-template-columns: minmax(0, 1fr) 21.25rem;
-  }
-}
-
-@media (min-width: 1280px) {
-  html[data-lighthouse-interface="classic"] [data-lh-workshop-two-column] {
-    grid-template-columns: minmax(0, 1fr) 21.25rem;
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-workshop-personal-layout] {
-    grid-template-columns: 20rem minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 767px) {

@@ -39,7 +39,6 @@ const migratedDesignSystemFiles = [
   "src/components/hermit/ChatPanel.tsx",
   "src/components/hermit/ChatInput.tsx",
   "src/components/hermit/MessageBubble.tsx",
-  "src/app/workshop/WorkshopClient.tsx",
 ] as const;
 
 const migratedMotionContractFiles = [
@@ -54,11 +53,9 @@ const migratedMotionContractFiles = [
   "src/components/hermit/MessageBubble.tsx",
   "src/app/action/page.tsx",
   "src/app/mirror/page.tsx",
-  "src/app/workshop/WorkshopClient.tsx",
   "src/app/admin/AdminHome.tsx",
   "src/app/admin/AdminLoginClient.tsx",
   "src/app/admin/action-cases/AdminActionCasesClient.tsx",
-  "src/app/admin/workshop/AdminWorkshopClient.tsx",
 ] as const;
 
 const forbiddenLocalMotionUtilities = [
@@ -571,42 +568,6 @@ describe("lighthouse design system contract", () => {
     expect(systemPrompt).toContain("不要使用中文长横线");
   });
 
-  it("lets Workshop inherit shared page-level primitives before full page migration", () => {
-    const globals = readProjectFile("src/app/globals.css");
-    const workshop = readProjectFile("src/app/workshop/WorkshopClient.tsx");
-    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
-    const contract = `${workshop}\n${primitives}`;
-
-    [
-      "LhMetaList",
-      "LhSegmentedControl",
-      "LhSubmissionCard",
-      "LhStateNotice",
-      "LhEmptyState",
-    ].forEach((token) => {
-      expect(workshop).toContain(token);
-    });
-
-    [
-      "data-lh-meta-list",
-      "data-lh-segmented-control",
-      "data-lh-segment",
-      "data-lh-submission-card",
-      "data-lh-submission-card-header",
-      "data-lh-submission-card-footer",
-      "data-lh-workshop-page",
-      "data-lh-workshop-section-tabs",
-      "data-lh-workshop-two-column",
-      "data-lh-workshop-filter-panel",
-      "data-lh-workshop-form",
-      "data-lh-workshop-card-list",
-      "data-lh-workshop-footer-grid",
-    ].forEach((token) => {
-      expect(contract).toContain(token);
-      expect(globals).toContain(token);
-    });
-  });
-
   it("keeps a fixed body typeface without runtime typeface switching", () => {
     const globals = readProjectFile("src/app/globals.css");
 
@@ -738,7 +699,6 @@ describe("lighthouse design system contract", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
     const hermitPage = readProjectFile("src/app/hermit/page.tsx");
     const actionPage = readProjectFile("src/app/action/page.tsx");
-    const workshopPage = readProjectFile("src/app/workshop/WorkshopClient.tsx");
     const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
     const patternsDoc = readProjectFile("docs/design/patterns.md");
 
@@ -746,9 +706,8 @@ describe("lighthouse design system contract", () => {
       'data-lh-page-archetype="cultural-reading"',
       'data-lh-page-archetype="tool-workspace"',
       'data-lh-page-archetype="case-workflow"',
-      'data-lh-page-archetype="workflow"',
     ].forEach((token) => {
-      expect(`${heartPage}\n${hermitPage}\n${actionPage}\n${workshopPage}\n${visualSpec}\n${patternsDoc}`).toContain(token);
+      expect(`${heartPage}\n${hermitPage}\n${actionPage}\n${visualSpec}\n${patternsDoc}`).toContain(token);
     });
 
     [
@@ -799,16 +758,18 @@ describe("lighthouse design system contract", () => {
   it("keeps the Heart homepage cohesive as an editorial prologue instead of colored card fragments", () => {
     const heartPage = readProjectFile("src/app/heart/page.tsx");
     const homeBrandHero = readProjectFile("src/components/heart/HomeBrandHero.tsx");
+    const heartMotion = readProjectFile("src/components/heart/HeartMotion.tsx");
     const motionHooks = readProjectFile("src/hooks/use-lighthouse-motion.ts");
     const globals = readProjectFile("src/app/globals.css");
     const visualSpec = readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html");
-    const heartSurface = `${heartPage}\n${homeBrandHero}`;
+    const heartSurface = `${heartPage}\n${homeBrandHero}\n${heartMotion}`;
 
     [
       "data-lh-heart-page",
       "data-lh-heart-prologue",
       "data-lh-heart-origin",
       "data-lh-heart-value-scroll",
+      "data-lh-heart-value-surface",
       "data-lh-heart-guide-list",
       "data-lh-heart-closing",
       "data-lh-home-brand-hero",
@@ -822,6 +783,32 @@ describe("lighthouse design system contract", () => {
     });
 
     expect(homeBrandHero).toContain("useLhElementScrollProgress");
+    [
+      'from "@gsap/react"',
+      'from "gsap"',
+      'from "gsap/ScrollTrigger"',
+      "useGSAP(",
+      "gsap.matchMedia()",
+      "prefers-reduced-motion: no-preference",
+      "once: true",
+      'ease: "power3.out"',
+      'clearProps: "transform,opacity,willChange"',
+      "{ scope: controllerRef }",
+    ].forEach((token) => {
+      expect(heartMotion).toContain(token);
+    });
+    expect(heartMotion).toContain("const REVEAL_DURATION = 0.72;");
+    expect(heartMotion).toContain("const lift = isWide ? 30 : 22;");
+    expect(heartMotion).toContain("const drift = isWide ? 18 : 12;");
+    expect(heartMotion).not.toContain("scaleX:");
+    expect(heartMotion).not.toContain("xPercent:");
+    expect(heartMotion).not.toContain("lift * 1.15");
+    expect(heartMotion).not.toContain("targets: [item]");
+    expect(heartMotion).toContain(
+      ':scope > [data-lh-heart-value-heading], :scope > [data-lh-heart-value-summary-text], :scope > [data-lh-heart-viewpoints], :scope > [data-lh-heart-actions]',
+    );
+    expect(heartMotion).toContain("stagger: 0.06");
+    expect(heartPage).toContain("<HeartMotion />");
     expect(motionHooks).toContain("requestAnimationFrame");
     expect(motionHooks).toContain("prefers-reduced-motion: reduce");
     expect(heartPage).not.toContain("LhPageHero");
@@ -831,6 +818,14 @@ describe("lighthouse design system contract", () => {
     expect(heartPage).not.toContain("md:grid-cols-3");
     expect(heartPage).not.toContain("xl:grid-cols-4");
     expect(globals).toContain("[data-lh-heart-value-item]");
+    expect(globals).not.toMatch(/\[data-lh-heart-page\]\s*\{[^}]*overflow:\s*clip;/);
+    expect(globals).toMatch(
+      /\[data-lh-main\]:has\(\[data-lh-heart-page\]\)\s*\{[^}]*overflow-x:\s*clip;/,
+    );
+    expect(globals).toMatch(
+      /\[data-lh-home-brand-hero\]\s*\{[^}]*width:\s*100vw;[^}]*margin-inline:\s*calc\(50% - 50vw\);/,
+    );
+    expect(globals).toContain("gap: clamp(1rem, 2.2vw, 1.5rem);");
     expect(globals).toContain("[data-lh-heart-guide-link]");
     expect(globals).toContain("@keyframes lh-heart-rise-in");
     expect(globals).toContain("@media (prefers-reduced-motion: no-preference)");

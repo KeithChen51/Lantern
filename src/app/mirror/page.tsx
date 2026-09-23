@@ -6,10 +6,6 @@ import {
   LhPageHero,
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
-import { isPublicWorkshopEnabled } from "@/config/features";
-
-const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
-
 const caseCards = [
   {
     title: "云游胖东来",
@@ -35,7 +31,7 @@ const compareRows = [
   [
     "拆解方式",
     "先识别事实、机制和成立条件，再转成售后动作",
-    PUBLIC_WORKSHOP_ENABLED ? "连接笃行、共创与路引" : "连接笃行与路引",
+    "连接笃行与路引",
   ],
 ];
 
@@ -61,11 +57,7 @@ export default function MirrorPage() {
         <LhSectionHeader
           eyebrow="案例目录"
           title="标杆案例"
-          description={
-            PUBLIC_WORKSHOP_ENABLED
-              ? "每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或共创。"
-              : "每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或路引。"
-          }
+          description="每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或路引。"
         />
 
         <div className="grid gap-5 lg:grid-cols-2">

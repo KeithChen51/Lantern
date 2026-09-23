@@ -5,7 +5,7 @@ describe("workshop api user-facing errors", () => {
   it("uses product copy instead of leaking infrastructure details", () => {
     const message = getWorkshopUnavailableMessage();
 
-    expect(message).toContain("行动指南");
+    expect(message).toContain("已下线");
     expect(message).not.toMatch(/DATABASE_URL|MySQL|Prisma/i);
   });
 });

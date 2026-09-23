@@ -6,8 +6,13 @@ import {
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { HomeBrandHero } from "@/components/heart/HomeBrandHero";
+import { HeartMotion } from "@/components/heart/HeartMotion";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { isPublicWorkshopEnabled } from "@/config/features";
+import { ResourceView } from "@/components/knowledge/ResourceView";
+import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import knowledgeStyles from "@/components/knowledge/knowledge.module.css";
+
+export const dynamic = "force-dynamic";
 
 type ValueSection = {
   title: string;
@@ -19,8 +24,6 @@ type ValueSection = {
   society?: string;
   actions: string[];
 };
-
-const PUBLIC_WORKSHOP_ENABLED = isPublicWorkshopEnabled();
 
 const upgradeReasons = [
   {
@@ -104,21 +107,13 @@ const valueSections: ValueSection[] = [
 
 const dimensionNotes = [
   {
-    title: "五个词是一条路径",
-    description:
-      "求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。",
-  },
-  {
     title: "价值要进入组织能力",
     description:
       "这套路径贯穿服务客户、对待员工、组织协作和经营管理全过程。价值观要进入流程、授权、协作、复盘和保障机制，成为组织可以稳定兑现的服务能力。",
   },
   {
     title: "回到真实场景",
-    description:
-      PUBLIC_WORKSHOP_ENABLED
-        ? "接下来的案例、实践、共创和问答，不是把价值观停留在概念里，而是把它放回日常动作和共同规范中。"
-        : "接下来的案例、实践和问答，不是把价值观停留在概念里，而是把它放回日常动作和具体场景中。",
+    description: "接下来的案例、实践和问答，不是把价值观停留在概念里，而是把它放回日常动作和具体场景中。",
   },
 ];
 
@@ -138,13 +133,6 @@ const guideSections = [
     description: "回到我们自己的服务现场，复盘过去在哪些判断路口犹豫过、选择过、承担过。",
   },
   {
-    title: "基于共创的执行清单",
-    label: "共创",
-    href: "/workshop",
-    icon: lighthouseIcons.workshop,
-    description: "由一线和内部团队共同补充 Do & Don't，让规范从真实场景里长出来。",
-  },
-  {
     title: "常见问题与讨论",
     label: "路引",
     href: "/hermit",
@@ -153,12 +141,21 @@ const guideSections = [
   },
 ];
 
-const visibleGuideSections = guideSections.filter((section) => section.href !== "/workshop" || PUBLIC_WORKSHOP_ENABLED);
+const visibleGuideSections = guideSections;
 
-export default function HeartPage() {
+export default async function HeartPage() {
+  if (isKnowledgeHubEnabled()) {
+    return <div data-lh-heart-page data-lh-page="heart" data-lh-page-archetype="cultural-reading" className="pb-16">
+      <HomeBrandHero />
+      <section id="heart-values" className={knowledgeStyles.homeReading} aria-label="精诚服务价值框架">
+        <ResourceView resource={await getKnowledgeHub().get("brand-whitepaper")} embedded />
+      </section>
+    </div>;
+  }
   return (
     <div data-lh-heart-page data-lh-page="heart" data-lh-page-archetype="cultural-reading" className="pb-16">
       <HomeBrandHero />
+      <HeartMotion />
 
       <section data-lh-heart-prologue>
         <div data-lh-heart-prologue-lead>
@@ -206,7 +203,6 @@ export default function HeartPage() {
         <LhSectionHeader
           eyebrow="价值路径"
           title="求真、尽善、致美、大爱、幸福"
-          description="求真立事实，尽善而致远，致美见专业，大爱看见人，幸福验结果。"
         />
 
         <div data-lh-heart-value-summary>
@@ -221,6 +217,7 @@ export default function HeartPage() {
         <ol data-lh-heart-value-scroll>
           {valueSections.map((value, index) => (
             <li key={value.title} data-lh-heart-value-item>
+              <span data-lh-heart-value-surface aria-hidden="true" />
               <div data-lh-heart-value-heading>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <div>
@@ -302,7 +299,7 @@ export default function HeartPage() {
             <tr>
               <td>求真、尽善、致美、大爱、幸福</td>
               <td>作为从功能型服务走向价值型关系的判断路径。</td>
-              <td>{PUBLIC_WORKSHOP_ENABLED ? "用于案例复盘、路引问答与岗位 Do & Don't 共创。" : "用于案例复盘、路引问答与后续岗位 Do & Don't 梳理。"}</td>
+              <td>用于案例复盘、路引问答与后续岗位动作梳理。</td>
             </tr>
             <tr>
               <td>客户、员工、社会与组织视角</td>

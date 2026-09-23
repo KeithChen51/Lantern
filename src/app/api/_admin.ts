@@ -1,11 +1,6 @@
 import { headers } from "next/headers";
-import { authRepository } from "@/modules/auth";
 import { isAdminPortalCookieHeaderAuthorized } from "@/modules/admin";
-import { createTenantService, tenantRepository } from "@/modules/tenant";
-import type { WorkshopUser } from "@/modules/workshop";
 import { AppError, toErrorResponse } from "@/shared/errors";
-
-const tenantService = createTenantService(tenantRepository);
 
 function readCookieHeader(requestHeaders: Headers) {
   return requestHeaders.get("cookie");
@@ -27,35 +22,6 @@ export async function requireAdminPortal() {
   const requestHeaders = await headers();
   requireAdminPortalFromHeaders(requestHeaders);
   return requestHeaders;
-}
-
-export async function getAdminPortalWorkshopAdminFromHeaders(requestHeaders: Headers): Promise<WorkshopUser | null> {
-  if (!isAdminPortalCookieHeaderAuthorized(readCookieHeader(requestHeaders))) {
-    return null;
-  }
-
-  assertDatabaseConfigured();
-  const user = await authRepository.findDemoHighestAdmin();
-  if (!user) {
-    throw new AppError("unauthorized", "Highest-admin user is not seeded.", 401);
-  }
-  const scope = await tenantService.getUserOrgScope(user.id);
-  return {
-    id: user.id,
-    displayName: user.displayName,
-    role: "highest_admin",
-    scope,
-  };
-}
-
-export async function requireAdminPortalUser() {
-  assertDatabaseConfigured();
-  const requestHeaders = await requireAdminPortal();
-  const portalUser = await getAdminPortalWorkshopAdminFromHeaders(requestHeaders);
-  if (!portalUser) {
-    throw new AppError("forbidden", "请输入管理密码后再访问后台。", 403);
-  }
-  return portalUser;
 }
 
 export function adminJsonError(error: unknown) {

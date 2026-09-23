@@ -7,25 +7,18 @@ import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { isPublicWorkshopEnabled } from "@/config/features";
 import { useLhScrollProgress } from "@/hooks/use-lighthouse-motion";
 import { cn } from "@/lib/utils";
 import { getFeedbackHref } from "./feedback-link";
-import { getHeaderSearchMatches, resolveHeaderSearch } from "./header-search";
+import { getHeaderSearchMatches } from "./header-search";
 import { getVisibleNavItems } from "./navigation-model";
-
-const WORKSHOP_IS_PUBLIC = isPublicWorkshopEnabled();
 
 const NOTIFICATIONS = [
   "路引已可直接接收服务场景，并按事实、依据和下一步话术回应。",
-  ...(WORKSHOP_IS_PUBLIC ? ["行动指南支持提交岗位应做/避免建议，审核后进入公共指南。"] : []),
   "镜鉴与笃行分别用于外部标杆和内部实践复盘。",
 ];
 
 const SEARCH_PLACEHOLDER = "搜索";
-const SEARCH_FALLBACK_HINT = WORKSHOP_IS_PUBLIC
-  ? "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 行动指南 / 路引。"
-  : "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 路引。";
 
 interface NavigationProps {
   isPinned: boolean;
@@ -142,17 +135,10 @@ function SidebarSearch({ isExpanded, onNavigate, className }: { isExpanded: bool
       return;
     }
 
-    const matchedTarget = resolveHeaderSearch(trimmedQuery);
-
-    if (!matchedTarget) {
-      setIsSearchOpen(true);
-      setSearchFeedback(SEARCH_FALLBACK_HINT);
-      return;
-    }
-
-    router.push(matchedTarget.href);
+    router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     onNavigate?.();
-    setSearchFeedback(`已跳转到 ${matchedTarget.label}。`);
+    setIsSearchOpen(false);
+    setSearchFeedback("");
   };
 
   const handleSearchTarget = (href: string, label: string) => {
@@ -274,6 +260,7 @@ function SidebarSearchPanel({
               {searchFeedback}
             </p>
           )}
+          {query.trim() && <button type="button" onClick={() => onSubmit(query)} className="w-full border-b border-line px-3 py-3 text-left font-[var(--weight-bold)] text-primary hover:bg-primary-soft">搜索知识资源：{query}</button>}
           {searchMatches.length > 0 ? (
             <div className="grid p-1" role="listbox" aria-label="搜索结果">
               {searchMatches.map((target) => (

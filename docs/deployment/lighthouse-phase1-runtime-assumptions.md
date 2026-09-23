@@ -54,7 +54,7 @@ Yes, an embedding model is needed at runtime if Hermit RAG is enabled.
 
 The current RAG flow uses embeddings twice:
 
-1. During `npm run build`, `npm run build:knowledge` reads static Hermit knowledge, brand/normative markdown, static Action cases, and, when `DATABASE_URL` is available, published Workshop guides plus published managed content versions. It then calls the configured embedding API and writes `knowledge-vectors.json` into the build output.
+1. During `npm run build`, `npm run build:knowledge` reads static Hermit knowledge, brand/normative markdown, static Action cases, and, when `DATABASE_URL` is available, published managed content versions. It then calls the configured embedding API and writes `knowledge-vectors.json` into the build output.
 2. During runtime chat, every user query calls the same embedding API to produce a query vector and compare it with the built knowledge vectors.
 
 In normal deployment, production, preview, and any private-cloud build host must configure:
@@ -66,7 +66,7 @@ In normal deployment, production, preview, and any private-cloud build host must
 - `HERMIT_RAG_MIN_SCORE`: minimum cosine score for a chunk to enter the prompt.
 - `HERMIT_RAG_STRONG_SCORE`: score at which published practice, Action, or norm sources can be treated as exact evidence.
 - `HERMIT_RAG_OUT_OF_DOMAIN_SCORE`: stricter score required when the user query has no service-domain signal.
-- `HERMIT_KNOWLEDGE_REQUIRE_DATABASE`: keep `false` for preview builds that may not have migrated database content yet. Set `true` only when production builds must fail if database-backed Workshop/Content sources cannot be loaded.
+- `HERMIT_KNOWLEDGE_REQUIRE_DATABASE`: keep `false` for preview builds that may not have migrated database content yet. Set `true` only when production builds must fail if database-backed Content sources cannot be loaded.
 
 The embedding model used at build time and runtime must be the same model with the same vector dimension. Hermit stores the build-time model name and dimension in `knowledge-vectors.json`; runtime RAG will reject mismatched embedding configuration and continue the chat without retrieved context rather than using distorted similarity scores.
 
@@ -127,13 +127,11 @@ serve static assets directly.
 
 ## Scope Notes
 
-- Workshop structured data is stored in MySQL through Prisma.
+- Historical Workshop structured data remains stored in MySQL through Prisma for migration and audit compatibility; the Workshop pages and APIs are disabled.
 - The current auth layer uses seeded demo users, request headers, and a
   `lighthouse_preview_user_id` cookie as placeholders.
 - The preview identity switcher is only for Railway/private preview walkthroughs;
   it is not a production login module and should be replaced by IAM / WeCom SSO.
-- Administrator review is part of Workshop, not a sixth primary navigation
-  module.
-- Highest-admin review is intentionally a single brand-side role in Phase 1.
-- Hermit vector retrieval remains isolated from the Workshop persistence slice.
+- The former Workshop administrator review flow is no longer part of the active product surface.
+- Hermit vector retrieval remains isolated from the historical Workshop persistence slice.
 - Real OA / WeCom login, real AI initial review, learning reports, batch import, and full content management are outside Phase 1.
