@@ -10,7 +10,7 @@ import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { useLhScrollProgress } from "@/hooks/use-lighthouse-motion";
 import { cn } from "@/lib/utils";
 import { getFeedbackHref } from "./feedback-link";
-import { getHeaderSearchMatches, resolveHeaderSearch } from "./header-search";
+import { getHeaderSearchMatches } from "./header-search";
 import { getVisibleNavItems } from "./navigation-model";
 
 const NOTIFICATIONS = [
@@ -19,7 +19,6 @@ const NOTIFICATIONS = [
 ];
 
 const SEARCH_PLACEHOLDER = "搜索";
-const SEARCH_FALLBACK_HINT = "未找到匹配页面，可尝试：本心 / 镜鉴 / 笃行 / 启航 / 路引。";
 
 interface NavigationProps {
   isPinned: boolean;
@@ -136,17 +135,10 @@ function SidebarSearch({ isExpanded, onNavigate, className }: { isExpanded: bool
       return;
     }
 
-    const matchedTarget = resolveHeaderSearch(trimmedQuery);
-
-    if (!matchedTarget) {
-      setIsSearchOpen(true);
-      setSearchFeedback(SEARCH_FALLBACK_HINT);
-      return;
-    }
-
-    router.push(matchedTarget.href);
+    router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     onNavigate?.();
-    setSearchFeedback(`已跳转到 ${matchedTarget.label}。`);
+    setIsSearchOpen(false);
+    setSearchFeedback("");
   };
 
   const handleSearchTarget = (href: string, label: string) => {
@@ -268,6 +260,7 @@ function SidebarSearchPanel({
               {searchFeedback}
             </p>
           )}
+          {query.trim() && <button type="button" onClick={() => onSubmit(query)} className="w-full border-b border-line px-3 py-3 text-left font-[var(--weight-bold)] text-primary hover:bg-primary-soft">搜索知识资源：{query}</button>}
           {searchMatches.length > 0 ? (
             <div className="grid p-1" role="listbox" aria-label="搜索结果">
               {searchMatches.map((target) => (

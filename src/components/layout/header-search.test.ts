@@ -32,7 +32,8 @@ describe("header search", () => {
     const appShell = readProjectFile("src/components/layout/AppShell.tsx");
 
     expect(navigation).toContain("getHeaderSearchMatches");
-    expect(navigation).toContain("resolveHeaderSearch");
+    expect(navigation).toContain("/search?q=${encodeURIComponent(trimmedQuery)}");
+    expect(navigation).toContain("搜索知识资源");
     expect(header).not.toContain("const SEARCH_TARGETS");
     expect(header).toContain("rounded-[var(--lh-card-radius)]");
     expect(header).toContain("[backdrop-filter:var(--lh-shell-blur)]");

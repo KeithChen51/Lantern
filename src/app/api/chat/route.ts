@@ -15,6 +15,8 @@ import {
   type HermitChatParticipant,
 } from "@/modules/hermit";
 import { createTenantService, tenantRepository } from "@/modules/tenant";
+import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import { searchHubForHermit } from "@/modules/knowledge-hub/hermit";
 
 const authService = createAuthService(authRepository);
 const tenantService = createTenantService(tenantRepository);
@@ -79,15 +81,24 @@ export async function POST(req: Request) {
 
   // Extract the latest user message for RAG retrieval
   const query = getLastUserText(messages);
+  if (!query.trim()) return Response.json({ error: "请输入问题。" }, { status: 400 });
   const participant = await resolveChatParticipant();
 
   // RAG: search knowledge base for relevant context
   let ragResult: RagSearchResult | null = null;
   let ragContext = "";
+  let heartValues: string | undefined;
   try {
-    ragResult = await searchKnowledgeDetailed(query, RAG_TOP_K);
+    if (isKnowledgeHubEnabled()) heartValues = (await getKnowledgeHub().get("knowledge-heart-values")).version.markdown;
+    ragResult = isKnowledgeHubEnabled()
+      ? await searchHubForHermit(query, RAG_TOP_K)
+      : await searchKnowledgeDetailed(query, RAG_TOP_K);
     ragContext = ragResult.contextText;
   } catch (err) {
+    if (isKnowledgeHubEnabled()) {
+      console.warn("[Hermit] Knowledge service unavailable:", err);
+      return Response.json({ error: "知识服务暂不可用，请稍后重试。" }, { status: 503 });
+    }
     console.warn("[Hermit] RAG search failed, continuing without context:", err);
   }
 
@@ -106,7 +117,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: selectHermitLanguageModel(provider, model, providerSettings.apiMode),
-    system: buildSystemPrompt(ragContext),
+    system: buildSystemPrompt(ragContext, heartValues),
     messages: await convertToModelMessages(messages),
   });
 
