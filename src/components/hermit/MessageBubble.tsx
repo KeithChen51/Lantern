@@ -12,9 +12,12 @@ import {
   LhLoadingGlyph,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import styles from "./hermit.module.css";
+import { getDocumentRecommendations, getTextContent, type HermitDocumentRecommendation } from "./types";
 
 interface MessageBubbleProps {
   message: UIMessage;
+  onOpenDocument?: (document: HermitDocumentRecommendation) => void;
 }
 
 type AnswerSectionKey = "direct" | "basis" | "reference" | "next";
@@ -77,13 +80,6 @@ function normalizeMarkdownTableSeparators(markdown: string): string {
     .join("\n");
 }
 
-function getTextContent(message: UIMessage): string {
-  return message.parts
-    .filter((part): part is { type: "text"; text: string } => part.type === "text")
-    .map((part) => part.text)
-    .join("");
-}
-
 function resolveSectionKey(label: string): AnswerSectionKey {
   if (label.includes("依据")) return "basis";
   if (label.includes("案例") || label.includes("规范") || label.includes("参照")) return "reference";
@@ -134,9 +130,10 @@ function UserAvatar() {
   );
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
+  const documents = getDocumentRecommendations(message);
   const assistantSections = splitAssistantAnswer(text);
 
   if (isUser) {
@@ -173,6 +170,30 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </section>
           ))}
         </div>
+        {documents.length > 0 && (
+          <section className={styles.readerRecommendations} aria-label="灯塔知识中台推荐文档">
+            <div className={styles.readerRecommendationsHeading}>
+              <Icon icon={lighthouseIcons.document} aria-hidden="true" />
+              灯塔知识中台推荐
+            </div>
+            {documents.map((document) => (
+              <button
+                type="button"
+                className={styles.documentCard}
+                key={document.id}
+                onClick={() => onOpenDocument?.(document)}
+                aria-label={`打开文档：${document.title}`}
+              >
+                <span className={styles.documentCardIcon} aria-hidden="true"><Icon icon={lighthouseIcons.document} /></span>
+                <span className={styles.documentCardCopy}>
+                  <span className={styles.documentCardTitle}>{document.title}</span>
+                  <span className={styles.documentCardMeta}>{document.source}{document.heading ? ` · ${document.heading}` : ""}</span>
+                </span>
+                <Icon className={styles.documentCardArrow} icon={lighthouseIcons.arrowRightUp} aria-hidden="true" />
+              </button>
+            ))}
+          </section>
+        )}
       </LhMessageBubbleFrame>
     </LhMessageRow>
   );

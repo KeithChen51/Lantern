@@ -41,4 +41,9 @@ export function copyStandaloneAssets(projectRoot = process.cwd()) {
   }
 
   copyDirectory(path.join(projectRoot, "public"), path.join(standaloneDir, "public"));
+  const hermitPlugin = path.join(projectRoot, "scripts", "hermit-dsh-plugin.mjs");
+  if (fs.existsSync(hermitPlugin)) {
+    fs.mkdirSync(path.join(standaloneDir, "scripts"), { recursive: true });
+    fs.copyFileSync(hermitPlugin, path.join(standaloneDir, "scripts", "hermit-dsh-plugin.mjs"));
+  }
 }
