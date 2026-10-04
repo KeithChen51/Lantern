@@ -32,14 +32,13 @@ export function ResourceView({ resource, embedded = false }: { resource: Awaited
     table: ({ children }) => <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="文章表格"><table>{children}</table></div>,
   };
   return <div id="resource-top" className={styles.reader} data-lh-resource data-lh-page-archetype={resource.type === "case" ? "case-workflow" : "cultural-reading"}>
-    <nav className={styles.breadcrumb} aria-label="阅读位置"><Link href={resource.type === "case" ? "/action" : "/search"}>← {resource.type === "case" ? "全部案例" : "知识资源"}</Link><span aria-hidden="true">/</span><span>{resourceLabels[resource.type]}</span></nav>
+    <nav className={styles.breadcrumb} aria-label="阅读位置"><Link href={resource.type === "case" ? "/action" : "/search"}>↩ {resource.type === "case" ? "全部案例" : "知识资源"}</Link></nav>
     <div className={styles.readingLayout}>
       <article className={styles.paper}>
         <header className={styles.articleHeader}>
           <p className={styles.eyebrow}>{resourceLabels[resource.type]}<span />{resourceSourceLabel(resource.source)}</p>
           <Title className={styles.articleTitle}>{resource.title}</Title>
           <div className={styles.metadata}><time dateTime={version.publishedAt ?? undefined}>{version.publishedAt?.slice(0, 10)}</time><span>版本 {version.number}</span>{resource.type === "notice" && <span>{resource.validity === "effective" ? "当前有效" : resource.validity === "expired" ? "已失效" : resource.validity === "scheduled" ? "待生效" : "有效性待确认"}</span>}</div>
-          {resource.summary && resource.summary.length < 180 && <p className={styles.lead}>{resource.summary}</p>}
           <div className={styles.readingActions}><a href={`${base}?version=${version.id}&format=md`} download>下载原文 <span aria-hidden="true">↗</span></a><a href="#resource-reference">来源与引用 <span aria-hidden="true">↓</span></a></div>
           {headings.length > 0 && <details className={styles.mobileContents}><summary>本文目录 <span>{headings.length} 个章节</span></summary><nav aria-label="文章目录">{contents}</nav></details>}
         </header>

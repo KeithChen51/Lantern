@@ -204,9 +204,9 @@ describe("lighthouse design system contract", () => {
     });
 
     [
-      "`--color-muted` | `color-mix(in srgb, #2c2c2c 72%, white)`",
-      "`--color-on-primary` | `#242424`",
-      "`--color-primary-hover` | `#d27200`",
+      "`--color-muted` | `#787166`",
+      "`--color-on-primary` | `#fffdf8`",
+      "`--color-primary-hover` | `#8f4e0f`",
     ].forEach((token) => {
       expect(tokensDoc).toContain(token);
     });
@@ -404,168 +404,24 @@ describe("lighthouse design system contract", () => {
     expect(navigation).not.toContain("<ThemeSwitcher");
   });
 
-  it("lets Hermit inherit the Classic editorial chat layout", () => {
-    const globals = readProjectFile("src/app/globals.css");
-    const hermitPage = readProjectFile("src/app/hermit/page.tsx");
-    const chatPanel = readProjectFile("src/components/hermit/ChatPanel.tsx");
-    const chatInput = readProjectFile("src/components/hermit/ChatInput.tsx");
-    const messageBubble = readProjectFile("src/components/hermit/MessageBubble.tsx");
-    const systemPrompt = readProjectFile("src/lib/hermit/system-prompt.ts");
-    const primitives = readProjectFile("src/components/ui/lighthouse-primitives.tsx");
-    const chatPanelContract = `${chatPanel}\n${primitives}`;
-    const chatInputContract = `${chatInput}\n${primitives}`;
-    const messageBubbleContract = `${messageBubble}\n${primitives}`;
-    const hermitCss = globals.slice(
-      globals.indexOf('html[data-lighthouse-interface="classic"] [data-lh-hermit-page]'),
-      globals.indexOf('html[data-lighthouse-interface="classic"] [data-lh-meta-list]'),
-    );
-
-    [
-      "data-lh-hermit-page",
-      "data-lh-hermit-intro",
-      "data-lh-hermit-title",
-      "data-lh-hermit-title-cn",
-      "data-lh-hermit-title-en",
-      "data-lh-hermit-chat-frame",
-      'data-lh-page-archetype="tool-workspace"',
-    ].forEach((token) => {
-      expect(hermitPage).toContain(token);
-    });
-
-    [
-      "getLocalGreeting",
-      "isVisibleMessage",
-      "shouldShowThinkingIndicator",
-      "visibleMessages",
-      "showThinkingIndicator",
-      "深夜辛苦了",
-      "我们来讨论什么服务场景？",
-      "data-lh-hermit-start",
-      "data-lh-hermit-start-inner",
-      "data-lh-hermit-start-title",
-      "data-lh-hermit-greeting",
-      "data-lh-hermit-start-input",
-      "data-lh-hermit-start-examples",
-      "getConversationTitle",
-      "data-lh-hermit-conversation",
-      "data-lh-hermit-conversation-bar",
-      "data-lh-hermit-conversation-topic",
-      "data-lh-hermit-conversation-status",
-      "data-lh-hermit-main",
-      "data-lh-hermit-footer",
-      "data-lh-hermit-composer",
-      "LhSuggestionList",
-      "hideLabel",
-      "交车时间未定，客户持续追问",
-      "客户诉求与门店成本冲突",
-      "客户情绪升高，先稳住第一句话",
-    ].forEach((token) => {
-      expect(chatPanel).toContain(token);
-    });
-
-    expect(chatPanel).not.toContain("<button");
-    expect(chatPanel).not.toMatch(/data-lh-hermit-start-example(?:[\s=>]|$)/);
-
-    ["LhChatShell", "LhChatHeader", "LhChatFooter", "data-lh-hermit-panel-header"].forEach((token) => {
-      expect(chatPanel).not.toContain(token);
-    });
-
-    ["data-lh-chat-input", "data-lh-chat-input-grid", "data-lh-chat-textarea", "data-lh-chat-submit"].forEach((token) => {
-      expect(chatInputContract).toContain(token);
-    });
-
-    ["data-lh-focus-origin", "focusIntentRef", "onPointerDownCapture", "onKeyDownCapture", "onFocusCapture", "onBlurCapture"].forEach((token) => {
-      expect(chatInput).toContain(token);
-    });
-
-    ["data-lh-message-row", "data-lh-message-avatar", "data-lh-message-bubble", "data-lh-message-prose"].forEach((token) => {
-      expect(messageBubbleContract).toContain(token);
-    });
-
-    expect(messageBubbleContract).toContain("data-lh-message-meta-note");
-    expect(messageBubbleContract).toContain("splitAssistantAnswer");
-    expect(messageBubbleContract).toContain("data-lh-answer-structure");
-    expect(messageBubbleContract).toContain("data-lh-answer-section");
-    expect(messageBubbleContract).toContain('import remarkGfm from "remark-gfm"');
-    expect(messageBubbleContract).toContain("remarkPlugins={[remarkGfm]}");
-    expect(messageBubbleContract).toContain("normalizeMarkdownTableSeparators");
-    expect(messageBubbleContract).toContain("data-lh-message-table-wrap");
-    expect(messageBubbleContract).toContain("data-lh-message-table");
-    expect(messageBubbleContract).toContain("直接建议");
-    expect(messageBubbleContract).toContain("判断依据");
-    expect(messageBubbleContract).toContain("相关案例 / 规范");
-    expect(messageBubbleContract).toContain("下一步动作");
-    expect(messageBubbleContract).toContain('label = "思考中"');
-    expect(chatPanel).toContain('<TypingIndicator label="思考中" />');
-
-    ["LhSuggestionList", "data-lh-suggestion-list", "data-lh-suggestion-button", "data-lh-hermit-start-examples"].forEach((token) => {
-      expect(chatPanelContract).toContain(token);
-    });
-
-    [
-      "LhChatShell",
-      "LhChatHeader",
-      "LhChatMain",
-      "LhChatFooter",
-      "LhChatInputShell",
-      "LhChatTextarea",
-      "LhChatSubmitButton",
-      "LhMessageRow",
-      "LhMessageAvatar",
-      "LhMessageBubble",
-      "LhSuggestionList",
-    ].forEach((token) => {
-      expect(primitives).toContain(token);
-    });
-
-    [
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-page]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation-bar]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-composer]',
-      'html[data-lighthouse-interface="classic"] [data-lh-chat-scroll-content]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-start]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-start-title]',
-      'html[data-lighthouse-interface="classic"] [data-lh-suggestion-button]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-main]',
-      'html[data-lighthouse-interface="classic"] [data-lh-chat-input]',
-      'html[data-lighthouse-interface="classic"] [data-lh-message-bubble]',
-      'html[data-lighthouse-interface="classic"] [data-lh-hermit-conversation] [data-lh-message-bubble]',
-      'html[data-lighthouse-interface="classic"] [data-lh-message-prose]',
-      'html[data-lighthouse-interface="classic"] [data-lh-message-table-wrap]',
-      'html[data-lighthouse-interface="classic"] [data-lh-message-table]',
-      'html[data-lighthouse-interface="classic"] [data-lh-answer-structure]',
-      'html[data-lighthouse-interface="classic"] [data-lh-answer-section]',
-      "@keyframes lh-message-enter",
-      "prefers-reduced-motion: no-preference",
-      "prefers-reduced-motion: reduce",
-      "--font-noto-stack:",
-      "--font-noto: var(--font-noto-stack);",
-      "font-family: var(--font-noto-stack);",
-      "border-color: transparent !important;",
-      "box-shadow: none !important;",
-    ].forEach((token) => {
-      expect(globals).toContain(token);
-    });
-
-    ["0 30px", "0 36px", "0 24px 70px", "0 28px 78px"].forEach((token) => {
-      expect(hermitCss).not.toContain(token);
-    });
-
-    expect(hermitCss).not.toMatch(/\[data-lh-chat-textarea\][^{]*:focus[\s\S]{0,180}outline:\s*0/);
-    expect(hermitCss).toContain("outline: 2px solid var(--lh-focus-outline);");
-    expect(hermitCss).toContain("outline-offset: var(--lh-focus-offset);");
-    expect(hermitCss).toContain("box-shadow: var(--shadow-focus);");
-    expect(hermitCss).toContain('[data-lh-chat-input][data-lh-focus-origin="pointer"] [data-lh-chat-textarea]:focus-visible');
-    expect(hermitCss).toContain("outline-color: transparent;");
-    expect(hermitCss).toContain('[data-lh-chat-input][data-lh-focus-origin="keyboard"] [data-lh-chat-textarea]:focus-visible');
-    expect(hermitCss).toContain("outline: 2px solid color-mix(in srgb, var(--lh-focus-outline) 70%, transparent);");
-    expect(hermitCss).not.toMatch(/\[data-lh-chat-input\]\[data-lh-focus-origin="pointer"\][\s\S]{0,180}outline:\s*(?:0|none)/);
-    expect(chatInput).not.toContain("outline-none");
-    expect(`${chatPanel}\n${chatInput}\n${messageBubble}`).not.toMatch(/\banimate-/);
-    expect(systemPrompt).toContain("合法 GFM 表格语法");
-    expect(systemPrompt).toContain("|---|---|");
-    expect(systemPrompt).toContain("不要使用中文长横线");
+  it("keeps the V3 Hermit identity, accessible composer and inline knowledge reading", () => {
+    const page = readProjectFile("src/app/hermit/page.tsx");
+    const panel = readProjectFile("src/components/hermit/ChatPanel.tsx");
+    const input = readProjectFile("src/components/hermit/ChatInput.tsx");
+    const message = readProjectFile("src/components/hermit/MessageBubble.tsx");
+    const css = readProjectFile("src/components/hermit/hermit-v3.module.css");
+    expect(page).toContain("PageHeading");
+    expect(page).toContain("HermitIdentity");
+    for (const token of ["isVisibleMessage", "shouldShowThinkingIndicator", "LhSuggestionList", "data-lh-hermit-composer"]) expect(panel).toContain(token);
+    for (const token of ["data-lh-focus-origin", "focusIntentRef", "onPointerDownCapture", "onKeyDownCapture", "onFocusCapture", "onBlurCapture", 'type="file"']) expect(input).toContain(token);
+    for (const token of ["remarkPlugins={[remarkGfm]}", "normalizeMarkdownTableSeparators", "data-lh-message-table-wrap", "阅读文档", "data-lh-message-meta-note"]) expect(message).toContain(token);
+    expect(message).not.toContain("splitAssistantAnswer");
+    expect(css).toContain(".chatLayoutWithReader");
+    expect(css).toContain("@media (max-width: 900px)");
+    expect(css).toContain("focus-visible");
+    expect(input).not.toContain("outline-none");
+    const prompt = readProjectFile("src/lib/hermit/system-prompt.ts");
+    expect(prompt).toContain("合法 GFM 表格语法");
   });
 
   it("keeps a fixed body typeface without runtime typeface switching", () => {

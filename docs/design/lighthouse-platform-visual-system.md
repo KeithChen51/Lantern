@@ -2,6 +2,8 @@
 
 ## Decision
 
+The active implementation baseline is Classic Amber V3. The complete reference is the approved Figma system at `node-id=121-983`; this folder translates that reference into runtime tokens, components, and page patterns.
+
 The Lighthouse platform visual system is independent from the service-brand VI.
 
 Lighthouse is a product platform for reading brand principles, finding cases,
@@ -22,6 +24,7 @@ workspace, those materials live in the adjacent Lantern brand workspace:
 | Service-brand VI | How does the service brand appear and speak? | Adjacent Lantern brand workspace, outside this app repo | Official marks, lockups, VI colors, brand fonts, and brand-facing assets. |
 | Brand-value knowledge | Which brand-value language should Hermit and Heart use? | `docs/brand/` | Brand-value source text intentionally included in Lighthouse knowledge building. |
 | Lighthouse product UI | How does the platform behave, guide, and organize work? | `docs/design/`, `src/app/globals.css`, `src/components/ui/` | Product tokens, layout rules, navigation, cards, forms, status colors, Hermit chat UI, admin/workshop density, interaction states. |
+| V3 page scope | How do the non-home pages share a precise frame? | `src/app/visual-v3.css`, `src/components/ui/PageHeading.tsx` | Shared page header, 1280px desktop frame, 44/56 and 32/44 titles, 24px grid gaps, mobile one-column collapse. |
 
 ## Repository Classification
 
@@ -40,6 +43,11 @@ workspace, those materials live in the adjacent Lantern brand workspace:
 | `src/components/ui/lighthouse-design-system.test.ts` | Runtime product UI | Active guardrail tests. |
 
 ## Source Of Truth
+
+For the approved V3 visual direction, read the complete Figma reference first:
+
+- [Classic Amber V3 complete design system](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-983)
+- The runtime implementation under `main[data-lh-v3]` and `src/app/visual-v3.css`.
 
 For service-brand VI decisions:
 

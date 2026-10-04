@@ -1,8 +1,20 @@
-# Lighthouse Product Patterns v0.1
+# Lighthouse Product Patterns · Classic Amber V3
 
 ## Status
 
-This document defines page and workflow patterns for the Lighthouse platform. It is desktop-first for now. Mobile adaptation is deferred, but patterns should not block future responsive work.
+This document defines the active page and workflow patterns for the Lighthouse platform. Desktop and mobile are both part of the V3 contract; a mobile rule is required whenever a page pattern is added.
+
+## V3 Shared Frame
+
+All pages except the unchanged Heart / 本心 homepage use the shared frame:
+
+- `main[data-lh-v3]` owns the non-home V3 scope. The existing navigation and shell remain outside that scope.
+- Desktop content starts at `x=128px`, keeps `32px` on the right, begins below the `64px` page header, and is constrained to `1280px`.
+- The shared `PageHeading` owns title, description, optional identity mark, and trailing actions. Its title is `44px / 56px`; mobile is `32px / 44px`.
+- Content begins `32px` below the page heading. Directory cards use equal tracks and `24px` gaps; reading/detail pages use a clear primary column plus a supporting rail.
+- Mobile pages use `20px` horizontal padding, one column, `44px` minimum touch targets, and no horizontal overflow. The Hermit reader becomes a standalone in-page reading view with a visible return-to-chat action.
+
+The frame is a layout contract, not a new theme. Mirror, Action, Search, Feedback, Admin, and Hermit share the frame while retaining their task-specific density and content order.
 
 ## Product Map
 
@@ -104,6 +116,17 @@ Runtime home pattern:
 
 ## Mirror And Action Patterns
 
+### V3 Non-home Page Map
+
+| Page | Desktop structure | Mobile behavior | Distinctive responsibility |
+| --- | --- | --- | --- |
+| Mirror / 镜鉴 | Shared heading, featured case plus quiet upcoming copy, then comparison or case cards. | One-column case list; featured case stays first. | Evidence and reflection through service cases. |
+| Action / 笃行 | Shared heading, equal-track case directory, filter/status row, expandable method preview, long-form case reading. | One-column directory; method preview expands inline before entering the reading view. | Translate principles into concrete action. |
+| Search / 知识资源 | Shared heading, query field, scoped result list, explicit empty/error states. | Query and filters stack; result rows keep source and read action visible. | Find published knowledge without creating a second navigation shell. |
+| Feedback / 意见反馈 | Shared heading, form panel, helper/error stack, success state. | Single-column form with full-width action and preserved entered content on error. | Collect product feedback and recovery context. |
+| Admin / 内容维护 | Shared heading, access state or dense editing surface, status and save actions. | Controls stack; table/list becomes readable rows with explicit actions. | Maintain knowledge and permissions with operational density. |
+| Hermit / 路引 | Shared heading with Hermit identity, centered conversation, composer, recommendations, optional document reader. | Conversation remains primary; reader becomes an in-page view with return to chat. | Answer service-culture questions and let users read and ask about knowledge documents. |
+
 ### Knowledge resource reading
 
 Hub-backed documents and cases use the existing cultural-reading / case-workflow archetypes. The shared ResourceView keeps an editorial title, a bounded reading column, and a quiet desktop contents rail; mobile contents collapse into a disclosure. Markdown headings link to original source lines, while the repeated document title is omitted only from rendering. Downloads and version-local citations retain the original content unchanged.
@@ -169,6 +192,16 @@ Answer shape should support:
 When evidence is insufficient, the interface should not stop at "no evidence." It should surface related cases with similar underlying logic and provide framework-based guidance.
 
 UI requirements:
+
+V3 Hermit contract:
+
+- The title block uses the shared page heading and a small amber Hermit identity mark. The navigation remains the original Lighthouse rail.
+- The empty state leads with “把现场的难题，一起理清。” and keeps three high-quality suggested questions close to the composer.
+- The composer places the writing area above the attachment and send tools. Its states are empty, input, processing, disabled, and keyboard focus.
+- Upload supports PDF, Word, TXT, and Markdown in the UI. Each attachment exposes name, size, upload/readiness status, cancel, retry, and remove actions; unfinished or failed attachments cannot be sent.
+- A recommendation identifies document source, title, related chapter, and reason. Opening it uses an in-page reader and preserves the current conversation.
+- The reader exposes close/back, source, title, chapter content, and “ask about this document”. Closing it returns to the same chat position. Mobile uses the same reader content in a full-width view.
+- There is no artifact or deliverable workspace. Model and Harness remain implementation details and do not become navigation labels.
 
 - Prompt entry is prominent but not flashy.
 - Suggested questions are guidance chips, not decorative pills.
@@ -285,14 +318,14 @@ Recovery rules:
 
 ## Mobile Boundary
 
-Mobile implementation is still not the primary implementation gate, but the shell target is now defined.
+Mobile is part of the V3 acceptance gate. It keeps the same information order while reducing columns and preserving task access.
 
-- Do not treat mobile screenshots as the primary acceptance gate.
+- Use desktop and mobile screenshots as the V3 acceptance evidence for their page pattern.
 - Do not introduce desktop patterns that require fixed pixel widths or horizontal overflow.
-- Keep controls and component tokens capable of later collapsing into mobile layouts.
-- Primary mobile navigation uses a bottom five-tab bar: Heart, Mirror, Action, Workshop, Hermit.
+- Keep controls and component tokens capable of collapsing into the V3 mobile layout.
+- The existing Lighthouse navigation framework remains the source of truth; mobile may collapse it into the existing responsive navigation treatment, but V3 does not add a second product navigation model.
 - Bottom navigation does not carry second-level actions; complex filters and secondary actions move into page-local drawers, segmented controls, or inline sections.
-- Main content collapses to one column. Desktop 8/4 and 6/6 layouts become ordered vertical sections rather than squeezed columns.
+- Main content collapses to one column. Desktop 8/4 and 6/6 layouts become ordered vertical sections rather than squeezed columns. The V3 pages use `20px` horizontal padding.
 - Touch targets should be at least 44px, and page content needs bottom padding that clears the bottom navigation and safe area.
 
 ## Runtime Typography Pattern

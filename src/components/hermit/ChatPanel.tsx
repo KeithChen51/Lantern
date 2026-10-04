@@ -10,7 +10,7 @@ import { useLhReducedMotion } from "@/hooks/use-lighthouse-motion";
 import { ChatInput } from "./ChatInput";
 import { DocumentReader } from "./DocumentReader";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import styles from "./hermit.module.css";
+import styles from "./hermit-v3.module.css";
 import {
   getDocumentRecommendations,
   getHermitApiError,
@@ -28,16 +28,6 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 const MAX_ATTACHMENTS_PER_CONVERSATION = 5;
-
-function getLocalGreeting(date = new Date()) {
-  const hour = date.getHours();
-
-  if (hour >= 22 || hour < 5) return "深夜辛苦了";
-  if (hour >= 18) return "晚上好";
-  if (hour >= 14) return "下午好";
-  if (hour >= 11) return "中午好";
-  return "早上好";
-}
 
 function getConversationTitle(messages: UIMessage[]) {
   const firstUserMessage = messages.find((message) => message.role === "user");
@@ -78,7 +68,6 @@ export function ChatPanel() {
   const uploadQueueLengthRef = useRef(0);
   const canceledUploadIdsRef = useRef(new Set<string>());
   const [input, setInput] = useState("");
-  const [greeting, setGreeting] = useState("您好");
   const [attachments, setAttachments] = useState<HermitAttachment[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -110,16 +99,6 @@ export function ChatPanel() {
   const visibleMessages = messages.filter(isVisibleMessage);
   const showThinkingIndicator = shouldShowThinkingIndicator(messages, isLoading);
   const displayedError = requestError ?? (error ? "这次请求没有完成，请重试。" : null);
-
-  useEffect(() => {
-    function updateGreeting() {
-      setGreeting(getLocalGreeting());
-    }
-
-    updateGreeting();
-    const timer = window.setInterval(updateGreeting, 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -303,7 +282,6 @@ export function ChatPanel() {
   if (!hasMessages) {
     return (
       <EmptyChatStart
-        greeting={greeting}
         input={input}
         isLoading={isLoading}
         isUploading={isUploadingAttachments}
@@ -325,18 +303,11 @@ export function ChatPanel() {
   return (
     <div className={`${styles.chatLayout} ${readerDocument ? styles.chatLayoutWithReader : ""}`} data-lh-hermit-layout>
       <section className={styles.conversation} data-lh-hermit-conversation aria-label="路引当前对话">
-        <div data-lh-hermit-conversation-bar>
-          <div data-lh-hermit-conversation-title>
-            <span data-lh-hermit-conversation-icon><Icon icon={lighthouseIcons.hermit} /></span>
-            <div data-lh-hermit-conversation-copy>
-              <span data-lh-hermit-conversation-kicker>当前场景</span>
-              <strong data-lh-hermit-conversation-topic>{conversationTitle}</strong>
-            </div>
-          </div>
-          <div data-lh-hermit-conversation-status>
-            <LhStatusBadge tone={isLoading ? "warning" : displayedError ? "danger" : "neutral"}>{isLoading ? "生成中" : displayedError ? "需要重试" : "可追问"}</LhStatusBadge>
-            <span>本心 · 镜鉴 · 笃行</span>
-          </div>
+        <div className={styles.conversationStatus} aria-live="polite">
+          <span className={styles.visuallyHidden}>{conversationTitle}</span>
+          <LhStatusBadge tone={isLoading ? "warning" : displayedError ? "danger" : "neutral"}>
+            {isLoading ? "生成中" : displayedError ? "需要重试" : "可追问"}
+          </LhStatusBadge>
         </div>
 
         <div data-lh-hermit-main ref={scrollRef}>
@@ -383,7 +354,6 @@ export function ChatPanel() {
 }
 
 interface EmptyChatStartProps {
-  greeting: string;
   input: string;
   isLoading: boolean;
   isUploading: boolean;
@@ -401,7 +371,6 @@ interface EmptyChatStartProps {
 }
 
 function EmptyChatStart({
-  greeting,
   input,
   isLoading,
   isUploading,
@@ -420,9 +389,19 @@ function EmptyChatStart({
   return (
     <section data-lh-hermit-start aria-labelledby="hermit-start-title">
       <div data-lh-hermit-start-inner>
-        <h2 id="hermit-start-title" data-lh-hermit-start-title>
-          <span data-lh-hermit-greeting>{greeting}</span>，我们来讨论什么服务场景？
-        </h2>
+        <div className={styles.startCopy}>
+          <h2 id="hermit-start-title" data-lh-hermit-start-title>把现场的难题，一起理清。</h2>
+          <p>说说发生了什么，也可以上传相关文件。路引会结合灯塔知识，帮助你形成下一步判断。</p>
+        </div>
+        <div data-lh-hermit-start-examples>
+          <LhSuggestionList
+            label="可直接提问"
+            questions={SUGGESTED_QUESTIONS}
+            disabled={isLoading}
+            hideLabel
+            onSelect={onSuggestedQuestion}
+          />
+        </div>
         <div data-lh-hermit-start-input>
           <ChatInput
             value={input}
@@ -440,15 +419,7 @@ function EmptyChatStart({
             onClearDocumentContext={onClearDocumentContext}
           />
         </div>
-        <div data-lh-hermit-start-examples>
-          <LhSuggestionList
-            label="可直接提问"
-            questions={SUGGESTED_QUESTIONS}
-            disabled={isLoading}
-            hideLabel
-            onSelect={onSuggestedQuestion}
-          />
-        </div>
+        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p>
       </div>
     </section>
   );

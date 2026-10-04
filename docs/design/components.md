@@ -1,10 +1,26 @@
-# Lighthouse Component Library v0.1
+# Lighthouse Component Library · Classic Amber V3
 
 ## Status
 
-This document defines the first Lighthouse product component contract. Runtime implementation currently lives in `src/components/ui/lighthouse-primitives.tsx` and `src/app/globals.css`.
+This document defines the active Lighthouse product component contract. Runtime implementation lives in `src/components/ui/lighthouse-primitives.tsx`, `src/components/layout/`, `src/components/hermit/`, and the page-level V3 styles.
 
 The component library belongs to the platform UI layer. It should not inherit service-brand VI styling by default.
+
+## V3 Shared Families
+
+V3 pages use a small set of named families. A family owns its structure, content order, state treatment, and responsive behavior so a page cannot drift by restyling a similar shape locally.
+
+| Family | Anatomy | V3 rule |
+| --- | --- | --- |
+| `PageHeading` | Optional identity mark, title, description, trailing actions. | One page title at `44/56` desktop and `32/44` mobile. Keep the title block aligned to the content frame; actions share the same baseline. |
+| Navigation rail | Logo, primary links, feedback, notification. | Keep the existing Lighthouse framework. Feedback and notification stay anchored at the bottom with flexible empty space between content groups. |
+| Directory card | Kicker/status, title, summary, tags or metadata, one action row. | Use `16px` radius, `#FFFDF8` surface, `#DED9CD` line, and one clear action. Do not nest cards. |
+| Resource row | Source, title, summary, related chapter, read action. | Use a compact list row for knowledge recommendations. The row opens the document inside the current page. |
+| Form panel | Field labels, controls, helper/error stack, action row. | Use shared form rhythm and `8px` control radius. Keep helper and error text adjacent to the affected field. |
+| Chat composer | Writing area, attachment context, upload/tools row, send action. | Use an `18px` composer radius. Upload state remains visible, cancellable, retryable, and removable before send. |
+| Message row | User or assistant identity, message content, metadata, optional references. | Assistant answers stay in the conversation. Recommendations are document cards or rows, never a separate artifact surface. |
+| Reader panel | Close/back action, source, title, chapter content, document question input. | Desktop may sit beside conversation; mobile becomes a page-level reading view with a clear return to chat. |
+| State notice | Status icon, title, explanation, recovery action. | Pair status color with text and icon. Preserve layout while loading and state what failed plus the next action. |
 
 ## Current Runtime Base
 
@@ -21,6 +37,7 @@ Existing primitives:
 - `LhFieldGroup`
 - `LhChoiceGroup`
 - `LhSearchBox`
+- `PageHeading`
 - `LhOperationalPageHeader`
 - `LhSectionHeader`
 - `LhCallout`

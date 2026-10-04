@@ -1,142 +1,87 @@
 import Link from "next/link";
-import { Icon } from "@iconify/react";
-import {
-  LhCard,
-  LhChip,
-  LhDataTableShell,
-  LhEmptyState,
-  LhPageHero,
-  LhSectionHeader,
-} from "@/components/ui/lighthouse-primitives";
+import { LhEmptyState } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { Icon } from "@iconify/react";
+import { PageHeading } from "@/components/ui/PageHeading";
 import { getPublicActionCaseSummaries } from "./public-action-cases";
+import styles from "../mirror/content-v3.module.css";
 
 const trainingSteps = [
-  "先读清楚客户问题和触发条件",
-  "再拆出客户、门店、政策、指标四类视角",
-  "最后判断最终做法是否守住客户价值",
+  "先读清楚客户问题和触发条件。",
+  "再拆出客户、门店、政策、指标四类视角。",
+  "最后判断最终做法是否守住客户价值。",
 ];
 
 export const dynamic = "force-dynamic";
+
+function statusLabel(status: string) {
+  if (status === "published") return "已发布";
+  if (status === "archived") return "已归档";
+  return "草稿";
+}
 
 export default async function ActionPage() {
   const actionCases = await getPublicActionCaseSummaries();
 
   return (
-    <div data-lh-action-page data-lh-page-archetype="case-workflow" className="space-y-8 pb-12">
-      <LhPageHero
-        title="回到决策的十字路口，看清楚我们的理念和权衡。"
-        description={
-          <p>
-            笃行记录内部已经发生的服务实践。重点不是把案例讲完，而是回到真实政策、真实门店和真实客户场景里，看客户体验是否被守住，门店是否具备执行条件，政策指标是否真的服务于客户价值。
-          </p>
-        }
-        asideTitle="训练流程"
-        asideItems={trainingSteps.map((step) => ({ title: step }))}
-      />
+    <div data-lh-action-page data-lh-page-archetype="case-workflow" data-lh-page="action" className={styles.page}>
+      <div className={styles.stack}>
+        <PageHeading title="笃行" description="回到真实服务现场，看见选择、权衡与行动。" />
 
-      <section className="space-y-6">
-        <LhSectionHeader
-          eyebrow="内部实践"
-          title="内部实践案例"
-          description="案例卡片固定呈现场景、问题、决策节点和进入动作。后续新增案例也按同一结构沉淀。"
-        />
+        <div className={styles.toolbar}>
+          <p className={styles.toolbarMeta}>内部实践&nbsp; / &nbsp;{actionCases.length} 篇案例</p>
+          <details className={styles.methodInline}>
+            <summary className={styles.toolbarAction}>复盘方法</summary>
+            <div className={styles.methodBody}>
+              <p>笃行案例回到真实政策、门店和客户现场，先判断条件，再讨论行动。</p>
+              <ol className={styles.methodList}>
+                {trainingSteps.map((step, index) => (
+                  <li key={step}>
+                    <span className={styles.methodIndex}>{index + 1}</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </details>
+        </div>
 
-        <div className="grid gap-5">
-          {actionCases.map((actionCase) => (
-            <Link key={actionCase.slug} href={actionCase.href} className="group block">
-              <LhCard data-lh-action-card className="grid min-h-[320px] gap-6 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] group-hover:border-line-strong group-hover:shadow-[var(--lh-card-hover-shadow)] lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="grid min-w-0 grid-rows-[auto_1fr_auto] gap-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <LhChip tone="primary">{actionCase.date}</LhChip>
-                    <LhChip tone={actionCase.status === "published" ? "success" : "warning"}>
-                      {actionCase.status === "published" ? "已发布" : "草稿"}
-                    </LhChip>
-                    {actionCase.tags.slice(0, 3).map((tag) => (
-                      <LhChip key={tag} tone="neutral">
-                        {tag}
-                      </LhChip>
-                    ))}
-                  </div>
-
-                  <div>
-                    <h2 className="max-w-4xl text-[length:var(--title-section)] font-[var(--weight-extrabold)] leading-[1.14] text-ink">
-                      {actionCase.title}
-                    </h2>
-                    <p className="mt-5 max-w-3xl text-[length:var(--type-reading)] leading-[var(--leading-reading)] text-ink-readable">{actionCase.summary}</p>
-                    <div data-lh-action-question className="mt-5 rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet p-4">
-                      <p className="text-[length:var(--type-caption)] font-[var(--weight-extrabold)] tracking-[var(--tracking-kicker)] text-primary-text">案例问题</p>
-                      <p className="mt-2 text-[length:var(--type-body)] leading-[var(--leading-reading)] text-ink-secondary">{actionCase.question}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-line pt-4">
-                    <span className="text-[length:var(--type-control)] font-[var(--weight-bold)] text-ink-tertiary">笃行学习卡</span>
-                    <LhChip tone="primary" className="min-h-9 px-3">
-                      <Icon icon={lighthouseIcons.document} className="h-4 w-4" />
-                      查看复盘
-                    </LhChip>
-                  </div>
-                </div>
-
-                <aside data-lh-action-keynodes className="rounded-[var(--lh-control-radius)] border border-line bg-surface-quiet p-5">
-                  <p className="text-[length:var(--type-caption)] font-[var(--weight-extrabold)] tracking-[var(--tracking-kicker)] text-primary-text">关键节点</p>
-                  <ol className="mt-4 grid gap-3">
-                    {actionCase.highlights.map((highlight, index) => (
-                      <li key={highlight} className="grid grid-cols-[32px_minmax(0,1fr)] gap-3 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-secondary">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-[var(--lh-control-radius)] border border-line bg-panel text-[length:var(--type-caption)] font-[var(--weight-extrabold)] text-primary-text">
-                          {index + 1}
-                        </span>
-                        <span>{highlight}</span>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="mt-5 border-t border-line pt-4 text-[length:var(--type-caption)] leading-[var(--leading-caption)] text-ink-tertiary">
-                    维护字段：背景与触发、认知冲突、关键选择、客户影响、门店能力、风险控制、来源材料。
-                  </p>
-                </aside>
-              </LhCard>
-            </Link>
-          ))}
-
+        {actionCases.length === 0 ? (
           <LhEmptyState
             tone="neutral"
             icon={<Icon icon={lighthouseIcons.document} className="h-5 w-5" />}
             title="更多内部实践待沉淀"
-            description="后续可继续接入交付、索赔、客户关怀、门店协同等真实案例，让一线经验留在组织里。"
-            secondaryAction={<LhChip tone="neutral">等待新增案例</LhChip>}
+            description="后续可继续接入真实服务案例，让一线经验留在组织里。"
           />
-        </div>
-      </section>
+        ) : (
+          <div className={styles.actionGrid}>
+            {actionCases.map((actionCase) => (
+              <Link
+                key={actionCase.slug}
+                href={actionCase.href}
+                data-lh-action-card
+                data-lh-action-question={actionCase.question}
+                data-lh-action-keynodes={actionCase.highlights.join(" · ")}
+                className={styles.actionCard}
+              >
+                <p className={styles.actionMeta}>
+                  内部实践 / {actionCase.tags[0] ?? "服务现场"} · {actionCase.date} · {statusLabel(actionCase.status)}
+                </p>
+                <h2 className={styles.actionTitle}>{actionCase.title}</h2>
+                <p className={styles.actionSummary}>{actionCase.summary}</p>
+                <p className={styles.actionLink}>阅读案例 →</p>
+              </Link>
+            ))}
+          </div>
+        )}
 
-      <LhDataTableShell>
-        <table>
-          <thead>
-            <tr>
-              <th>案例学习结构</th>
-              <th>本页如何处理</th>
-              <th>迁移目标</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>问题与触发</td>
-              <td>首屏直接呈现案例问题和训练目标。</td>
-              <td>先进入判断，不先进入长文叙事。</td>
-            </tr>
-            <tr>
-              <td>决策节点</td>
-              <td>卡片右侧固定预览关键节点。</td>
-              <td>让读者知道这个案例要练什么。</td>
-            </tr>
-            <tr>
-              <td>后续承接</td>
-              <td>详情页连接最终做法、门店启示和可复用原则。</td>
-              <td>把案例沉淀成笃行与路引可复用材料。</td>
-            </tr>
-          </tbody>
-        </table>
-      </LhDataTableShell>
+        <details className={styles.methodDisclosure}>
+          <summary>查看笃行案例字段</summary>
+          <div className={styles.methodBody}>
+            <p>每个案例保留问题与触发、关键选择、客户影响、门店能力、风险控制和来源材料，方便后续进入路引问答。</p>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }

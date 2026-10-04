@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { Icon } from "@iconify/react";
-import { LhButton, LhCard, LhCallout, LhLoadingGlyph, LhPageHero, LhTextField } from "@/components/ui/lighthouse-primitives";
+import { LhButton, LhPanel, LhLoadingGlyph, LhTextField } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { PageHeading } from "@/components/ui/PageHeading";
+import styles from "./admin.module.css";
 
 export function AdminLoginClient() {
   const [password, setPassword] = React.useState("");
@@ -33,18 +35,11 @@ export function AdminLoginClient() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 pb-12">
-      <LhPageHero
-        icon={<Icon icon={lighthouseIcons.admin} className="h-4 w-4" />}
-        eyebrow="Admin"
-        title="管理后台"
-        description={<p>输入管理密码后，可以维护笃行案例。</p>}
-        asideTitle="访问规则"
-        asideItems={[{ title: "24 小时有效" }, { title: "仅保护后台维护入口" }, { title: "不改变公开访问体验" }]}
-      />
+    <div className={styles.adminLoginPage}>
+      <PageHeading title="内容维护" description="管理笃行案例的草稿、预览与发布。" />
 
-      <LhCard className="p-6">
-        <form className="grid gap-5" onSubmit={submit}>
+      <LhPanel className={styles.adminLoginPanel}>
+        <form className={styles.adminLoginForm} onSubmit={submit}>
           <LhTextField
             id="admin-password"
             label="管理密码"
@@ -63,11 +58,7 @@ export function AdminLoginClient() {
             进入后台
           </LhButton>
         </form>
-      </LhCard>
-
-      <LhCallout tone="warning" icon={<Icon icon={lighthouseIcons.warning} className="h-4 w-4" />} title="临时后台保护">
-        这是内部维护入口的轻量密码门，不是完整账号系统。请只把密码给需要维护内容的人。
-      </LhCallout>
+      </LhPanel>
     </div>
   );
 }

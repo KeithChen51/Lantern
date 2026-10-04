@@ -4,9 +4,9 @@
 
 ## 权威来源与优先级
 
-[Figma 权威定义与审阅入口](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=44-486)
+[Figma 权威定义与审阅入口](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-1781)
 
-[桌面端页内阅读](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=44-103)
+[完整 V3 设计系统与原型](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-983)
 
 本定义替代此前路引 Agent 探索中的“产物／成果工作台”方案。历史画板仅供追溯，不能作为当前开发依据。灯塔全局视觉规范仍适用；路引交互与旧稿冲突时，以本定义为准。
 
@@ -34,8 +34,8 @@
 - 文件作为当前对话的参考材料，不自动发布或入库到灯塔知识中台。
 - 附件组件展示文件名、大小及状态，覆盖上传中、读取中、已就绪、失败。上传或读取中可取消，失败可重试，发送前可移除。
 - 上传或读取未完成时，不发送含该附件的消息；失败、取消或移除附件不清空已输入的问题。
-- 支持的文件类型、单文件大小、数量、解析方式和保留期限需在接入方案中明确；不将原型示例视为已实现的上传能力。
-- 上传组件与示例见 [Figma 上传组件](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=53-378)。
+- 首批支持 PDF、DOCX、TXT 和 Markdown；单文件大小、数量、解析方式和保留期限仍由接入方案与运行配置决定，不将原型示例视为已实现的上传能力。
+- 上传组件与示例见 [Figma V3 路引状态](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-2016)。
 
 ### 通用规则
 

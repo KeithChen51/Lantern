@@ -162,6 +162,7 @@ export function LhChip({ className, tone = "neutral", ...props }: LhChipProps) {
   return (
     <span
       data-lh-chip
+      data-tone={tone}
       className={cn(
         "inline-flex min-h-6 items-center gap-1.5 rounded-[var(--lh-control-radius)] border px-2.5 py-1 text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]",
         toneClasses[tone],
@@ -181,6 +182,7 @@ export function LhStatusBadge({ className, tone = "neutral", withDot = true, chi
   return (
     <span
       data-lh-status-badge
+      data-tone={tone}
       className={cn(
         "inline-flex min-h-7 items-center gap-2 rounded-[var(--lh-control-radius)] border px-2.5 py-1 text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]",
         toneClasses[tone],

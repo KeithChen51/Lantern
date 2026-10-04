@@ -1,0 +1,97 @@
+.actionCasesPage,
+.editorPage {
+  width: min(100%, 70rem);
+  padding-bottom: 4rem;
+}
+
+.backLink {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1.25rem;
+  padding: .5rem .75rem;
+  border: 1px solid var(--lh-refine-line, var(--color-line));
+  border-radius: var(--lh-control-radius, .5rem);
+  background: var(--lh-refine-surface, var(--color-surface));
+  color: var(--color-primary-text);
+  font-size: var(--type-control);
+  font-weight: var(--weight-semibold);
+}
+
+.backLink:hover { border-color: var(--color-primary-text); text-decoration: none; }
+.editorPage :global([data-lh-page-heading]) { margin-bottom: 2rem; }
+.editorPage > :global([data-lh-callout]) { margin-bottom: 1rem; }
+
+.editorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 34.25rem);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.editorPanel {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+.importRow { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.filePicker,
+.filePickerSecondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: .75rem;
+  cursor: pointer;
+}
+
+.filePickerButton {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  padding: .5rem 1rem;
+  border: 1px solid var(--lh-refine-line, var(--color-line));
+  border-radius: var(--lh-control-radius, .5rem);
+  color: var(--color-primary-text);
+  font-size: var(--type-control);
+  font-weight: var(--weight-semibold);
+}
+
+.filePickerButton:hover { border-color: var(--color-primary-text); background: var(--lh-refine-selected, var(--color-primary-soft)); }
+.filePickerSecondary { padding: .5rem .75rem; border: 1px solid transparent; border-radius: var(--lh-control-radius, .5rem); color: var(--color-ink-soft); font-size: var(--type-caption); }
+.filePickerSecondary:hover { border-color: var(--lh-refine-line, var(--color-line)); background: var(--lh-refine-subtle, var(--color-panel)); }
+.fileInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.fileName { max-width: 14rem; overflow: hidden; color: var(--color-muted); font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+.importActions, .editorActions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.fieldGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.fullField { grid-column: 1 / -1; }
+.editorPanel :global([data-lh-field]) { min-width: 0; }
+.editorPanel :global([data-lh-field-control]) { min-height: 3.25rem; border-color: var(--lh-refine-line, var(--color-line)); border-radius: var(--lh-control-radius, .5rem); background: var(--lh-refine-subtle, var(--color-panel)); }
+.editorPanel :global(textarea[data-lh-field-control]) { min-height: 8rem; border-radius: var(--lh-control-radius, .5rem); }
+.markdownField { min-height: 13rem !important; font-family: var(--font-mono); font-size: var(--type-control) !important; }
+.editorActions { padding-top: .25rem; }
+
+.previewColumn { display: grid; align-content: start; gap: 1rem; min-width: 0; }
+.previewCard { min-height: 100%; padding: 1.5rem; }
+.previewHeader { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.previewHeader h2 { color: var(--color-ink); font-family: var(--font-serif-stack); font-size: var(--title-card); font-weight: var(--weight-bold); line-height: 1.45; }
+.previewCard h3 { margin-top: 1.5rem; color: var(--color-ink); font-family: var(--font-serif-stack); font-size: var(--title-section); font-weight: var(--weight-bold); line-height: 1.45; }
+.previewCard > p:not(.previewMeta) { margin-top: 1.25rem; color: var(--color-ink-soft); font-size: var(--type-body); line-height: var(--leading-body); }
+.previewMeta { margin-top: 1.25rem; color: var(--color-muted); font-size: var(--type-caption); line-height: var(--leading-caption); }
+.coverPreview { aspect-ratio: 16 / 9; width: 100%; margin-top: 1.25rem; border-radius: var(--lh-control-radius, .5rem); background-position: center; background-size: cover; }
+.caseTable { margin-top: 0; }
+.caseTable :global(button) { color: var(--color-primary-text); font-weight: var(--weight-semibold); }
+
+@media (max-width: 980px) {
+  .editorLayout { grid-template-columns: 1fr; }
+  .previewColumn { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .previewCard { min-height: 0; }
+}
+
+@media (max-width: 650px) {
+  .editorPanel { padding: 1.25rem; }
+  .fieldGrid, .previewColumn { grid-template-columns: 1fr; }
+}
+.filePicker:focus-within, .filePickerSecondary:focus-within { outline: 2px solid var(--lh-focus-outline); outline-offset: 3px; }

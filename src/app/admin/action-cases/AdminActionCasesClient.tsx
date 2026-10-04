@@ -9,13 +9,14 @@ import {
   LhChip,
   LhDataTableShell,
   LhLoadingGlyph,
-  LhSectionHeader,
   LhStatusBadge,
   LhTextArea,
   LhTextField,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import type { ActionCaseCoverImage, ActionCaseRecord, ParsedActionCaseMarkdown } from "@/modules/content";
+import { PageHeading } from "@/components/ui/PageHeading";
+import styles from "./action-cases.module.css";
 
 type FormState = {
   id: string;
@@ -185,40 +186,38 @@ export function AdminActionCasesClient() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
-      <LhSectionHeader
-        eyebrow="笃行案例"
-        title="案例维护"
-        description="上传参悟案例 Markdown，系统保留标题结构并生成草稿；发布前可以手动修正元数据和封面图。"
-      />
+    <div className={styles.editorPage}>
+      <PageHeading title="笃行案例维护" description="导入 Markdown、预览内容、保存草稿，并手动发布。" />
 
       {message && <LhCallout tone="success" icon={<Icon icon={lighthouseIcons.status} className="h-4 w-4" />}>{message}</LhCallout>}
       {error && <LhCallout tone="danger" icon={<Icon icon={lighthouseIcons.warning} className="h-4 w-4" />}>{error}</LhCallout>}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <LhCard className="space-y-6 p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-extrabold text-ink">
-              Markdown 文档
+      <div className={styles.editorLayout}>
+        <LhCard className={styles.editorPanel}>
+          <div className={styles.importRow}>
+            <label className={styles.filePicker}>
+              <span className={styles.filePickerButton}>导入 Markdown</span>
               <input
                 type="file"
                 accept=".md,.markdown"
-                className="rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-4 py-3 text-sm text-ink"
+                className={styles.fileInput}
                 onChange={(event) => setMarkdownFile(event.target.files?.[0] ?? null)}
               />
+              <span className={styles.fileName}>{markdownFile?.name || form.sourceFileName || "选择一份 Markdown 文件"}</span>
             </label>
-            <label className="grid gap-2 text-sm font-extrabold text-ink">
-              封面图
+            <label className={styles.filePickerSecondary}>
+              <span>封面图</span>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-4 py-3 text-sm text-ink"
+                className={styles.fileInput}
                 onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)}
               />
+              <span className={styles.fileName}>{coverFile?.name || "可选"}</span>
             </label>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className={styles.importActions}>
             <LhButton
               type="button"
               variant="secondary"
@@ -226,8 +225,19 @@ export function AdminActionCasesClient() {
               icon={busy === "parse" ? <LhLoadingGlyph label="正在解析" /> : <Icon icon={lighthouseIcons.document} className="h-4 w-4" />}
               onClick={() => void parseMarkdown()}
             >
-              解析 Markdown
+              {busy === "parse" ? "正在解析" : "解析 Markdown"}
             </LhButton>
+          </div>
+
+          <div className={styles.fieldGrid}>
+            <LhTextField id="action-case-slug" label="Slug" value={form.slug} onChange={(event) => updateField("slug", event.target.value)} />
+            <LhTextField id="action-case-date" label="日期" type="date" value={form.date} onChange={(event) => updateField("date", event.target.value)} />
+            <LhTextField id="action-case-title" label="案例标题" value={form.title} onChange={(event) => updateField("title", event.target.value)} className={styles.fullField} />
+            <LhTextField id="action-case-tags" label="标签" helperText="用逗号分隔" value={form.tags} onChange={(event) => updateField("tags", event.target.value)} className={styles.fullField} />
+          </div>
+          <LhTextArea id="action-case-summary" label="摘要" value={form.summary} onChange={(event) => updateField("summary", event.target.value)} />
+          <LhTextArea id="action-case-markdown" label="Markdown 正文" value={form.markdown} onChange={(event) => updateField("markdown", event.target.value)} className={styles.markdownField} />
+          <div className={styles.editorActions}>
             <LhButton
               type="button"
               variant="primary"
@@ -247,34 +257,27 @@ export function AdminActionCasesClient() {
               发布
             </LhButton>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <LhTextField label="Slug" value={form.slug} onChange={(event) => updateField("slug", event.target.value)} />
-            <LhTextField label="日期" type="date" value={form.date} onChange={(event) => updateField("date", event.target.value)} />
-            <LhTextField label="标题" value={form.title} onChange={(event) => updateField("title", event.target.value)} className="md:col-span-2" />
-            <LhTextField label="标签" helperText="用逗号分隔" value={form.tags} onChange={(event) => updateField("tags", event.target.value)} className="md:col-span-2" />
-          </div>
-          <LhTextArea label="摘要" value={form.summary} onChange={(event) => updateField("summary", event.target.value)} />
-          <LhTextArea label="Markdown 正文" value={form.markdown} onChange={(event) => updateField("markdown", event.target.value)} className="min-h-96 font-mono text-sm" />
         </LhCard>
 
-        <aside className="space-y-5">
-          <LhCard className="p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-extrabold text-ink">当前草稿</h2>
+        <aside className={styles.previewColumn}>
+          <LhCard className={styles.previewCard}>
+            <div className={styles.previewHeader}>
+              <h2>当前草稿</h2>
               <LhStatusBadge tone={form.id ? "warning" : "neutral"}>{form.id ? "可发布" : "未保存"}</LhStatusBadge>
             </div>
-            <p className="mt-4 text-sm leading-7 text-ink-soft">{form.summary || "解析 Markdown 后会生成摘要，保存前可手动修改。"}</p>
+            <h3>{form.title || "案例标题将在这里预览"}</h3>
+            <p>{form.summary || "解析 Markdown 后会生成摘要，保存前可手动修改。"}</p>
+            <p className={styles.previewMeta}>正文预览 · 版本记录 · 发布状态</p>
             {form.coverImage && (
               <div
                 aria-label="封面图预览"
-                className="mt-4 aspect-[16/9] w-full rounded-[var(--lh-card-radius)] bg-cover bg-center"
+                className={styles.coverPreview}
                 style={{ backgroundImage: `url("${form.coverImage.url}")` }}
               />
             )}
           </LhCard>
 
-          <LhDataTableShell>
+          <LhDataTableShell className={styles.caseTable}>
             <table>
               <thead>
                 <tr>
