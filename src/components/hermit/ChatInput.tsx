@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type KeyboardEvent } from "react";
 import { LhChatInputShell, LhChatSubmitButton, LhChatTextarea } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import styles from "./hermit.module.css";
+import styles from "./hermit-v3.module.css";
 import { formatHermitFileSize, type HermitAttachment, type HermitDocumentRecommendation } from "./types";
 
 interface ChatInputProps {
@@ -163,19 +163,6 @@ export function ChatInput({
             rows={1}
           />
         </label>
-        <LhChatSubmitButton
-          type={isLoading ? "button" : "submit"}
-          onClick={isLoading ? onStop : undefined}
-          disabled={isLoading ? false : !canSubmit}
-          aria-label={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
-          title={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
-        >
-          {isLoading ? (
-            <span data-lh-chat-submit-icon className={styles.stopGlyph} aria-hidden="true">■</span>
-          ) : (
-            <Icon data-lh-chat-submit-icon icon={lighthouseIcons.send} />
-          )}
-        </LhChatSubmitButton>
       </div>
 
       <div className={styles.inputTools}>
@@ -201,7 +188,25 @@ export function ChatInput({
             {uploadError ?? "支持 PDF、DOCX、TXT、Markdown · 每个 10 MB，最多 5 个"}
           </span>
         </div>
-        {hasPendingAttachment && !uploadError && <span className={styles.inputHint}>附件准备好后即可发送</span>}
+        <div className={styles.inputToolsRight}>
+          {hasPendingAttachment && !uploadError && <span className={styles.inputHint}>附件准备好后即可发送</span>}
+          <LhChatSubmitButton
+            type={isLoading ? "button" : "submit"}
+            onClick={isLoading ? onStop : undefined}
+            disabled={isLoading ? false : !canSubmit}
+            aria-label={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
+            title={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
+          >
+            {isLoading ? (
+              <span data-lh-chat-submit-icon className={styles.stopGlyph} aria-hidden="true">■</span>
+            ) : (
+              <>
+                <span className={styles.submitLabel}>发送</span>
+                <Icon data-lh-chat-submit-icon icon={lighthouseIcons.send} />
+              </>
+            )}
+          </LhChatSubmitButton>
+        </div>
       </div>
     </LhChatInputShell>
   );

@@ -1,0 +1,1318 @@
+/*
+ * Hermit V3 is intentionally scoped to the page root. The application still
+ * ships the classic Hermit rules for older surfaces, so the classic html
+ * selector below gives this implementation a stable, local cascade without
+ * changing the shared shell or other products.
+ */
+.page {
+  --hermit-page: #f3efe0;
+  --hermit-surface: #fffdf8;
+  --hermit-subtle: #f7f4ec;
+  --hermit-line: #ded9cd;
+  --hermit-ink: #2c2c2c;
+  --hermit-secondary: #666158;
+  --hermit-muted: #787166;
+  --hermit-accent: #a65d12;
+  --hermit-accent-deep: #8f4e0d;
+  --hermit-selected: #f3e5ce;
+  --hermit-success: #35634b;
+  --hermit-danger: #9d443d;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - 4rem);
+  color: var(--hermit-ink);
+  font-family: var(--font-sans-stack, "Noto Sans SC", sans-serif);
+}
+
+.pageHeader {
+  display: flex;
+  min-height: 176px;
+  width: 100%;
+  align-items: center;
+  padding: 48px 24px 16px 16px;
+}
+
+.pageHeader > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.pageHeader :global([data-lh-v3-heading]) {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.pageHeader :global([data-lh-v3-heading-copy]) {
+  min-width: 0;
+}
+
+.pageHeader :global([data-lh-v3-heading-title]) {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pageHeader :global([data-lh-v3-heading-description]) {
+  color: var(--hermit-secondary);
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.pageHeader :global(h1) {
+  margin: 0;
+  color: var(--hermit-ink);
+  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 56px;
+  letter-spacing: 0;
+}
+
+.pageHeader :global(p) {
+  margin: 12px 0 0;
+  color: var(--hermit-secondary);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 28px;
+}
+
+.identity {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--hermit-selected);
+  color: var(--hermit-accent);
+  vertical-align: middle;
+}
+
+.identity svg {
+  width: 20px;
+  height: 20px;
+}
+
+.identitySmall {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+.identitySmall svg {
+  width: 15px;
+  height: 15px;
+}
+
+.chatFrame {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+.chatLayout {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 752px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.chatLayoutWithReader {
+  grid-template-columns: minmax(0, 1fr) minmax(28rem, 40%);
+  gap: 24px;
+}
+
+.conversation {
+  display: grid;
+  min-width: 0;
+  min-height: 752px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 32px 24px 16px;
+}
+
+.conversationStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.startCopy {
+  display: grid;
+  gap: 12px;
+}
+
+.startCopy h2 {
+  margin: 0;
+  color: var(--hermit-ink);
+  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 40px;
+}
+
+.startCopy p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--hermit-secondary);
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.startFootnote {
+  margin: 12px 0 0;
+  color: var(--hermit-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+/* The selected page has no visible conversation toolbar; the state remains
+ * available to screen readers through .conversationStatus. */
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start],
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-conversation] {
+  display: block;
+  width: 100%;
+  min-height: 752px;
+  padding: 32px 24px 16px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-conversation] {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-inner] {
+  display: flex;
+  width: min(752px, 100%);
+  min-height: 704px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 auto;
+  padding: 0;
+  text-align: left;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-title] {
+  max-width: none;
+  margin: 0;
+  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 40px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] {
+  width: 100%;
+  margin-top: 12px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-items] {
+  display: grid;
+  gap: 4px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button] {
+  display: flex;
+  width: fit-content;
+  min-height: 32px;
+  align-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 4px 0;
+  color: var(--hermit-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  box-shadow: none;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]::after {
+  margin-left: 8px;
+  color: var(--hermit-accent);
+  content: "→";
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]:hover {
+  border-color: transparent;
+  background: transparent;
+  color: var(--hermit-accent);
+  transform: translateX(2px);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-input] {
+  width: 100%;
+  margin-top: auto;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-main] {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0 20px;
+  scrollbar-gutter: stable;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-scroll-content] {
+  display: grid;
+  width: min(752px, 100%);
+  max-width: none;
+  gap: 20px;
+  margin-inline: auto;
+  padding: 0;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-footer] {
+  border-top: 0;
+  background: transparent;
+  padding: 0;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-composer] {
+  width: min(752px, 100%);
+  margin-inline: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input] {
+  --lh-chat-input-border: var(--hermit-accent);
+  --lh-chat-input-shadow: none;
+  display: block;
+  width: 100%;
+  border: 1px solid var(--hermit-accent) !important;
+  border-radius: 18px !important;
+  background: var(--hermit-surface) !important;
+  padding: 14px 16px 12px;
+  box-shadow: none !important;
+  backdrop-filter: none;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input]:focus-within {
+  border-color: var(--hermit-accent) !important;
+  box-shadow: 0 0 0 3px rgba(166, 93, 18, 0.12) !important;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input-grid] {
+  display: block;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea] {
+  width: 100%;
+  min-height: 52px;
+  max-height: 156px;
+  resize: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--hermit-ink);
+  font-family: var(--font-sans-stack, "Noto Sans SC", sans-serif);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 26px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea]::placeholder {
+  color: var(--hermit-muted);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea]:focus-visible {
+  outline: 2px solid rgba(166, 93, 18, 0.56);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.inputTools {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.inputToolsLeft,
+.inputToolsRight {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.inputToolsRight {
+  justify-content: flex-end;
+}
+
+.uploadButton {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 4px 0;
+  color: var(--hermit-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.uploadButton:hover {
+  color: var(--hermit-accent);
+}
+
+.uploadButton svg {
+  width: 14px;
+  height: 14px;
+}
+
+.uploadInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.inputHint {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--hermit-muted);
+  font-size: 12px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inputHintError {
+  color: var(--hermit-danger);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit] {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hermit-accent) !important;
+  border-radius: 10px !important;
+  background: var(--hermit-accent) !important;
+  color: #fffdf8 !important;
+  box-shadow: none !important;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit]:hover {
+  border-color: var(--hermit-accent-deep) !important;
+  background: var(--hermit-accent-deep) !important;
+  transform: translateY(-1px);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit]:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit-icon] {
+  width: 16px;
+  height: 16px;
+}
+
+.submitLabel {
+  display: none;
+}
+
+.stopGlyph {
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.attachmentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.attachmentChip {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hermit-line);
+  border-radius: 8px;
+  background: var(--hermit-subtle);
+  padding: 3px 5px 3px 8px;
+  color: var(--hermit-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.attachmentChip[data-status="error"] {
+  border-color: rgba(157, 68, 61, 0.35);
+  background: rgba(157, 68, 61, 0.06);
+}
+
+.attachmentChip[data-sent="true"] {
+  border-color: rgba(53, 99, 75, 0.3);
+  background: rgba(53, 99, 75, 0.06);
+}
+
+.attachmentIcon {
+  display: inline-flex;
+  color: var(--hermit-accent);
+}
+
+.attachmentIcon svg,
+.attachmentRemove svg,
+.attachmentRetry svg {
+  width: 14px;
+  height: 14px;
+}
+
+.attachmentName {
+  max-width: min(16rem, 48vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachmentState {
+  color: var(--hermit-muted);
+  white-space: nowrap;
+}
+
+.attachmentChip[data-status="error"] .attachmentState {
+  color: var(--hermit-danger);
+}
+
+.attachmentRetry,
+.attachmentRemove {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hermit-muted);
+}
+
+.attachmentRetry:hover,
+.attachmentRemove:hover {
+  background: var(--hermit-selected);
+  color: var(--hermit-accent);
+}
+
+.selectedDocument {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(166, 93, 18, 0.2);
+  border-radius: 8px;
+  background: var(--hermit-selected);
+  padding: 6px 8px;
+  color: var(--hermit-accent);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.selectedDocument svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.selectedDocument span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedDocument button {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hermit-muted);
+}
+
+.selectedDocument button:hover {
+  background: rgba(166, 93, 18, 0.12);
+  color: var(--hermit-accent);
+}
+
+.requestError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid rgba(157, 68, 61, 0.24);
+  border-radius: 10px;
+  background: rgba(157, 68, 61, 0.06);
+  padding: 10px 12px;
+  color: var(--hermit-danger);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.requestError p {
+  margin: 0;
+}
+
+.requestRetry {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(157, 68, 61, 0.24);
+  border-radius: 6px;
+  background: var(--hermit-surface);
+  padding: 4px 8px;
+  color: var(--hermit-danger);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.requestRetry svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Conversation rows stay lightweight: the answer is prose, and only the
+ * user turn receives a surface. This keeps the assistant from looking like a
+ * stack of nested cards while recommendations remain actionable. */
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row] {
+  display: grid;
+  gap: 12px;
+  font-family: var(--font-sans-stack, "Noto Sans SC", sans-serif);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="assistant"] {
+  grid-template-columns: 36px minmax(0, 1fr);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: end;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-bubble-slot] {
+  display: flex;
+  justify-content: flex-end;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: var(--hermit-accent) !important;
+  box-shadow: none !important;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] > [data-lh-hermit-identity] {
+  display: inline-flex;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] > svg {
+  width: 20px;
+  height: 20px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-avatar] {
+  display: none;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-bubble] {
+  min-width: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0;
+  color: var(--hermit-ink) !important;
+  box-shadow: none !important;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] {
+  max-width: min(549px, 78%);
+  border: 1px solid rgba(166, 93, 18, 0.06) !important;
+  border-radius: 16px 16px 4px 16px !important;
+  background: var(--hermit-selected) !important;
+  padding: 14px 16px;
+  color: var(--hermit-ink) !important;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] * {
+  color: var(--hermit-ink);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-author] {
+  display: none;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta] {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta]::before {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--hermit-selected);
+  color: var(--hermit-accent);
+  content: "✣";
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta] strong {
+  color: var(--hermit-accent);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta-note] {
+  color: var(--hermit-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] {
+  max-width: 728px;
+  color: var(--hermit-ink);
+  font-size: 16px;
+  line-height: 28px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] p {
+  margin: 0 0 16px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] p:last-child,
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] ul:last-child,
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] ol:last-child {
+  margin-bottom: 0;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] :is(h1, h2, h3, h4) {
+  margin: 24px 0 8px;
+  color: var(--hermit-ink);
+  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] :is(ul, ol) {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] blockquote {
+  margin: 16px 0;
+  border-left: 3px solid var(--hermit-accent);
+  background: var(--hermit-subtle);
+  padding: 8px 12px;
+  color: var(--hermit-secondary);
+}
+
+:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] strong {
+  color: var(--hermit-ink);
+  font-weight: 700;
+}
+
+.readerRecommendations {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  border-top: 1px solid var(--hermit-line);
+  padding-top: 12px;
+}
+
+.readerRecommendationsHeading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hermit-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.readerRecommendationsHeading svg {
+  width: 16px;
+  height: 16px;
+  color: var(--hermit-accent);
+}
+
+.documentCard {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--hermit-line);
+  border-radius: 12px;
+  background: var(--hermit-surface);
+  padding: 10px 12px;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.documentCard:hover {
+  border-color: rgba(166, 93, 18, 0.42);
+  background: #fffaf0;
+  transform: translateY(-1px);
+}
+
+.documentCardIcon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--hermit-subtle);
+  color: var(--hermit-accent);
+}
+
+.documentCardIcon svg,
+.documentCardArrow {
+  width: 16px;
+  height: 16px;
+}
+
+.documentCardCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.documentCardTitle {
+  overflow: hidden;
+  color: var(--hermit-ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documentCardMeta {
+  overflow: hidden;
+  color: var(--hermit-muted);
+  font-size: 12px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documentCardArrow {
+  color: var(--hermit-accent);
+}
+
+/* Reader */
+.readerPanel {
+  display: flex;
+  min-width: 0;
+  min-height: 752px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--hermit-line);
+  border-radius: 16px;
+  background: var(--hermit-surface);
+  box-shadow: none;
+}
+
+.readerHeader {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--hermit-line);
+  padding: 20px 24px;
+  background: var(--hermit-surface);
+}
+
+.readerHeaderCopy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.readerEyebrow {
+  margin: 0;
+  color: var(--hermit-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.readerTitle {
+  margin: 0;
+  color: var(--hermit-ink);
+  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 32px;
+  overflow-wrap: anywhere;
+}
+
+.readerSource {
+  margin: 0;
+  color: var(--hermit-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.readerClose,
+.readerBack {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--hermit-line);
+  border-radius: 8px;
+  background: var(--hermit-surface);
+  padding: 6px 10px;
+  color: var(--hermit-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.readerClose:hover,
+.readerBack:hover {
+  border-color: rgba(166, 93, 18, 0.38);
+  color: var(--hermit-accent);
+}
+
+.readerClose svg,
+.readerBack svg {
+  width: 16px;
+  height: 16px;
+}
+
+.readerBack {
+  display: none;
+}
+
+.readerBody {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 32px;
+  scrollbar-gutter: stable;
+}
+
+.readerLoading,
+.readerError {
+  display: grid;
+  min-height: 240px;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  color: var(--hermit-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.readerError {
+  color: var(--hermit-danger);
+}
+
+.readerError p {
+  margin: 0;
+}
+
+.readerRetry,
+.readerUse {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--hermit-line);
+  border-radius: 8px;
+  background: var(--hermit-subtle);
+  padding: 6px 10px;
+  color: var(--hermit-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.readerRetry:hover,
+.readerUse:hover {
+  border-color: rgba(166, 93, 18, 0.38);
+  color: var(--hermit-accent);
+}
+
+.readerRetry svg,
+.readerUse svg {
+  width: 16px;
+  height: 16px;
+}
+
+.readerUse {
+  width: 100%;
+  margin-top: 24px;
+  border-color: var(--hermit-accent);
+  background: var(--hermit-accent);
+  color: var(--hermit-surface);
+}
+
+.readerUse:hover {
+  border-color: var(--hermit-accent-deep);
+  background: var(--hermit-accent-deep);
+  color: var(--hermit-surface);
+}
+
+.readerProse {
+  color: var(--hermit-ink);
+  font-size: 16px;
+  line-height: 28px;
+  overflow-wrap: anywhere;
+}
+
+.readerProse > :first-child {
+  margin-top: 0;
+}
+
+.readerProse p {
+  margin: 0 0 16px;
+}
+
+.readerProse :is(h1, h2, h3, h4) {
+  margin: 28px 0 10px;
+  color: var(--hermit-ink);
+  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
+  font-weight: 700;
+  line-height: 1.45;
+  scroll-margin-top: 16px;
+}
+
+.readerProse h1,
+.readerProse h2 {
+  font-size: 22px;
+  line-height: 32px;
+}
+
+.readerProse h3 {
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.readerProse h4 {
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.readerProse :is(ul, ol) {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.readerProse ul {
+  list-style: disc;
+}
+
+.readerProse ol {
+  list-style: decimal;
+}
+
+.readerProse strong {
+  font-weight: 700;
+}
+
+.readerProse blockquote {
+  margin: 20px 0;
+  border-left: 3px solid var(--hermit-accent);
+  background: var(--hermit-selected);
+  padding: 12px 16px;
+  color: var(--hermit-secondary);
+}
+
+.readerProse pre {
+  overflow-x: auto;
+  border: 1px solid var(--hermit-line);
+  border-radius: 8px;
+  background: var(--hermit-subtle);
+  padding: 12px;
+  font-size: 12px;
+}
+
+.readerProse code {
+  border-radius: 4px;
+  background: var(--hermit-subtle);
+  padding: 2px 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.readerProse pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.readerProse a {
+  color: var(--hermit-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.readerProse hr {
+  margin: 24px 0;
+  border: 0;
+  border-top: 1px solid var(--hermit-line);
+}
+
+.readerProseTableWrap {
+  margin: 16px 0;
+  overflow-x: auto;
+  border: 1px solid var(--hermit-line);
+  border-radius: 8px;
+}
+
+.readerProse table {
+  width: 100%;
+  min-width: 30rem;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.readerProse :is(th, td) {
+  border-bottom: 1px solid var(--hermit-line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.readerProse th {
+  background: var(--hermit-subtle);
+  font-weight: 500;
+}
+
+.readerProse tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .chatLayoutWithReader {
+    display: block;
+  }
+
+  .chatLayoutWithReader .conversation {
+    display: none;
+  }
+
+  .readerPanel {
+    min-height: min(752px, calc(100dvh - 8rem));
+  }
+
+  .readerBack {
+    display: inline-flex;
+  }
+
+  .readerClose {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .pageHeader {
+    min-height: 120px;
+    padding: 24px 0 12px;
+  }
+
+  .pageHeader :global(h1) {
+    font-size: 32px;
+    line-height: 44px;
+  }
+
+  .pageHeader :global(p) {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .identity {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start],
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-conversation] {
+    min-height: calc(100dvh - 8rem);
+    padding: 20px 0 12px;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-inner] {
+    min-height: calc(100dvh - 10rem);
+  }
+
+  .startCopy h2 {
+    font-size: 24px;
+    line-height: 34px;
+  }
+
+  .startCopy p {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input] {
+    padding: 14px 16px 12px;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea] {
+    min-height: 52px;
+    font-size: 15px;
+    line-height: 26px;
+  }
+
+  .inputTools {
+    align-items: flex-end;
+  }
+
+  .inputToolsLeft {
+    flex-wrap: wrap;
+  }
+
+  .inputToolsRight {
+    flex: 0 0 auto;
+  }
+
+  .inputToolsRight .inputHint {
+    display: none;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit] {
+    width: auto;
+    min-width: 76px;
+    padding-inline: 12px;
+  }
+
+  .submitLabel {
+    display: inline;
+    margin-right: 4px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .attachmentName {
+    max-width: 42vw;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="assistant"] {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] {
+    width: 28px;
+    height: 28px;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] {
+    max-width: 90%;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] {
+    font-size: 15px;
+    line-height: 26px;
+  }
+
+  .readerHeader {
+    padding: 16px;
+  }
+
+  .readerBody {
+    padding: 20px 16px 24px;
+  }
+
+  .readerTitle {
+    font-size: 20px;
+    line-height: 30px;
+  }
+
+  .readerProse {
+    font-size: 15px;
+    line-height: 26px;
+  }
+}

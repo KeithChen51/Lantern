@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { useEffect, useState } from "react";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { getHermitApiError, isHermitResourceResponse, type HermitDocumentRecommendation, type HermitResourceResponse } from "./types";
-import styles from "./hermit.module.css";
+import styles from "./hermit-v3.module.css";
 
 interface DocumentReaderProps {
   document: HermitDocumentRecommendation;

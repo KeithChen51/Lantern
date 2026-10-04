@@ -12,31 +12,14 @@ import {
   LhLoadingGlyph,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import styles from "./hermit.module.css";
+import styles from "./hermit-v3.module.css";
+import { HermitIdentity } from "./HermitIdentity";
 import { getDocumentRecommendations, getTextContent, type HermitDocumentRecommendation } from "./types";
 
 interface MessageBubbleProps {
   message: UIMessage;
   onOpenDocument?: (document: HermitDocumentRecommendation) => void;
 }
-
-type AnswerSectionKey = "direct" | "basis" | "reference" | "next";
-
-type AnswerSection = {
-  key: AnswerSectionKey;
-  title: string;
-  content: string;
-};
-
-const ANSWER_SECTION_ORDER: Array<{ key: AnswerSectionKey; title: string }> = [
-  { key: "direct", title: "直接建议" },
-  { key: "basis", title: "判断依据" },
-  { key: "reference", title: "相关案例 / 规范" },
-  { key: "next", title: "下一步动作" },
-];
-
-const SECTION_HEADING_PATTERN =
-  /^\s{0,3}(?:#{2,4}\s*)?(?:[-*]\s*)?(?:\*\*)?\s*(直接建议|直接判断|判断依据|相关案例\s*\/\s*规范|相关案例|相关参照|案例参照|相关规范|规范参照|下一步动作|下一步)(?:\*\*)?\s*[：:]?\s*(.*)$/;
 
 const markdownComponents = {
   p: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
@@ -80,44 +63,10 @@ function normalizeMarkdownTableSeparators(markdown: string): string {
     .join("\n");
 }
 
-function resolveSectionKey(label: string): AnswerSectionKey {
-  if (label.includes("依据")) return "basis";
-  if (label.includes("案例") || label.includes("规范") || label.includes("参照")) return "reference";
-  if (label.includes("下一步")) return "next";
-  return "direct";
-}
-
-function createSectionMap() {
-  return new Map<AnswerSectionKey, string[]>(ANSWER_SECTION_ORDER.map(({ key }) => [key, []]));
-}
-
-function splitAssistantAnswer(markdown: string): AnswerSection[] {
-  const sectionContent = createSectionMap();
-  let activeSection: AnswerSectionKey = "direct";
-
-  markdown.split(/\r?\n/).forEach((line) => {
-    const match = line.match(SECTION_HEADING_PATTERN);
-    if (match) {
-      activeSection = resolveSectionKey(match[1]);
-      const remainder = match[2]?.trim();
-      if (remainder) sectionContent.get(activeSection)?.push(remainder);
-      return;
-    }
-
-    sectionContent.get(activeSection)?.push(line);
-  });
-
-  return ANSWER_SECTION_ORDER.map(({ key, title }) => ({
-    key,
-    title,
-    content: sectionContent.get(key)?.join("\n").trim() ?? "",
-  })).filter((section) => section.content.length > 0);
-}
-
 function AssistantAvatar() {
   return (
     <LhMessageAvatar variant="assistant">
-      <Icon icon={lighthouseIcons.hermit} />
+      <HermitIdentity size="sm" />
     </LhMessageAvatar>
   );
 }
@@ -134,7 +83,6 @@ export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
   const documents = getDocumentRecommendations(message);
-  const assistantSections = splitAssistantAnswer(text);
 
   if (isUser) {
     return (
@@ -156,19 +104,12 @@ export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
       <LhMessageBubbleFrame>
         <div data-lh-message-meta>
           <strong>路引</strong>
-          <span data-lh-message-meta-note>框架建议</span>
+          <span data-lh-message-meta-note>结合灯塔知识回答</span>
         </div>
-        <div data-lh-answer-structure>
-          {assistantSections.map((section) => (
-            <section data-lh-answer-section data-section={section.key} key={section.key}>
-              <h3 data-lh-answer-section-title>{section.title}</h3>
-              <div data-lh-message-prose>
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                  {normalizeMarkdownTableSeparators(section.content)}
-                </ReactMarkdown>
-              </div>
-            </section>
-          ))}
+        <div data-lh-message-prose>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            {normalizeMarkdownTableSeparators(text)}
+          </ReactMarkdown>
         </div>
         {documents.length > 0 && (
           <section className={styles.readerRecommendations} aria-label="灯塔知识中台推荐文档">
