@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>灯塔平台 Classic Amber 视觉规范</title>
+  <title>灯塔平台 Classic Amber V3 视觉规范</title>
   <style>
     :root {
       --lh-ink: #2c2c2c;
@@ -802,6 +802,15 @@
     </aside>
 
     <main class="main">
+      <section id="v3-baseline" class="section">
+        <div class="section-header"><span class="section-kicker">V3 / Current Baseline</span><h2>跨页面视觉系统</h2><p class="section-intro">V3 保留本心首页与灯塔原有导航框架；其余页面共享同一页头、栅格、卡片、表单、阅读和状态规则。Figma 完整系统：<a href="https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-983">node 121:983</a>。</p></div>
+        <div class="token-grid">
+          <article class="card"><h3>Canonical palette</h3><p><code>#F3EFE0</code> paper · <code>#FFFDF8</code> warm white · <code>#F7F4EC</code> quiet · <code>#DED9CD</code> line · <code>#2C2C2C</code> ink · <code>#666158</code> secondary · <code>#A65D12</code> amber action · <code>#F3E5CE</code> selected.</p></article>
+          <article class="card"><h3>Shared rhythm</h3><p>Page title <code>44/56</code> desktop and <code>32/44</code> mobile; body <code>16/28</code>; controls <code>14/22</code>; metadata <code>12/20</code>; cards <code>16px</code>; controls <code>8px</code>; Hermit composer <code>18px</code>.</p></article>
+          <article class="card"><h3>Page frame</h3><p>Desktop content starts at <code>x=128px</code>, keeps a <code>32px</code> right gutter, begins below the <code>64px</code> header, and is constrained to <code>1280px</code>. Mobile uses <code>20px</code> padding and one column.</p></article>
+        </div>
+        <div class="callout"><strong>Home boundary</strong><p>Home / Heart remains the brand-spirit prologue with its existing cover. The V3 frame applies to Mirror, Action, Search, Feedback, Admin, and Hermit without creating a second navigation system.</p></div>
+      </section>
       <section id="overview" class="hero">
         <span class="eyebrow">Lighthouse Platform UI / v0.2</span>
         <h1>灯塔平台视觉规范<br />经典琥珀版本</h1>

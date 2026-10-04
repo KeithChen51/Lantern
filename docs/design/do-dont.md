@@ -1,9 +1,25 @@
-# Lighthouse Design Do And Don't v0.1
+# Lighthouse Design Do And Don’t · Classic Amber V3
 
-## Layer Separation
+
+## V3 Baseline
+
+Use the existing Lighthouse framework and treat V3 as a visual system update across non-home pages. Keep the Heart / 本心 homepage and original navigation structure intact.
+
+| Do | Don’t |
+| --- | --- |
+| Scope shared V3 rules under `main[data-lh-v3]` and use `PageHeading`. | Change the home cover or create a second navigation shell for an individual page. |
+| Use `#F3EFE0` paper, `#FFFDF8` surfaces, `#DED9CD` lines, `#2C2C2C` ink, and `#A65D12` amber action. | Reintroduce the removed Harbor Signal, warm palette, or value-theme UI kits. |
+| Keep page title `44/56` desktop and `32/44` mobile; body `16/28`; controls `14/22`. | Give each page a separate title scale, container width, card radius, or grid. |
+| Use `16px` cards, `8px` controls, `18px` Hermit composer, and `24px` content gaps. | Nest cards, rely on floating decoration, or use oversized empty hero blocks in work pages. |
+| Keep feedback and notification at the bottom of the navigation rail. | Put utility actions between primary navigation items or let them drift with page content. |
+| Preserve content, API/auth, RAG, upload, document reading, and keyboard behavior while refining visuals. | Treat a static Figma state or HTML demo as proof that a service capability exists. |
+| Let Hermit recommend and open knowledge documents in the current page. | Add an artifact/deliverable workspace or expose DeepSeek Harness as a user-facing navigation concept. |
 
 | Do | Don't |
 | --- | --- |
+
+## Layer Separation
+
 | Keep official service-brand VI assets outside this app repo in the adjacent Lantern brand workspace. | Move VI assets into platform UI folders just because the app mentions the service brand. |
 | Use `docs/design/` and `src/components/ui/` for platform controls, layout, state, and interaction rules. | Let a campaign H5 or poster define app shell, buttons, tables, or admin UI. |
 | Classify new design artifacts as `service-brand-vi`, `lighthouse-product-ui`, or `campaign-or-output-artifact`. | Add ambiguous visual files without a layer or source-of-truth note. |
@@ -126,3 +142,7 @@
 | Document anatomy, states, accessibility, and misuse boundaries before adding a primitive. | Add a component because one page needs a visual variant. |
 | Mark deprecated styles with their replacement token or component. | Leave old page-local class strings as acceptable examples. |
 | Treat Classic Amber as the active platform system until explicitly promoted otherwise. | Reintroduce exploration palettes or service-brand VI colors into product controls. |
+
+## Prototype And File Hygiene
+
+Keep only the browser visual specification and active Markdown contracts in the product design-system folder. Remove an exploratory HTML or duplicate kit when it has no runtime or documentation reference; first repair historical links and confirm the source is not a brand asset, campaign deliverable, or print output.

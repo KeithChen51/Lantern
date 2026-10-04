@@ -1,8 +1,8 @@
 # Classic Amber Page Visual Migration Audit
 
-Date: 2026-06-27
+Date: 2026-10-04
 
-Scope: page-level visual migration audit only. No runtime page code is changed in this pass.
+Scope: page-level visual migration audit and V3 implementation contract. Runtime changes land separately from this document.
 
 Active visual system: Lighthouse Classic Amber.
 
@@ -22,6 +22,12 @@ Third phase should not start by restyling every page. It should first add the mi
 - Mobile implementation is treated as later migration work; this audit focuses on desktop-first code alignment and reusable contracts.
 
 ## Overall Verdict
+
+## V3 Direction
+
+The V3 pass keeps the Heart / 本心 homepage and global Lighthouse navigation intact. Mirror, Action, Search, Feedback, Admin, and Hermit converge on the shared `PageHeading` plus `main[data-lh-v3]` frame. The implementation contract is defined in `src/app/visual-v3.css` and uses a `1280px` desktop content frame, `44/56` page titles, `32/44` mobile titles, `24px` grid gaps, and `20px` mobile padding.
+
+The page-specific work is carried by named patterns: Mirror evidence cards, Action case directory and method disclosure, Search resource rows, Feedback form panel, Admin operational surface, and Hermit conversation with an inline document reader. These patterns keep real content, API/auth, RAG, upload, reading, and keyboard behavior in place while the visual layer is aligned.
 
 Design score: B- as a product direction, C+ as an enforceable runtime system.
 
@@ -127,6 +133,8 @@ Required direction:
 - The Classic Amber tone is more distinctive than a generic SaaS theme and does not depend on trendy purple-blue gradients.
 
 ## Third Phase Recommended Scope
+
+> The following wave notes are retained as implementation history. For current work, follow the V3 page map in `patterns.md` and the shared `visual-v3.css` scope.
 
 ### Wave 0: Add Missing Page-Level Primitives
 

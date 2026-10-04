@@ -1,15 +1,37 @@
-# Lighthouse Platform Tokens v0.1
+# Lighthouse Platform Tokens · Classic Amber V3
 
 ## Status
 
-This is the first platform token contract for Lighthouse product UI. It defines the target roles that runtime CSS should converge to.
+This is the active platform token contract for Lighthouse product UI. V3 is the implementation baseline for the non-home pages in the approved Figma system. The Heart / 本心 homepage keeps its existing brand cover and uses the same shell only after the cover transitions into the product surface.
 
 - Layer: `lighthouse-product-ui`
 - Runtime counterpart: `src/app/globals.css`
 - Active HTML spec: `docs/design/lighthouse-classic-amber-visual-spec.html`
 - Not a source for: official service-brand marks, VI lockups, campaign posters, or H5 output assets
 
-The active runtime and current visual direction use the Classic Amber implementation. Exploration palettes in `docs/design/lighthouse-color-system.html` and related warm-palette files are not active unless explicitly promoted later.
+Earlier palette, kit, and campaign HTML explorations are archived and are not runtime sources. A token is active only when this document, the browser visual spec, the runtime CSS, and the relevant component contract agree.
+
+## V3 Canonical Values
+
+The following values are the compact contract used when calibrating the V3 pages. The longer compatibility tables below retain the semantic aliases used by existing primitives and tests.
+
+| Role | Canonical value | Use |
+| --- | --- | --- |
+| Paper page | `#F3EFE0` | Product background and long-page reading field. |
+| Warm white surface | `#FFFDF8` | Primary cards, panels, readers, forms, and work surfaces. |
+| Quiet surface | `#F7F4EC` | Subtle sections, disabled fills, and low-emphasis grouping. |
+| Structure line | `#DED9CD` | Borders, dividers, and quiet table rules. |
+| Ink | `#2C2C2C` | Primary text and important icons. |
+| Secondary ink | `#666158` | Supporting text, descriptions, and metadata with normal contrast. |
+| Muted ink | `#787166` | Placeholder and low-priority helper copy. |
+| Amber action | `#A65D12` | Primary action, active navigation, selected emphasis, and the Hermit identity signal. |
+| Selected fill | `#F3E5CE` | Selected rows, active filters, and quiet selected controls. |
+| Success | `#35634B` | Completed, ready, and healthy states. |
+| Warning | `#885A13` | Attention required before proceeding. |
+| Danger | `#9D443D` | Errors, destructive actions, and failed processing. |
+| Info | `#54616B` | Neutral system information and processing context. |
+
+V3 uses `16px` cards, `8px` controls, and an `18px` Hermit composer. The shared page heading is `44px / 56px` on desktop and `32px / 44px` on mobile; article titles use `32px / 44px`, section titles use `28px / 40px`, cards use `22px / 32px`, and UI text uses the sans-serif `14px / 22px` role. Body and reading copy use `16px / 28px` unless a dense workflow explicitly adopts the `15px / 24px` compatibility role.
 
 ## Product Tone
 
@@ -27,26 +49,27 @@ The active platform palette is Classic Amber: a warm paper surface with amber ac
 | Role | Target token | Target value | Meaning |
 | --- | --- | --- | --- |
 | Page | `--color-page` | `#f3efe0` | App background and large warm paper regions. |
-| Page start | `--color-page-start` | `#f8f3e5` | Top gradient and hero background start. |
-| Page end | `--color-page-end` | `#eee6d0` | Bottom gradient and page depth. |
-| Surface | `--color-surface` | `rgba(255, 255, 255, 0.64)` | Cards, panels, readable blocks. |
-| Surface solid | `--lh-surface-solid` | `rgba(255, 255, 255, 0.76)` | Stable work surfaces such as Hermit and dense workflow panels. |
-| Surface reading | `--lh-surface-reading` | `rgba(255, 255, 255, 0.52)` | Supporting reading blocks, side notes, and restrained secondary panels. |
-| Surface quiet | `--color-surface-quiet` | `color-mix(in srgb, #d97706 8%, #f3efe0)` | Subtle section bands, inactive fills. |
+| Page start | `--color-page-start` | `#f3efe0` | Non-home pages stay on the flat paper field; the homepage cover may own its image treatment. |
+| Page end | `--color-page-end` | `#f3efe0` | Compatibility alias; V3 non-home pages do not darken toward the bottom. |
+| Surface | `--color-surface` | `#fffdf8` | Cards, panels, readable blocks. |
+| Surface solid | `--lh-surface-solid` | `#fffdf8` | Stable work surfaces such as Hermit and dense workflow panels. |
+| Surface reading | `--lh-surface-reading` | `#fffdf8` | Supporting reading blocks, side notes, and restrained secondary panels. |
+| Surface quiet | `--color-surface-quiet` | `#f7f4ec` | Subtle section bands, inactive fills. |
 | Ink | `--color-ink` | `#2c2c2c` | Primary text, important icons. |
-| Ink soft | `--color-ink-soft` | `color-mix(in srgb, #2c2c2c 74%, white)` | Secondary headings and supporting text. |
-| Muted | `--color-muted` | `color-mix(in srgb, #2c2c2c 72%, white)` | Metadata, helper text, and low-priority labels that still meet normal-text contrast. |
-| Faint | `--color-faint` | `color-mix(in srgb, #2c2c2c 34%, white)` | Placeholder text and disabled labels. |
-| Line | `--color-line` | `rgba(44, 44, 44, 0.08)` | Default borders and dividers. |
-| Line strong | `--color-line-strong` | `rgba(217, 119, 6, 0.28)` | Active region boundaries and form borders. |
-| Primary | `--color-primary` | `#d97706` | Primary actions, active navigation, selected highlights. |
-| Primary deep / text | `--color-primary-deep`, `--color-primary-text` | `#9b5c14` | Hover/active state and small amber text that must pass contrast. |
-| Primary soft | `--color-primary-soft` | `rgba(217, 119, 6, 0.1)` | Selected backgrounds and low-emphasis active states. |
-| On primary | `--color-on-primary` | `#242424` | Text and icons on the Classic Amber primary action background. |
-| Primary hover | `--color-primary-hover` | `#d27200` | Primary-action hover background that retains normal-text contrast with `--color-on-primary`. |
-| Signal / Brass | `--color-signal`, `--color-brass` | `#9b7a4c` | Secondary signal, quiet success/info/brass labels. |
-| Signal text | `--color-signal-text`, `--color-brass-text` | `#806744` | Small success/info/brass text that must pass contrast. |
-| Danger text | `--color-danger-text` | `#965040` | Small error, destructive, and danger text that must pass contrast. |
+| Ink soft | `--color-ink-soft` | `#666158` | Secondary headings and supporting text. |
+| Muted | `--color-muted` | `#787166` | Metadata, helper text, and low-priority labels that still meet normal-text contrast. |
+| Faint | `--color-faint` | `#787166` | Placeholder text and disabled labels. |
+| Line | `--color-line` | `#ded9cd` | Default borders and dividers. |
+| Line strong | `--color-line-strong` | `#c88947` | Active region boundaries and form borders. |
+| Primary | `--color-primary` | `#a65d12` | Primary actions, active navigation, selected highlights. |
+| Primary deep / text | `--color-primary-deep`, `--color-primary-text` | `#8a4d0c` | Hover/active state and small amber text that must pass contrast. |
+| Primary soft | `--color-primary-soft` | `#f3e5ce` | Selected backgrounds and low-emphasis active states. |
+| On primary | `--color-on-primary` | `#fffdf8` | Text and icons on the Classic Amber primary action background. |
+| Primary hover | `--color-primary-hover` | `#8f4e0f` | Primary-action hover background that retains normal-text contrast with `--color-on-primary`. |
+| Signal / Brass | `--color-signal`, `--color-brass` | `#806744` | Secondary signal, quiet status labels, and source metadata. |
+| Signal text | `--color-signal-text`, `--color-brass-text` | `#665238` | Small signal text that must pass contrast. |
+| Danger text | `--color-danger-text` | `#9d443d` | Small error, destructive, and danger text that must pass contrast. |
+
 
 ### Semantic Colors
 
@@ -54,10 +77,10 @@ Each status color has exactly one meaning. Do not reuse semantic colors for deco
 
 | Meaning | Token | Target value | Rule |
 | --- | --- | --- | --- |
-| Success | `--color-success` / `--color-success-text` | `#9b7a4c` / `#806744` | Completed, healthy, approved in the current restrained brass treatment. |
-| Warning | `--color-warning` | `#d97706` | Needs attention before proceeding; also the classic primary accent. |
-| Danger | `--color-danger` / `--color-danger-text` | `#b85c46` / `#965040` | Error, destructive, failed, cannot be undone. |
-| Info | `--color-info` / `--color-info-text` | `#9b7a4c` / `#806744` | Neutral information, pending, system message in the current brass treatment. |
+| Success | `--color-success` / `--color-success-text` | `#35634b` / `#35634b` | Completed, healthy, approved. |
+| Warning | `--color-warning` | `#885a13` | Needs attention before proceeding. |
+| Danger | `--color-danger` / `--color-danger-text` | `#9d443d` / `#9d443d` | Error, destructive, failed, cannot be undone. |
+| Info | `--color-info` / `--color-info-text` | `#54616b` / `#54616b` | Neutral information, pending, and system messages. |
 
 Classic Amber keeps the semantic set intentionally warm and restrained. If future implementation needs stronger semantic separation, update this document and the HTML visual spec together before changing runtime CSS.
 
@@ -103,12 +126,12 @@ Recommended size scale:
 | Caption | `--type-caption` | `12px / 16px` | Metadata, timestamp, secondary table hints. |
 | Label | `--type-label` | `13px / 18px` | Helper text, dense labels, compact explanations. |
 | Control | `--type-control` | `14px / 20px` | Buttons, nav, inputs, admin tables, chips. |
-| Body | `--type-body` | `15px / 24px` | Cards, lists, default product reading. |
+| Body | `--type-body` | `16px / 28px` | Cards, lists, default product reading. |
 | Reading | `--type-reading` | `16px / 28px` | Hermit answers, long-form values, editorial content. |
 | Lead | `--type-lead` | `20px / 32px` | Section lead, key explanation. |
-| H3 | `--type-h3` | `25px / 30px` | Local subsection heading. |
-| H2 | `--type-h2` | `31px / 35px` | Page section heading. |
-| Display | `--type-display` | `40px` to `72px / 1.04` | Top-level page title only. |
+| H3 | `--type-h3` | `22px / 32px` | Card and local subsection heading. |
+| H2 | `--type-h2` | `28px / 40px` | Page section heading. |
+| Display | `--type-display` | `44px / 56px` desktop; `32px / 44px` mobile | Top-level page title only. |
 | Home Brand Display | page-specific rule | `64px` to `100px / 1.16` desktop target | Homepage brand-spirit cover only; not a reusable product heading token. |
 
 Heading style roles:
@@ -117,10 +140,10 @@ Heading style roles:
 | --- | --- | --- | --- | --- | --- |
 | Home Brand Display | `data-lh-home-brand-title` | Source Han Serif SC | `64px` to `100px / 1.16` on desktop | `700` | Homepage / Heart brand-spirit cover: `求真、尽善、致美、大爱、幸福`. This is a page-specific display rule, not a global title token. |
 | Display / Hero | `--title-display` | Source Han Serif SC | `40px` to `72px / 1.04` | `700` or `900` by page role | First-screen product title, value-reading cover, empty-state main sentence. Do not copy the homepage brand scale into ordinary pages. |
-| Page Title | `--title-page` | Source Han Serif SC | `32px` to `44px / 1.1` | `900` | Product page main title; one per page. |
-| Section Title | `--title-section` | Source Han Serif SC | `31px / 1.14` | `700` | Main section title inside a page or spec document. |
-| Subsection | `--title-subsection` | Source Han Serif SC | `25px / 1.2` | `700` | Secondary group title inside a section. |
-| Card Title | `--title-card` | Source Han Serif SC or PingFang SC | `20px / 1.25` | `700` | Card, panel, form group, and compact module title. |
+| Page Title | `--title-page` | Source Han Serif SC | `44px / 56px` desktop; `32px / 44px` mobile | `900` | Product page main title; one per page. |
+| Section Title | `--title-section` | Source Han Serif SC | `28px / 40px` | `700` | Main section title inside a page or spec document. |
+| Subsection | `--title-subsection` | Source Han Serif SC | `22px / 32px` | `700` | Secondary group title inside a section. |
+| Card Title | `--title-card` | Source Han Serif SC or PingFang SC | `22px / 32px` | `700` | Card, panel, form group, and compact module title. |
 | Kicker / Label | `--title-kicker` | PingFang SC | `12px / 1.2`, `0.12em` letter spacing | `900` | Structural label above a heading. Do not use it as body content. |
 
 Rules:
@@ -198,6 +221,18 @@ Desktop is the current primary platform. Mobile rules are deferred, but desktop 
 
 ## Grid System
 
+### V3 Page Frame
+
+Every non-home V3 page uses the same frame before choosing a page pattern:
+
+1. The global navigation remains fixed at the existing Lighthouse position and width.
+2. The page header begins below the shell header at `64px`, with the shared title, optional identity mark, one-line description, and trailing actions.
+3. The content region starts `32px` after the header and is constrained to `--grid-content-max`.
+4. Major content uses a 12-column grid; a card group uses equal columns and a `24px` gap. Mirror’s featured case may use an `8 / 4` reading split, while Action’s directory uses two equal columns.
+5. At `767px` and below, the grid becomes one column, page padding becomes `20px`, and controls keep a minimum `44px` touch target.
+
+The header and content frame are shared across Mirror, Action, Search, Feedback, Admin, and Hermit. Identity appears in the page content or tool surface; it does not create a second navigation shell.
+
 Classic Amber uses a stable desktop-first grid rather than exploratory asymmetric layouts. The system has four layers.
 
 ### 1. Shell Grid
@@ -209,7 +244,7 @@ Classic Amber uses a stable desktop-first grid rather than exploratory asymmetri
 | `--grid-main-offset-expanded` | `260px` | Main content offset when sidebar is pinned. |
 | `--grid-main-offset-collapsed` | `100px` | Main content offset in collapsed shell. |
 | `--grid-page-gutter` | `32px` | Desktop page breathing room. |
-| `--grid-content-max` | `1220px` | Primary page content width. |
+| `--grid-content-max` | `1280px` | Primary page content width in the V3 desktop frame. |
 
 The HTML visual spec uses a `248px` local sidebar only because the document navigation labels are longer than the app navigation labels.
 
@@ -234,9 +269,9 @@ Rules:
 | Token | Value | Use |
 | --- | --- | --- |
 | `--grid-columns` | `12` | Logical columns inside the main work area. |
-| `--grid-column-gap` | `16px` | Default content-column and card-column gap. |
+| `--grid-column-gap` | `24px` | Default content-column and card-column gap. |
 | `--grid-row-gap` | `24px` | Default vertical rhythm inside a content grid. |
-| `--grid-section-gap` | `30px` target | Vertical rhythm between major page sections. |
+| `--grid-section-gap` | `32px` | Vertical rhythm between major page sections. |
 
 Allowed spans:
 
