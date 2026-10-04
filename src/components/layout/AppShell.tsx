@@ -55,6 +55,7 @@ export function AppShell({ children }: AppShellProps) {
 
       <main
         data-lh-main
+        data-lh-v3={isHomeSurface ? undefined : "true"}
         data-lh-home-main={isHomeSurface ? "true" : undefined}
         data-sidebar-pinned={isSidebarPinned ? "true" : "false"}
         className={cn(

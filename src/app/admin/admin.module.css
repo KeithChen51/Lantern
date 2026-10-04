@@ -1,0 +1,45 @@
+.adminLoginPage {
+  width: min(100%, 70rem);
+  padding-bottom: 4rem;
+}
+
+.adminLoginPage :global([data-lh-page-heading]) { margin-bottom: 2rem; }
+
+.adminLoginPanel {
+  width: min(100%, 34.25rem);
+  padding: 2rem 1.5rem 1.5rem;
+}
+
+.adminLoginForm { display: grid; gap: 1.25rem; }
+.adminLoginForm :global([data-lh-field-control]) {
+  min-height: 3.25rem;
+  border-color: var(--lh-refine-line, var(--color-line));
+  border-radius: var(--lh-control-radius, .5rem);
+  background: var(--lh-refine-subtle, var(--color-panel));
+}
+
+.adminLoginForm :global(button) { width: max-content; }
+
+.adminHomePage {
+  width: min(100%, 70rem);
+  padding-bottom: 4rem;
+}
+
+.adminHomePage :global([data-lh-page-heading]) { margin-bottom: 2rem; }
+.adminHomeSection { display: grid; gap: 1.5rem; }
+.adminHomeSectionHeader { border-top: 1px solid var(--lh-refine-line, var(--color-line)); padding-top: 1.25rem; }
+.adminEyebrow { margin-bottom: .5rem; color: var(--color-primary-text); font-size: var(--type-caption); font-weight: var(--weight-semibold); line-height: var(--leading-caption); }
+.adminHomeSectionHeader h2 { color: var(--color-ink); font-family: var(--font-serif-stack); font-size: var(--title-section); font-weight: var(--weight-bold); line-height: 1.4; }
+.adminHomeSectionHeader > div > p:last-child { margin-top: .5rem; color: var(--color-muted); font-size: var(--type-body); line-height: var(--leading-body); }
+.adminAreaGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.adminAreaCard { display: grid; min-height: 14rem; grid-template-rows: auto 1fr auto; gap: 1.25rem; padding: 1.5rem; transition: border-color var(--lh-motion-fast) var(--lh-ease-standard), box-shadow var(--lh-motion-fast) var(--lh-ease-standard), transform var(--lh-motion-fast) var(--lh-ease-standard); }
+.adminAreaCard:hover { border-color: var(--lh-refine-line, var(--color-line-strong)); box-shadow: var(--lh-card-hover-shadow); }
+
+@media (max-width: 700px) {
+  .adminAreaGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .adminLoginPanel { padding: 1.25rem; }
+  .adminLoginForm :global(button) { width: 100%; }
+}

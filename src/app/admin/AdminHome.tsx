@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Icon } from "@iconify/react";
-import { LhCard, LhChip, LhPageHero, LhSectionHeader } from "@/components/ui/lighthouse-primitives";
+import { LhCard, LhChip } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { PageHeading } from "@/components/ui/PageHeading";
+import styles from "./admin.module.css";
 
 const adminAreas = [
   {
@@ -15,26 +17,21 @@ const adminAreas = [
 
 export function AdminHome() {
   return (
-    <div className="space-y-8 pb-12">
-      <LhPageHero
-        icon={<Icon icon={lighthouseIcons.admin} className="h-4 w-4" />}
-        eyebrow="Admin"
-        title="内容维护后台"
-        description={<p>这里只承载内部维护操作。普通内部人员继续通过原有页面访问内容，不需要账号登录。</p>}
-        asideTitle="当前能力"
-        asideItems={[{ title: "笃行案例导入" }, { title: "草稿与发布" }]}
-      />
+    <div className={styles.adminHomePage}>
+      <PageHeading title="内容维护" description="管理笃行案例的草稿、预览与发布。" />
 
-      <section className="space-y-5">
-        <LhSectionHeader
-          eyebrow="维护入口"
-          title="选择要处理的内容"
-          description="首版先保持后台克制，只处理笃行案例维护，不扩展为通用 CMS。"
-        />
-        <div className="grid gap-5 md:grid-cols-2">
+      <section className={styles.adminHomeSection}>
+        <div className={styles.adminHomeSectionHeader}>
+          <div>
+            <p className={styles.adminEyebrow}>维护入口</p>
+            <h2>选择要处理的内容</h2>
+            <p>首版先保持后台克制，只处理笃行案例维护。</p>
+          </div>
+        </div>
+        <div className={styles.adminAreaGrid}>
           {adminAreas.map((area) => (
             <Link key={area.href} href={area.href} className="group block">
-              <LhCard className="grid min-h-56 grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] group-hover:border-line-strong group-hover:shadow-lh-md">
+              <LhCard className={styles.adminAreaCard}>
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-[var(--lh-control-radius)] border border-primary/20 bg-primary-soft text-primary-deep">
                     <Icon icon={area.icon} className="h-5 w-5" />

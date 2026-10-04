@@ -7,11 +7,12 @@ import {
   LhCard,
   LhChip,
   LhDataTableShell,
-  LhPageHero,
   LhPanel,
   LhSectionHeader,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { PageHeading } from "@/components/ui/PageHeading";
+import styles from "../content-v3.module.css";
 
 const stats = [
   { label: "2025 年销售额", value: "200.35", unit: "亿元", note: "提前达成目标" },
@@ -166,75 +167,34 @@ export default function PangDongLaiPage() {
   const workflowLabel = "进入笃行查看案例";
 
   return (
-    <article className="pb-16">
-      <div className="mb-6">
+    <article data-lh-page="mirror-read" data-lh-page-archetype="cultural-reading" className={`${styles.page} ${styles.detailPage}`}>
+      <div className={styles.stack}>
         <LhBackLink href="/mirror" icon={<Icon icon={lighthouseIcons.mirror} className="size-[1rem]" />}>
           返回镜鉴
         </LhBackLink>
-      </div>
 
-      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="hidden lg:block">
-          <div className="sticky top-28 space-y-5">
-            <LhCard className="p-4">
-              <p className="text-[length:var(--title-kicker)] font-[var(--weight-black)] leading-[1.2] tracking-[var(--tracking-kicker)] text-primary-text">
-                案例工作台
-              </p>
-              <nav className="mt-4 grid gap-2" aria-label="案例工作台目录">
-                {toc.map(([href, label], index) => (
-                  <a
-                    key={href}
-                    href={`#${href}`}
-                    className="grid min-h-9 grid-cols-[28px_minmax(0,1fr)] items-center rounded-[var(--lh-control-radius)] px-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[color:var(--color-ink-soft)] transition-colors hover:bg-primary-soft hover:text-primary-text"
-                  >
-                    <span className="text-[length:var(--type-label)] text-[color:var(--color-muted)]">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span>{label}</span>
-                  </a>
-                ))}
-              </nav>
-            </LhCard>
+        <PageHeading title="云游胖东来" />
 
-            <LhCard className="p-4">
-              <p className="text-[length:var(--title-kicker)] font-[var(--weight-black)] leading-[1.2] tracking-[var(--tracking-kicker)] text-primary-text">
-                本页产出
-              </p>
-              <ul className="mt-4 grid gap-3 text-[length:var(--type-body)] leading-[var(--leading-body)] text-[color:var(--color-ink-soft)]">
-                <li>一组可复用机制卡</li>
-                <li>一张售后迁移矩阵</li>
-                <li>一组路引问题</li>
-              </ul>
-            </LhCard>
+        <section className={styles.readingSection}>
+          <h2 className={styles.sectionHeading}>从机制、条件与动作理解标杆</h2>
+          <p>把胖东来的公开事实拆成机制、条件和售后可用动作，作为服务文化转译的标杆案例。</p>
+          <p>阅读提示：先看事实与来源，再分析组织条件。只迁移适合售后场景的部分，避免机械照搬。</p>
+        </section>
+
+        <details className={styles.methodDisclosure}>
+          <summary>打开案例目录</summary>
+          <div className={styles.methodBody}>
+            <nav aria-label="案例目录" className={styles.methodList}>
+              {toc.map(([href, label], index) => (
+                <a key={href} href={`#${href}`}>
+                  <span className={styles.methodIndex}>{String(index + 1).padStart(2, "0")}</span>
+                  <span>{label}</span>
+                </a>
+              ))}
+            </nav>
           </div>
-        </aside>
+        </details>
 
-        <main className="min-w-0 space-y-8">
-          <LhPageHero
-            icon={<Icon icon={lighthouseIcons.mirror} className="size-[1rem]" />}
-            eyebrow="镜鉴案例"
-            title="云游胖东来"
-            description={
-              <p>
-                这不是一篇品牌游记，而是一张可转译的标杆案例卡。页面把胖东来的公开事实拆成机制、条件和售后可用动作，帮助团队判断哪些经验能进入精诚服务，哪些只能作为背景参照。
-              </p>
-            }
-            asideTitle="阅读任务"
-            asideItems={[
-              { title: "先看事实", description: "固定来源、数据口径和经营背景。" },
-              { title: "再拆机制", description: "看员工、客户、现场和经营如何互相支撑。" },
-              { title: "最后转译", description: "只迁移适合汽车售后的动作和判断方法。" },
-            ]}
-            footer={
-              <div className="flex flex-wrap gap-2">
-                {["人本经营", "员工体验", "服务秩序", "售后迁移"].map((tag) => (
-                  <LhChip key={tag} tone="neutral">
-                    {tag}
-                  </LhChip>
-                ))}
-              </div>
-            }
-          />
 
           <ContentSection
             id="overview"
@@ -427,7 +387,6 @@ export default function PangDongLaiPage() {
               ))}
             </ul>
           </footer>
-        </main>
       </div>
     </article>
   );
