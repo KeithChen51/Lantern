@@ -7,14 +7,15 @@ import {
   LhChip,
   LhContentProse,
   LhDataTableShell,
-  LhPageHero,
   LhPanel,
   LhSectionHeader,
   LhStatusBadge,
 } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { PageHeading } from "@/components/ui/PageHeading";
 import type { PublicActionCaseDetail } from "./public-action-cases";
 import { isMarkdownActionCase } from "./action-cases";
+import styles from "../mirror/content-v3.module.css";
 
 type ActionCaseDetailViewProps = {
   actionCase: PublicActionCaseDetail;
@@ -34,10 +35,52 @@ function statusLabel(status: string) {
   return "草稿";
 }
 
-function statusTone(status: string) {
-  if (status === "published") return "success" as const;
-  if (status === "archived") return "neutral" as const;
-  return "warning" as const;
+function ActionDetailHeader({
+  title,
+  summary,
+  date,
+  status,
+  tags,
+  keyPoint,
+  keyMeta,
+}: {
+  title: string;
+  summary: string;
+  date?: string;
+  status: string;
+  tags?: string[];
+  keyPoint: string;
+  keyMeta: string;
+}) {
+  return (
+    <>
+      <LhBackLink href="/action" icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}>
+        返回笃行
+      </LhBackLink>
+      <PageHeading title="案例复盘" />
+      <section className={styles.detailCard}>
+        <div className={styles.detailCardBody}>
+          <div className={styles.detailMeta}>
+            {date && <span>{date}</span>}
+            <span>{statusLabel(status)}</span>
+            {tags?.[0] && <span>{tags[0]}</span>}
+          </div>
+          <h2 className={styles.detailHeadline}>{title}</h2>
+          <p className={styles.detailSummary}>{summary}</p>
+        </div>
+        <aside className={styles.keyPanel}>
+          <p className={styles.keyPanelLabel}>关键节点</p>
+          <p className={styles.keyPanelText}>{keyPoint}</p>
+          <p className={styles.keyPanelMeta}>{keyMeta}</p>
+        </aside>
+      </section>
+      <section className={styles.readingSection}>
+        <h2 className={styles.sectionHeading}>先看清现场，再讨论行动</h2>
+        <p>客户救援需要组织支持，让一线员工的安全、资源与付出得到保障。</p>
+        <p>讨论提示：现场有哪些限制？客户、员工与门店分别承担什么？哪些做法需要组织提供支持？</p>
+      </section>
+    </>
+  );
 }
 
 function CoverImage({ url, title }: { url: string | null | undefined; title: string }) {
@@ -52,44 +95,21 @@ function CoverImage({ url, title }: { url: string | null | undefined; title: str
   );
 }
 
-function Tags({ tags }: { tags: string[] }) {
-  if (tags.length === 0) return null;
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {tags.map((tag) => (
-        <LhChip key={tag} tone="neutral">
-          {tag}
-        </LhChip>
-      ))}
-    </div>
-  );
-}
-
 function ManagedActionCaseDetail({
   actionCase,
 }: {
   actionCase: Extract<PublicActionCaseDetail, { source: "managed" }>["record"];
 }) {
   return (
-    <article className="space-y-8 pb-12">
-      <LhBackLink href="/action" icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}>
-        返回笃行
-      </LhBackLink>
-
-      <LhPageHero
-        icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
-        eyebrow="后台发布案例"
-        meta={<LhStatusBadge tone={statusTone(actionCase.status)}>{statusLabel(actionCase.status)}</LhStatusBadge>}
+    <article data-lh-page="action-read" data-lh-page-archetype="case-workflow" className={`${styles.page} ${styles.detailPage} ${styles.stack}`}>
+      <ActionDetailHeader
         title={actionCase.title}
-        description={<p>{actionCase.summary}</p>}
-        asideTitle="案例信息"
-        asideItems={[
-          { title: "日期", description: actionCase.date },
-          { title: "当前版本", description: actionCase.currentVersionNo ? `v${actionCase.currentVersionNo}` : "未生成" },
-          { title: "发布版本", description: actionCase.publishedVersionNo ? `v${actionCase.publishedVersionNo}` : "未发布" },
-        ]}
-        footer={<Tags tags={actionCase.tags} />}
+        summary={actionCase.summary}
+        date={actionCase.date}
+        status={actionCase.status}
+        tags={actionCase.tags}
+        keyPoint={actionCase.headings[0]?.title ?? actionCase.title}
+        keyMeta={`当前版本 ${actionCase.currentVersionNo ? `v${actionCase.currentVersionNo}` : "未生成"} · 发布版本 ${actionCase.publishedVersionNo ? `v${actionCase.publishedVersionNo}` : "未发布"}`}
       />
 
       <CoverImage url={actionCase.coverImage?.url} title={actionCase.title} />
@@ -147,24 +167,15 @@ function StaticActionCaseDetail({
   const { metadata, brief, background, caseBody, evidence } = actionCase;
 
   return (
-    <article className="space-y-8 pb-12">
-      <LhBackLink href="/action" icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}>
-        返回笃行
-      </LhBackLink>
-
-      <LhPageHero
-        icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
-        eyebrow={metadata.kicker}
-        meta={<LhStatusBadge tone={statusTone(metadata.status)}>{statusLabel(metadata.status)}</LhStatusBadge>}
+    <article data-lh-page="action-read" data-lh-page-archetype="case-workflow" className={`${styles.page} ${styles.detailPage} ${styles.stack}`}>
+      <ActionDetailHeader
         title={metadata.title}
-        description={<p>{brief.oneLine}</p>}
-        asideTitle="案例信息"
-        asideItems={[
-          { title: "受众", description: metadata.audience.join("、") },
-          { title: "版本", description: metadata.version },
-          { title: "负责人", description: metadata.owner },
-        ]}
-        footer={<Tags tags={metadata.tags} />}
+        summary={brief.oneLine}
+        date={metadata.date}
+        status={metadata.status}
+        tags={metadata.tags}
+        keyPoint={brief.caseQuestion}
+        keyMeta={`${metadata.kicker} · ${metadata.owner}`}
       />
 
       <CoverImage url={metadata.imageUrl} title={metadata.title} />
@@ -301,24 +312,15 @@ function StaticMarkdownActionCaseDetail({
   const sectionHeadings = actionCase.headings.filter((heading) => heading.level > 1).slice(0, 8);
 
   return (
-    <article className="space-y-8 pb-12">
-      <LhBackLink href="/action" icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}>
-        返回笃行
-      </LhBackLink>
-
-      <LhPageHero
-        icon={<Icon icon={lighthouseIcons.action} className="h-4 w-4" />}
-        eyebrow={metadata.kicker}
-        meta={<LhStatusBadge tone={statusTone(metadata.status)}>{statusLabel(metadata.status)}</LhStatusBadge>}
+    <article data-lh-page="action-read" data-lh-page-archetype="case-workflow" className={`${styles.page} ${styles.detailPage} ${styles.stack}`}>
+      <ActionDetailHeader
         title={metadata.title}
-        description={<p>{brief.oneLine}</p>}
-        asideTitle="案例信息"
-        asideItems={[
-          { title: "批次", description: metadata.version },
-          { title: "日期", description: metadata.date },
-          { title: "负责人", description: metadata.owner },
-        ]}
-        footer={<Tags tags={metadata.tags} />}
+        summary={brief.oneLine}
+        date={metadata.date}
+        status={metadata.status}
+        tags={metadata.tags}
+        keyPoint={brief.caseQuestion}
+        keyMeta={`${metadata.kicker} · ${metadata.owner}`}
       />
 
       {sectionHeadings.length > 0 && (

@@ -1,130 +1,102 @@
 import Link from "next/link";
-import {
-  LhCard,
-  LhChip,
-  LhDataTableShell,
-  LhPageHero,
-  LhSectionHeader,
-} from "@/components/ui/lighthouse-primitives";
+import { LhDataTableShell } from "@/components/ui/lighthouse-primitives";
+import { PageHeading } from "@/components/ui/PageHeading";
+import styles from "./content-v3.module.css";
+
 const caseCards = [
   {
     title: "云游胖东来",
     description: "把胖东来的公开事实拆成机制、条件和售后可用动作，作为服务文化转译的标杆案例卡。",
-    date: "2026-01",
     href: "/mirror/pang-dong-lai",
-    status: "可阅读",
-    dimensions: ["机制拆解", "售后迁移", "路引提问"],
+    meta: "外部标杆 · 零售服务",
+    dimensions: ["机制拆解", "员工尊重", "售后迁移"],
   },
   {
     title: "其他案例待沉淀",
-    description: "后续案例会按行业、角色和可迁移动作整理，而不是只做散文式阅读。",
-    date: "规划中",
+    description: "后续案例按行业、角色和可迁移动作整理。",
     href: null,
-    status: "待补充",
-    dimensions: ["标杆经验", "服务文化", "可迁移动作"],
+    meta: "",
+    dimensions: [],
   },
-];
+] as const;
 
 const compareRows = [
   ["案例来源", "外部企业公开材料、行业观察、媒体报道", "帮助团队形成可讨论的参考对象"],
   ["阅读目标", "提取服务文化、组织管理和动作设计", "避免简单赞美或机械照搬"],
-  [
-    "拆解方式",
-    "先识别事实、机制和成立条件，再转成售后动作",
-    "连接笃行与路引",
-  ],
+  ["拆解方式", "先识别事实、机制和成立条件，再转成售后动作", "连接笃行与路引"],
+];
+
+const readingRules = [
+  "先看事实与来源，不先下结论，不把赞美当作分析。",
+  "拆成原则、条件、动作，让案例能进入讨论和迁移。",
+  "只迁移适合售后场景的部分，避免机械照搬外部经验。",
 ];
 
 export default function MirrorPage() {
   return (
-    <div className="space-y-8 pb-12">
-      <LhPageHero
-        title="在别人的灯火里，看见服务文化可以怎样成立。"
-        description={
-          <p>
-            镜鉴不是文学化案例合集，而是外部标杆知识库。每个案例都要回答：它的做法解决了什么问题、背后的组织条件是什么、哪些部分可以转成我们自己的服务动作。
-          </p>
-        }
-        asideTitle="案例筛选规则"
-        asideItems={[
-          { title: "先看事实与来源", description: "不先下结论，不把赞美当作分析。" },
-          { title: "拆成原则、条件、动作", description: "让案例能进入讨论和迁移。" },
-          { title: "只迁移适合售后场景的部分", description: "避免机械照搬外部经验。" },
-        ]}
-      />
+    <div data-lh-page-archetype="cultural-reading" data-lh-page="mirror" className={styles.page}>
+      <div className={styles.stack}>
+        <PageHeading title="镜鉴" description="从外部标杆中，找到值得借鉴的服务方法。" />
 
-      <section className="space-y-6">
-        <LhSectionHeader
-          eyebrow="案例目录"
-          title="标杆案例"
-          description="每张卡片固定呈现来源、摘要、观察维度和下一步动作，便于后续进入笃行或路引。"
-        />
-
-        <div className="grid gap-5 lg:grid-cols-2">
-          {caseCards.map((card) => {
-            const content = (
-              <LhCard className="grid min-h-[300px] grid-rows-[auto_1fr_auto] gap-5 p-6 transition-[border-color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-line-strong hover:shadow-lh-md">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <LhChip tone={card.href ? "success" : "neutral"}>{card.status}</LhChip>
-                    <h2 className="mt-4 text-2xl font-extrabold leading-tight text-ink">{card.title}</h2>
-                  </div>
-                  <span className="text-sm font-extrabold text-muted">{card.date}</span>
-                </div>
-                <div>
-                  <p className="text-base leading-8 text-ink-soft">{card.description}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {card.dimensions.map((dimension) => (
-                      <LhChip key={dimension} tone="neutral">
-                        {dimension}
-                      </LhChip>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between border-t border-line pt-4">
-                  <span className="text-sm font-bold text-muted">镜鉴内容卡</span>
-                  {card.href ? (
-                    <span className="inline-flex min-h-9 items-center justify-center rounded-sm border border-line-strong bg-panel px-3 text-xs font-bold text-primary-deep shadow-lh-sm">
-                      阅读案例
-                    </span>
-                  ) : (
-                    <span className="text-sm font-extrabold text-muted">等待补充</span>
-                  )}
-                </div>
-              </LhCard>
-            );
-
-            return card.href ? (
-              <Link key={card.title} href={card.href} className="block">
-                {content}
-              </Link>
-            ) : (
-              <div key={card.title}>{content}</div>
-            );
-          })}
+        <div className={styles.toolbar}>
+          <p className={styles.toolbarMeta}>标杆案例&nbsp; / &nbsp;1 篇可阅读</p>
+          <details className={styles.methodInline}>
+            <summary className={styles.toolbarAction}>阅读方法</summary>
+            <div className={styles.methodBody}>
+              <p>镜鉴把公开案例拆成可验证的事实、成立条件和可迁移动作。</p>
+              <ol className={styles.methodList}>
+                {readingRules.map((rule, index) => (
+                  <li key={rule}>
+                    <span className={styles.methodIndex}>{index + 1}</span>
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </details>
         </div>
-      </section>
 
-      <LhDataTableShell>
-        <table>
-          <thead>
-            <tr>
-              <th>维度</th>
-              <th>看什么</th>
-              <th>为什么重要</th>
-            </tr>
-          </thead>
-          <tbody>
-            {compareRows.map(([name, value, reason]) => (
-              <tr key={name}>
-                <td>{name}</td>
-                <td>{value}</td>
-                <td>{reason}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </LhDataTableShell>
+        <div className={styles.caseGrid}>
+          <Link href={caseCards[0].href} className={styles.caseCard}>
+            <p className={styles.caseMeta}>{caseCards[0].meta}</p>
+            <h2 className={styles.caseTitle}>{caseCards[0].title}</h2>
+            <p className={styles.caseDescription}>{caseCards[0].description}</p>
+            <p className={styles.caseTags}>{caseCards[0].dimensions.join("   /   ")}</p>
+            <span className={styles.caseLink}>阅读案例 →</span>
+          </Link>
+
+          <div className={styles.caseCardMuted}>
+            <h2 className={styles.caseTitleMuted}>{caseCards[1].title}</h2>
+            <p className={styles.caseDescription}>{caseCards[1].description}</p>
+          </div>
+        </div>
+
+        <details className={styles.methodDisclosure}>
+          <summary>查看镜鉴的拆解维度</summary>
+          <div className={styles.methodBody}>
+            <LhDataTableShell>
+              <table>
+                <thead>
+                  <tr>
+                    <th>维度</th>
+                    <th>看什么</th>
+                    <th>为什么重要</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compareRows.map(([name, value, reason]) => (
+                    <tr key={name}>
+                      <td>{name}</td>
+                      <td>{value}</td>
+                      <td>{reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </LhDataTableShell>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }
