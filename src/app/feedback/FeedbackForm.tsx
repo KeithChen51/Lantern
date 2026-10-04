@@ -11,6 +11,7 @@ import {
   type FeedbackCategory,
   type FeedbackIssueReference,
 } from "@/modules/feedback/types";
+import styles from "./feedback.module.css";
 
 type FeedbackFormValues = {
   category: FeedbackCategory;
@@ -276,7 +277,7 @@ export function FeedbackForm({ initialSourcePath }: { initialSourcePath: string 
         ) : null}
       </div>
 
-      <div className="mt-6 flex justify-end">
+      <div className={`mt-6 flex justify-end ${styles.submitRow}`}>
         <LhButton
           type="submit"
           variant="primary"

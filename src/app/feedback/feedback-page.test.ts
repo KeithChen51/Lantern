@@ -23,20 +23,20 @@ describe("feedback page", () => {
     expect(form).toContain("peer-focus-visible:shadow-[var(--shadow-focus)]");
     expect(form).toContain('className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4"');
     expect(form).toContain("data-lh-feedback-body");
-    expect(form).toContain('className="mt-6 flex justify-end"');
+    expect(form).toContain("mt-6 flex justify-end");
     expect(form).not.toContain("CONTROL_CLASS");
     expect(form).not.toContain("FEEDBACK_URGENCY_OPTIONS");
     expect(form).not.toContain("feedback-source-path");
   });
 
-  it("uses an operational h1 page header and returns the created Issue reference", () => {
+  it("uses the shared V3 page heading and returns the created Issue reference", () => {
     const page = readProjectFile("src/app/feedback/page.tsx");
     const route = readProjectFile("src/app/api/feedback/route.ts");
 
-    expect(page).toContain("max-w-[760px]");
-    expect(page).toContain("LhOperationalPageHeader");
-    expect(page).not.toContain("LhSectionHeader");
-    expect(page).not.toContain('eyebrow="站内反馈"');
+    expect(page).toContain("PageHeading");
+    expect(page).toContain('title="让灯塔更好用"');
+    expect(page).toContain("feedbackLayout");
+    expect(page).toContain("feedbackNote");
     expect(route).toContain("const issue = await createDevOpsIssue");
     expect(route).toContain("submitted: true, issue");
   });
