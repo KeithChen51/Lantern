@@ -94,3 +94,4 @@
   .editorPanel { padding: 1.25rem; }
   .fieldGrid, .previewColumn { grid-template-columns: 1fr; }
 }
+.filePicker:focus-within, .filePickerSecondary:focus-within { outline: 2px solid var(--lh-focus-outline); outline-offset: 3px; }

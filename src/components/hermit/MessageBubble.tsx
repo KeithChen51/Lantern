@@ -104,7 +104,7 @@ export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
       <LhMessageBubbleFrame>
         <div data-lh-message-meta>
           <strong>路引</strong>
-          <span data-lh-message-meta-note>结合灯塔知识回答</span>
+          <span data-lh-message-meta-note>{documents.length ? "结合灯塔知识回答" : "服务文化助手"}</span>
         </div>
         <div data-lh-message-prose>
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -129,6 +129,7 @@ export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
                 <span className={styles.documentCardCopy}>
                   <span className={styles.documentCardTitle}>{document.title}</span>
                   <span className={styles.documentCardMeta}>{document.source}{document.heading ? ` · ${document.heading}` : ""}</span>
+                  <span className={styles.documentReadLink}>阅读文档 →</span>
                 </span>
                 <Icon className={styles.documentCardArrow} icon={lighthouseIcons.arrowRightUp} aria-hidden="true" />
               </button>

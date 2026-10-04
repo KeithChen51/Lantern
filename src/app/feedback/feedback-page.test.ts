@@ -18,7 +18,7 @@ describe("feedback page", () => {
     expect(form).toContain("LhCallout");
     expect(form).toContain("LhStateNotice");
     expect(form).toContain("data-lh-feedback-context");
-    expect(form).toContain("请勿填写客户个人信息、账号、密钥等敏感信息");
+    expect(readProjectFile("src/app/feedback/page.tsx")).toContain("请勿填写客户个人信息、账号、密钥等敏感信息");
     expect(form).toContain("peer-focus-visible:outline-offset-[var(--lh-focus-offset)]");
     expect(form).toContain("peer-focus-visible:shadow-[var(--shadow-focus)]");
     expect(form).toContain('className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4"');

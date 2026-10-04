@@ -70,7 +70,7 @@
 .feedbackPanel :global([data-lh-feedback-body] > fieldset) { gap: .5rem; }
 .feedbackPanel :global([data-lh-feedback-body] > fieldset > div) { margin-top: 0; }
 
-.feedbackPanel :global([data-lh-feedback-body] label > span) {
+.feedbackPanel :global([data-lh-feedback-body] > fieldset label > span) {
   min-height: 2.75rem;
   border-color: var(--lh-refine-line, var(--color-line));
   background: var(--lh-refine-surface, var(--color-panel));

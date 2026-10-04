@@ -11,13 +11,13 @@ export default function HermitPage() {
       data-lh-page="hermit"
       data-lh-page-archetype="tool-workspace"
     >
-      <header className={styles.pageHeader} data-lh-hermit-intro>
+      <div className={styles.pageHeader} data-lh-hermit-intro>
         <PageHeading
           title="路引"
           description="汽车售后服务文化助手 · 从现场问题，找到行动方向"
           titleAdornment={<HermitIdentity />}
         />
-      </header>
+      </div>
       <div className={styles.chatFrame} data-lh-hermit-chat-frame>
         <ChatPanel />
       </div>

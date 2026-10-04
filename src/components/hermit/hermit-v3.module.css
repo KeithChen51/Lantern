@@ -26,11 +26,18 @@
 
 .pageHeader {
   display: flex;
-  min-height: 176px;
+  min-height: 0;
   width: 100%;
   align-items: center;
-  padding: 48px 24px 16px 16px;
+  padding: 0;
 }
+
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-intro] {
+  max-width: none;
+  padding: 0;
+}
+
+.documentReadLink { color: var(--hermit-accent); font-size: 14px; line-height: 22px; }
 
 .pageHeader > * {
   width: 100%;
@@ -187,20 +194,20 @@
 
 /* The selected page has no visible conversation toolbar; the state remains
  * available to screen readers through .conversationStatus. */
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start],
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-conversation] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start],
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-conversation] {
   display: block;
   width: 100%;
   min-height: 752px;
   padding: 32px 24px 16px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-conversation] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-conversation] {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-inner] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-inner] {
   display: flex;
   width: min(752px, 100%);
   min-height: 704px;
@@ -212,7 +219,7 @@
   text-align: left;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-title] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-title] {
   max-width: none;
   margin: 0;
   font-family: var(--font-noto-stack, "Noto Serif SC", serif);
@@ -221,17 +228,17 @@
   line-height: 40px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-examples] {
   width: 100%;
   margin-top: 12px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-items] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-items] {
   display: grid;
   gap: 4px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button] {
   display: flex;
   width: fit-content;
   min-height: 32px;
@@ -248,20 +255,20 @@
   transition: color 160ms ease, transform 160ms ease;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]::after {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]::after {
   margin-left: 8px;
   color: var(--hermit-accent);
   content: "→";
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]:hover {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]:hover {
   border-color: transparent;
   background: transparent;
   color: var(--hermit-accent);
   transform: translateX(2px);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-input] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-input] {
   width: 100%;
   margin-top: auto;
   border: 0;
@@ -269,14 +276,14 @@
   box-shadow: none;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-main] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-main] {
   min-height: 0;
   overflow-y: auto;
   padding: 0 0 20px;
   scrollbar-gutter: stable;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-scroll-content] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-scroll-content] {
   display: grid;
   width: min(752px, 100%);
   max-width: none;
@@ -285,13 +292,13 @@
   padding: 0;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-footer] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer] {
   border-top: 0;
   background: transparent;
   padding: 0;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-composer] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] {
   width: min(752px, 100%);
   margin-inline: auto;
   border: 0;
@@ -301,7 +308,7 @@
   box-shadow: none;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-input] {
   --lh-chat-input-border: var(--hermit-accent);
   --lh-chat-input-shadow: none;
   display: block;
@@ -314,16 +321,16 @@
   backdrop-filter: none;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input]:focus-within {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-input]:focus-within {
   border-color: var(--hermit-accent) !important;
   box-shadow: 0 0 0 3px rgba(166, 93, 18, 0.12) !important;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input-grid] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-input-grid] {
   display: block;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-textarea] {
   width: 100%;
   min-height: 52px;
   max-height: 156px;
@@ -339,11 +346,11 @@
   line-height: 26px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea]::placeholder {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-textarea]::placeholder {
   color: var(--hermit-muted);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea]:focus-visible {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-textarea]:focus-visible {
   outline: 2px solid rgba(166, 93, 18, 0.56);
   outline-offset: 3px;
   box-shadow: none;
@@ -418,7 +425,7 @@
   color: var(--hermit-danger);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit] {
   display: inline-flex;
   width: 36px;
   height: 36px;
@@ -433,18 +440,18 @@
   transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit]:hover {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit]:hover {
   border-color: var(--hermit-accent-deep) !important;
   background: var(--hermit-accent-deep) !important;
   transform: translateY(-1px);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit]:disabled {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit]:disabled {
   cursor: not-allowed;
   opacity: 0.42;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit-icon] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit-icon] {
   width: 16px;
   height: 16px;
 }
@@ -632,27 +639,27 @@
 /* Conversation rows stay lightweight: the answer is prose, and only the
  * user turn receives a surface. This keeps the assistant from looking like a
  * stack of nested cards while recommendations remain actionable. */
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row] {
   display: grid;
   gap: 12px;
   font-family: var(--font-sans-stack, "Noto Sans SC", sans-serif);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="assistant"] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="assistant"] {
   grid-template-columns: 36px minmax(0, 1fr);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="user"] {
   grid-template-columns: minmax(0, 1fr);
   justify-items: end;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-bubble-slot] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-bubble-slot] {
   display: flex;
   justify-content: flex-end;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-avatar] {
   display: inline-flex;
   width: 36px;
   height: 36px;
@@ -665,20 +672,20 @@
   box-shadow: none !important;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] > [data-lh-hermit-identity] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-avatar] > [data-lh-hermit-identity] {
   display: inline-flex;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] > svg {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-avatar] > svg {
   width: 20px;
   height: 20px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-avatar] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="user"] [data-lh-message-avatar] {
   display: none;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-bubble] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-bubble] {
   min-width: 0;
   border: 0 !important;
   border-radius: 0 !important;
@@ -688,7 +695,7 @@
   box-shadow: none !important;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] {
   max-width: min(549px, 78%);
   border: 1px solid rgba(166, 93, 18, 0.06) !important;
   border-radius: 16px 16px 4px 16px !important;
@@ -700,15 +707,15 @@
   line-height: 22px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] * {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] * {
   color: var(--hermit-ink);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-author] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-author] {
   display: none;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-meta] {
   display: flex;
   min-height: 24px;
   align-items: center;
@@ -716,50 +723,42 @@
   margin-bottom: 12px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta]::before {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  background: var(--hermit-selected);
-  color: var(--hermit-accent);
-  content: "✣";
-  font-size: 14px;
-  line-height: 24px;
-  text-align: center;
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-meta]::before {
+  content: none;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta] strong {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-meta] strong {
   color: var(--hermit-accent);
   font-size: 14px;
   font-weight: 500;
   line-height: 22px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-meta-note] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-meta-note] {
   color: var(--hermit-muted);
   font-size: 12px;
   font-weight: 400;
   line-height: 20px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] {
   max-width: 728px;
   color: var(--hermit-ink);
   font-size: 16px;
   line-height: 28px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] p {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] p {
   margin: 0 0 16px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] p:last-child,
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] ul:last-child,
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] ol:last-child {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] p:last-child,
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] ul:last-child,
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] ol:last-child {
   margin-bottom: 0;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] :is(h1, h2, h3, h4) {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] :is(h1, h2, h3, h4) {
   margin: 24px 0 8px;
   color: var(--hermit-ink);
   font-family: var(--font-noto-stack, "Noto Serif SC", serif);
@@ -768,14 +767,14 @@
   line-height: 32px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] :is(ul, ol) {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] :is(ul, ol) {
   display: grid;
   gap: 4px;
   margin: 0 0 16px;
   padding-left: 24px;
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] blockquote {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] blockquote {
   margin: 16px 0;
   border-left: 3px solid var(--hermit-accent);
   background: var(--hermit-subtle);
@@ -783,7 +782,7 @@
   color: var(--hermit-secondary);
 }
 
-:global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] strong {
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] strong {
   color: var(--hermit-ink);
   font-weight: 700;
 }
@@ -1176,7 +1175,7 @@
     display: block;
   }
 
-  .chatLayoutWithReader .conversation {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page .chatLayoutWithReader [data-lh-hermit-conversation] {
     display: none;
   }
 
@@ -1195,8 +1194,8 @@
 
 @media (max-width: 767px) {
   .pageHeader {
-    min-height: 120px;
-    padding: 24px 0 12px;
+    min-height: 0;
+    padding: 0;
   }
 
   .pageHeader :global(h1) {
@@ -1216,13 +1215,13 @@
     border-radius: 10px;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start],
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-conversation] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start],
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-conversation] {
     min-height: calc(100dvh - 8rem);
     padding: 20px 0 12px;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-hermit-start-inner] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-inner] {
     min-height: calc(100dvh - 10rem);
   }
 
@@ -1236,11 +1235,11 @@
     line-height: 22px;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-input] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-input] {
     padding: 14px 16px 12px;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-textarea] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-textarea] {
     min-height: 52px;
     font-size: 15px;
     line-height: 26px;
@@ -1262,7 +1261,7 @@
     display: none;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-chat-submit] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit] {
     width: auto;
     min-width: 76px;
     padding-inline: 12px;
@@ -1279,21 +1278,21 @@
     max-width: 42vw;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="assistant"] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="assistant"] {
     grid-template-columns: 28px minmax(0, 1fr);
     gap: 8px;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-avatar] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-avatar] {
     width: 28px;
     height: 28px;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-row][data-role="user"] [data-lh-message-bubble] {
     max-width: 90%;
   }
 
-  :global(html[data-lighthouse-interface="classic"]) .page [data-lh-message-prose] {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-message-prose] {
     font-size: 15px;
     line-height: 26px;
   }
@@ -1316,3 +1315,11 @@
     line-height: 26px;
   }
 }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-conversation] > *,
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer],
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-main] {
+  min-width: 0;
+  max-width: 100%;
+}
+.inputToolsLeft { min-width: 0; }
+.formatHint { white-space: normal; }

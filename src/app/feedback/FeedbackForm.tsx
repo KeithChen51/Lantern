@@ -238,12 +238,9 @@ export function FeedbackForm({ initialSourcePath }: { initialSourcePath: string 
           disabled={isSubmitting}
         />
 
-        <LhCallout tone="neutral" title="提交说明">
+        <LhCallout tone="neutral" title="反馈位置">
           <span data-lh-feedback-context className="block">
             反馈页面：<span className="font-[var(--weight-bold)] text-ink">{sourcePathLabel}</span>
-          </span>
-          <span className="mt-2 block border-t border-current/15 pt-2">
-            反馈将进入内部问题列表。请勿填写客户个人信息、账号、密钥等敏感信息。
           </span>
         </LhCallout>
 

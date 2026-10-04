@@ -5,11 +5,11 @@
 This is the active platform token contract for Lighthouse product UI. V3 is the implementation baseline for the non-home pages in the approved Figma system. The Heart / 本心 homepage keeps its existing brand cover and uses the same shell only after the cover transitions into the product surface.
 
 - Layer: `lighthouse-product-ui`
-- Runtime counterpart: `src/app/globals.css`
+- Runtime counterpart: `src/app/visual-v3.css`; legacy homepage tokens remain in `src/app/globals.css`
 - Active HTML spec: `docs/design/lighthouse-classic-amber-visual-spec.html`
 - Not a source for: official service-brand marks, VI lockups, campaign posters, or H5 output assets
 
-Earlier palette, kit, and campaign HTML explorations are archived and are not runtime sources. A token is active only when this document, the browser visual spec, the runtime CSS, and the relevant component contract agree.
+Obsolete palette and kit HTML explorations were removed from the repository; brand and campaign assets remain separate from runtime sources. A token is active only when this document, the browser visual spec, the runtime CSS, and the relevant component contract agree.
 
 ## V3 Canonical Values
 

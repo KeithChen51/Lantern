@@ -230,13 +230,13 @@ export function AdminActionCasesClient() {
           </div>
 
           <div className={styles.fieldGrid}>
-            <LhTextField label="Slug" value={form.slug} onChange={(event) => updateField("slug", event.target.value)} />
-            <LhTextField label="日期" type="date" value={form.date} onChange={(event) => updateField("date", event.target.value)} />
-            <LhTextField label="案例标题" value={form.title} onChange={(event) => updateField("title", event.target.value)} className={styles.fullField} />
-            <LhTextField label="标签" helperText="用逗号分隔" value={form.tags} onChange={(event) => updateField("tags", event.target.value)} className={styles.fullField} />
+            <LhTextField id="action-case-slug" label="Slug" value={form.slug} onChange={(event) => updateField("slug", event.target.value)} />
+            <LhTextField id="action-case-date" label="日期" type="date" value={form.date} onChange={(event) => updateField("date", event.target.value)} />
+            <LhTextField id="action-case-title" label="案例标题" value={form.title} onChange={(event) => updateField("title", event.target.value)} className={styles.fullField} />
+            <LhTextField id="action-case-tags" label="标签" helperText="用逗号分隔" value={form.tags} onChange={(event) => updateField("tags", event.target.value)} className={styles.fullField} />
           </div>
-          <LhTextArea label="摘要" value={form.summary} onChange={(event) => updateField("summary", event.target.value)} />
-          <LhTextArea label="Markdown 正文" value={form.markdown} onChange={(event) => updateField("markdown", event.target.value)} className={styles.markdownField} />
+          <LhTextArea id="action-case-summary" label="摘要" value={form.summary} onChange={(event) => updateField("summary", event.target.value)} />
+          <LhTextArea id="action-case-markdown" label="Markdown 正文" value={form.markdown} onChange={(event) => updateField("markdown", event.target.value)} className={styles.markdownField} />
           <div className={styles.editorActions}>
             <LhButton
               type="button"

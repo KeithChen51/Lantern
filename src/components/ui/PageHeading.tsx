@@ -10,7 +10,7 @@ interface PageHeadingProps {
 /** Shared V3 page hierarchy; the Heart landing retains its own brand composition. */
 export function PageHeading({ title, description, titleAdornment, children }: PageHeadingProps) {
   return (
-    <header data-lh-v3-heading>
+    <header data-lh-v3-heading data-lh-page-heading>
       <div data-lh-v3-heading-copy>
         <div data-lh-v3-heading-title>
           <h1>{title}</h1>

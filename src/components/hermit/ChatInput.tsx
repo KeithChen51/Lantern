@@ -158,7 +158,7 @@ export function ChatInput({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={documentContext ? "围绕当前文档继续提问…" : "描述客户状态、现场限制和需要判断的问题"}
+            placeholder={documentContext ? "围绕当前文档继续提问…" : "把现场情况告诉路引，或上传文件一起分析…"}
             disabled={isLoading}
             rows={1}
           />
