@@ -10,6 +10,8 @@ The service-brand VI is an upstream brand asset layer. It should inform brand co
 
 See `lighthouse-platform-visual-system.md` for the layer boundary. Use `tokens.md`, `components.md`, `patterns.md`, and `do-dont.md` as the first platform design-system contract.
 
+路引产品定义以 [hermit-authoritative-definition.md](hermit-authoritative-definition.md) 及其指定的 Figma 版本为准。
+
 ## Recommended Read Order
 
 1. `lighthouse-platform-visual-system.md`: confirm the boundary between service-brand VI and Lighthouse product UI.
