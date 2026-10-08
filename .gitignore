@@ -50,6 +50,7 @@ knowledge-vectors.json
 
 # Runtime uploads
 /storage/uploads/
+/storage/knowledge/
 
 # Local code understanding artifacts
 .understand-anything/

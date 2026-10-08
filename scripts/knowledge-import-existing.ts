@@ -3,8 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { ACTION_CASES, isMarkdownActionCase } from "../src/app/action/action-cases";
-import { prisma } from "../src/infrastructure/db";
-import { getKnowledgeHub } from "../src/modules/knowledge-hub/runtime";
+import { closeKnowledgeHub, getKnowledgeHub, getKnowledgeHubStore } from "../src/modules/knowledge-hub/runtime";
 import { importSchema } from "../src/modules/knowledge-hub/service";
 
 async function main() {
@@ -30,11 +29,11 @@ async function main() {
   const hub = getKnowledgeHub();
   for (const input of inputs) {
     // Migration is one-way. Never overwrite a resource maintained in the hub.
-    const existing = await prisma.hubResource.findUnique({ where: { id: input.id }, select: { id: true } });
+    const existing = await getKnowledgeHubStore().transaction(tx => tx.getResource(input.id));
     if (existing) { console.log(JSON.stringify({ id: input.id, skipped: true, reason: "already managed in hub" })); continue; }
     const result = await hub.import(input);
     if (values.publish) await hub.publish(result.resourceId, result.versionId);
     console.log(JSON.stringify({ ...result, published: values.publish }));
   }
 }
-main().catch(error => { console.error(error instanceof Error ? error.message : "Import failed"); process.exitCode = 1; }).finally(() => prisma.$disconnect());
+main().catch(error => { console.error(error instanceof Error ? error.message : "Import failed"); process.exitCode = 1; }).finally(() => closeKnowledgeHub());

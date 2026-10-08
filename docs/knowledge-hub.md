@@ -1,6 +1,6 @@
 # 灯塔知识服务（首期，无账号依赖）
 
-关联需求：<https://github.com/KeithChen51/Lantern/issues/4>。
+关联需求：<https://github.com/KeithChen51/Lantern/issues/4>、<https://github.com/KeithChen51/Lantern/issues/10>。
 
 知识中台属于灯塔底层能力。人员从现有搜索入口进入 `/search`，Agent 通过 CLI 或 stdio MCP 获取同一资源、版本和引用。维护也走本地 CLI/MCP，不增加一级导航、上传表单、登录页、用户、管理员或权限模型。
 
@@ -20,6 +20,29 @@
 ID 使用 1–120 位字母、数字、点、下划线、连字符，首位为字母或数字，大小写敏感（新表使用 utf8mb4_bin）。导入脚本使用 `brand-whitepaper`、`brand-guide`、`case-<slug>`、`knowledge-<file-stem>`。旧格式 `action-case:<slug>` 应在客户端显式映射，不能每次导入生成新 ID。
 
 ## 初始化与内容切换
+
+### 轻量本地预览（SQLite，无需 Docker）
+
+使用 Node.js 22.13 及以上（推荐 Node.js 24），在 `.env.local` 设置：
+
+```dotenv
+KNOWLEDGE_HUB_DRIVER=sqlite
+KNOWLEDGE_HUB_SQLITE_PATH=storage/knowledge/lantern.sqlite
+NEXT_PUBLIC_SHOW_GAMES=true
+```
+
+运行 `npm run hub:import-existing -- --dry-run` 检查真实仓库导入清单，再运行
+`npm run hub:import-existing -- --publish` 导入并发布白皮书、案例和知识文档。首次访问自动建表，
+无需 Prisma migration 或单独数据库服务。导入完成后设置
+`KNOWLEDGE_HUB_ENABLED=true` 并重启 `npm run dev`。CLI、MCP、网页使用同一 SQLite 文件。
+
+路径相对于进程工作目录，跨目录启动时应设置绝对路径；`storage/knowledge/` 已加入 Git 忽略。
+SQLite 只服务知识中台，其他模块仍使用原有 MySQL 配置。驱动不会在失败时自动切换，也不会把
+已有 MySQL 数据自动复制到 SQLite。切换路径后需要重启进程。停止所有使用数据库的进程后再备份；
+运行中使用 WAL，请勿只复制主文件。重复导入跳过已有资源，不覆盖中台维护内容；之前导入但未发布的草稿
+仍需显式发布。
+
+### MySQL
 
 1. 配置 MySQL `DATABASE_URL`，执行 `npm run db:generate` 和 `npm run db:deploy`。CLI 自动读取当前目录 `.env.local`、`.env`；已有进程环境优先。不要用生产数据库跑测试。
 2. `npm run hub:import-existing -- --dry-run` 检查导入清单，不写数据库。
