@@ -61,15 +61,23 @@ SQLite 仅作为单实例知识存储，其他业务模块仍有其原数据库�
 - SQLite 已导入 22 个已发布资源；HTTP 与独立打包 CLI 读取同一文档版本，完整 JSON 一致。
 - 真实 embedding 检索命中取送车投诉案例，保留资源/版本 ID；冷启动实测约 45 秒，仍依赖网关响应时间。
 - 知识片段 embedding 最多 4 路并发，维持原有相关性筛选规则。
-- 自动化测试 154 项通过，浏览器样式测试使用本机 Chrome（Edge 在本环境无 headless 输出）。
-- 真实模型网关仍返回 `401 not_authorized`，真实问答、文档追问及业务质量验收未通过，不能据此宣布正式可用。
+- 自动化测试 156 项通过，浏览器样式测试使用本机 Chrome（Edge 在本环境无 headless 输出）。
+- 原先 `401 not_authorized` 来自验收进程继承的其他 `OPENAI_API_KEY`，并非用户 `.env.local` 中的密钥。显式加载该文件后网关返回 200；真实模型调用与附件读取已通过，用户无需更换该组配置。
 - Linux x64 镜像构建通过；容器内真实 DSH 工具/文本/取消 smoke 通过，健康检查通过。
-- 最终镜像约 204 MB；断网初始化 22 个知识资源通过；HTTP/容器 CLI 读取一致，重启后版本保留。
-- 运行时附带许可证清单；部分上游包未附许可证正文，详见 `runtime-manifest.json.licenseInventory.missingThirdPartyLicenseText`，正式分发前需补齐。禁用的 MCP 包上游缺失两个默认 export，记录在 `unresolvedSourceExports`，不用于路引执行路径。
+- 导出的 Linux 镜像约 232 MB；断网初始化 22 个知识资源通过；HTTP/容器 CLI 读取一致，重启后版本保留。
+- 运行时附带来源、版本、许可证正文和 SHA-256；Linux 清单 `runtime-manifest.json.licenseInventory.missingThirdPartyLicenseText` 为 0。禁用的 MCP 包上游缺失两个默认 export，记录在 `unresolvedSourceExports`，不用于路引执行路径。
+
+- 正式工具参数映射到 DSH 支持的标量声明，原有 Zod 边界校验保留；增加就绪握手，防止工具注册失败后静默降级。
+- PDF 解析的原生 canvas 与 worker 明确进入 Next standalone；PDF、DOCX、TXT、Markdown 上传均返回 ready。
+- 知识片段保留文档标题后，“极端天气救援”实测相关性从 0.538 提升到 0.599，最低门槛仍为 0.55。
+
+- 真实模型业务验收（18:05–18:12）：4/4 场景的流式回答、文档卡片、按版本读取和选中文档追问通过；无依据问题未引用文档或伪造库存；独立容器 CLI 比对 7/7 份版本与正文一致。
+- 真实附件问答读取到了只存在于上传文件中的合成核验代号，213 次文本增量，无错误事件。
+- 人工抽查：回答能区分价值判断与参悟案例、承接文档追问，并说明无依据边界。一次追问中额外文档重读失败，模型明确标明未能重新核对；仍需业务人员审核具体建议，机器通过不等于正式操作规范或生产验收。
 
 ## 导入本轮验证镜像
 
-这是一份待完成真实模型验收的候选镜像，不代表已发布或已部署到内网。
+这是一份已通过本轮机器验收、待业务审阅的候选镜像，不代表已发布或已部署到内网。
 
 ```sh
 docker load -i lantern-hermit-linux-x64-20261008.tar
