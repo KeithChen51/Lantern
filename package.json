@@ -22,7 +22,10 @@
     "db:seed": "prisma db seed",
     "hub": "tsx scripts/knowledge-hub.ts",
     "hub:mcp": "tsx scripts/knowledge-mcp.ts",
-    "hub:import-existing": "tsx scripts/knowledge-import-existing.ts"
+    "hub:import-existing": "tsx scripts/knowledge-import-existing.ts",
+    "package:hermit-runtime": "node scripts/package-hermit-runtime.mjs",
+    "check:hermit-runtime": "tsx scripts/check-hermit-runtime.ts",
+    "test:hermit-runtime": "tsx scripts/hermit-dsh-smoke.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

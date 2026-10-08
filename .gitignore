@@ -98,3 +98,7 @@ knowledge-vectors.json
 
 # Local Netlify folder
 .netlify
+
+# Generated deployment-local DSH carrier (platform-specific)
+/runtime/
+/release/

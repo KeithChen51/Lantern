@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
-import { mkdtemp, readFile, writeFile, rm, access } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -13,19 +13,8 @@ type Harness = { run(prompt: string): Promise<{ finalResponse: string }>; close(
 type Sdk = { DeepSeekHarness: new (options: Record<string, unknown>) => Harness };
 const nativeImport = new Function("url", "return import(url)") as (url: string) => Promise<Sdk>;
 let activeRuns = 0;
-export const DSH_SUPPORTED_VERSION = "0.2.0-rc.2";
-
-export async function verifyDshInstallation(root = process.env.HERMIT_DSH_ROOT) {
-  if (!root || !path.isAbsolute(root)) throw new Error("请配置 HERMIT_DSH_ROOT 为匹配版本的 DSH 构建目录。");
-  const sdkPath = path.join(root, "packages/sdk/client/lib/index.js");
-  const bin = path.join(root, "apps/cli/lib/bin.js");
-  for (const relative of ["packages/sdk/client/package.json", "packages/sdk/protocol/package.json", "packages/core/tools/package.json", "packages/llm/llm-pi-ai/package.json", "apps/cli/package.json"]) {
-    const metadata = JSON.parse(await readFile(path.join(root, relative), "utf8"));
-    if (metadata.version !== DSH_SUPPORTED_VERSION) throw new Error(`路引适配器需要 DSH ${DSH_SUPPORTED_VERSION} 的 SDK 和运行时。`);
-  }
-  await Promise.all([access(sdkPath), access(bin), access(path.join(root, "packages/core/tools/lib/index.js"))]);
-  return { root, sdkPath, bin };
-}
+export { DSH_SUPPORTED_VERSION, verifyDshInstallation } from "./dsh-installation";
+import { verifyDshInstallation } from "./dsh-installation";
 
 /** One isolated runtime per request: no client-selected session, cwd or profile. */
 export async function runDshTurn(input: {
@@ -78,11 +67,11 @@ export async function runDshTurn(input: {
       ...["persistent-bash", "persistent-pwsh", "terminal-bash", "terminal-pwsh", "pty", "llm-deepseek"].map(id => ({ id, disabled: true })),
       { id: "tools", config: { mode: "native" } },
       { insert: [
-        { id: "hermit-provider", name: "@deepseek-ai/dsh-llm-pi-ai", config: { providers: { "lantern-gateway": {
+        { id: "hermit-provider", name: pathToFileURL(installation.providerPath).href, config: { providers: { "lantern-gateway": {
           apiKeyEnv: "HERMIT_MODEL_KEY", api: input.provider.apiMode === "responses" ? "openai-responses" : "openai-completions",
           baseURL: input.provider.baseURL, models: [{ id: input.model, name: input.model, contextWindow: 32768 }], retryPolicy: { mode: "normal", maxRetries: 0 },
         } } } },
-        { id: "hermit-tools", name: pathToFileURL(plugin).href, config: { bridge: `http://127.0.0.1:${address.port}`, toolsModule: pathToFileURL(path.join(installation.root, "packages/core/tools/lib/index.js")).href, tools: toolSpecs } },
+        { id: "hermit-tools", name: pathToFileURL(plugin).href, config: { bridge: `http://127.0.0.1:${address.port}`, toolsModule: pathToFileURL(installation.toolsPath).href, tools: toolSpecs } },
       ] },
     ];
     // Non-standard gateway headers require the provider patch to resolve the
