@@ -10,9 +10,9 @@
 
 - `HERMIT_RUNTIME=dsh`
 - `KNOWLEDGE_HUB_ENABLED=true`
-- 已安装目标版本为 `0.2.0-rc.2` 的 DSH，并配置绝对路径 `HERMIT_DSH_ROOT`
+- 已按[独立运行时说明](./hermit-runtime-package.md)打包 DSH `0.2.0-rc.2`；默认使用 `runtime/hermit-dsh`，开发时才覆盖绝对路径 `HERMIT_DSH_ROOT`
 - 模型网关和 embedding 配置可用，且中台已有已发布资源
-- 若要启用第二调用方比对，运行脚本的进程环境中要有连接同一中台的 `DATABASE_URL`
+- 第二调用方需连接同一中台：MySQL 使用同一 `DATABASE_URL`；SQLite 使用 `KNOWLEDGE_HUB_DRIVER=sqlite` 与同一数据库的绝对路径 `KNOWLEDGE_HUB_SQLITE_PATH`
 
 模型密钥、数据库连接串和受控实例 Cookie 只放在进程环境中。脚本允许使用 `HERMIT_ACCEPTANCE_BEARER_TOKEN` 或 `HERMIT_ACCEPTANCE_COOKIE` 访问需要认证的受控实例，但不会读取它们生成报告，也不会把它们写入命令参数或仓库文件。
 
@@ -58,7 +58,7 @@ GET /api/resources/{resourceId}?version={versionId}
 
 它会检查响应状态、`X-Resource-Version`、JSON 中的资源和版本编号、发布时间以及 Markdown 正文。随后用同一份历史对话和该版本作为 `documentContext` 发起追问，验证文档上下文可以继续使用。
 
-最后一个场景是无依据边界：询问月球基地推进器燃料库存和发射窗口。脚本先检查中台搜索为空，再检查回答没有 `data-document`。这两个结果只能证明边界结构；回答是否明确拒绝编造库存、日期和引用，仍由人工复核。
+最后一个场景是无依据边界：询问月球基地推进器燃料库存和发射窗口。脚本记录关键词搜索候选数量，并检查回答没有 `data-document`。关键词重合不代表存在有效依据，因此不强制要求搜索为空。回答是否明确拒绝编造库存、日期和引用，仍由人工复核。
 
 ## 第二调用方比对
 

@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.7
+# Build dependencies and native addons on the same Linux/amd64 target as runtime.
+FROM node:24.11.1-bookworm-slim AS dsh-build
+ARG DSH_COMMIT=639ed015397290b3745d163aafe02ffee4aa3f84
+RUN apt-get update && apt-get install -y --no-install-recommends git python3 make g++ musl-tools ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /build/dsh
+RUN git init && git remote add origin https://github.com/deepseek-ai/deepseek-harness.git \
+    && git fetch --depth 1 origin "$DSH_COMMIT" && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = "$DSH_COMMIT"
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate && pnpm install --frozen-lockfile
+# Compile host libraries only. No web frontend or desktop application is shipped.
+RUN pnpm run build:native-system \
+    && node --max-old-space-size=4096 node_modules/typescript/bin/tsc -b tsconfig.host.json \
+    && pnpm exec tsdown --env.DSH_BUILD_FACE host
+# The root build script builds only the host addon; the carrier validates all
+# declared Linux native assets, including landlock-run and both libc variants.
+RUN pnpm exec tsx native/system/scripts/build.ts
+
+FROM dsh-build AS dsh-package
+COPY scripts/package-hermit-runtime.mjs /carrier/scripts/package-hermit-runtime.mjs
+COPY scripts/hermit-runtime/launcher.mjs /carrier/scripts/hermit-runtime/launcher.mjs
+RUN node /carrier/scripts/package-hermit-runtime.mjs --source /build/dsh --output /build/hermit-dsh
+
+FROM node:24.11.1-bookworm-slim AS lantern-build
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY . .
+RUN npm run db:generate
+COPY --from=dsh-package /build/hermit-dsh /app/runtime/hermit-dsh
+RUN npm run check:hermit-runtime && npm run test:hermit-runtime
+# A prebuilt index is supplied as a named context; no model secrets in build layers.
+COPY --from=knowledge knowledge-vectors.json /app/src/lib/hermit/knowledge/knowledge-vectors.json
+ENV HERMIT_KNOWLEDGE_USE_PREBUILT=true HERMIT_BUNDLE_REQUIRED=true
+RUN npm run build
+# Bundle just the import CLI, keeping repository content for first-run initialization.
+RUN node scripts/package-knowledge-cli.mjs
+
+FROM node:24.11.1-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 \
+    HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite \
+    KNOWLEDGE_HUB_SQLITE_PATH=/data/knowledge/lantern.sqlite
+WORKDIR /app
+COPY --from=lantern-build --chown=node:node /app/.next/standalone ./
+COPY --from=lantern-build --chown=node:node /app/release/knowledge-cli ./knowledge-cli
+RUN mkdir -p /data/knowledge && chown -R node:node /data
+USER node
+EXPOSE 3000
+VOLUME ["/data"]
+# Do not auto-import/publish into an existing knowledge store on every restart.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:3000/hermit').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "server.js"]

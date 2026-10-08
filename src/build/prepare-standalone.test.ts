@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyStandaloneAssets } from "./prepare-standalone";
 
 function createTempProject() {
@@ -16,6 +16,25 @@ function createTempProject() {
 }
 
 describe("prepare standalone assets", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("refuses deployment output without a required DSH carrier", () => {
+    vi.stubEnv("HERMIT_BUNDLE_REQUIRED", "true");
+    expect(() => copyStandaloneAssets(createTempProject())).toThrow("DSH runtime missing");
+  });
+
+  it("copies a matching carrier and rejects a foreign platform", () => {
+    const projectRoot = createTempProject();
+    const runtime = path.join(projectRoot, "runtime", "hermit-dsh");
+    fs.mkdirSync(runtime, { recursive: true });
+    const manifest = { format: 1, dshVersion: "0.2.0-rc.2", platform: process.platform, arch: process.arch };
+    fs.writeFileSync(path.join(runtime, "runtime-manifest.json"), JSON.stringify(manifest));
+    fs.writeFileSync(path.join(runtime, "launcher.mjs"), "carrier");
+    copyStandaloneAssets(projectRoot);
+    expect(fs.readFileSync(path.join(projectRoot, ".next", "standalone", "runtime", "hermit-dsh", "launcher.mjs"), "utf8")).toBe("carrier");
+    fs.writeFileSync(path.join(runtime, "runtime-manifest.json"), JSON.stringify({ ...manifest, platform: "foreign" }));
+    expect(() => copyStandaloneAssets(projectRoot)).toThrow("version/platform");
+  });
   it("copies public and Next static assets into the standalone server output", () => {
     const projectRoot = createTempProject();
 

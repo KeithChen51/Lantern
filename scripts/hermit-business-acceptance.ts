@@ -600,7 +600,7 @@ async function runNoEvidence(config: RunnerConfig): Promise<NoEvidenceResult> {
   const items = searchItems(searchResponse.json);
   const searchAssertions: Assertion[] = [
     failOrBlocked("no-evidence-search-http-200", searchResponse.status === 200, searchResponse, searchResponse.status === 0 ? `请求失败：${searchResponse.error ?? "unknown error"}` : `HTTP ${searchResponse.status}`),
-    failOrBlocked("no-evidence-search-empty", searchResponse.status === 200 && items.length === 0, searchResponse, `published search items=${items.length}`),
+    assertion("no-evidence-search-candidates", "skipped", `keyword search returned ${items.length} candidates; keyword overlap is not proof of relevant evidence, checked through the answer and document citations below`),
   ];
   const chat = await runChat(config, [{ id: randomUUID(), role: "user", parts: [{ type: "text", text: HERMIT_ACCEPTANCE_NO_EVIDENCE.question }] }], undefined, false);
   const boundaryAssertion = assertion("no-document-citation", chat.documentCards.length === 0 ? "pass" : "fail", `document cards=${chat.documentCards.length}`);
@@ -729,7 +729,7 @@ function redacted(value: string): string {
   return value
     .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, "Bearer [REDACTED]")
     .replace(/\b(?:sk|rk|pk)(?:-[A-Za-z0-9]+)?-[A-Za-z0-9_-]{12,}\b/gi, "[REDACTED_KEY]")
-    .replace(/\b(?:OPENAI_API_KEY|EMBEDDING_API_KEY|HERMIT_MODEL_KEY|DATABASE_URL|HERMIT_ACCEPTANCE_BEARER_TOKEN)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
+    .replace(/\b(OPENAI_API_KEY|EMBEDDING_API_KEY|HERMIT_MODEL_KEY|DATABASE_URL|HERMIT_ACCEPTANCE_BEARER_TOKEN)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
     .replace(/(https?:\/\/)([^\s/:@]+):([^\s/@]+)@/gi, "$1[REDACTED]@")
     .replace(/([?&](?:token|api_key|apikey|key|secret|password)=)[^&\s]+/gi, "$1[REDACTED]");
 }
