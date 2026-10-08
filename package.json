@@ -1,6 +1,6 @@
 {
   "name": "lantern-app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
@@ -22,7 +22,10 @@
     "db:seed": "prisma db seed",
     "hub": "tsx scripts/knowledge-hub.ts",
     "hub:mcp": "tsx scripts/knowledge-mcp.ts",
-    "hub:import-existing": "tsx scripts/knowledge-import-existing.ts"
+    "hub:import-existing": "tsx scripts/knowledge-import-existing.ts",
+    "releases:sync": "node scripts/sync-releases.mjs",
+    "releases:check": "node scripts/sync-releases.mjs --check",
+    "prebuild": "npm run releases:check"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
