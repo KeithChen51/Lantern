@@ -178,6 +178,7 @@ type RunnerConfig = {
   requestTimeoutMs: number;
   secondCaller: "cli" | "none";
   cliRoot: string;
+  cliContainer?: string;
 };
 
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -373,8 +374,7 @@ function parseStream(body: string): ParsedStream {
     const type = stringValue(event.type) ?? "";
     if (type) eventTypes.push(type);
     if (type === "text-delta") {
-      const delta = stringValue(event.delta);
-      if (delta) text += delta;
+      if (typeof event.delta === "string") text += event.delta;
     }
     if (type === "error") hasErrorEvent = true;
     if (type === "data-document") {
@@ -644,6 +644,7 @@ function runChild(command: string, args: string[], cwd: string, timeoutMs: numbe
 }
 
 function parseLastJson(value: string): unknown {
+  try { return JSON.parse(value); } catch { /* launcher lines may precede JSON */ }
   const lines = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     try {
@@ -660,7 +661,11 @@ async function runCliGet(config: RunnerConfig, card: DocumentCard, expected: Res
   const inputPath = path.join(tempRoot, "get.json");
   try {
     await writeFile(inputPath, JSON.stringify({ id: card.resourceId, versionId: card.versionId }), "utf8");
-    const child = await runChild(process.execPath, ["--import", "tsx", "scripts/knowledge-hub.ts", "get", "--input", inputPath], config.cliRoot, config.requestTimeoutMs);
+    const child = config.cliContainer
+      ? await runChild("docker", ["exec", config.cliContainer, "node", "-e",
+        "const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process');const dir=fs.mkdtempSync(path.join(os.tmpdir(),'lantern-acceptance-'));try{const file=path.join(dir,'get.json');fs.writeFileSync(file,process.argv[1]);const r=cp.spawnSync(process.execPath,['knowledge-cli/hub.cjs','get','--input',file],{stdio:'inherit'});process.exitCode=r.status??1;}finally{fs.rmSync(dir,{recursive:true,force:true});}",
+        JSON.stringify({ id: card.resourceId, versionId: card.versionId })], config.cliRoot, config.requestTimeoutMs)
+      : await runChild(process.execPath, ["--import", "tsx", "scripts/knowledge-hub.ts", "get", "--input", inputPath], config.cliRoot, config.requestTimeoutMs);
     const parsed = parseLastJson(child.stdout);
     const actual = resourceMeta(parsed);
     const metadataMatches = !!actual && actual.id === expected.id && actual.title === expected.title && actual.source === expected.source && actual.versionId === expected.versionId && actual.versionNumber === expected.versionNumber;
@@ -692,7 +697,7 @@ async function runSecondCaller(config: RunnerConfig, scenarios: readonly Scenari
     };
   }
   try {
-    await access(path.join(config.cliRoot, "scripts", "knowledge-hub.ts"));
+    if (!config.cliContainer) await access(path.join(config.cliRoot, "scripts", "knowledge-hub.ts"));
   } catch {
     return {
       caller: "cli",
@@ -763,6 +768,8 @@ function makeConfig(): RunnerConfig {
   const timeout = numberValue(parsed.values["request-timeout-ms"], DEFAULT_TIMEOUT_MS);
   const requestedCaller = stringValue(parsed.values["second-caller"]) ?? process.env.HERMIT_ACCEPTANCE_SECOND_CALLER?.trim() ?? "cli";
   if (requestedCaller !== "cli" && requestedCaller !== "none") throw new Error("--second-caller must be cli or none.");
+  const cliContainer = process.env.HERMIT_ACCEPTANCE_CLI_CONTAINER?.trim();
+  if (cliContainer && !/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(cliContainer)) throw new Error("Invalid acceptance container name.");
   return {
     baseUrl,
     outputPath,
@@ -770,6 +777,7 @@ function makeConfig(): RunnerConfig {
     requestTimeoutMs: timeout,
     secondCaller: requestedCaller,
     cliRoot: path.resolve(process.env.HERMIT_ACCEPTANCE_CLI_ROOT?.trim() || process.cwd()),
+    cliContainer,
   };
 }
 
@@ -813,6 +821,7 @@ async function main() {
     for (const scenario of scenarios) {
       const result = await runScenario(config, scenario);
       report.scenarios.push(result);
+      console.log(JSON.stringify({ scenario: scenario.id, status: result.status }));
       report.manualReview.prompts.push(`${scenario.title}：${scenario.manualReviewPrompts.join("；")}`);
     }
     report.noEvidence = await runNoEvidence(config);

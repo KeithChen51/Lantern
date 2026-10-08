@@ -1,0 +1,2 @@
+# License bytes are verified against upstream SHA-256 values.
+scripts/hermit-runtime/licenses/*.txt -text

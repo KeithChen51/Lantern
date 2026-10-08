@@ -28,6 +28,7 @@ export async function runDshTurn(input: {
   const signal = AbortSignal.any([input.signal, lifetime.signal, AbortSignal.timeout(180_000)]);
   const token = randomBytes(32).toString("hex");
   let streamed = false;
+  let toolsReady = false;
   let calls = 0;
   const server = createServer(async (req, res) => {
     if (req.method !== "POST" || req.headers.authorization !== `Bearer ${token}` || signal.aborted) { res.writeHead(403).end(); return; }
@@ -35,6 +36,12 @@ export async function runDshTurn(input: {
       const chunks: Buffer[] = []; let bytes = 0;
       for await (const chunk of req) { bytes += chunk.length; if (bytes > 64_000) throw new Error("Tool request too large"); chunks.push(Buffer.from(chunk)); }
       const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      if (req.url === "/ready") {
+        const ready = z.object({ tools: z.array(z.string()).length(3) }).strict().parse(value);
+        if ([...ready.tools].sort().join(",") !== "attachment_read,knowledge_read,knowledge_search") throw new Error("Incomplete tools");
+        toolsReady = true;
+        res.writeHead(200, { "Content-Type": "application/json" }).end("{}"); return;
+      }
       if (req.url === "/text") {
         const data = z.object({ text: z.string().max(32_000) }).strict().parse(value);
         streamed = true; input.onText(data.text);
@@ -58,8 +65,15 @@ export async function runDshTurn(input: {
     const plugin = path.join(home, "hermit-plugin.mjs");
     await writeFile(plugin, await readFile(path.join(process.cwd(), "scripts/hermit-dsh-plugin.mjs")));
     const toolSpecs = Object.entries(input.tools).map(([name, tool]) => {
-      const schema = z.toJSONSchema(tool.schema) as { properties: Record<string, object>; required?: string[] };
-      return { name, description: tool.description, parameters: Object.fromEntries(Object.entries(schema.properties).map(([key, spec]) => [key, { ...spec, required: schema.required?.includes(key) ?? false }])) };
+      const schema = z.toJSONSchema(tool.schema, { io: "input" }) as { properties: Record<string, Record<string, unknown>>; required?: string[] };
+      // DSH's property DSL accepts only a subset of JSON Schema and rejects
+      // required:false, pattern and min/max keywords. Keep strict validation
+      // at the bridge in the original Zod schemas; advertise supported scalars.
+      return { name, description: tool.description, parameters: Object.fromEntries(Object.entries(schema.properties).map(([key, spec]) => {
+        if (!["string", "integer", "number", "boolean"].includes(String(spec.type))) throw new Error("Unsupported Hermit tool parameter");
+        const scalar = Object.fromEntries(Object.entries(spec).filter(([field]) => ["type", "description", "default", "enum", "const"].includes(field)));
+        return [key, { ...scalar, ...(schema.required?.includes(key) ? { required: true } : {}) }];
+      })) };
     });
     const patch = path.join(home, "hermit.patch.yml");
     // JSON is a YAML subset; model secrets are only injected through child env.
@@ -92,6 +106,7 @@ export async function runDshTurn(input: {
       env, provider: "lantern-gateway", model: input.model, maxTokens: 4096, requestTimeoutMs: 170_000, initializeTimeoutMs: 30_000 });
     signal.addEventListener("abort", abort, { once: true }); signal.throwIfAborted();
     const result = await harness.run(input.prompt); signal.throwIfAborted();
+    if (!toolsReady) throw new Error("路引资料工具未能初始化，请联系维护人员。");
     if (!streamed && result.finalResponse) input.onText(result.finalResponse);
     if (!streamed && !result.finalResponse.trim()) throw new Error("路引未能完成回答，请重试。");
     return result;

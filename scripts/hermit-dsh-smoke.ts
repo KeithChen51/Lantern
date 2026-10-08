@@ -2,8 +2,8 @@
 // No company credentials or documents are used.
 import { createServer } from "node:http";
 import assert from "node:assert/strict";
-import { z } from "zod";
 import { runDshTurn } from "../src/lib/hermit/dsh-runtime";
+import { createHermitAgentTools } from "../src/lib/hermit/agent-tools";
 
 async function main() {
 let requests = 0; let toolCalls = 0; let text = "";
@@ -25,12 +25,17 @@ const model = createServer(async (req, res) => {
 });
 await new Promise<void>(resolve => model.listen(0, "127.0.0.1", resolve));
 const address = model.address(); assert(address && typeof address !== "string");
-const schema = z.object({ query: z.string() });
-const tool = { description: "读取测试知识", schema, execute: async () => { toolCalls++; return { text: "求真" }; } };
+// Use the production schemas (including bounds, patterns and optional offsets),
+// so the smoke test catches incompatibility with DSH's parameter DSL.
+const tools = createHermitAgentTools({
+  hub: { get: async () => { throw new Error("unexpected read"); } },
+  search: async () => { toolCalls++; return { contextText: "求真" } as never; },
+  attachments: [], onDocument: () => {}, signal: controller.signal,
+});
 try {
   await runDshTurn({ prompt: "请查阅知识后回答。", system: "你是路引，请调用 knowledge_search 再回答。", model: "hermit-smoke",
     provider: { apiKey: "local-smoke-only", baseURL: `http://127.0.0.1:${address.port}/v1`, apiMode: "chat", headers: { "x-hermit-smoke": "checked" } },
-    tools: { knowledge_search: tool, knowledge_read: tool, attachment_read: tool } as unknown as Parameters<typeof runDshTurn>[0]["tools"],
+    tools,
     signal: AbortSignal.timeout(90000), onText: chunk => { text += chunk; },
   });
   assert.equal(toolCalls, 1); assert.equal(text, "已通过 DSH 查询灯塔知识。");
@@ -38,7 +43,7 @@ try {
   const started = Date.now();
   await assert.rejects(runDshTurn({ prompt: "cancel", system: "test", model: "hermit-smoke",
     provider: { apiKey: "local-smoke-only", baseURL: `http://127.0.0.1:${address.port}/v1`, apiMode: "chat", headers: {} },
-    tools: { knowledge_search: tool, knowledge_read: tool, attachment_read: tool } as unknown as Parameters<typeof runDshTurn>[0]["tools"],
+    tools,
     signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]), onText: () => { throw new Error("unexpected text after cancellation"); },
   }));
   assert(controller.signal.aborted);

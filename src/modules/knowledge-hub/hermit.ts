@@ -17,9 +17,12 @@ export async function searchHubForHermit(query: string, topK: number): Promise<R
     const resource = await hub.get(item.id, item.versionId);
     const relevant = [...resource.version.citations].sort((a, b) => terms.filter(t => b.text.toLowerCase().includes(t)).length - terms.filter(t => a.text.toLowerCase().includes(t)).length).slice(0, 3);
     for (const citation of relevant) {
-      const text = `${citation.heading}\n${citation.text}`;
+      // Generic section headings (e.g. "制度/流程优化建议") lose the case
+      // subject when embedded alone. Preserve the published resource title.
+      const heading = [resource.title, citation.heading].filter(Boolean).join(" / ");
+      const text = `${heading}\n${citation.text}`;
       const key = `${readEmbeddingConfig().baseUrl}:${model}:${createHash("sha256").update(text).digest("hex")}`;
-      chunks.push({ id: citation.id, resourceId: item.id, versionId: item.versionId, source: `资源 ${item.id} / 版本 ${item.versionId} / 第${citation.startLine}-${citation.endLine}行 / ${item.source}`, sourceType: item.type === "notice" ? "norm_file" : item.type === "case" ? "action_case" : "manual", evidenceTier: item.type === "notice" && item.validity === "effective" ? "exact" : "analogous", heading: citation.heading, content: citation.text, vector: vectors.get(key) ?? [] });
+      chunks.push({ id: citation.id, resourceId: item.id, versionId: item.versionId, source: `资源 ${item.id} / 版本 ${item.versionId} / 第${citation.startLine}-${citation.endLine}行 / ${item.source}`, sourceType: item.type === "notice" ? "norm_file" : item.type === "case" ? "action_case" : "manual", evidenceTier: item.type === "notice" && item.validity === "effective" ? "exact" : "analogous", heading, content: citation.text, vector: vectors.get(key) ?? [] });
     }
   }
   // Bound gateway load while avoiding up to 24 serial embedding requests on a cold start.

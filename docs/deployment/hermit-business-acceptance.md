@@ -34,6 +34,7 @@ npx tsx scripts/hermit-business-acceptance.ts `
 | `--limit` | 运行前 N 个汽车售后场景，默认 4；完整业务验收保持 4 个。 |
 | `--request-timeout-ms` | 单个 HTTP 或 CLI 调用的超时，默认 180000。 |
 | `HERMIT_ACCEPTANCE_CLI_ROOT` | 提供 `scripts/knowledge-hub.ts` 的项目根目录；默认使用当前目录。 |
+| `HERMIT_ACCEPTANCE_CLI_CONTAINER` | 可选，本机 Docker 验收容器名；使用 `docker exec` 执行镜像内的 `knowledge-cli/hub.cjs`，直接读取容器同一知识卷。 |
 | `--second-caller cli` / `HERMIT_ACCEPTANCE_SECOND_CALLER=cli` | 使用 CLI 的只读 `get` 命令核对回答引用的资源和版本，默认值。 |
 | `--second-caller none` | 跳过第二调用方；报告会标为 `blocked`，不能作为完整验收通过。 |
 | `HERMIT_ACCEPTANCE_BEARER_TOKEN` | 可选，受控实例的 Bearer token，仅进程内使用。 |

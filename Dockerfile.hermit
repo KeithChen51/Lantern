@@ -19,7 +19,7 @@ RUN pnpm exec tsx native/system/scripts/build.ts
 
 FROM dsh-build AS dsh-package
 COPY scripts/package-hermit-runtime.mjs /carrier/scripts/package-hermit-runtime.mjs
-COPY scripts/hermit-runtime/launcher.mjs /carrier/scripts/hermit-runtime/launcher.mjs
+COPY scripts/hermit-runtime /carrier/scripts/hermit-runtime
 RUN node /carrier/scripts/package-hermit-runtime.mjs --source /build/dsh --output /build/hermit-dsh
 
 FROM node:24.11.1-bookworm-slim AS lantern-build

@@ -31,4 +31,5 @@ export async function apply(ctx, config) {
       yield chunk;
     }
   });
+  await call('/ready', { tools: config.tools.map(tool => tool.name) });
 }
