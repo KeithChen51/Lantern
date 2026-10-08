@@ -340,7 +340,7 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
   }, [isOpen]);
 
   return (
-    <div ref={rootRef} data-lh-sidebar-notifications className={cn("relative", className)}
+    <div ref={rootRef} data-lh-sidebar-notifications className={cn("relative w-full", className)}
       onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false); }}
       onKeyDown={(event) => {
         if (event.key === "Escape" && isOpen) {
@@ -356,7 +356,7 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
         }}
         aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined}
         className={cn(
-          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-[background,border-color,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+          "relative grid min-h-11 w-full items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-[background,border-color,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
         )}
         aria-label={unread ? "通知，有版本更新" : "通知"} title="通知">
