@@ -17,6 +17,8 @@ const DSH_VERSION = '0.2.0-rc.2'
 const NODE_ENGINE = '^22.19.0 || >=24.0.0'
 const SCRIPT_ROOT = dirname(fileURLToPath(import.meta.url))
 const LAUNCHER_TEMPLATE = join(SCRIPT_ROOT, 'hermit-runtime', 'launcher.mjs')
+const LICENSE_MATERIALS_ROOT = join(SCRIPT_ROOT, 'hermit-runtime', 'licenses')
+const LICENSE_MATERIALS_MANIFEST = join(LICENSE_MATERIALS_ROOT, 'manifest.json')
 const EXPECTED_SOURCE_COMMIT = '639ed015397290b3745d163aafe02ffee4aa3f84'
 
 const SEED_PACKAGES = [
@@ -485,6 +487,75 @@ function hashFile(file) {
   return createHash('sha256').update(readFileSync(file)).digest('hex')
 }
 
+function loadLicenseMaterials() {
+  if (!existsSync(LICENSE_MATERIALS_MANIFEST)) {
+    fail('license materials manifest is missing: ' + LICENSE_MATERIALS_MANIFEST)
+  }
+  const manifest = readJson(LICENSE_MATERIALS_MANIFEST)
+  if (manifest.format !== 1 || !Array.isArray(manifest.materials)) {
+    fail('license materials manifest has unsupported format: ' + LICENSE_MATERIALS_MANIFEST)
+  }
+  const packages = new Map()
+  for (const material of manifest.materials) {
+    if (!material || typeof material !== 'object') fail('license material entry is invalid')
+    if (typeof material.packageName !== 'string' || typeof material.packageVersion !== 'string') {
+      fail('license material entry is missing package identity')
+    }
+    if (packages.has(material.packageName)) fail('duplicate license material for package ' + material.packageName)
+    if (typeof material.material !== 'string' || material.material.length === 0 || material.material.includes('..')) {
+      fail('license material path is invalid for ' + material.packageName)
+    }
+    if (!material.source || typeof material.source.url !== 'string' || typeof material.source.commit !== 'string' || typeof material.source.path !== 'string') {
+      fail('license material source is incomplete for ' + material.packageName)
+    }
+    if (typeof material.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(material.sha256)) {
+      fail('license material hash is invalid for ' + material.packageName)
+    }
+    const materialPath = resolve(LICENSE_MATERIALS_ROOT, material.material)
+    if (!isWithinPath(LICENSE_MATERIALS_ROOT, materialPath) || !existsSync(materialPath)) {
+      fail('license material file is missing for ' + material.packageName + ': ' + material.material)
+    }
+    const actualHash = hashFile(materialPath)
+    if (actualHash !== material.sha256.toLowerCase()) {
+      fail('license material hash mismatch for ' + material.packageName + ': expected ' + material.sha256 + ', got ' + actualHash)
+    }
+    packages.set(material.packageName, { ...material, materialPath, sha256: actualHash })
+  }
+  return packages
+}
+
+function copyPackageLicenseMaterial(name, manifest, target, licenseMaterials) {
+  const material = licenseMaterials.get(name)
+  if (material === undefined) return
+  if (manifest.version !== material.packageVersion) {
+    fail('license material version mismatch for ' + name + ': package is ' + manifest.version + ', material is ' + material.packageVersion)
+  }
+  if (material.declaredLicense !== undefined && manifest.license !== undefined && manifest.license !== material.declaredLicense) {
+    fail('license material expression mismatch for ' + name + ': package is ' + manifest.license + ', material is ' + material.declaredLicense)
+  }
+  const targetFile = join(target, 'LICENSE')
+  if (existsSync(targetFile)) {
+    const existingHash = hashFile(targetFile)
+    if (existingHash !== material.sha256) {
+      fail('package already has a different license text for ' + name + ': ' + targetFile)
+    }
+    return
+  }
+  copyFileSync(material.materialPath, targetFile)
+  chmodSync(targetFile, 0o644)
+}
+
+function licenseMaterialForManifest(material) {
+  return {
+    packageName: material.packageName,
+    packageVersion: material.packageVersion,
+    declaredLicense: material.declaredLicense ?? null,
+    material: material.material,
+    sha256: material.sha256,
+    source: material.source,
+  }
+}
+
 function listFiles(root) {
   const result = []
   const visit = (current) => {
@@ -573,6 +644,7 @@ function stageRuntime(options) {
   for (const root of ['packages', 'vendor', 'apps', join('native', 'system', 'packages')]) {
     walkWorkspace(join(source, root), packageMap)
   }
+  const licenseMaterials = loadLicenseMaterials()
   const rootNodeModules = join(output, 'node_modules')
   mkdirSync(rootNodeModules, { recursive: true })
   const staged = new Map()
@@ -622,6 +694,7 @@ function stageRuntime(options) {
     if (existsSync(target)) fail('refusing to overwrite staged path: ' + target)
     mkdirSync(target, { recursive: true })
     copyRuntimeTree(sourceDir, target, source, declaredRuntimeAssets(manifest))
+    copyPackageLicenseMaterial(name, manifest, target, licenseMaterials)
     writeFileSync(join(target, 'package.json'), JSON.stringify(manifest, null, 2) + '\n')
     const record = { name, sourceDir, target, manifest, workspaceDependencyRewrites: manifestResult.workspaceDependencyRewrites }
     staged.set(targetKey, record)
@@ -683,6 +756,7 @@ function stageRuntime(options) {
     }))
   const licensePackages = packages.map(packageRecord => {
     const prefix = packageRecord.path + '/'
+    const material = licenseMaterials.get(packageRecord.name)
     const licenseFiles = files
       .filter(file => file.path.startsWith(prefix))
       .filter(file => /(?:^|\/)(?:LICENSE|LICENCE|NOTICE|COPYING|PATENTS)(?:\.|$)/i.test(file.path.slice(prefix.length)))
@@ -693,6 +767,7 @@ function stageRuntime(options) {
       path: packageRecord.path,
       declaredLicense: packageRecord.license,
       licenseTextFiles: licenseFiles,
+      licenseMaterial: material === undefined ? null : licenseMaterialForManifest(material),
       missingLicenseText: licenseFiles.length === 0,
     }
   })
@@ -711,6 +786,7 @@ function stageRuntime(options) {
     unresolvedSourceExports,
     licenseInventory: {
       rootFiles: files.filter(file => file.path === 'LICENSE' || file.path === 'THIRD_PARTY_NOTICES.md').map(file => file.path),
+      materials: licensePackages.filter(record => record.licenseMaterial !== null).map(record => record.licenseMaterial),
       packages: licensePackages,
       missingPackageLicenseText: licensePackages.filter(record => record.missingLicenseText).map(record => ({
         name: record.name,
