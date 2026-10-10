@@ -236,6 +236,27 @@ export function AdminKnowledgeManager() {
   const [dropActive, setDropActive] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const directoryInputRef = React.useRef<HTMLInputElement>(null);
+  const modalOpen = Boolean(dialog || preview.loading || preview.resource || preview.error);
+  React.useEffect(() => {
+    if (!modalOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const modal = document.querySelector<HTMLElement>('[aria-modal="true"]');
+    const focusable = () => Array.from(modal?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex="0"]') ?? []);
+    (modal?.querySelector<HTMLElement>('input, select') ?? focusable()[0])?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDialog(null);
+        setPreview({ loading: false, resource: null, error: "" });
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      const first = items[0], last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.removeEventListener("keydown", onKeyDown); previousFocus?.focus(); };
+  }, [modalOpen]);
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
@@ -359,8 +380,10 @@ export function AdminKnowledgeManager() {
       setMessage(`已移动 ${items.length} 项到${folderId ? folders.find((folder) => folder.id === folderId)?.name ?? "目标文件夹" : "全部文件"}。`);
       setSelected(new Set());
       await loadData();
+      return true;
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "移动失败，请检查目标文件夹。");
+      return false;
     } finally {
       setBusy("");
       setDragTarget(null);
@@ -403,7 +426,7 @@ export function AdminKnowledgeManager() {
         setMessage(`已移入回收站 ${dialog.items.length} 项。`);
       } else if (dialog.kind === "move") {
         const folderId = value === "__root__" ? null : value || null;
-        await moveItems(selectedItems, folderId);
+        if (!(await moveItems(selectedItems, folderId))) return;
       }
       setDialog(null);
       setDialogValue("");
@@ -434,6 +457,7 @@ export function AdminKnowledgeManager() {
   }
 
   async function openPreview(id: string) {
+    setError("");
     const resource = resources.find((item) => item.id === id);
     setPreview({ loading: true, resource: null, error: "" });
     try {
@@ -753,6 +777,7 @@ export function AdminKnowledgeManager() {
             <div className={styles.toolbarActions}>
               <LhButton type="button" size="sm" variant="secondary" icon={icon("add")} onClick={() => { setDialog({ kind: "createFolder", parentId: view.kind === "folder" ? view.folderId : null }); setDialogValue(""); }}>新建文件夹</LhButton>
               {selectedItems.length > 0 && !isTrash && <>
+                {selectedItems.length === 1 && <LhButton type="button" size="sm" variant="quiet" icon={icon("edit")} onClick={() => { const item = selectedItems[0]; setError(""); setDialog({ kind: "rename", item }); setDialogValue((item.kind === "folder" ? folders : resources).find((entry) => entry.id === item.id)?.name ?? ""); }}>重命名</LhButton>}
                 <LhButton type="button" size="sm" variant="quiet" icon={icon("pin")} onClick={() => { setDialog({ kind: "move" }); setDialogValue("__root__"); }}>移动到…</LhButton>
                 <LhButton type="button" size="sm" variant="danger" icon={icon("delete")} onClick={() => setDialog({ kind: "trash", items: selectedItems })}>删除 {selectedItems.length} 项</LhButton>
               </>}
@@ -789,9 +814,9 @@ export function AdminKnowledgeManager() {
         </div>
       </section>
 
-      {dialog && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="knowledge-dialog-title"><form onSubmit={(event) => void submitDialog(event)}><div className={styles.modalHeader}><h2 id="knowledge-dialog-title">{dialog.kind === "createFolder" ? "新建文件夹" : dialog.kind === "rename" ? "重命名" : dialog.kind === "move" ? "移动到" : "确认移入回收站"}</h2><button type="button" className={styles.modalClose} onClick={() => setDialog(null)} aria-label="关闭">{icon("close")}</button></div>{dialog.kind === "trash" ? <p className={styles.modalCopy}>将 {dialog.items.length} 项移入回收站？删除后仍可在回收站恢复。</p> : dialog.kind === "move" ? <label className={styles.modalField}>目标文件夹<select value={dialogValue} onChange={(event) => setDialogValue(event.target.value)}><option value="__root__">全部文件（根目录）</option>{folders.filter((folder) => !folder.deleted && !selected.has(itemKey({ kind: "folder", id: folder.id }))).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label> : <label className={styles.modalField}>名称<input autoFocus value={dialogValue} onChange={(event) => setDialogValue(event.target.value)} placeholder="输入名称" /></label>}<div className={styles.modalActions}><LhButton type="button" size="sm" variant="quiet" onClick={() => setDialog(null)}>取消</LhButton><LhButton type="submit" size="sm" variant={dialog.kind === "trash" ? "danger" : "primary"} disabled={busy === "dialog"} icon={busy === "dialog" ? <LhLoadingGlyph label="处理中" /> : undefined}>{dialog.kind === "trash" ? "移入回收站" : dialog.kind === "move" ? "移动" : "保存"}</LhButton></div></form></div></div>}
+      {dialog && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="knowledge-dialog-title"><form onSubmit={(event) => void submitDialog(event)}><div className={styles.modalHeader}><h2 id="knowledge-dialog-title">{dialog.kind === "createFolder" ? "新建文件夹" : dialog.kind === "rename" ? "重命名" : dialog.kind === "move" ? "移动到" : "确认移入回收站"}</h2><button type="button" className={styles.modalClose} onClick={() => setDialog(null)} aria-label="关闭">{icon("close")}</button></div>{error && <LhCallout tone="danger" role="alert">{error}</LhCallout>}{dialog.kind === "trash" ? <p className={styles.modalCopy}>将 {dialog.items.length} 项移入回收站？删除后仍可在回收站恢复。</p> : dialog.kind === "move" ? <label className={styles.modalField}>目标文件夹<select value={dialogValue} onChange={(event) => setDialogValue(event.target.value)}><option value="__root__">全部文件（根目录）</option>{folders.filter((folder) => !folder.deleted && !selected.has(itemKey({ kind: "folder", id: folder.id }))).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label> : <label className={styles.modalField}>名称<input autoFocus value={dialogValue} onChange={(event) => setDialogValue(event.target.value)} placeholder="输入名称" /></label>}<div className={styles.modalActions}><LhButton type="button" size="sm" variant="quiet" onClick={() => setDialog(null)}>取消</LhButton><LhButton type="submit" size="sm" variant={dialog.kind === "trash" ? "danger" : "primary"} disabled={Boolean(busy)} icon={busy === "dialog" ? <LhLoadingGlyph label="处理中" /> : undefined}>{dialog.kind === "trash" ? "移入回收站" : dialog.kind === "move" ? "移动" : "保存"}</LhButton></div></form></div></div>}
 
-      {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{preview.error && <LhCallout tone="danger" icon={icon("warning")}>{preview.error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip><span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div><div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.version.publishedAt) || busy === "publish"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
+      {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{(preview.error || error) && <LhCallout tone="danger" role="alert" icon={icon("warning")}>{preview.error || error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip><span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div><div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.archived || preview.resource.version.publishedAt) || busy === "publish"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
     </div>
   );
 }
