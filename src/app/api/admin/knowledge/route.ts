@@ -1,6 +1,7 @@
 import { assertDatabaseConfigured, adminJsonError, requireAdminPortalFromHeaders } from "../../_admin";
 import { createKnowledgeManager, knowledgeManagerErrorResponse } from "@/modules/knowledge-hub/manager";
 import { HubError } from "@/modules/knowledge-hub/service";
+import { AppError } from "@/shared/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +12,9 @@ function assertSameOrigin(request: Request) {
   try {
     requestOrigin = new URL(request.url).origin;
   } catch {
-    throw new HubError("invalid", "请求地址不正确。");
+    throw new AppError("bad_request", "请求地址不正确。", 400);
   }
-  if (origin !== requestOrigin) throw new HubError("invalid", "写操作必须来自同源页面。");
+  if (origin !== requestOrigin) throw new AppError("forbidden", "写操作必须来自同源页面。", 403);
 }
 
 function errorResponse(error: unknown) {

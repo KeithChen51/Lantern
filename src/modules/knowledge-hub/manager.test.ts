@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "vitest";
 import type { PrismaClient } from "@prisma/client";
-import { HubError } from "./service";
+import { HubError, importSchema } from "./service";
 import { createKnowledgeManager, protectedKnowledgeIds } from "./manager";
 
 type AnyRow = Record<string, any>;
@@ -41,7 +41,9 @@ class MemoryManagerDb {
       const row = this.state.resources.find(item => item.id === where.id);
       if (row) Object.assign(row, structuredClone(update));
       else this.state.resources.push({ ...structuredClone(create), versions: [] });
-      return this.resourceRow(row ?? this.state.resources.at(-1));
+      const target = row ?? this.state.resources.at(-1);
+      if (!target) throw new Error("resource missing");
+      return this.resourceRow(target);
     },
   };
 
@@ -120,6 +122,8 @@ describe("knowledge manager", () => {
     const childId = (child as { folder: { id: string } }).folder.id;
     await expect(manager.apply({ action: "createFolder", name: "资料", parentId: null })).rejects.toMatchObject({ code: "conflict" });
     await expect(manager.apply({ action: "move", items: [{ kind: "folder", id: rootId }], folderId: childId })).rejects.toMatchObject({ code: "conflict" });
+    await expect(manager.apply({ action: "createFolder", name: ".", parentId: null })).rejects.toThrow();
+    await expect(manager.apply({ action: "createFolder", name: "带\u0001控制符", parentId: null })).rejects.toThrow();
   });
 
   it("trashes and restores a folder with its resource atomically", async () => {
@@ -146,6 +150,72 @@ describe("knowledge manager", () => {
     expect(db.state.folders.find(item => item.id === folderId)?.deleted).toBe(false);
   });
 
+  it("refuses to trash a folder containing a protected resource", async () => {
+    const { db, manager } = setup();
+    const folderResult = await manager.apply({ action: "createFolder", name: "系统资料", parentId: null });
+    const folderId = (folderResult as { folder: { id: string } }).folder.id;
+    seedResource(db, protectedKnowledgeIds[1], "核心价值", folderId);
+    await expect(manager.apply({ action: "trash", items: [{ kind: "folder", id: folderId }] })).rejects.toMatchObject({ code: "conflict" });
+    expect(db.state.folders.find(item => item.id === folderId)?.deleted).toBe(false);
+    expect(db.state.resources.find(item => item.id === protectedKnowledgeIds[1])?.archived).toBe(false);
+  });
+
+  it("restores only the selected resource when its folder was trashed", async () => {
+    const { db, manager } = setup();
+    const folderResult = await manager.apply({ action: "createFolder", name: "资料", parentId: null });
+    const folderId = (folderResult as { folder: { id: string } }).folder.id;
+    seedResource(db, "first", "第一份", folderId);
+    seedResource(db, "second", "第二份", folderId);
+    await manager.apply({ action: "trash", items: [{ kind: "folder", id: folderId }] });
+    await manager.apply({ action: "restore", items: [{ kind: "resource", id: "first" }] });
+    expect(db.state.folders.find(item => item.id === folderId)?.deleted).toBe(false);
+    expect(db.state.resources.find(item => item.id === "first")?.archived).toBe(false);
+    expect(db.state.resources.find(item => item.id === "second")?.archived).toBe(true);
+  });
+
+  it("keeps a separately trashed child out of a parent folder restore", async () => {
+    const { db, manager } = setup();
+    const rootResult = await manager.apply({ action: "createFolder", name: "根目录", parentId: null });
+    const rootId = (rootResult as { folder: { id: string } }).folder.id;
+    const childResult = await manager.apply({ action: "createFolder", name: "子目录", parentId: rootId });
+    const childId = (childResult as { folder: { id: string } }).folder.id;
+    seedResource(db, "child-resource", "子资料", childId);
+    await manager.apply({ action: "trash", items: [{ kind: "folder", id: childId }] });
+    await manager.apply({ action: "trash", items: [{ kind: "folder", id: rootId }] });
+    await manager.apply({ action: "restore", items: [{ kind: "folder", id: rootId }] });
+    expect(db.state.folders.find(item => item.id === rootId)?.deleted).toBe(false);
+    expect(db.state.folders.find(item => item.id === childId)?.deleted).toBe(true);
+    expect(db.state.resources.find(item => item.id === "child-resource")?.archived).toBe(true);
+  });
+
+  it("does not publish an archived resource or one below a deleted folder", async () => {
+    const { db, manager } = setup();
+    seedResource(db, "archived", "已归档");
+    await manager.apply({ action: "trash", items: [{ kind: "resource", id: "archived" }] });
+    await expect(manager.apply({ action: "publish", id: "archived", versionId: "v1" })).rejects.toMatchObject({ code: "conflict" });
+    const folderResult = await manager.apply({ action: "createFolder", name: "待恢复", parentId: null });
+    const folderId = (folderResult as { folder: { id: string } }).folder.id;
+    seedResource(db, "nested", "嵌套", folderId);
+    await manager.apply({ action: "trash", items: [{ kind: "folder", id: folderId }] });
+    await expect(manager.apply({ action: "publish", id: "nested", versionId: "v1" })).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("treats folders as import conflicts and prefers active resources", async () => {
+    const { db, manager } = setup();
+    await manager.apply({ action: "createFolder", name: "资料", parentId: null });
+    const skill = importSchema.parse({ id: "new-skill", type: "skill", title: "技能", markdown: "# 技能", source: "测试" });
+    await expect(manager.importManagedResource(skill, null, "资料", "ask")).rejects.toMatchObject({ code: "conflict" });
+    expect((await manager.importManagedResource(skill, null, "资料", "rename")).name).toBe("资料 (2)");
+
+    seedResource(db, "archived-copy", "同名");
+    db.state.resources.find(item => item.id === "archived-copy")!.archived = true;
+    seedResource(db, "active-copy", "同名");
+    const incoming = importSchema.parse({ id: "incoming", type: "document", title: "同名", markdown: "# 新版", source: "测试" });
+    const overwritten = await manager.importManagedResource(incoming, null, "同名.md", "overwrite");
+    expect(overwritten.resourceId).toBe("active-copy");
+    expect(db.state.resources.find(item => item.id === "archived-copy")?.archived).toBe(true);
+  });
+
   it("returns the file tree shape and stable default names", async () => {
     const { db, manager } = setup();
     seedResource(db, "tool", "工具说明");
@@ -160,11 +230,13 @@ describe("knowledge manager", () => {
     const { db, manager } = setup();
     seedResource(db, "old", "资料");
     db.state.resources[0].archived = true;
-    const input = { id: "incoming", type: "document", title: "资料", markdown: "# 新内容", source: "测试" } as const;
+    const input = importSchema.parse({ id: "incoming", type: "document", title: "资料", markdown: "# 新内容", source: "测试" });
     await expect(manager.importManagedResource(input, null, "资料.md", "ask")).rejects.toMatchObject({ code: "conflict" });
+    await expect(manager.importManagedResource(input, null, "资料.md", "overwrite")).rejects.toMatchObject({ code: "conflict" });
+    await manager.apply({ action: "restore", items: [{ kind: "resource", id: "old" }] });
     const imported = await manager.importManagedResource(input, null, "资料.md", "overwrite");
     expect(imported.resourceId).toBe("old");
-    expect(db.state.resources.find(item => item.id === "old")).toMatchObject({ archived: true, publishedVersionId: "v1" });
+    expect(db.state.resources.find(item => item.id === "old")).toMatchObject({ archived: false, publishedVersionId: "v1" });
     expect((await manager.importManagedResource({ ...input, id: "incoming-2" }, null, "资料.md", "rename")).name).toBe("资料 (2).md");
   });
 });

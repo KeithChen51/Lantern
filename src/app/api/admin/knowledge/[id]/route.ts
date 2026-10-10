@@ -15,9 +15,10 @@ export async function GET(request: Request, context: RouteContext) {
     requireAdminPortalFromHeaders(request.headers);
     assertDatabaseConfigured();
     const { id } = await context.params;
-    const latestVersionId = await createKnowledgeManager().latestVersionId(id);
-    if (!latestVersionId) return Response.json({ error: "资源没有可预览的版本。", code: "not_found" }, { status: 404 });
-    return Response.json(await getKnowledgeHub().get(id, latestVersionId, true), { headers: { "Cache-Control": "no-store" } });
+    const requestedVersionId = new URL(request.url).searchParams.get("version")?.trim() || null;
+    const versionId = requestedVersionId ?? await createKnowledgeManager().latestVersionId(id);
+    if (!versionId) return Response.json({ error: "资源没有可预览的版本。", code: "not_found" }, { status: 404 });
+    return Response.json(await getKnowledgeHub().get(id, versionId, true), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return errorResponse(error);
   }

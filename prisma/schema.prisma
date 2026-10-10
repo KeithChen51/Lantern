@@ -111,6 +111,7 @@ model HubFolder {
   name      String    @db.VarChar(240)
   parentId  String?   @db.VarChar(120)
   deleted   Boolean   @default(false)
+  trashBatchId String? @db.VarChar(120)
   createdAt DateTime
   updatedAt DateTime
 
@@ -127,6 +128,7 @@ model HubResourceLocation {
   folderId              String?  @db.VarChar(120)
   name                  String   @db.VarChar(240)
   archivedBeforeTrash   Boolean  @default(false)
+  trashBatchId          String?  @db.VarChar(120)
   updatedAt             DateTime
 
   resource HubResource @relation(fields: [resourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
