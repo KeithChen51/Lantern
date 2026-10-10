@@ -1,3 +1,4 @@
+import { assertKnowledgeManagerStorage } from "@/modules/knowledge-hub/manager-storage";
 import { z } from "zod";
 import { requireAdminPortalFromHeaders, adminJsonError } from "../../../_admin";
 import { AppError } from "@/shared/errors";
@@ -36,6 +37,7 @@ async function limitedForm(request: Request) {
 export async function POST(request: Request) {
   try {
     requireAdminPortalFromHeaders(request.headers);
+    assertKnowledgeManagerStorage();
     const origin = request.headers.get("origin");
     if (origin) {
       let parsed: URL;

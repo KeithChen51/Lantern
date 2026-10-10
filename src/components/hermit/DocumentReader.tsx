@@ -3,7 +3,7 @@
 import { Icon } from "@iconify/react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { getHermitApiError, isHermitResourceResponse, type HermitDocumentRecommendation, type HermitResourceResponse } from "./types";
 import styles from "./hermit-v3.module.css";
@@ -25,12 +25,14 @@ const markdownComponents: Components = {
 };
 
 export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [resource, setResource] = useState<HermitResourceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
     const controller = new AbortController();
     let active = true;
     setResource(null);
@@ -90,7 +92,7 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
         </div>
       </header>
 
-      <div className={styles.readerBody}>
+      <div className={styles.readerBody} ref={bodyRef} tabIndex={0} role="region" aria-label="文档正文">
         {isLoading && <div className={styles.readerLoading} role="status">正在打开文档…</div>}
         {!isLoading && error && (
           <div className={styles.readerError} role="alert">
@@ -102,19 +104,21 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
           </div>
         )}
         {!isLoading && !error && resource && (
-          <>
-            <div className={styles.readerProse} data-lh-document-prose>
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents} urlTransform={safeUrlTransform}>
-                {resource.version.markdown}
-              </ReactMarkdown>
-            </div>
-            <button type="button" className={styles.readerUse} onClick={() => onUse(document)}>
-              <Icon icon={lighthouseIcons.hermit} aria-hidden="true" />
-              引用本文继续提问
-            </button>
-          </>
+          <div className={styles.readerProse} data-lh-document-prose>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents} urlTransform={safeUrlTransform}>
+              {resource.version.markdown}
+            </ReactMarkdown>
+          </div>
         )}
       </div>
+      {!isLoading && !error && resource && (
+        <footer className={styles.readerFooter}>
+          <button type="button" className={styles.readerUse} onClick={() => onUse(document)}>
+            <Icon icon={lighthouseIcons.hermit} aria-hidden="true" />
+            引用本文继续提问
+          </button>
+        </footer>
+      )}
     </aside>
   );
 }

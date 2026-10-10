@@ -1,3 +1,4 @@
+import { assertKnowledgeManagerStorage } from "@/modules/knowledge-hub/manager-storage";
 import { assertDatabaseConfigured, adminJsonError, requireAdminPortalFromHeaders } from "../../../_admin";
 import { getKnowledgeHub } from "@/modules/knowledge-hub/runtime";
 import { createKnowledgeManager, knowledgeManagerErrorResponse } from "@/modules/knowledge-hub/manager";
@@ -13,6 +14,7 @@ function errorResponse(error: unknown) {
 export async function GET(request: Request, context: RouteContext) {
   try {
     requireAdminPortalFromHeaders(request.headers);
+    assertKnowledgeManagerStorage();
     assertDatabaseConfigured();
     const { id } = await context.params;
     const requestedVersionId = new URL(request.url).searchParams.get("version")?.trim() || null;

@@ -1,0 +1,13 @@
+.git
+node_modules
+.next
+.env
+.env.*
+!.env.example
+runtime
+release
+storage
+*.log
+*.zip
+**/node_modules
+**/.env.local

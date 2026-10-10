@@ -41,6 +41,17 @@ export function copyStandaloneAssets(projectRoot = process.cwd()) {
   }
 
   copyDirectory(path.join(projectRoot, "public"), path.join(standaloneDir, "public"));
+  const runtime = path.join(projectRoot, "runtime", "hermit-dsh");
+  const runtimeManifest = path.join(runtime, "runtime-manifest.json");
+  if (fs.existsSync(runtimeManifest)) {
+    const manifest = JSON.parse(fs.readFileSync(runtimeManifest, "utf8"));
+    if (manifest.format !== 1 || manifest.dshVersion !== "0.2.0-rc.2" || manifest.platform !== process.platform || manifest.arch !== process.arch) {
+      throw new Error("Bundled DSH version/platform does not match this build host.");
+    }
+    copyDirectory(runtime, path.join(standaloneDir, "runtime", "hermit-dsh"));
+  } else if (process.env.HERMIT_BUNDLE_REQUIRED === "true") {
+    throw new Error("DSH runtime missing. Run npm run package:hermit-runtime before the deployment build.");
+  }
   const hermitPlugin = path.join(projectRoot, "scripts", "hermit-dsh-plugin.mjs");
   if (fs.existsSync(hermitPlugin)) {
     fs.mkdirSync(path.join(standaloneDir, "scripts"), { recursive: true });

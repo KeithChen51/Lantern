@@ -5,8 +5,8 @@ import { parseArgs } from "node:util";
 import { ACTION_CASES, isMarkdownActionCase } from "../src/app/action/action-cases";
 import { prisma } from "../src/infrastructure/db";
 import { Prisma } from "@prisma/client";
+import { closeKnowledgeHub, getKnowledgeHubStore } from "../src/modules/knowledge-hub/runtime";
 import { importSchema, KnowledgeHub } from "../src/modules/knowledge-hub/service";
-import { createPrismaHubTransaction } from "../src/modules/knowledge-hub/prisma-store";
 import { bundledStandardizeSkill } from "../src/modules/knowledge-hub/bundled-skill";
 import { initializeBaseFolders } from "../src/modules/knowledge-hub/base-folders";
 
@@ -33,16 +33,17 @@ async function main() {
   if (values["dry-run"]) { console.log(JSON.stringify(inputs.map(x => ({ id: x.id, type: x.type, title: x.title, source: x.source })), null, 2)); return; }
   for (const input of inputs) {
     // Migration is one-way. Never overwrite a resource maintained in the hub.
-    const result = await prisma.$transaction(async tx => {
-      const existing = await tx.hubResource.findUnique({ where: { id: input.id }, select: { id: true } });
-      if (existing) return { id: input.id, skipped: true, reason: "already managed in hub" };
-      const hub = new KnowledgeHub({ transaction: async callback => callback(createPrismaHubTransaction(tx)) });
+    const result = await getKnowledgeHubStore().transaction(async tx => {
+      if (await tx.getResource(input.id)) return { id: input.id, skipped: true, reason: "already managed in hub" };
+      const hub = new KnowledgeHub({ transaction: async callback => callback(tx) });
       const imported = await hub.import(input);
       if (values.publish) await hub.publish(imported.resourceId, imported.versionId);
       return { ...imported, published: values.publish };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
+    });
     console.log(JSON.stringify(result));
   }
-  console.log(JSON.stringify(await prisma.$transaction(initializeBaseFolders, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 })));
+  if ((process.env.KNOWLEDGE_HUB_DRIVER || "mysql") === "mysql") {
+    console.log(JSON.stringify(await prisma.$transaction(initializeBaseFolders, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 })));
+  }
 }
-main().catch(error => { console.error(error instanceof Error ? error.message : "Import failed"); process.exitCode = 1; }).finally(() => prisma.$disconnect());
+main().catch(error => { console.error(error instanceof Error ? error.message : "Import failed"); process.exitCode = 1; }).finally(() => closeKnowledgeHub());
