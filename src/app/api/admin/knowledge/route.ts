@@ -5,16 +5,30 @@ import { AppError } from "@/shared/errors";
 
 export const dynamic = "force-dynamic";
 
-function assertSameOrigin(request: Request) {
+export function assertSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return;
-  let requestOrigin: string;
+  let parsedOrigin: URL;
   try {
-    requestOrigin = new URL(request.url).origin;
+    parsedOrigin = new URL(origin);
   } catch {
-    throw new AppError("bad_request", "请求地址不正确。", 400);
+    throw new AppError("forbidden", "写操作必须来自同源页面。", 403);
   }
-  if (origin !== requestOrigin) throw new AppError("forbidden", "写操作必须来自同源页面。", 403);
+  if (parsedOrigin.protocol !== "http:" && parsedOrigin.protocol !== "https:") {
+    throw new AppError("forbidden", "写操作必须来自同源页面。", 403);
+  }
+
+  let requestHost = request.headers.get("host")?.trim();
+  if (!requestHost) {
+    try {
+      requestHost = new URL(request.url).host;
+    } catch {
+      throw new AppError("bad_request", "请求地址不正确。", 400);
+    }
+  }
+  if (!requestHost || parsedOrigin.host.toLowerCase() !== requestHost.toLowerCase()) {
+    throw new AppError("forbidden", "写操作必须来自同源页面。", 403);
+  }
 }
 
 function errorResponse(error: unknown) {
