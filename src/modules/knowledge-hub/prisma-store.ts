@@ -9,7 +9,7 @@ function resource(row: ResourceRow): HubResource {
 function interaction(row: Prisma.HubInteractionGetPayload<object>): Interaction {
   return { ...row, scope: row.scope as Interaction["scope"], consentAt: row.consentAt.toISOString(), receivedAt: row.receivedAt.toISOString(), messages: row.messages as unknown as Interaction["messages"], resourceVersions: row.resourceVersions as string[] };
 }
-function transaction(client: Prisma.TransactionClient): HubTransaction {
+export function createPrismaHubTransaction(client: Prisma.TransactionClient): HubTransaction {
   return {
     async getResource(id) { const row = await client.hubResource.findUnique({ where: { id }, include: { versions: true } }); return row ? resource(row) : null; },
     async listResources() {
@@ -41,7 +41,7 @@ export class PrismaHubStore implements HubStore {
   async transaction<T>(fn: (tx: HubTransaction) => Promise<T>): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       try {
-        return await this.client.$transaction(tx => fn(transaction(tx)), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
+        return await this.client.$transaction(tx => fn(createPrismaHubTransaction(tx)), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
       } catch (error) {
         if (attempt >= 3 || !(error instanceof Prisma.PrismaClientKnownRequestError) || !["P2034", "P2002"].includes(error.code)) throw error;
       }
