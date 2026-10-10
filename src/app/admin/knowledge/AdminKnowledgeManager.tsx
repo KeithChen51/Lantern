@@ -11,6 +11,7 @@ import { resourceLabels } from "@/components/knowledge/ResourceView";
 import styles from "./knowledge-manager.module.css";
 
 type ResourceType = keyof typeof resourceLabels;
+type CaseVisibility = "public" | "internal";
 
 type KnowledgeFolder = {
   id: string;
@@ -29,6 +30,7 @@ type KnowledgeResource = {
   publishedVersionId: string | null;
   latestVersionId: string | null;
   updatedAt: string;
+  visibility?: CaseVisibility;
 };
 
 type KnowledgeIndex = {
@@ -53,6 +55,7 @@ type PreviewResource = {
   source?: string;
   summary?: string;
   archived?: boolean;
+  visibility?: CaseVisibility;
   publishedVersionId?: string | null;
   version: {
     id: string;
@@ -87,6 +90,21 @@ const typeOptions: Array<{ value: ResourceType; label: string }> = [
   { value: "skill", label: resourceLabels.skill },
   { value: "tool", label: resourceLabels.tool },
 ];
+
+const visibilityLabels: Record<CaseVisibility, string> = { public: "公开", internal: "内参" };
+const visibilityTones: Record<CaseVisibility, "success" | "warning"> = { public: "success", internal: "warning" };
+const coreFolderOrder = ["base-whitepapers", "base-cases", "base-guidelines", "base-skills"];
+
+function compareFolders(left: KnowledgeFolder, right: KnowledgeFolder) {
+  const leftOrder = coreFolderOrder.indexOf(left.id);
+  const rightOrder = coreFolderOrder.indexOf(right.id);
+  if (leftOrder >= 0 || rightOrder >= 0) {
+    if (leftOrder < 0) return 1;
+    if (rightOrder < 0) return -1;
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+  }
+  return left.name.localeCompare(right.name, "zh-CN");
+}
 
 const icon = (value: keyof typeof lighthouseIcons, className?: string) => <Icon icon={lighthouseIcons[value]} aria-hidden="true" className={className} />;
 
@@ -282,12 +300,12 @@ export function AdminKnowledgeManager() {
 
   const visibleFolders = React.useMemo(() => {
     const candidates = isTrash ? folders.filter((folder) => folder.deleted) : folders.filter((folder) => !folder.deleted && folder.parentId === view.folderId);
-    return candidates.filter((folder) => folder.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    return candidates.filter((folder) => folder.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).sort(compareFolders);
   }, [folders, isTrash, query, view.folderId]);
 
   const visibleResources = React.useMemo(() => {
     const candidates = isTrash ? resources.filter((resource) => resource.archived) : resources.filter((resource) => !resource.archived && resource.folderId === view.folderId);
-    return candidates.filter((resource) => `${resource.name} ${resource.title}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    return candidates.filter((resource) => `${resource.name} ${resource.title}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
   }, [isTrash, query, resources, view.folderId]);
 
   const selectedItems = React.useMemo(() => {
@@ -485,6 +503,25 @@ export function AdminKnowledgeManager() {
     }
   }
 
+  async function setCaseVisibility(visibility: CaseVisibility) {
+    if (!preview.resource || preview.resource.type !== "case") return;
+    const resourceId = preview.resource.id;
+    setBusy("visibility");
+    setError("");
+    try {
+      await postAction({ action: "setVisibility", id: resourceId, visibility });
+      setPreview((current) => current.resource && current.resource.id === resourceId
+        ? { ...current, resource: { ...current.resource, visibility } }
+        : current);
+      setMessage(`案例可见范围已设为“${visibilityLabels[visibility]}”。`);
+      await loadData();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "可见范围保存失败，请稍后重试。");
+    } finally {
+      setBusy("");
+    }
+  }
+
   function setUploadFiles(files: File[], includeRelativePath = false) {
     if (retryContext) {
       setUploadError("请先处理当前批次的失败项，再开始新的上传。");
@@ -634,7 +671,7 @@ export function AdminKnowledgeManager() {
   const directoryInputProps = { webkitdirectory: "", directory: "" } as unknown as React.InputHTMLAttributes<HTMLInputElement>;
 
   function renderTree(parentId: string | null, depth = 0): React.ReactNode {
-    return folders.filter((folder) => !folder.deleted && folder.parentId === parentId).map((folder) => {
+    return folders.filter((folder) => !folder.deleted && folder.parentId === parentId).sort(compareFolders).map((folder) => {
       const active = view.kind === "folder" && view.folderId === folder.id;
       const target = `folder:${folder.id}`;
       return (
@@ -708,14 +745,17 @@ export function AdminKnowledgeManager() {
         </span>
         <span className={styles.typeCell}>{folder ? "文件夹" : resourceLabels[resource?.type ?? "document"]}</span>
         <span className={styles.statusCell}>
-          {folder ? <LhChip tone="neutral">{isTrash ? "已删除" : "目录"}</LhChip> : resource?.archived ? <LhChip tone="neutral">已删除</LhChip> : resource?.publishedVersionId && resource.latestVersionId && resource.latestVersionId !== resource.publishedVersionId ? <LhChip tone="warning">有未发布更新</LhChip> : resource?.publishedVersionId ? <LhChip tone="success">已发布</LhChip> : <LhChip tone="warning">草稿</LhChip>}
+          {folder ? <LhChip tone="neutral">{isTrash ? "已删除" : "目录"}</LhChip> : <>{resource?.archived ? <LhChip tone="neutral">已删除</LhChip> : resource?.publishedVersionId && resource.latestVersionId && resource.latestVersionId !== resource.publishedVersionId ? <LhChip tone="warning">有未发布更新</LhChip> : resource?.publishedVersionId ? <LhChip tone="success">已发布</LhChip> : <LhChip tone="warning">草稿</LhChip>}{resource?.type === "case" && <LhChip tone={visibilityTones[resource.visibility ?? "internal"]}>{visibilityLabels[resource.visibility ?? "internal"]}</LhChip>}</>}
         </span>
         <span className={styles.updatedCell}>{folder ? "—" : formatDate(resource?.updatedAt)}</span>
         <span className={styles.rowActions}>
           {folder && !isTrash ? (
-            <LhIconButton label="重命名文件夹" size="sm" icon={icon("edit")} onClick={(event) => { event.stopPropagation(); setDialog({ kind: "rename", item: ref }); setDialogValue(folder.name); }} />
+            <LhIconButton label="重命名文件夹" size="sm" icon={icon("edit")} onClick={(event) => { event.stopPropagation(); setError(""); setDialog({ kind: "rename", item: ref }); setDialogValue(folder.name); }} />
           ) : !folder ? (
-            <LhIconButton label="预览资源" size="sm" icon={icon("document")} onClick={(event) => { event.stopPropagation(); void openPreview(resource?.id ?? ""); }} />
+            <>
+              <LhIconButton label="预览资源" size="sm" icon={icon("document")} onClick={(event) => { event.stopPropagation(); void openPreview(resource?.id ?? ""); }} />
+              <LhIconButton label="重命名资源" size="sm" icon={icon("edit")} onClick={(event) => { event.stopPropagation(); setError(""); setDialog({ kind: "rename", item: ref }); setDialogValue(resource?.name ?? ""); }} />
+            </>
           ) : null}
           {!isTrash && (
             <LhIconButton
@@ -816,7 +856,7 @@ export function AdminKnowledgeManager() {
 
       {dialog && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="knowledge-dialog-title"><form onSubmit={(event) => void submitDialog(event)}><div className={styles.modalHeader}><h2 id="knowledge-dialog-title">{dialog.kind === "createFolder" ? "新建文件夹" : dialog.kind === "rename" ? "重命名" : dialog.kind === "move" ? "移动到" : "确认移入回收站"}</h2><button type="button" className={styles.modalClose} onClick={() => setDialog(null)} aria-label="关闭">{icon("close")}</button></div>{error && <LhCallout tone="danger" role="alert">{error}</LhCallout>}{dialog.kind === "trash" ? <p className={styles.modalCopy}>将 {dialog.items.length} 项移入回收站？删除后仍可在回收站恢复。</p> : dialog.kind === "move" ? <label className={styles.modalField}>目标文件夹<select value={dialogValue} onChange={(event) => setDialogValue(event.target.value)}><option value="__root__">全部文件（根目录）</option>{folders.filter((folder) => !folder.deleted && !selected.has(itemKey({ kind: "folder", id: folder.id }))).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label> : <label className={styles.modalField}>名称<input autoFocus value={dialogValue} onChange={(event) => setDialogValue(event.target.value)} placeholder="输入名称" /></label>}<div className={styles.modalActions}><LhButton type="button" size="sm" variant="quiet" onClick={() => setDialog(null)}>取消</LhButton><LhButton type="submit" size="sm" variant={dialog.kind === "trash" ? "danger" : "primary"} disabled={Boolean(busy)} icon={busy === "dialog" ? <LhLoadingGlyph label="处理中" /> : undefined}>{dialog.kind === "trash" ? "移入回收站" : dialog.kind === "move" ? "移动" : "保存"}</LhButton></div></form></div></div>}
 
-      {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{(preview.error || error) && <LhCallout tone="danger" role="alert" icon={icon("warning")}>{preview.error || error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip><span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div><div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.archived || preview.resource.version.publishedAt) || busy === "publish"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
+       {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{(preview.error || error) && <LhCallout tone="danger" role="alert" icon={icon("warning")}>{preview.error || error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip>{preview.resource.type === "case" && <LhChip tone={visibilityTones[preview.resource.visibility ?? "internal"]}>{visibilityLabels[preview.resource.visibility ?? "internal"]}</LhChip>}<span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div>{preview.resource.type === "case" && <div className={styles.previewVisibility}><label htmlFor="knowledge-case-visibility">可见范围</label><select id="knowledge-case-visibility" value={preview.resource.visibility ?? "internal"} disabled={busy === "visibility"} aria-busy={busy === "visibility"} onChange={(event) => void setCaseVisibility(event.target.value as CaseVisibility)}><option value="internal">内参</option><option value="public">公开</option></select>{busy === "visibility" && <LhLoadingGlyph label="正在保存可见范围" />}</div>}<div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.archived || preview.resource.version.publishedAt) || busy === "publish" || busy === "visibility"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
     </div>
   );
 }

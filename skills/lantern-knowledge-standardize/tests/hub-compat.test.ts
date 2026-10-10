@@ -14,6 +14,7 @@ describe("standardization skill to Hub import", () => {
       const text = await readFile(new URL(`../assets/${type}.md`, import.meta.url), "utf8");
       const checked = await validate(text, { id: `standardize-${type}` });
       assert.equal(checked.ready, true);
+      if (type === "case") assert.equal(checked.request?.visibility, "internal");
       const request = importSchema.parse(checked.request);
       assert.ok(!request.markdown.includes("schemaVersion:"));
       const hub = new KnowledgeHub(new MemoryHubStore());

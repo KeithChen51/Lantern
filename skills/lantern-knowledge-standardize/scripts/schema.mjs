@@ -14,6 +14,7 @@ export const metadataSchema = z.object({
   businessScope: z.string().max(1000).default(""),
   changeNote: z.string().max(2000).default(""),
   validity: z.enum(["effective", "unknown", "expired"]).default("unknown"),
+  visibility: z.enum(["public", "internal"]).optional(),
   effectiveFrom: date,
   effectiveTo: date,
   baseVersionId: identifier.optional(),

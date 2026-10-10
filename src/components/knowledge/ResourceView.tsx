@@ -9,6 +9,9 @@ import styles from "./knowledge.module.css";
 export const resourceLabels = { notice: "通知与规范", case: "案例与复盘", document: "知识文档", skill: "Skill", tool: "工具资源" };
 export function ResourceView({ resource, embedded = false }: { resource: Awaited<ReturnType<KnowledgeHub["get"]>>; embedded?: boolean }) {
   const { version } = resource;
+  const caseVisibility = resource.type === "case"
+    ? ((resource as typeof resource & { visibility?: "public" | "internal" }).visibility ?? "internal")
+    : null;
   const { titleLine, headings } = articleOutline(version.markdown);
   const base = `/api/resources/${encodeURIComponent(resource.id)}`;
   const fileUrl = (path: string) => `${base}/files?version=${encodeURIComponent(version.id)}&path=${encodeURIComponent(path)}`;
@@ -38,7 +41,7 @@ export function ResourceView({ resource, embedded = false }: { resource: Awaited
         <header className={styles.articleHeader}>
           <p className={styles.eyebrow}>{resourceLabels[resource.type]}<span />{resourceSourceLabel(resource.source)}</p>
           <Title className={styles.articleTitle}>{resource.title}</Title>
-          <div className={styles.metadata}><time dateTime={version.publishedAt ?? undefined}>{version.publishedAt?.slice(0, 10)}</time><span>版本 {version.number}</span>{resource.type === "notice" && <span>{resource.validity === "effective" ? "当前有效" : resource.validity === "expired" ? "已失效" : resource.validity === "scheduled" ? "待生效" : "有效性待确认"}</span>}</div>
+          <div className={styles.metadata}><time dateTime={version.publishedAt ?? undefined}>{version.publishedAt?.slice(0, 10)}</time><span>版本 {version.number}</span>{caseVisibility && <span data-case-visibility={caseVisibility}>{caseVisibility === "public" ? "公开" : "内参"}</span>}{resource.type === "notice" && <span>{resource.validity === "effective" ? "当前有效" : resource.validity === "expired" ? "已失效" : resource.validity === "scheduled" ? "待生效" : "有效性待确认"}</span>}</div>
           <div className={styles.readingActions}>{(resource.type === "skill" || version.files.length > 0) && <a href={`${base}/download?version=${encodeURIComponent(version.id)}`} download>{resource.type === "skill" ? "下载完整 Skill" : "下载资料包"} <span aria-hidden="true">↗</span></a>}<a href={`${base}?version=${version.id}&format=md`} download>下载原文 <span aria-hidden="true">↗</span></a><a href="#resource-reference">来源与引用 <span aria-hidden="true">↓</span></a></div>
           {headings.length > 0 && <details className={styles.mobileContents}><summary>本文目录 <span>{headings.length} 个章节</span></summary><nav aria-label="文章目录">{contents}</nav></details>}
         </header>
