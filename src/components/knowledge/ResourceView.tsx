@@ -39,7 +39,7 @@ export function ResourceView({ resource, embedded = false }: { resource: Awaited
           <p className={styles.eyebrow}>{resourceLabels[resource.type]}<span />{resourceSourceLabel(resource.source)}</p>
           <Title className={styles.articleTitle}>{resource.title}</Title>
           <div className={styles.metadata}><time dateTime={version.publishedAt ?? undefined}>{version.publishedAt?.slice(0, 10)}</time><span>版本 {version.number}</span>{resource.type === "notice" && <span>{resource.validity === "effective" ? "当前有效" : resource.validity === "expired" ? "已失效" : resource.validity === "scheduled" ? "待生效" : "有效性待确认"}</span>}</div>
-          <div className={styles.readingActions}><a href={`${base}?version=${version.id}&format=md`} download>下载原文 <span aria-hidden="true">↗</span></a><a href="#resource-reference">来源与引用 <span aria-hidden="true">↓</span></a></div>
+          <div className={styles.readingActions}>{(resource.type === "skill" || version.files.length > 0) && <a href={`${base}/download?version=${encodeURIComponent(version.id)}`} download>{resource.type === "skill" ? "下载完整 Skill" : "下载资料包"} <span aria-hidden="true">↗</span></a>}<a href={`${base}?version=${version.id}&format=md`} download>下载原文 <span aria-hidden="true">↗</span></a><a href="#resource-reference">来源与引用 <span aria-hidden="true">↓</span></a></div>
           {headings.length > 0 && <details className={styles.mobileContents}><summary>本文目录 <span>{headings.length} 个章节</span></summary><nav aria-label="文章目录">{contents}</nav></details>}
         </header>
         <div className={styles.prose} data-lh-article-prose><ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{version.markdown}</ReactMarkdown></div>
