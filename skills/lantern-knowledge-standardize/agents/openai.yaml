@@ -1,0 +1,4 @@
+interface:
+  display_name: "灯塔知识资料标准化"
+  short_description: "按五类资源整理上传前资料，检查字段与 Markdown 并输出离线导入包"
+  default_prompt: "使用 $lantern-knowledge-standardize 将这些资料整理为灯塔知识中台的标准 Markdown，检查格式并报告缺失信息。"
