@@ -25,6 +25,13 @@ describe("admin knowledge upload boundary", () => {
     expect((await POST(large)).status).toBe(400);
     expect(mocks.importResource).not.toHaveBeenCalled();
   });
+  it("accepts the browser origin through Docker port mapping", async () => {
+    const incoming = request();
+    incoming.headers.set("host", "localhost:3301");
+    const proxied = new Request("http://0.0.0.0:3000/api/admin/knowledge/upload", incoming);
+    expect((await POST(proxied)).status).toBe(200);
+    expect(mocks.importResource).toHaveBeenCalledOnce();
+  });
   it("returns each result when one file conflicts and another succeeds", async () => {
     mocks.importResource.mockRejectedValueOnce(new HubError("conflict", "同名文件"));
     const response = await POST(request([new File(["# A"], "a.md"), new File(["# B"], "b.md")]));

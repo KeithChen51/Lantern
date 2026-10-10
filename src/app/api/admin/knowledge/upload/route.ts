@@ -37,7 +37,12 @@ export async function POST(request: Request) {
   try {
     requireAdminPortalFromHeaders(request.headers);
     const origin = request.headers.get("origin");
-    if (origin && origin !== new URL(request.url).origin) throw new AppError("forbidden", "不接受跨站上传。", 403);
+    if (origin) {
+      let parsed: URL;
+      try { parsed = new URL(origin); } catch { throw new AppError("forbidden", "不接受跨站上传。", 403); }
+      const host = request.headers.get("host") || new URL(request.url).host;
+      if (!["http:", "https:"].includes(parsed.protocol) || parsed.host !== host) throw new AppError("forbidden", "不接受跨站上传。", 403);
+    }
     const form = await limitedForm(request);
     const files = form.getAll("files").filter((f): f is File => typeof f !== "string");
     if (!files.length || files.length > 100) throw new HubError("invalid", "请选择 1–100 个文件。");
