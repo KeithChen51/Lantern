@@ -67,6 +67,7 @@ type PreviewResource = {
 
 type UploadItem = { file: File; path: string };
 type UploadResult = { name: string; resourceId?: string; versionId?: string; error?: string; code?: string; skipped?: boolean };
+type UploadBatch = { folderId: string | null; type: ResourceType };
 
 const EMPTY_FOLDERS: KnowledgeFolder[] = [];
 const EMPTY_RESOURCES: KnowledgeResource[] = [];
@@ -158,31 +159,48 @@ function fileNameFromPath(path: string) {
 }
 
 async function readDroppedEntries(items: DataTransferItemList) {
-  type Entry = { isFile: boolean; isDirectory: boolean; name: string; file?: (callback: (file: File) => void) => void; createReader?: () => { readEntries: (callback: (entries: Entry[]) => void) => void } };
+  type ReadError = (error?: unknown) => void;
+  type Entry = {
+    isFile: boolean;
+    isDirectory: boolean;
+    name: string;
+    file?: (callback: (file: File) => void, errorCallback?: ReadError) => void;
+    createReader?: () => { readEntries: (callback: (entries: Entry[]) => void, errorCallback?: ReadError) => void };
+  };
   type EntryItem = { webkitGetAsEntry?: () => Entry | null };
   const roots: Entry[] = Array.from(items).map((item) => {
     const entryItem = item as unknown as EntryItem;
     return typeof entryItem.webkitGetAsEntry === "function" ? entryItem.webkitGetAsEntry() : null;
   }).filter((entry): entry is Entry => Boolean(entry));
 
-  const readDirectory = (entry: Entry, prefix: string): Promise<UploadItem[]> => new Promise((resolve) => {
-    if (!entry.createReader) return resolve([]);
+  const readDirectory = (entry: Entry, prefix: string): Promise<UploadItem[]> => new Promise((resolve, reject) => {
+    if (!entry.createReader) return reject(new Error(`无法读取目录：${entry.name}`));
     const reader = entry.createReader();
     const all: Entry[] = [];
     const readBatch = () => reader.readEntries((batch) => {
       if (!batch.length) {
-        void Promise.all(all.map((child) => readEntry(child, `${prefix}${entry.name}/`))).then((parts) => resolve(parts.flat()));
+        void Promise.all(all.map((child) => readEntry(child, `${prefix}${entry.name}/`))).then((parts) => resolve(parts.flat())).catch(reject);
         return;
       }
       all.push(...batch);
       readBatch();
-    });
-    readBatch();
+    }, (error) => reject(error instanceof Error ? error : new Error(`无法读取目录：${entry.name}`)));
+    try {
+      readBatch();
+    } catch (error) {
+      reject(error);
+    }
   });
 
   const readEntry = (entry: Entry, prefix: string): Promise<UploadItem[]> => {
     if (entry.isFile && entry.file) {
-      return new Promise((resolve) => entry.file?.((file) => resolve([{ file, path: `${prefix}${file.name}` }])));
+      return new Promise((resolve, reject) => {
+        try {
+          entry.file?.((file) => resolve([{ file, path: `${prefix}${file.name}` }]), (error) => reject(error instanceof Error ? error : new Error(`无法读取文件：${entry.name}`)));
+        } catch (error) {
+          reject(error);
+        }
+      });
     }
     if (entry.isDirectory) return readDirectory(entry, prefix);
     return Promise.resolve([]);
@@ -213,6 +231,8 @@ export function AdminKnowledgeManager() {
   const [uploadExcluded, setUploadExcluded] = React.useState<string[]>([]);
   const [conflictItems, setConflictItems] = React.useState<UploadItem[]>([]);
   const [conflictResults, setConflictResults] = React.useState<UploadResult[]>([]);
+  const [failedResults, setFailedResults] = React.useState<UploadResult[]>([]);
+  const [retryContext, setRetryContext] = React.useState<UploadBatch | null>(null);
   const [dropActive, setDropActive] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const directoryInputRef = React.useRef<HTMLInputElement>(null);
@@ -286,13 +306,17 @@ export function AdminKnowledgeManager() {
   }
 
   function handleRowKeyDown(event: React.KeyboardEvent<HTMLDivElement>, item: ItemRef) {
+    if ((event.target as HTMLElement).closest("button,input,a")) return;
     if (event.key === " ") {
       event.preventDefault();
       toggleSelected(item);
     } else if (event.key === "Enter") {
       event.preventDefault();
-      if (item.kind === "folder") setCurrentView({ kind: "folder", folderId: item.id });
-      else void openPreview(item.id);
+      if (item.kind === "folder") {
+        if (!isTrash) setCurrentView({ kind: "folder", folderId: item.id });
+        return;
+      }
+      void openPreview(item.id);
     } else if (event.key === "Escape") {
       setSelected(new Set());
     }
@@ -430,6 +454,10 @@ export function AdminKnowledgeManager() {
   }
 
   function setUploadFiles(files: File[], includeRelativePath = false) {
+    if (retryContext) {
+      setUploadError("请先处理当前批次的失败项，再开始新的上传。");
+      return;
+    }
     const items = files.map((file) => ({ file, path: includeRelativePath ? ((file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name) : file.name }));
     setUploadItems((previous) => {
       const byPath = new Map(previous.map((item) => [item.path, item]));
@@ -449,8 +477,13 @@ export function AdminKnowledgeManager() {
       setUploadError("请先选择一个知识目录，再导入资料。");
       return;
     }
+    if (retryContext) {
+      setUploadError("请先处理当前批次的失败项，再开始新的上传。");
+      return;
+    }
     try {
-      const dropped = event.dataTransfer.items.length ? await readDroppedEntries(event.dataTransfer.items) : Array.from(event.dataTransfer.files).map((file) => ({ file, path: file.name }));
+      const droppedEntries = event.dataTransfer.items.length ? await readDroppedEntries(event.dataTransfer.items) : [];
+      const dropped = droppedEntries.length ? droppedEntries : Array.from(event.dataTransfer.files).map((file) => ({ file, path: file.name }));
       if (!dropped.length) {
         setUploadError("没有读取到文件，请重新拖入 Markdown 或 Skill 文件夹。");
         return;
@@ -468,21 +501,34 @@ export function AdminKnowledgeManager() {
     }
   }
 
-  function matchConflictItems(results: UploadResult[]) {
-    return uploadItems.filter((item) => results.some((result) => result.code === "conflict" && (result.name === item.path || result.name === item.file.name || fileNameFromPath(result.name) === fileNameFromPath(item.path))));
+  function resultMatchesItem(result: UploadResult, item: UploadItem) {
+    const resultName = result.name.trim();
+    if (!resultName) return false;
+    return resultName === item.path || resultName === item.file.name || fileNameFromPath(resultName) === fileNameFromPath(item.path);
   }
 
-  async function uploadFiles(items = uploadItems, conflict: "ask" | "overwrite" | "rename" | "skip" = "ask") {
+  function itemsForResults(results: UploadResult[], candidates: UploadItem[], batch: UploadBatch) {
+    if (!results.length) return [];
+    // A Skill upload is one package even when it contains many files. The API
+    // reports the package name (often without .zip), so retry the full source
+    // package instead of trying to match that name to a child file.
+    if (batch.type === "skill") return candidates;
+    const matched = candidates.filter((item) => results.some((result) => resultMatchesItem(result, item)));
+    return matched.length || candidates.length === 1 ? (matched.length ? matched : candidates) : [];
+  }
+
+  async function uploadFiles(items = uploadItems, conflict: "ask" | "overwrite" | "rename" | "skip" = "ask", boundContext?: UploadBatch) {
     if (!items.length) return;
     setUploadBusy(true);
     setUploadError("");
     setUploadMessage("");
     try {
+      const batch = boundContext ?? retryContext ?? { folderId: view.kind === "folder" ? view.folderId : null, type: uploadType };
       const formData = new FormData();
       items.forEach((item) => formData.append("files", item.file, fileNameFromPath(item.path)));
       formData.append("paths", JSON.stringify(items.map((item) => item.path)));
-      formData.append("folderId", view.kind === "folder" ? view.folderId ?? "" : "");
-      formData.append("type", uploadType);
+      formData.append("folderId", batch.folderId ?? "");
+      formData.append("type", batch.type);
       formData.append("conflict", conflict);
       const response = await fetch("/api/admin/knowledge/upload", { method: "POST", body: formData, cache: "no-store" });
       const payload = await response.json().catch(() => ({})) as { results?: UploadResult[]; excluded?: string[]; error?: unknown };
@@ -490,20 +536,38 @@ export function AdminKnowledgeManager() {
       setUploadExcluded(payload.excluded ?? []);
       const failed = results.filter((result) => result.error || result.code === "conflict");
       if (!response.ok && !results.length) throw new Error(errorMessage(payload, `上传失败：${response.status}`));
-      if (failed.some((result) => result.code === "conflict") && conflict === "ask") {
-        setConflictResults(failed);
-        const conflicts = matchConflictItems(failed);
-        setConflictItems(conflicts);
-        setUploadItems((previous) => previous.filter((item) => conflicts.some((conflictItem) => conflictItem.path === item.path)));
-        setUploadMessage("发现同名资源，请选择覆盖、重命名或跳过。已成功导入的文件不会重复提交。");
+      if (!results.length) throw new Error("上传接口没有返回逐项处理结果，未清理待上传文件。");
+      const currentPaths = new Set(items.map((item) => item.path));
+      const previousFailed = failedResults;
+      const otherFailed = batch.type === "skill" ? [] : previousFailed.filter((result) => !items.some((item) => resultMatchesItem(result, item)));
+      const otherItems = uploadItems.filter((item) => !currentPaths.has(item.path));
+      if (failed.length > 0) {
+        const conflictFailures = failed.filter((result) => result.code === "conflict");
+        const currentRetryItems = itemsForResults(failed, items, batch);
+        const retryItems = [...new Map([...otherItems, ...currentRetryItems].map((item) => [item.path, item])).values()];
+        const conflictRetryItems = itemsForResults(conflictFailures, items, batch);
+        const allFailed = [...otherFailed, ...failed];
+        setFailedResults(allFailed);
+        setRetryContext(retryItems.length > 0 ? (retryContext ?? batch) : null);
+        setUploadItems((previous) => previous.filter((item) => retryItems.some((retryItem) => retryItem.path === item.path)));
+        setConflictResults(conflictFailures);
+        setConflictItems(conflict === "ask" ? conflictRetryItems : []);
+        const succeeded = results.filter((result) => !result.error && !result.skipped).length;
+        const unresolved = retryItems.length > 0 ? `已保留 ${retryItems.length} 个失败文件供重试` : "失败文件无法安全匹配，请重新选择";
+        setUploadMessage(`${succeeded} 项已生成草稿，${allFailed.length} 项未完成；${unresolved}。成功文件不会重复提交。`);
+        await loadData();
       } else {
         const succeeded = results.filter((result) => !result.error && !result.skipped).length;
         const skipped = results.filter((result) => result.skipped).length;
         const excluded = payload.excluded?.length ? `，${payload.excluded.length} 个依赖/缓存文件已排除` : "";
-        setUploadMessage(`上传处理完成：${succeeded} 项生成草稿${skipped ? `，${skipped} 项已跳过` : ""}${excluded}。请打开预览确认后发布。`);
-        setUploadItems((previous) => previous.filter((item) => !items.some((uploaded) => uploaded.path === item.path)));
+        const remainingItems = uploadItems.filter((item) => !currentPaths.has(item.path));
+        const hasRemainingFailures = remainingItems.length > 0 || otherFailed.length > 0;
+        setUploadMessage(`上传处理完成：${succeeded} 项生成草稿${skipped ? `，${skipped} 项已跳过` : ""}${excluded}${hasRemainingFailures ? `；仍有 ${remainingItems.length} 项待处理` : ""}。请打开预览确认后发布。`);
+        setUploadItems(remainingItems);
         setConflictItems([]);
         setConflictResults([]);
+        setFailedResults(otherFailed);
+        setRetryContext(hasRemainingFailures ? (retryContext ?? batch) : null);
         await loadData();
       }
     } catch (nextError) {
@@ -511,6 +575,27 @@ export function AdminKnowledgeManager() {
     } finally {
       setUploadBusy(false);
     }
+  }
+
+  function clearUploadQueue() {
+    setUploadItems([]);
+    setConflictItems([]);
+    setConflictResults([]);
+    setFailedResults([]);
+    setRetryContext(null);
+  }
+
+  function removeUploadItem(path: string) {
+    setUploadItems((previous) => {
+      const next = previous.filter((item) => item.path !== path);
+      if (!next.length) {
+        setConflictItems([]);
+        setConflictResults([]);
+        setFailedResults([]);
+        setRetryContext(null);
+      }
+      return next;
+    });
   }
 
   const directoryInputProps = { webkitdirectory: "", directory: "" } as unknown as React.InputHTMLAttributes<HTMLInputElement>;
@@ -562,7 +647,10 @@ export function AdminKnowledgeManager() {
         draggable={!isTrash}
         onClick={(event) => handleRowClick(event, ref)}
         onKeyDown={(event) => handleRowKeyDown(event, ref)}
-        onDoubleClick={() => folder ? setCurrentView({ kind: "folder", folderId: folder.id }) : void openPreview(resource?.id ?? "")}
+        onDoubleClick={() => {
+          if (folder && !isTrash) setCurrentView({ kind: "folder", folderId: folder.id });
+          else if (!folder) void openPreview(resource?.id ?? "");
+        }}
         onDragStart={(event) => startDrag(event, ref)}
         onDragEnd={() => setDragTarget(null)}
         onDragOver={folder ? (event) => handleDragOver(event, target) : undefined}
@@ -587,15 +675,15 @@ export function AdminKnowledgeManager() {
         </span>
         <span className={styles.typeCell}>{folder ? "文件夹" : resourceLabels[resource?.type ?? "document"]}</span>
         <span className={styles.statusCell}>
-          {folder ? <LhChip tone="neutral">目录</LhChip> : resource?.archived ? <LhChip tone="neutral">已删除</LhChip> : resource?.publishedVersionId ? <LhChip tone="success">已发布</LhChip> : <LhChip tone="warning">草稿</LhChip>}
+          {folder ? <LhChip tone="neutral">{isTrash ? "已删除" : "目录"}</LhChip> : resource?.archived ? <LhChip tone="neutral">已删除</LhChip> : resource?.publishedVersionId && resource.latestVersionId && resource.latestVersionId !== resource.publishedVersionId ? <LhChip tone="warning">有未发布更新</LhChip> : resource?.publishedVersionId ? <LhChip tone="success">已发布</LhChip> : <LhChip tone="warning">草稿</LhChip>}
         </span>
         <span className={styles.updatedCell}>{folder ? "—" : formatDate(resource?.updatedAt)}</span>
         <span className={styles.rowActions}>
-          {folder ? (
+          {folder && !isTrash ? (
             <LhIconButton label="重命名文件夹" size="sm" icon={icon("edit")} onClick={(event) => { event.stopPropagation(); setDialog({ kind: "rename", item: ref }); setDialogValue(folder.name); }} />
-          ) : (
+          ) : !folder ? (
             <LhIconButton label="预览资源" size="sm" icon={icon("document")} onClick={(event) => { event.stopPropagation(); void openPreview(resource?.id ?? ""); }} />
-          )}
+          ) : null}
           {!isTrash && (
             <LhIconButton
               label={protectedItem ? "系统资源不可删除" : folder ? "删除文件夹" : "删除资源"}
@@ -664,16 +752,16 @@ export function AdminKnowledgeManager() {
           </div>
 
           <div className={styles.uploadPanel}>
-            <div className={styles.uploadHeading}><div><strong>导入知识资料</strong><p>Markdown 可批量导入；Skill 可选择文件夹或 ZIP，并保留相对路径。</p></div><label className={styles.typeSelect}>资源类型<select value={uploadType} onChange={(event) => setUploadType(event.target.value as ResourceType)}>{typeOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label></div>
-            <div className={`${styles.dropZone} ${dropActive ? styles.dropZoneActive : ""} ${isTrash ? styles.dropZoneDisabled : ""}`} onDragEnter={(event) => { if (!isTrash && !event.dataTransfer.types.includes(INTERNAL_DRAG_TYPE)) setDropActive(true); }} onDragOver={(event) => { if (!isTrash && !event.dataTransfer.types.includes(INTERNAL_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDragLeave={(event) => { if (event.currentTarget === event.target) setDropActive(false); }} onDrop={(event) => void handleExternalDrop(event)}>
+            <div className={styles.uploadHeading}><div><strong>导入知识资料</strong><p>Markdown 可批量导入；Skill 可选择文件夹或 ZIP，并保留相对路径。</p></div><label className={styles.typeSelect}>资源类型<select disabled={isTrash || Boolean(retryContext)} value={uploadType} onChange={(event) => setUploadType(event.target.value as ResourceType)}>{typeOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label></div>
+            <div className={`${styles.dropZone} ${dropActive ? styles.dropZoneActive : ""} ${isTrash || retryContext ? styles.dropZoneDisabled : ""}`} onDragEnter={(event) => { if (!isTrash && !retryContext && !event.dataTransfer.types.includes(INTERNAL_DRAG_TYPE)) setDropActive(true); }} onDragOver={(event) => { if (!isTrash && !retryContext && !event.dataTransfer.types.includes(INTERNAL_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDragLeave={(event) => { if (event.currentTarget === event.target) setDropActive(false); }} onDrop={(event) => void handleExternalDrop(event)}>
               {icon("publish", styles.uploadGlyph)}<div><strong>拖入文件或文件夹</strong><span>外部文件会进入当前目录；拖动已有条目请放到左侧目录完成移动。</span></div>
-              <div className={styles.uploadPickers}><LhButton type="button" size="sm" variant="secondary" disabled={isTrash} onClick={() => fileInputRef.current?.click()}>选择 Markdown / ZIP</LhButton><LhButton type="button" size="sm" variant="ghost" disabled={isTrash} onClick={() => directoryInputRef.current?.click()}>选择 Skill 文件夹</LhButton></div>
-              <input ref={fileInputRef} className={styles.hiddenInput} type="file" multiple accept=".md,.markdown,.zip" onChange={(event) => { setUploadFiles(Array.from(event.target.files ?? [])); event.currentTarget.value = ""; }} />
-              <input ref={directoryInputRef} className={styles.hiddenInput} type="file" multiple accept=".md,.markdown,*/*" {...directoryInputProps} onChange={(event) => { setUploadFiles(Array.from(event.target.files ?? []), true); event.currentTarget.value = ""; }} />
+              <div className={styles.uploadPickers}><LhButton type="button" size="sm" variant="secondary" disabled={isTrash || Boolean(retryContext)} onClick={() => fileInputRef.current?.click()}>选择 Markdown / ZIP</LhButton><LhButton type="button" size="sm" variant="ghost" disabled={isTrash || Boolean(retryContext)} onClick={() => directoryInputRef.current?.click()}>选择 Skill 文件夹</LhButton></div>
+              <input ref={fileInputRef} className={styles.hiddenInput} type="file" multiple accept=".md,.markdown,.zip" disabled={isTrash || Boolean(retryContext)} onChange={(event) => { setUploadFiles(Array.from(event.target.files ?? [])); event.currentTarget.value = ""; }} />
+              <input ref={directoryInputRef} className={styles.hiddenInput} type="file" multiple accept=".md,.markdown,*/*" disabled={isTrash || Boolean(retryContext)} {...directoryInputProps} onChange={(event) => { setUploadFiles(Array.from(event.target.files ?? []), true); event.currentTarget.value = ""; }} />
             </div>
-            {uploadItems.length > 0 && <div className={styles.uploadQueue}><div className={styles.queueHeader}><strong>待导入 {uploadItems.length} 项</strong><button type="button" onClick={() => setUploadItems([])}>清空</button></div><ul>{uploadItems.map((item, index) => <li key={`${item.path}-${index}`}><span>{item.path}</span><button type="button" aria-label={`移除 ${item.path}`} onClick={() => setUploadItems((previous) => previous.filter((_, itemIndex) => itemIndex !== index))}>{icon("close")}</button></li>)}</ul><div className={styles.queueActions}><span>目标：{isTrash ? "请先选择知识目录" : currentFolderName}</span><LhButton type="button" size="sm" variant="primary" disabled={uploadBusy || isTrash} icon={uploadBusy ? <LhLoadingGlyph label="正在上传" /> : icon("publish")} onClick={() => void uploadFiles()}>{uploadBusy ? "正在导入" : "上传并生成草稿"}</LhButton></div></div>}
-            {(uploadMessage || uploadError) && <div className={`${styles.uploadResult} ${uploadError ? styles.uploadResultError : ""}`} role={uploadError ? "alert" : "status"}>{uploadError || uploadMessage}{!uploadError && uploadExcluded.length > 0 && <details><summary>查看已排除文件（{uploadExcluded.length}）</summary><ul>{uploadExcluded.map((path) => <li key={path}>{path}</li>)}</ul></details>}</div>}
-            {conflictItems.length > 0 && <div className={styles.conflictPanel}><div><strong>发现同名资料</strong><p>{conflictResults.filter((result) => result.code === "conflict").map((result) => result.name).join("、")}</p></div><div className={styles.conflictActions}><LhButton type="button" size="sm" variant="secondary" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "overwrite")}>覆盖</LhButton><LhButton type="button" size="sm" variant="signal" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "rename")}>重命名导入</LhButton><LhButton type="button" size="sm" variant="quiet" disabled={uploadBusy} onClick={() => { setUploadItems((previous) => previous.filter((item) => !conflictItems.some((conflictItem) => conflictItem.path === item.path))); setConflictItems([]); setConflictResults([]); setUploadMessage("已跳过同名资料。"); }}>跳过</LhButton></div></div>}
+            {uploadItems.length > 0 && <div className={styles.uploadQueue}><div className={styles.queueHeader}><strong>待导入 {uploadItems.length} 项</strong><button type="button" onClick={clearUploadQueue}>清空</button></div><ul>{uploadItems.map((item) => <li key={item.path}><span>{item.path}</span><button type="button" aria-label={`移除 ${item.path}`} onClick={() => removeUploadItem(item.path)}>{icon("close")}</button></li>)}</ul><div className={styles.queueActions}><span>目标：{retryContext ? `${retryContext.folderId ? folders.find((folder) => folder.id === retryContext.folderId)?.name ?? "原目标文件夹" : "全部文件"} · ${typeOptions.find((option) => option.value === retryContext.type)?.label ?? retryContext.type}` : isTrash ? "请先选择知识目录" : currentFolderName}</span><LhButton type="button" size="sm" variant="primary" disabled={uploadBusy || isTrash} icon={uploadBusy ? <LhLoadingGlyph label="正在上传" /> : icon("publish")} onClick={() => void uploadFiles()}>{uploadBusy ? "正在导入" : "上传并生成草稿"}</LhButton></div></div>}
+            {(uploadMessage || uploadError) && <div className={`${styles.uploadResult} ${uploadError ? styles.uploadResultError : ""}`} role={uploadError ? "alert" : "status"}>{uploadError || uploadMessage}{!uploadError && uploadExcluded.length > 0 && <details><summary>查看已排除文件（{uploadExcluded.length}）</summary><ul>{uploadExcluded.map((path) => <li key={path}>{path}</li>)}</ul></details>}{!uploadError && failedResults.length > 0 && <details><summary>查看未完成项目（{failedResults.length}）</summary><ul>{failedResults.map((result, index) => <li key={`${result.name}-${index}`}>{result.name}{result.error ? `：${result.error}` : result.code ? `：${result.code}` : ""}</li>)}</ul></details>}</div>}
+            {conflictItems.length > 0 && <div className={styles.conflictPanel}><div><strong>发现同名资料</strong><p>{conflictResults.map((result) => result.name).join("、")}</p><p>将按原目标：{retryContext?.folderId ? folders.find((folder) => folder.id === retryContext.folderId)?.name ?? "原目标文件夹" : "全部文件"} · {retryContext ? typeOptions.find((option) => option.value === retryContext.type)?.label ?? retryContext.type : uploadType} 处理。</p></div><div className={styles.conflictActions}><LhButton type="button" size="sm" variant="secondary" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "overwrite")}>覆盖</LhButton><LhButton type="button" size="sm" variant="signal" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "rename")}>重命名导入</LhButton><LhButton type="button" size="sm" variant="quiet" disabled={uploadBusy} onClick={() => { setUploadItems((previous) => previous.filter((item) => !conflictItems.some((conflictItem) => conflictItem.path === item.path))); setConflictItems([]); setConflictResults([]); setFailedResults((previous) => previous.filter((result) => result.code !== "conflict")); setRetryContext((previous) => failedResults.some((result) => result.code !== "conflict") ? previous : null); setUploadMessage("已跳过同名资料。"); }}>跳过</LhButton></div></div>}
           </div>
 
           {loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载知识目录" />正在加载知识目录…</div>}
@@ -689,7 +777,7 @@ export function AdminKnowledgeManager() {
 
       {dialog && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="knowledge-dialog-title"><form onSubmit={(event) => void submitDialog(event)}><div className={styles.modalHeader}><h2 id="knowledge-dialog-title">{dialog.kind === "createFolder" ? "新建文件夹" : dialog.kind === "rename" ? "重命名" : dialog.kind === "move" ? "移动到" : "确认移入回收站"}</h2><button type="button" className={styles.modalClose} onClick={() => setDialog(null)} aria-label="关闭">{icon("close")}</button></div>{dialog.kind === "trash" ? <p className={styles.modalCopy}>将 {dialog.items.length} 项移入回收站？删除后仍可在回收站恢复。</p> : dialog.kind === "move" ? <label className={styles.modalField}>目标文件夹<select value={dialogValue} onChange={(event) => setDialogValue(event.target.value)}><option value="__root__">全部文件（根目录）</option>{folders.filter((folder) => !folder.deleted && !selected.has(itemKey({ kind: "folder", id: folder.id }))).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label> : <label className={styles.modalField}>名称<input autoFocus value={dialogValue} onChange={(event) => setDialogValue(event.target.value)} placeholder="输入名称" /></label>}<div className={styles.modalActions}><LhButton type="button" size="sm" variant="quiet" onClick={() => setDialog(null)}>取消</LhButton><LhButton type="submit" size="sm" variant={dialog.kind === "trash" ? "danger" : "primary"} disabled={busy === "dialog"} icon={busy === "dialog" ? <LhLoadingGlyph label="处理中" /> : undefined}>{dialog.kind === "trash" ? "移入回收站" : dialog.kind === "move" ? "移动" : "保存"}</LhButton></div></form></div></div>}
 
-      {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{preview.error && <LhCallout tone="danger" icon={icon("warning")}>{preview.error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip><span>版本 {preview.resource.version.number}</span><span>{preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div><div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><span>{preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.version.publishedAt) || busy === "publish"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
+      {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{preview.error && <LhCallout tone="danger" icon={icon("warning")}>{preview.error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip><span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div><div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.version.publishedAt) || busy === "publish"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
     </div>
   );
 }
