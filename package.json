@@ -21,6 +21,7 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "hub": "tsx scripts/knowledge-hub.ts",
+    "test:knowledge-standardize": "npm ci --prefix skills/lantern-knowledge-standardize --ignore-scripts && npm test --prefix skills/lantern-knowledge-standardize && node --import tsx --test skills/lantern-knowledge-standardize/tests/hub-compat.test.ts",
     "hub:mcp": "tsx scripts/knowledge-mcp.ts",
     "hub:import-existing": "tsx scripts/knowledge-import-existing.ts"
   },
