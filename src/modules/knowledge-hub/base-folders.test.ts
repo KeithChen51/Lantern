@@ -7,7 +7,8 @@ describe("base knowledge folders", () => {
     type Folder = { id: string; name: string; parentId: string | null; deleted: boolean };
     type Location = { resourceId: string; folderId: string | null; name: string };
     const folders: Folder[] = [];
-    const locations: Location[] = [{ resourceId: "manual-case", folderId: null, name: "人工整理.md" }];
+    const locations: Location[] = [{ resourceId: "manual-case", folderId: "operator-folder", name: "人工整理.md" }];
+    let organized = false;
     const resources = [
       { id: "brand-whitepaper", type: "document", title: "白皮书" },
       { id: "case-a", type: "case", title: "案例" },
@@ -22,12 +23,12 @@ describe("base knowledge folders", () => {
         findFirst: async ({ where }: { where: object }) => folders.find(row => matches(row, where)) ?? null,
         create: async ({ data }: { data: Folder }) => { folders.push(data); return data; },
       },
-      hubResource: { findMany: async () => resources.filter(row => !locations.some(location => location.resourceId === row.id)) },
+      hubResource: { findMany: async () => resources.filter(row => !locations.some(location => location.resourceId === row.id && (organized || location.folderId !== null))) },
       hubResourceLocation: {
         findFirst: async ({ where }: { where: object }) => locations.find(row => matches(row, where)) ?? null,
-        create: async ({ data }: { data: Location }) => { locations.push(data); return data; },
+        upsert: async ({ create, update }: { create: Location; update: Location }) => { const previous = locations.find(row => row.resourceId === create.resourceId); if (previous) Object.assign(previous, update); else locations.push(create); return previous ?? create; },
       },
-      hubAudit: { create: async () => ({}) },
+      hubAudit: { findFirst: async () => organized ? {} : null, create: async ({ data }: { data: { action: string } }) => { if (data.action === "base_folders_initialized") organized = true; return {}; } },
     } as unknown as Prisma.TransactionClient;
     expect((await initializeBaseFolders(tx)).placed).toBe(3);
     expect(folders.map(folder => folder.name)).toEqual(["白皮书", "参悟案例", "行为准则", "Skill"]);
@@ -37,6 +38,6 @@ describe("base knowledge folders", () => {
     expect((await initializeBaseFolders(tx)).placed).toBe(0);
     expect(caseLocation.folderId).toBeNull();
     expect(folders).toHaveLength(4);
-    expect(locations.find(location => location.resourceId === "manual-case")?.folderId).toBeNull();
+    expect(locations.find(location => location.resourceId === "manual-case")?.folderId).toBe("operator-folder");
   });
 });

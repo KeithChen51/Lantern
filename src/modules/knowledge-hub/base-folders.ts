@@ -18,6 +18,7 @@ export function baseFolderFor(resource: { id: string; type: string }) {
 /** First placement only. Redeploying must not undo an operator's organization. */
 export async function initializeBaseFolders(tx: Prisma.TransactionClient) {
   const now = new Date();
+  const alreadyOrganized = await tx.hubAudit.findFirst({ where: { action: "base_folders_initialized", targetId: "base-folders-v1" } });
   const destinations = new Map<string, string>();
   for (const definition of baseFolders) {
     const existing = await tx.hubFolder.findUnique({ where: { id: definition.id } });
@@ -30,19 +31,23 @@ export async function initializeBaseFolders(tx: Prisma.TransactionClient) {
     await tx.hubFolder.create({ data: { ...definition, parentId: null, deleted: false, createdAt: now, updatedAt: now } });
     destinations.set(definition.id, definition.id);
   }
-  const resources = await tx.hubResource.findMany({ where: { archived: false, location: null }, select: { id: true, type: true, title: true } });
+  const resources = await tx.hubResource.findMany({
+    where: { archived: false, ...(alreadyOrganized ? { location: null } : { OR: [{ location: null }, { location: { folderId: null } }] }) },
+    select: { id: true, type: true, title: true, location: { select: { name: true } } },
+  });
   let placed = 0;
   for (const resource of resources) {
     const key = baseFolderFor(resource);
     const folderId = key && destinations.get(key);
     if (!folderId) continue;
-    const original = resource.type === "skill" ? resource.title : `${resource.title}.md`;
+    const original = resource.location?.name ?? (resource.type === "skill" ? resource.title : `${resource.title}.md`);
     let name = original;
     let suffix = 2;
     while (await tx.hubResourceLocation.findFirst({ where: { folderId, name } }) || await tx.hubFolder.findFirst({ where: { parentId: folderId, name, deleted: false } })) name = `${original} (${suffix++})`;
-    await tx.hubResourceLocation.create({ data: { resourceId: resource.id, folderId, name, updatedAt: now } });
+    await tx.hubResourceLocation.upsert({ where: { resourceId: resource.id }, create: { resourceId: resource.id, folderId, name, updatedAt: now }, update: { folderId, name, updatedAt: now } });
     await tx.hubAudit.create({ data: { id: randomUUID(), action: "base_folder_placed", targetId: resource.id, detail: JSON.stringify({ folderId, name }), createdAt: now } });
     placed++;
   }
+  if (!alreadyOrganized) await tx.hubAudit.create({ data: { id: randomUUID(), action: "base_folders_initialized", targetId: "base-folders-v1", detail: JSON.stringify({ placed }), createdAt: now } });
   return { folders: [...destinations.values()], placed };
 }
