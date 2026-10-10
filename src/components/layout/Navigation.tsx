@@ -13,10 +13,8 @@ import { getFeedbackHref } from "./feedback-link";
 import { getHeaderSearchMatches } from "./header-search";
 import { getVisibleNavItems } from "./navigation-model";
 
-const NOTIFICATIONS = [
-  "路引已可直接接收服务场景，并按事实、依据和下一步话术回应。",
-  "镜鉴与笃行分别用于外部标杆和内部实践复盘。",
-];
+import { currentRelease } from "@/lib/releases";
+import { markCurrentReleaseRead, useReleaseUnread } from "./release-read-state";
 
 const SEARCH_PLACEHOLDER = "搜索";
 
@@ -326,47 +324,61 @@ function SidebarFeedbackLink({
 function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; className?: string }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
+  const unread = useReleaseUnread();
+  const panelId = React.useId();
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
+  React.useEffect(() => { setIsOpen(false); }, [pathname]);
   React.useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+    if (!isOpen) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [isOpen]);
 
   return (
-    <div data-lh-sidebar-notifications className={cn("relative", className)}>
-      <button
-        data-lh-sidebar-notification-button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
+    <div ref={rootRef} data-lh-sidebar-notifications className={cn("relative w-full", className)}
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false); }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && isOpen) {
+          event.stopPropagation();
+          setIsOpen(false);
+          buttonRef.current?.focus();
+        }
+      }}>
+      <button ref={buttonRef} data-lh-sidebar-notification-button type="button"
+        onClick={() => {
+          if (!isOpen) markCurrentReleaseRead();
+          setIsOpen((prev) => !prev);
+        }}
+        aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined}
         className={cn(
-          "relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-[background,border-color,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action",
+          "relative grid min-h-11 w-full items-center rounded-[var(--lh-control-radius)] border border-transparent bg-transparent px-3 py-2 text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)] text-[var(--color-deck-text-soft)] transition-[background,border-color,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
         )}
-        aria-label="通知"
-        title="通知"
-      >
+        aria-label={unread ? "通知，有版本更新" : "通知"} title="通知">
         <Icon icon={lighthouseIcons.bell} className="h-5 w-5" />
-        <span data-lh-sidebar-notification-dot className="absolute left-8 top-2 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />
-        {isExpanded && <span className="text-left">消息提醒</span>}
+        {unread && <span aria-hidden="true" data-lh-sidebar-notification-dot className="absolute left-8 top-2 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />}
+        {isExpanded && <span className="text-left">通知</span>}
       </button>
-
       {isOpen && (
-        <div
-          data-lh-popover
+        <section id={panelId} aria-label="最新版本更新" data-lh-popover
           className={cn(
-            "absolute bottom-12 z-20 w-[min(20rem,calc(100vw-32px))] rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft shadow-[var(--lh-card-hover-shadow)] [--lh-popover-origin:left_bottom] [backdrop-filter:var(--lh-shell-blur)]",
+            "absolute bottom-12 z-20 max-h-[min(32rem,70dvh)] w-[min(20rem,calc(100vw-32px))] overflow-y-auto overscroll-contain rounded-[var(--lh-card-radius)] border border-line bg-panel p-4 text-[length:var(--type-body)] leading-[var(--leading-body)] text-ink-soft shadow-[var(--lh-card-hover-shadow)] [--lh-popover-origin:left_bottom] [backdrop-filter:var(--lh-shell-blur)]",
             isExpanded ? "left-0" : "left-[calc(100%+0.5rem)]",
-          )}
-        >
-          <p className="mb-3 text-[length:var(--title-kicker)] font-[var(--weight-black)] leading-[1.2] tracking-[var(--tracking-kicker)] text-primary-text">今日可处理</p>
-          <ul className="space-y-2">
-            {NOTIFICATIONS.map((item) => (
-              <li key={item} className="leading-[var(--leading-body)]">
-                {item}
-              </li>
-            ))}
+          )}>
+          <p className="text-[length:var(--type-caption)] text-muted">当前版本</p>
+          <h2 className="mt-1 text-[length:var(--title-card)] font-[var(--weight-bold)] text-primary-text">灯塔 v{currentRelease.version}</h2>
+          <p className="mt-2">{currentRelease.summary}</p>
+          <h3 className="mb-2 mt-4 font-[var(--weight-bold)] text-ink">本次更新</h3>
+          <ul className="list-disc space-y-2 pl-4">
+            {currentRelease.changes.flatMap((group) => group.items).slice(0, 3).map((item) => <li key={item}>{item}</li>)}
           </ul>
-        </div>
+          <Link href="/updates" onClick={() => setIsOpen(false)} className="mt-4 inline-flex min-h-11 items-center text-primary-text underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">查看全部更新与历史</Link>
+        </section>
       )}
     </div>
   );
