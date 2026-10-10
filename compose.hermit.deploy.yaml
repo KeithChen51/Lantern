@@ -1,0 +1,14 @@
+services:
+  lighthouse:
+    image: lantern-hermit:acceptance
+    platform: linux/amd64
+    env_file:
+      - .env.runtime
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - lighthouse-knowledge:/data
+    init: true
+    restart: unless-stopped
+volumes:
+  lighthouse-knowledge:

@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     ".netlify/**",
     "out/**",
     "build/**",
+    "runtime/**",
+    "release/**",
     "next-env.d.ts",
     ".understand-anything/**",
   ]),

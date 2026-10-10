@@ -1,0 +1,19 @@
+services:
+  lighthouse:
+    image: lighthouse-hermit:local
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.hermit
+      additional_contexts:
+        knowledge: ${HERMIT_INDEX_DIR:?Set HERMIT_INDEX_DIR to the directory containing knowledge-vectors.json}
+    env_file:
+      - .env.runtime
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - lighthouse-knowledge:/data
+    init: true
+    restart: unless-stopped
+volumes:
+  lighthouse-knowledge:

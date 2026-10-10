@@ -27,7 +27,10 @@
     "releases:sync": "node scripts/sync-releases.mjs",
     "releases:check": "node scripts/sync-releases.mjs --check",
     "prebuild": "npm run releases:check",
-    "hub:bootstrap": "npm run db:deploy && npm run hub:import-existing -- --publish"
+    "hub:bootstrap": "npm run db:deploy && npm run hub:import-existing -- --publish",
+    "package:hermit-runtime": "node scripts/package-hermit-runtime.mjs",
+    "check:hermit-runtime": "tsx scripts/check-hermit-runtime.ts",
+    "test:hermit-runtime": "tsx scripts/hermit-dsh-smoke.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

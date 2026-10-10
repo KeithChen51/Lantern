@@ -348,3 +348,7 @@ Design changes should land in the system before they land as page-local styling.
 | New page skeleton | Update this file with task, layout, state, and mobile collapse rules. |
 | Deprecated style | Add the replacement rule to `do-dont.md` and remove page-local examples over time. |
 | New motion behavior | Add a token or hook contract first, then add the migrated files to `src/components/ui/lighthouse-design-system.test.ts`. |
+
+### Hermit viewport and reading regions
+
+Hermit uses a viewport-height workspace below its shared heading. The heading and composer keep their space; only the conversation body scrolls. On desktop the knowledge reader has its own vertical scroll body, with its title, close action and reference action remaining visible. Opening or switching a document starts its body at the top without moving the conversation. Closing it preserves the conversation position. On narrow screens the reader temporarily replaces the conversation and provides a return action. Streaming follows the latest reply only while the user is already at the bottom; otherwise a latest-reply button lets the user return explicitly. This behavior is scoped to Hermit and does not change the Home/Heart layout or shared navigation.

@@ -74,6 +74,8 @@ export function ChatPanel() {
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [readerDocument, setReaderDocument] = useState<HermitDocumentRecommendation | null>(null);
   const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(null);
+  const followLatestRef = useRef(true);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useLhReducedMotion();
   const {
@@ -102,10 +104,12 @@ export function ChatPanel() {
 
   useEffect(() => {
     const element = scrollRef.current;
-    if (element && (hasMessages || isLoading)) {
-      element.scrollTo({ top: element.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
+    if (element && (hasMessages || isLoading) && followLatestRef.current) {
+      element.scrollTo({ top: element.scrollHeight, behavior: "auto" });
+    } else if (element && !followLatestRef.current && isLoading) {
+      setHasUnreadMessages(true);
     }
-  }, [hasMessages, isLoading, messages, prefersReducedMotion, status]);
+  }, [hasMessages, isLoading, messages, status]);
 
   async function uploadAttachment(file: File, localId: string) {
     const formData = new FormData();
@@ -236,6 +240,8 @@ export function ChatPanel() {
       attachmentIds: readyAttachments.map((attachment) => attachment.id as string),
       ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}),
     };
+    followLatestRef.current = true;
+    setHasUnreadMessages(false);
     pendingTextRef.current = text;
     pendingBodyRef.current = body;
     setInput("");
@@ -310,7 +316,11 @@ export function ChatPanel() {
           </LhStatusBadge>
         </div>
 
-        <div data-lh-hermit-main ref={scrollRef}>
+        <div data-lh-hermit-main ref={scrollRef} tabIndex={0} role="region" aria-label="对话消息" onScroll={(event) => {
+          const element = event.currentTarget;
+          followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+          if (followLatestRef.current) setHasUnreadMessages(false);
+        }}>
           <div data-lh-chat-scroll-content>
             {displayedError && (
               <div className={styles.requestError} role="alert">
@@ -328,6 +338,11 @@ export function ChatPanel() {
         </div>
 
         <footer data-lh-hermit-footer>
+          {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => {
+            followLatestRef.current = true;
+            setHasUnreadMessages(false);
+            scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
+          }}>查看最新回复 ↓</button>}
           <div data-lh-hermit-composer>
             <ChatInput
               value={input}
