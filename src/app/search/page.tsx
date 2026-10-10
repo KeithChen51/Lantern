@@ -52,5 +52,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     </article>)}{result.total === 0 && <p className={styles.searchEmpty}>没有匹配的已发布资源，可尝试其他关键词。</p>}
     <nav className={styles.pagination} aria-label="结果分页">{options.offset > 0 && <Link href={pageLink(Math.max(0, options.offset - options.limit))}>上一页</Link>}{options.offset + options.limit < result.total && <Link href={pageLink(options.offset + options.limit)}>下一页</Link>}</nav></section>}
     {navigationMatches.length > 0 && <section className={styles.searchNavigation}><h2>页面导航</h2>{navigationMatches.map(item => <Link key={item.href} href={item.href}>{item.label}</Link>)}</section>}
+    <section className={styles.searchNavigation}><h2>后台维护</h2><Link href="/admin/knowledge">管理知识</Link></section>
   </div>;
 }

@@ -13,19 +13,26 @@ const adminAreas = [
     icon: lighthouseIcons.action,
     status: "首版维护入口",
   },
+  {
+    title: "知识文件管理",
+    description: "像整理桌面文件夹一样管理知识目录，导入 Markdown、Skill 与工具资料。",
+    href: "/admin/knowledge",
+    icon: lighthouseIcons.document,
+    status: "知识中台",
+  },
 ];
 
 export function AdminHome() {
   return (
     <div className={styles.adminHomePage}>
-      <PageHeading title="内容维护" description="管理笃行案例的草稿、预览与发布。" />
+      <PageHeading title="内容维护" description="管理笃行案例与知识中台资料的草稿、预览与发布。" />
 
       <section className={styles.adminHomeSection}>
         <div className={styles.adminHomeSectionHeader}>
           <div>
             <p className={styles.adminEyebrow}>维护入口</p>
             <h2>选择要处理的内容</h2>
-            <p>首版先保持后台克制，只处理笃行案例维护。</p>
+            <p>在一个受保护的后台中维护发布内容与知识文件。</p>
           </div>
         </div>
         <div className={styles.adminAreaGrid}>

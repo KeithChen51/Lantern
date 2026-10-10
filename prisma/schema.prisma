@@ -8,8 +8,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Knowledge hub has no user/role dependencies in this phase. CLI and stdio MCP
-// are the maintenance boundary; HTTP exposes published resources only.
+// Knowledge hub maintenance is exposed through the authenticated admin portal;
+// public HTTP routes continue to expose published resources only.
 model HubResource {
   id                 String @id @db.VarChar(120)
   type               String @db.VarChar(30)
@@ -18,11 +18,13 @@ model HubResource {
   tags               Json
   source             String @db.Text
   businessScope      String @db.Text
+  visibility         String @default("public") @db.VarChar(20)
   archived           Boolean @default(false)
   publishedVersionId String? @db.VarChar(120)
   createdAt          DateTime
   updatedAt          DateTime
   versions           HubVersion[]
+  location           HubResourceLocation?
 
   @@index([type, archived])
   @@map("hub_resources")
@@ -103,6 +105,38 @@ model HubAudit {
 
   @@index([targetId, createdAt])
   @@map("hub_audits")
+}
+
+model HubFolder {
+  id        String    @id @db.VarChar(120)
+  name      String    @db.VarChar(240)
+  parentId  String?   @db.VarChar(120)
+  deleted   Boolean   @default(false)
+  trashBatchId String? @db.VarChar(120)
+  createdAt DateTime
+  updatedAt DateTime
+
+  parent    HubFolder?  @relation("HubFolderParent", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  children  HubFolder[] @relation("HubFolderParent")
+  resources HubResourceLocation[]
+
+  @@index([parentId, deleted])
+  @@map("hub_folders")
+}
+
+model HubResourceLocation {
+  resourceId            String   @id @db.VarChar(120)
+  folderId              String?  @db.VarChar(120)
+  name                  String   @db.VarChar(240)
+  archivedBeforeTrash   Boolean  @default(false)
+  trashBatchId          String?  @db.VarChar(120)
+  updatedAt             DateTime
+
+  resource HubResource @relation(fields: [resourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  folder   HubFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([folderId, name])
+  @@map("hub_resource_locations")
 }
 
 enum RecordStatus {
