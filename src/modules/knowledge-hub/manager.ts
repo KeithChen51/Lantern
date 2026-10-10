@@ -33,6 +33,7 @@ export const knowledgeManagerActionSchema = z.union([
   z.object({ action: z.literal("move"), items: z.array(itemSchema).min(1).max(500), folderId: idSchema.nullable() }),
   z.object({ action: z.enum(["trash", "restore"]), items: z.array(itemSchema).min(1).max(500) }),
   z.object({ action: z.literal("publish"), id: idSchema, versionId: idSchema }),
+  z.object({ action: z.literal("setVisibility"), id: idSchema, visibility: z.enum(["public", "internal"]) }),
 ]);
 export type KnowledgeManagerAction = z.infer<typeof knowledgeManagerActionSchema>;
 
@@ -48,6 +49,7 @@ type Resource = {
   id: string;
   type: string;
   title: string;
+  visibility: string;
   archived: boolean;
   publishedVersionId: string | null;
   updatedAt: Date;
@@ -180,6 +182,7 @@ async function readGraph(tx: Tx): Promise<Graph> {
       id: row.id,
       type: row.type,
       title: row.title,
+      visibility: row.visibility,
       archived: row.archived,
       publishedVersionId: row.publishedVersionId,
       updatedAt: row.updatedAt,
@@ -255,6 +258,7 @@ export type KnowledgeManagerListing = {
     folderId: string | null;
     type: string;
     title: string;
+    visibility: string;
     archived: boolean;
     publishedVersionId: string | null;
     latestVersionId: string | null;
@@ -291,6 +295,7 @@ export class KnowledgeManager {
           folderId: resource.location?.folderId ?? null,
           type: resource.type,
           title: resource.title,
+          visibility: resource.visibility,
           archived: resource.archived,
           publishedVersionId: resource.publishedVersionId,
           latestVersionId: resource.latestVersionId,
@@ -314,6 +319,15 @@ export class KnowledgeManager {
 
   private async applyInTransaction(tx: Tx, action: KnowledgeManagerAction) {
     const now = new Date();
+    if (action.action === "setVisibility") {
+      const resource = await tx.hubResource.findUnique({ where: { id: action.id } });
+      if (!resource) notFound("资源", action.id);
+      if (resource.type !== "case") invalid("公开／内参状态仅用于参悟案例。");
+      if (resource.archived) conflict("请先从回收站恢复资料。");
+      await tx.hubResource.update({ where: { id: action.id }, data: { visibility: action.visibility, updatedAt: now } });
+      await writeAudit(tx, "visibility_updated", action.id, { before: resource.visibility, after: action.visibility }, now);
+      return { id: action.id, visibility: action.visibility };
+    }
     if (action.action === "createFolder") {
       const graph = await readGraph(tx);
       if (action.parentId) {

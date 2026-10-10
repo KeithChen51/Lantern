@@ -78,6 +78,7 @@ export function markdownInput(entry: UploadEntry, type: ResourceType) {
     title: data.title ?? body.match(/^#\s+(.+)$/m)?.[1] ?? entry.path.split("/").at(-1)!.replace(/\.md$/i, ""),
     summary: data.summary ?? "", tags: data.tags ?? [], source: data.source ?? entry.path,
     businessScope: data.businessScope ?? "", changeNote: data.changeNote ?? "",
+    visibility: data.visibility,
     validity: data.validity ?? "unknown", effectiveFrom: data.effectiveFrom ?? null, effectiveTo: data.effectiveTo ?? null,
   });
 }

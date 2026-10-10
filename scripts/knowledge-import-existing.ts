@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 import { importSchema, KnowledgeHub } from "../src/modules/knowledge-hub/service";
 import { createPrismaHubTransaction } from "../src/modules/knowledge-hub/prisma-store";
 import { bundledStandardizeSkill } from "../src/modules/knowledge-hub/bundled-skill";
+import { initializeBaseFolders } from "../src/modules/knowledge-hub/base-folders";
 
 async function main() {
   const { values } = parseArgs({ options: { publish: { type: "boolean", default: false }, "dry-run": { type: "boolean", default: false } } });
@@ -19,7 +20,7 @@ async function main() {
     const sourcePath = item.evidence.sourceMaterials.find(source => source.path)?.path;
     if (!sourcePath) throw new Error(`Missing canonical source for ${item.slug}`);
     const markdown = await readFile(sourcePath, "utf8");
-    inputs.push(importSchema.parse({ id: `case-${item.slug}`, type: "case", title: item.metadata.title, markdown, summary: item.brief.oneLine, tags: item.metadata.tags, source: sourcePath, businessScope: "汽车售后服务" }));
+    inputs.push(importSchema.parse({ id: `case-${item.slug}`, type: "case", visibility: item.metadata.visibility, title: item.metadata.title, markdown, summary: item.brief.oneLine, tags: item.metadata.tags, source: sourcePath, businessScope: "汽车售后服务" }));
   }
   const guidePath = "docs/brand/精诚服务 (The Genuine Way) 品牌价值观框架与落地指南.md";
   const guide = await readFile(guidePath, "utf8");
@@ -42,5 +43,6 @@ async function main() {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
     console.log(JSON.stringify(result));
   }
+  console.log(JSON.stringify(await prisma.$transaction(initializeBaseFolders, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 })));
 }
 main().catch(error => { console.error(error instanceof Error ? error.message : "Import failed"); process.exitCode = 1; }).finally(() => prisma.$disconnect());

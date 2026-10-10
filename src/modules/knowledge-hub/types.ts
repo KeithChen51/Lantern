@@ -11,7 +11,7 @@ export type HubVersion = {
 };
 export type HubResource = {
   id: string; type: ResourceType; title: string; summary: string; tags: string[];
-  source: string; businessScope: string; archived: boolean;
+  source: string; businessScope: string; visibility: "public" | "internal"; archived: boolean;
   publishedVersionId: string | null; createdAt: string; updatedAt: string;
   versions: HubVersion[];
 };

@@ -5,6 +5,7 @@ import path from "node:path";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { KnowledgeHub, importSchema } from "../src/modules/knowledge-hub/service";
 import { createPrismaHubTransaction } from "../src/modules/knowledge-hub/prisma-store";
+import { initializeBaseFolders } from "../src/modules/knowledge-hub/base-folders";
 
 const prisma = new PrismaClient();
 async function main() {
@@ -17,5 +18,6 @@ async function main() {
     return { ...imported, published: true };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
   console.log(JSON.stringify(result));
+  console.log(JSON.stringify(await prisma.$transaction(initializeBaseFolders, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 })));
 }
 main().catch(error => { console.error(error instanceof Error ? error.message : "Built-in Skill initialization failed"); process.exitCode = 1; }).finally(() => prisma.$disconnect());

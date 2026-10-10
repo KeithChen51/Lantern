@@ -10,6 +10,18 @@ function setup() {
   return { store, hub: new KnowledgeHub(store, () => now), time: (value: string) => { now = value; } };
 }
 describe("knowledge hub publication and retrieval", () => {
+  it("keeps case audience separate from publication and preserves omitted audience on updates", async () => {
+    const { hub, store } = setup();
+    const first = await hub.import({ ...input, type: "case" });
+    expect(store.resources.get(input.id)?.visibility).toBe("internal");
+    await hub.publish(input.id, first.versionId);
+    expect((await hub.search()).items[0]).toMatchObject({ visibility: "internal" });
+    await hub.import({ ...input, type: "case", visibility: "public" });
+    await hub.import({ ...input, type: "case", markdown: "# 更新内容" });
+    expect(store.resources.get(input.id)?.visibility).toBe("public");
+    expect((await hub.get(input.id)).publishedVersionId).toBe(first.versionId);
+    await expect(hub.import({ ...input, type: "case", visibility: "invalid" })).rejects.toThrow();
+  });
   it("imports once, isolates drafts, publishes, and retains exact old citations", async () => {
     const { hub } = setup();
     const v1 = await hub.import(input);

@@ -14,6 +14,7 @@ export const importSchema = z.object({
   markdown: z.string().min(1).max(2_000_000).refine(value => !!value.trim(), "Markdown is empty"), summary: z.string().max(2000).default(""),
   tags: z.array(z.string().min(1).max(80)).max(50).default([]),
   source: z.string().trim().min(1).max(1000), businessScope: z.string().max(1000).default(""),
+  visibility: z.enum(["public", "internal"]).optional(),
   changeNote: z.string().max(2000).default(""), validity: z.enum(["effective", "unknown", "expired"]).default("unknown"),
   effectiveFrom: date.nullable().default(null), effectiveTo: date.nullable().default(null),
   files: z.array(fileSchema).max(50).default([]),
@@ -102,11 +103,12 @@ export class KnowledgeHub {
       if (existing && existing.type !== data.type) throw new HubError("conflict", "Resource type cannot be changed by import");
       const latest = existing?.versions.at(-1);
       if (data.baseVersionId && data.baseVersionId !== latest?.id) throw new HubError("conflict", "Resource changed; read the latest version before updating");
-      const resource: HubResource = existing ?? { id: data.id, type: data.type, title: data.title, summary: "", tags: [], source: data.source, businessScope: "", archived: false, publishedVersionId: null, createdAt: now, updatedAt: now, versions: [] };
-      const before = { title: resource.title, summary: resource.summary, tags: resource.tags, source: resource.source, businessScope: resource.businessScope };
-      const after = { title: data.title, summary: data.summary, tags: data.tags, source: data.source, businessScope: data.businessScope };
+      const visibility = data.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
+      const resource: HubResource = existing ?? { id: data.id, type: data.type, title: data.title, summary: "", tags: [], source: data.source, businessScope: "", visibility, archived: false, publishedVersionId: null, createdAt: now, updatedAt: now, versions: [] };
+      const before = { title: resource.title, summary: resource.summary, tags: resource.tags, source: resource.source, businessScope: resource.businessScope, visibility: resource.visibility };
+      const after = { title: data.title, summary: data.summary, tags: data.tags, source: data.source, businessScope: data.businessScope, visibility };
       const metadataChanged = JSON.stringify(before) !== JSON.stringify(after);
-      Object.assign(resource, { title: data.title, summary: data.summary, tags: data.tags, source: data.source, businessScope: data.businessScope });
+      Object.assign(resource, after);
       const duplicate = resource.versions.find(v => v.checksum === checksum);
       if (!duplicate) {
         const id = uuid();
@@ -180,7 +182,7 @@ export class KnowledgeHub {
         const score = terms.reduce((n, term) => n + (title.includes(term) ? 10 : 0) + (metadata.includes(term) ? 4 : 0) + (body.includes(term) ? 1 : 0), 0);
         if (terms.length && score === 0) return [];
         const citation = version.citations.find(c => terms.some(term => c.text.toLowerCase().includes(term))) ?? version.citations[0];
-        return [{ id: resource.id, type: resource.type, title: resource.title, summary: resource.summary, source: resource.source, tags: resource.tags, versionId: version.id, version: version.number, publishedAt: version.publishedAt!, updatedAt: resource.updatedAt, validity: validity(version, now), score, excerpt: citation?.text.slice(0, 300) ?? "", citation: citation ? { id: citation.id, heading: citation.heading, startLine: citation.startLine, endLine: citation.endLine } : null }];
+        return [{ id: resource.id, type: resource.type, title: resource.title, summary: resource.summary, source: resource.source, tags: resource.tags, visibility: resource.visibility, versionId: version.id, version: version.number, publishedAt: version.publishedAt!, updatedAt: resource.updatedAt, validity: validity(version, now), score, excerpt: citation?.text.slice(0, 300) ?? "", citation: citation ? { id: citation.id, heading: citation.heading, startLine: citation.startLine, endLine: citation.endLine } : null }];
       });
       items.sort((a, b) => (options.sort === "relevance" ? b.score - a.score : options.sort === "published" ? b.publishedAt.localeCompare(a.publishedAt) : b.updatedAt.localeCompare(a.updatedAt)) || a.id.localeCompare(b.id));
       return { items: items.slice(options.offset, options.offset + options.limit), total: items.length, offset: options.offset, limit: options.limit };

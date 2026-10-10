@@ -114,6 +114,19 @@ function setup() {
 }
 
 describe("knowledge manager", () => {
+  it("maintains case audience with an audit without changing publication", async () => {
+    const { db, manager } = setup();
+    seedResource(db, "case-a", "案例");
+    db.state.resources[0].type = "case";
+    db.state.resources[0].visibility = "internal";
+    await manager.apply({ action: "setVisibility", id: "case-a", visibility: "public" });
+    expect((await manager.list()).resources[0]).toMatchObject({ visibility: "public", publishedVersionId: "v1" });
+    expect(db.state.audits.at(-1)).toMatchObject({ action: "visibility_updated" });
+    await manager.apply({ action: "trash", items: [{ kind: "resource", id: "case-a" }] });
+    await expect(manager.apply({ action: "setVisibility", id: "case-a", visibility: "internal" })).rejects.toThrow("恢复");
+    seedResource(db, "document-a");
+    await expect(manager.apply({ action: "setVisibility", id: "document-a", visibility: "internal" })).rejects.toThrow("仅用于");
+  });
   it("creates folders and rejects duplicate names and cycles", async () => {
     const { manager } = setup();
     const root = await manager.apply({ action: "createFolder", name: "资料", parentId: null });

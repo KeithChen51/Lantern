@@ -3,6 +3,11 @@ import JSZip from "jszip";
 import { markdownInput, readSkillZip, safePackagePath, skillInput } from "./upload";
 const file = (path: string, text: string) => ({ path, bytes: Buffer.from(text) });
 describe("knowledge uploads", () => {
+  it("imports explicit case audience without inventing an overwrite value when omitted", () => {
+    expect(markdownInput(file("case.md", "---\nvisibility: public\n---\n# 案例"), "case").visibility).toBe("public");
+    expect(markdownInput(file("case.md", "# 案例"), "case").visibility).toBeUndefined();
+    expect(() => markdownInput(file("case.md", "---\nvisibility: secret\n---\n# 案例"), "case")).toThrow();
+  });
   it("keeps body and metadata but cannot target a resource through frontmatter", () => {
     const result = markdownInput(file("guide.md", "---\nid: brand-whitepaper\ntitle: 指引\ntype: document\ntags: [服务]\n---\n# 指引\n\n正文"), "document");
     expect(result.id).not.toBe("brand-whitepaper");
