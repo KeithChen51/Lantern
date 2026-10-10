@@ -4,12 +4,12 @@ import type { HubResource, HubStore, HubTransaction, HubVersion, Interaction, Re
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 type ResourceRow = Prisma.HubResourceGetPayload<{ include: { versions: true } }>;
 function resource(row: ResourceRow): HubResource {
-  return { ...row, type: row.type as HubResource["type"], tags: row.tags as string[], createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(), versions: row.versions.sort((a, b) => a.number - b.number).map(v => ({ ...v, validity: v.validity as HubVersion["validity"], createdAt: v.createdAt.toISOString(), publishedAt: v.publishedAt?.toISOString() ?? null, effectiveFrom: v.effectiveFrom?.toISOString() ?? null, effectiveTo: v.effectiveTo?.toISOString() ?? null, files: v.files as unknown as HubVersion["files"], citations: v.citations as unknown as HubVersion["citations"] })) };
+  return { ...row, visibility: row.visibility as HubResource["visibility"], type: row.type as HubResource["type"], tags: row.tags as string[], createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(), versions: row.versions.sort((a, b) => a.number - b.number).map(v => ({ ...v, validity: v.validity as HubVersion["validity"], createdAt: v.createdAt.toISOString(), publishedAt: v.publishedAt?.toISOString() ?? null, effectiveFrom: v.effectiveFrom?.toISOString() ?? null, effectiveTo: v.effectiveTo?.toISOString() ?? null, files: v.files as unknown as HubVersion["files"], citations: v.citations as unknown as HubVersion["citations"] })) };
 }
 function interaction(row: Prisma.HubInteractionGetPayload<object>): Interaction {
   return { ...row, scope: row.scope as Interaction["scope"], consentAt: row.consentAt.toISOString(), receivedAt: row.receivedAt.toISOString(), messages: row.messages as unknown as Interaction["messages"], resourceVersions: row.resourceVersions as string[] };
 }
-function transaction(client: Prisma.TransactionClient): HubTransaction {
+export function createPrismaHubTransaction(client: Prisma.TransactionClient): HubTransaction {
   return {
     async getResource(id) { const row = await client.hubResource.findUnique({ where: { id }, include: { versions: true } }); return row ? resource(row) : null; },
     async listResources() {
@@ -41,7 +41,7 @@ export class PrismaHubStore implements HubStore {
   async transaction<T>(fn: (tx: HubTransaction) => Promise<T>): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       try {
-        return await this.client.$transaction(tx => fn(transaction(tx)), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
+        return await this.client.$transaction(tx => fn(createPrismaHubTransaction(tx)), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
       } catch (error) {
         if (attempt >= 3 || !(error instanceof Prisma.PrismaClientKnownRequestError) || !["P2034", "P2002"].includes(error.code)) throw error;
       }

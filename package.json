@@ -21,11 +21,13 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "hub": "tsx scripts/knowledge-hub.ts",
+    "test:knowledge-standardize": "npm ci --prefix skills/lantern-knowledge-standardize --ignore-scripts && npm test --prefix skills/lantern-knowledge-standardize && node --import tsx --test skills/lantern-knowledge-standardize/tests/hub-compat.test.ts",
     "hub:mcp": "tsx scripts/knowledge-mcp.ts",
     "hub:import-existing": "tsx scripts/knowledge-import-existing.ts",
     "releases:sync": "node scripts/sync-releases.mjs",
     "releases:check": "node scripts/sync-releases.mjs --check",
-    "prebuild": "npm run releases:check"
+    "prebuild": "npm run releases:check",
+    "hub:bootstrap": "npm run db:deploy && npm run hub:import-existing -- --publish"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -41,6 +43,7 @@
     "clsx": "^2.1.1",
     "gray-matter": "^4.0.3",
     "gsap": "^3.15.0",
+    "jszip": "3.10.2",
     "lucide-react": "^0.562.0",
     "mammoth": "^1.13.0",
     "next": "16.1.1",
@@ -50,6 +53,7 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0",
+    "yaml": "2.9.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -58,6 +62,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.3.1",
+    "esbuild": "0.27.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "prisma": "^6.19.3",

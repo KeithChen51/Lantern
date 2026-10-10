@@ -36,7 +36,7 @@ export function AdminLoginClient() {
 
   return (
     <div className={styles.adminLoginPage}>
-      <PageHeading title="内容维护" description="管理笃行案例的草稿、预览与发布。" />
+      <PageHeading title="内容维护" description="管理笃行案例与知识中台资料的草稿、预览与发布。" />
 
       <LhPanel className={styles.adminLoginPanel}>
         <form className={styles.adminLoginForm} onSubmit={submit}>
