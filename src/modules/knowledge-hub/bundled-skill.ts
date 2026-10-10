@@ -18,6 +18,9 @@ export async function bundledStandardizeSkill(root = process.cwd()) {
   }
   for (const name of ["SKILL.md", "package.json", "package-lock.json"]) entries.push({ path: name, bytes: await readFile(path.join(directory, name)) });
   for (const name of ["agents", "assets", "references", "scripts"]) await collect(name);
+  // The package's npm test command is portable; the separate TS hub integration
+  // test belongs to the application repository and is intentionally not shipped.
+  entries.push({ path: "tests/validate.test.mjs", bytes: await readFile(path.join(directory, "tests/validate.test.mjs")) });
   const { request } = skillInput(entries, STANDARDIZE_SKILL_ID);
   return { ...request, id: STANDARDIZE_SKILL_ID, title: "灯塔资料标准化 Skill", source: "灯塔部署内置 Skill", tags: ["内置", "资料标准化", "Markdown 检查"] };
 }
