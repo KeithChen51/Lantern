@@ -66,7 +66,7 @@ type PreviewResource = {
 };
 
 type UploadItem = { file: File; path: string };
-type UploadResult = { name: string; resourceId?: string; versionId?: string; error?: string; code?: string; skipped?: boolean };
+type UploadResult = { name: string; path?: string; resourceId?: string; versionId?: string; error?: string; code?: string; skipped?: boolean };
 type UploadBatch = { folderId: string | null; type: ResourceType };
 
 const EMPTY_FOLDERS: KnowledgeFolder[] = [];
@@ -510,6 +510,7 @@ export function AdminKnowledgeManager() {
   }
 
   function resultMatchesItem(result: UploadResult, item: UploadItem) {
+    if (result.path) return result.path === item.path;
     const resultName = result.name.trim();
     if (!resultName) return false;
     return resultName === item.path || resultName === item.file.name || fileNameFromPath(resultName) === fileNameFromPath(item.path);

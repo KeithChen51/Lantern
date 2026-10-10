@@ -64,8 +64,8 @@ export async function POST(request: Request) {
     const results = [];
     for (const entry of entries) {
       const name = entry.path.split("/").at(-1)!;
-      try { results.push(await importManagedResource(markdownInput(entry, type), folderId, name, conflict)); }
-      catch (error) { results.push({ name, ...failure(error) }); }
+      try { results.push({ ...await importManagedResource(markdownInput(entry, type), folderId, name, conflict), path: entry.path }); }
+      catch (error) { results.push({ name, path: entry.path, ...failure(error) }); }
     }
     return Response.json({ results });
   } catch (error) {
