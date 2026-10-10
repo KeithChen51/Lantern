@@ -7,6 +7,7 @@ summary: 用于演示case资源的字段与章节结构，不作为业务事实�
 tags: [格式演示]
 businessScope: 教学演示
 validity: unknown
+visibility: internal
 ---
 
 # 演示：等待沟通复盘

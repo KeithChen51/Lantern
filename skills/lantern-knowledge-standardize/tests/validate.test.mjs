@@ -17,6 +17,10 @@ for (const type of ["notice", "case", "document", "skill", "tool"]) {
     assert.equal(result.request.id, `test-${type}`);
     assert.ok(!result.request.markdown.includes("schemaVersion:"));
     assert.ok(!("schemaVersion" in result.request));
+    if (type === "case") {
+      assert.equal(result.metadata.visibility, "internal");
+      assert.equal(result.request.visibility, "internal");
+    }
   });
 }
 test("duplicate YAML keys and malformed YAML fail", async () => {
@@ -29,6 +33,16 @@ test("invalid metadata cannot be silently dropped", async () => {
     const r = await validate(content, { id: "test" });
     assert.equal(r.ready, false); assert.equal(r.request, null);
   }
+});
+test("case visibility is an explicit metadata enum and survives export", async () => {
+  const caseSample = await readFile(new URL("../assets/case.md", import.meta.url), "utf8");
+  const publicCase = await validate(caseSample.replace("visibility: internal", "visibility: public"), { id: "public-case" });
+  assert.equal(publicCase.ready, true, JSON.stringify(publicCase.issues));
+  assert.equal(publicCase.metadata.visibility, "public");
+  assert.equal(publicCase.request.visibility, "public");
+  const invalid = await validate(caseSample.replace("visibility: internal", "visibility: partner"), { id: "invalid-case" });
+  assert.equal(invalid.ready, false);
+  assert.equal(invalid.request, null);
 });
 test("date ranges compare instants and reject invalid calendar dates", async () => {
   for (const extra of ["effectiveFrom: 2026-02-30T00:00:00Z", "effectiveFrom: 2026-01-01T00:00:00Z\neffectiveTo: 2025-12-31T23:00:00Z"]) {
