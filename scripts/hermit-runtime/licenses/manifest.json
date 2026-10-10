@@ -1,0 +1,134 @@
+{
+  "format": 1,
+  "materials": [
+    {
+      "packageName": "@aws-sdk/credential-provider-http",
+      "packageVersion": "3.972.74",
+      "declaredLicense": "Apache-2.0",
+      "material": "aws-sdk-v3-apache-2.0.txt",
+      "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+      "source": {
+        "repository": "https://github.com/aws/aws-sdk-js-v3",
+        "ref": "v3.972.0",
+        "commit": "c47a84766e65e9a7f3d7151ff10d58aba29e6df0",
+        "path": "LICENSE",
+        "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/c47a84766e65e9a7f3d7151ff10d58aba29e6df0/LICENSE"
+      }
+    },
+    {
+      "packageName": "@aws-sdk/credential-provider-login",
+      "packageVersion": "3.972.79",
+      "declaredLicense": "Apache-2.0",
+      "material": "aws-sdk-v3-apache-2.0.txt",
+      "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+      "source": {
+        "repository": "https://github.com/aws/aws-sdk-js-v3",
+        "ref": "v3.972.0",
+        "commit": "c47a84766e65e9a7f3d7151ff10d58aba29e6df0",
+        "path": "LICENSE",
+        "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/c47a84766e65e9a7f3d7151ff10d58aba29e6df0/LICENSE"
+      }
+    },
+    {
+      "packageName": "@aws-sdk/nested-clients",
+      "packageVersion": "3.997.46",
+      "declaredLicense": "Apache-2.0",
+      "material": "aws-sdk-v3-apache-2.0.txt",
+      "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+      "source": {
+        "repository": "https://github.com/aws/aws-sdk-js-v3",
+        "ref": "v3.997.0",
+        "commit": "637dcf0ea7467a0b9e432575da50579bc432b3c5",
+        "path": "LICENSE",
+        "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/637dcf0ea7467a0b9e432575da50579bc432b3c5/LICENSE"
+      }
+    },
+    {
+      "packageName": "@earendil-works/pi-telemetry",
+      "packageVersion": "0.87.1",
+      "declaredLicense": "MIT",
+      "material": "pi-telemetry-mit.txt",
+      "sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source": {
+        "repository": "https://github.com/earendil-works/pi",
+        "ref": "f07218c4d4bbc12bef056a7058c3dd49dfe41abe",
+        "commit": "f07218c4d4bbc12bef056a7058c3dd49dfe41abe",
+        "path": "LICENSE",
+        "url": "https://raw.githubusercontent.com/earendil-works/pi/f07218c4d4bbc12bef056a7058c3dd49dfe41abe/LICENSE"
+      }
+    },
+    {
+      "packageName": "@koromix/koffi-linux-x64",
+      "packageVersion": "3.1.1",
+      "declaredLicense": "MIT",
+      "material": "koffi-mit.txt",
+      "sha256": "3af26e26bb1dec13acf73e3ac12d3f4d6d40134d84a43d9b508c9413d0b7a39e",
+      "source": {
+        "repository": "https://github.com/Koromix/koffi",
+        "ref": "master",
+        "commit": "2294ba0fa05b6edf1c87c6d9fbe8c66e98b313fe",
+        "path": "LICENSE.txt",
+        "url": "https://raw.githubusercontent.com/Koromix/koffi/2294ba0fa05b6edf1c87c6d9fbe8c66e98b313fe/LICENSE.txt",
+        "note": "The official front repository exposes no 3.1.1 tag; npm 3.1.1 declares MIT and this is the official repository license at the verified master commit. Trailing whitespace was normalized."
+      }
+    },
+    {
+      "packageName": "@koromix/koffi-win32-x64",
+      "packageVersion": "3.1.1",
+      "declaredLicense": "MIT",
+      "material": "koffi-mit.txt",
+      "sha256": "3af26e26bb1dec13acf73e3ac12d3f4d6d40134d84a43d9b508c9413d0b7a39e",
+      "source": {
+        "repository": "https://github.com/Koromix/koffi",
+        "ref": "master",
+        "commit": "2294ba0fa05b6edf1c87c6d9fbe8c66e98b313fe",
+        "path": "LICENSE.txt",
+        "url": "https://raw.githubusercontent.com/Koromix/koffi/2294ba0fa05b6edf1c87c6d9fbe8c66e98b313fe/LICENSE.txt",
+        "note": "The official front repository exposes no 3.1.1 tag; npm 3.1.1 declares MIT and this is the official repository license at the verified master commit. Trailing whitespace was normalized."
+      }
+    },
+    {
+      "packageName": "data-uri-to-buffer",
+      "packageVersion": "4.0.1",
+      "declaredLicense": "MIT",
+      "material": "data-uri-to-buffer-mit.txt",
+      "sha256": "452c4ff96c563bfc6be3e690ae1b1dbcbaa11e7cf1468404e171e15de807586b",
+      "source": {
+        "repository": "https://github.com/TooTallNate/node-data-uri-to-buffer",
+        "ref": "85cd8c854aefbf1bb636789d80364cfac8ea1583",
+        "commit": "85cd8c854aefbf1bb636789d80364cfac8ea1583",
+        "path": "README.md#License",
+        "url": "https://raw.githubusercontent.com/TooTallNate/node-data-uri-to-buffer/85cd8c854aefbf1bb636789d80364cfac8ea1583/README.md"
+      }
+    },
+    {
+      "packageName": "proxy-agent-negotiate",
+      "packageVersion": "1.1.0",
+      "declaredLicense": "MIT",
+      "material": "proxy-agent-negotiate-mit.txt",
+      "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a",
+      "source": {
+        "repository": "https://github.com/TooTallNate/proxy-agents",
+        "ref": "b7e5f7ccce1a3ac5b339cc4c587974e8989cbc16",
+        "commit": "b7e5f7ccce1a3ac5b339cc4c587974e8989cbc16",
+        "path": "packages/proxy/LICENSE",
+        "url": "https://raw.githubusercontent.com/TooTallNate/proxy-agents/b7e5f7ccce1a3ac5b339cc4c587974e8989cbc16/packages/proxy/LICENSE",
+        "note": "The negotiate package has no package-local LICENSE at this release commit; this is the official MIT license text shipped by the same upstream monorepo."
+      }
+    },
+    {
+      "packageName": "standardwebhooks",
+      "packageVersion": "1.1.1",
+      "declaredLicense": "MIT",
+      "material": "standardwebhooks-mit.txt",
+      "sha256": "5ec8c7b26b64d881a6706617bed25c049f97f2f35de034c756de8546fd6dbe27",
+      "source": {
+        "repository": "https://github.com/standard-webhooks/standard-webhooks",
+        "ref": "b4d2c14fc5b4ccff3ff271e3b087dff812254c59",
+        "commit": "b4d2c14fc5b4ccff3ff271e3b087dff812254c59",
+        "path": "libraries/LICENSE",
+        "url": "https://raw.githubusercontent.com/standard-webhooks/standard-webhooks/b4d2c14fc5b4ccff3ff271e3b087dff812254c59/libraries/LICENSE"
+      }
+    }
+  ]
+}

@@ -10,6 +10,8 @@ import type { KnowledgeEvidenceTier, KnowledgeSourceType } from "./knowledge-bui
 export interface KnowledgeChunk {
   id: string;
   source: string;
+  resourceId?: string;
+  versionId?: string;
   sourceType?: KnowledgeSourceType;
   evidenceTier?: KnowledgeEvidenceTier;
   heading: string;
@@ -50,6 +52,8 @@ export type RagSearchResult = {
     sources: Array<{
       id: string;
       source: string;
+      resourceId?: string;
+      versionId?: string;
       sourceType: KnowledgeSourceType | "unknown";
       heading: string;
       score: number;

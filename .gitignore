@@ -50,6 +50,7 @@ knowledge-vectors.json
 
 # Runtime uploads
 /storage/uploads/
+/storage/knowledge/
 
 # Local code understanding artifacts
 .understand-anything/
@@ -98,3 +99,12 @@ knowledge-vectors.json
 
 # Local Netlify folder
 .netlify
+
+# Generated deployment-local DSH carrier (platform-specific)
+/runtime/
+/release/
+
+# Expanded offline build inputs (archives remain versioned)
+/deploy/system/
+/deploy/runtime-data/
+/build-image.txt

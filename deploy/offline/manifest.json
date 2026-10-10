@@ -1,0 +1,12 @@
+{
+  "applicationCommit": "5d369d728f4d747d1ce1f1bc45633f4ba281036d",
+  "runtimeSourceImageSha256": "81cfda462122d5d8acd4c4f2d2ab2e21ce8cb8ef2a5d445a066e26cd53aca5e5",
+  "dshVersion": "0.2.0-rc.2",
+  "dshCommit": "639ed015397290b3745d163aafe02ffee4aa3f84",
+  "platform": "linux",
+  "arch": "x64",
+  "opensslSource": "Debian bookworm from verified candidate image",
+  "embeddingModel": "Qwen/Qwen3-Embedding-8B",
+  "embeddingDimension": 4096,
+  "prismaEngineCommit": "c2990dca591cba766e3b7ef5d9e8a84796e47ab7"
+}

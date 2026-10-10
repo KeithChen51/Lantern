@@ -1,3 +1,4 @@
+import { assertKnowledgeManagerStorage } from "@/modules/knowledge-hub/manager-storage";
 import { assertDatabaseConfigured, adminJsonError, requireAdminPortalFromHeaders } from "../../_admin";
 import { createKnowledgeManager, knowledgeManagerErrorResponse } from "@/modules/knowledge-hub/manager";
 import { HubError } from "@/modules/knowledge-hub/service";
@@ -38,6 +39,7 @@ function errorResponse(error: unknown) {
 export async function GET(request: Request) {
   try {
     requireAdminPortalFromHeaders(request.headers);
+    assertKnowledgeManagerStorage();
     assertDatabaseConfigured();
     return Response.json(await createKnowledgeManager().list(), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
@@ -48,6 +50,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     requireAdminPortalFromHeaders(request.headers);
+    assertKnowledgeManagerStorage();
     assertDatabaseConfigured();
     assertSameOrigin(request);
     const body = await request.json().catch(() => { throw new HubError("invalid", "请求正文必须是有效 JSON。"); });

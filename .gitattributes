@@ -1,0 +1,8 @@
+# License bytes are verified against upstream SHA-256 values.
+scripts/hermit-runtime/licenses/*.txt -text
+
+# Offline inputs have byte-exact SHA-256 checks; never convert their line endings.
+deploy/offline/** -text
+
+# Shell entry points must remain executable by Linux bash after Windows checkout.
+*.sh text eol=lf
