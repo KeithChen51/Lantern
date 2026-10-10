@@ -319,6 +319,14 @@ export function AdminKnowledgeManager() {
       void openPreview(item.id);
     } else if (event.key === "Escape") {
       setSelected(new Set());
+    } else if (event.key === "Delete" && !isTrash) {
+      event.preventDefault();
+      setDialog({ kind: "trash", items: selected.has(itemKey(item)) ? selectedItems : [item] });
+    } else if (event.key === "F2" && !isTrash) {
+      event.preventDefault();
+      const name = item.kind === "folder" ? folders.find(folder => folder.id === item.id)?.name : resources.find(resource => resource.id === item.id)?.name;
+      setDialog({ kind: "rename", item });
+      setDialogValue(name ?? "");
     }
   }
 
@@ -723,7 +731,12 @@ export function AdminKnowledgeManager() {
             </button>
             <ul className={styles.treeChildren}>{renderTree(null)}</ul>
             <div className={styles.treeDivider} />
-            <button type="button" className={styles.treeItem} data-active={isTrash ? "true" : undefined} onClick={() => setCurrentView({ kind: "trash", folderId: null })} aria-current={isTrash ? "page" : undefined}>
+            <button type="button" className={styles.treeItem} data-active={isTrash ? "true" : undefined} data-drop-target={dragTarget === "trash" ? "true" : undefined} onDragOver={(event) => handleDragOver(event, "trash")} onDragLeave={() => setDragTarget(null)} onDrop={(event) => {
+              event.preventDefault();
+              setDragTarget(null);
+              const raw = event.dataTransfer.getData(INTERNAL_DRAG_TYPE);
+              if (raw) { try { setDialog({ kind: "trash", items: JSON.parse(raw) as ItemRef[] }); } catch { setError("无法读取拖拽内容。"); } }
+            }} onClick={() => setCurrentView({ kind: "trash", folderId: null })} aria-current={isTrash ? "page" : undefined}>
               {icon("delete", styles.treeGlyph)}<span>回收站</span><span className={styles.treeCount}>{resources.filter((resource) => resource.archived).length || ""}</span>
             </button>
           </div>
