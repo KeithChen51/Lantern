@@ -4,7 +4,8 @@ import { getVisibleNavItems, NAV_ITEMS } from "./navigation-model";
 const originalShowGames = process.env.NEXT_PUBLIC_SHOW_GAMES;
 
 afterEach(() => {
-  process.env.NEXT_PUBLIC_SHOW_GAMES = originalShowGames;
+  if (originalShowGames === undefined) delete process.env.NEXT_PUBLIC_SHOW_GAMES;
+  else process.env.NEXT_PUBLIC_SHOW_GAMES = originalShowGames;
 });
 
 describe("navigation model", () => {
@@ -16,7 +17,7 @@ describe("navigation model", () => {
 
   it("shows the active modules by default during internal preview", () => {
     delete process.env.NEXT_PUBLIC_SHOW_GAMES;
-    const expectedLabels = ["价值起点", "外部标杆", "内部实践", "AI问答"];
+    const expectedLabels = ["价值起点", "外部标杆", "内部实践", "文化游戏", "AI问答"];
 
     expect(getVisibleNavItems("normal_user").map((item) => item.label)).toEqual(expectedLabels);
     expect(getVisibleNavItems("highest_admin").map((item) => item.label)).toEqual(expectedLabels);
@@ -28,6 +29,11 @@ describe("navigation model", () => {
     const expectedLabels = ["价值起点", "外部标杆", "内部实践", "文化游戏", "AI问答"];
 
     expect(getVisibleNavItems("normal_user").map((item) => item.label)).toEqual(expectedLabels);
+  });
+
+  it("hides Games only when explicitly disabled", () => {
+    process.env.NEXT_PUBLIC_SHOW_GAMES = "false";
+    expect(getVisibleNavItems("normal_user").some((item) => item.href === "/games")).toBe(false);
   });
 
   it("uses Heart as the home route and keeps Mirror under /mirror", () => {
