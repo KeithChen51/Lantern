@@ -14,7 +14,7 @@ const model = createServer(async (req, res) => {
   assert.equal(req.headers["x-hermit-smoke"], "checked");
   const input = JSON.parse(body);
   const names = input.tools.map((tool: { function: { name: string } }) => tool.function.name);
-  assert.deepEqual([...names].sort(), ["attachment_read", "knowledge_read", "knowledge_search"]);
+  assert.deepEqual([...names].sort(), Object.keys(tools).sort());
   res.writeHead(200, { "Content-Type": "text/event-stream" });
   const delta = requests++ === 0
     ? { role: "assistant", tool_calls: [{ index: 0, id: "call_1", type: "function", function: { name: "knowledge_search", arguments: '{"query":"服务"}' } }] }
@@ -28,8 +28,8 @@ const address = model.address(); assert(address && typeof address !== "string");
 // Use the production schemas (including bounds, patterns and optional offsets),
 // so the smoke test catches incompatibility with DSH's parameter DSL.
 const tools = createHermitAgentTools({
-  hub: { get: async () => { throw new Error("unexpected read"); } },
-  search: async () => { toolCalls++; return { contextText: "求真" } as never; },
+  hub: { get: async () => { throw new Error("unexpected read"); },
+    search: async () => { toolCalls++; return { items: [], total: 0, offset: 0, limit: 20 }; } },
   attachments: [], onDocument: () => {}, signal: controller.signal,
 });
 try {
