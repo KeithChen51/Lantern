@@ -23,7 +23,7 @@ class MemoryHermitChatRepository implements HermitChatRepository {
     const key = `${input.sessionId}:${input.externalMessageId}`;
     const existing = this.messages.get(key);
     const record = existing ?? { id: `message-${this.sequence++}`, ...input };
-    this.messages.set(key, { ...record, ...input });
+    this.messages.set(key, record);
     return this.messages.get(key)!;
   }
 

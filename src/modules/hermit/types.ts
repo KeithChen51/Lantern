@@ -60,6 +60,7 @@ export type PersistAssistantResponseInput = {
 
 export interface HermitChatRepository {
   upsertSession(input: HermitChatSessionInput): Promise<void>;
+  /** First write wins for (sessionId, externalMessageId); replay returns the original identity without modifying it. */
   upsertMessage(input: HermitMessageInput): Promise<HermitChatMessageRecord>;
   addRetrievalTrace(input: HermitRetrievalTraceInput): Promise<void>;
 }

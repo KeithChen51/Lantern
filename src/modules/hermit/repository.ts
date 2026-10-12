@@ -60,12 +60,9 @@ export class PrismaHermitChatRepository implements HermitChatRepository {
         },
       },
       create: data,
-      update: {
-        role: data.role,
-        content: data.content,
-        modelName: data.modelName,
-        metadataJson: data.metadataJson,
-      },
+      // Messages have no edit operation. First write owns role, content and
+      // audit metadata, even if client history reuses this ID with another role.
+      update: {},
     });
 
     return {
