@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.1.3",
+    "date": "2026-10-12",
+    "title": "后台测试环境登录修复",
+    "summary": "后台会话支持按部署环境配置 Secure Cookie，修复 HTTP 测试环境登录后无法保持会话的问题。",
+    "changes": [
+      {
+        "type": "修复",
+        "items": [
+          "后台登录与退出统一读取运行时 ADMIN_COOKIE_SECURE；默认启用 Secure，HTTP 测试环境可显式设置 false。",
+          "补充环境配置与浏览器验收说明，生产构建继续使用 production 模式。"
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.1.2",
     "date": "2026-10-12",
     "title": "路引引用与知识读取优化",
