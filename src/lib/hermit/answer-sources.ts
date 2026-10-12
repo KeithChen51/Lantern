@@ -467,4 +467,3 @@ export function createAnswerSources(deps: { hub: AnswerSourceHub }) {
 
   return { recordRead, tools, finalize, snapshot };
 }
-

@@ -188,4 +188,3 @@ describe("stripSourceMarkers", () => {
     expect(outputs.at(-1)).toBe("这是说明。，继续阅读 [普通链接](https://example.com)；伪造结束。");
   });
 });
-
