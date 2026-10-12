@@ -44,7 +44,7 @@
 - public/fonts/ 字体、许可证、manifest 与 CSS 配套同步；字体请求必须同源，无需终端安装或公网 CDN。
 - deploy/offline/ 的归档和 SHA256SUMS 配套同步。不得用 Windows node_modules 或 runtime 替代 Linux 运行依赖。
 - 配置差异只列变量名、用途、必需性和是否已配置；不打印真实密钥。
-- 以本次部署说明为准核对 Node/系统架构、数据库驱动、模型与 embedding、持久化目录。源码导入不自动开启服务或执行初始化。
+- 以本次部署说明为准核对 Node/系统架构、数据库驱动、模型服务（1.1.2 起无需 embedding）、持久化目录。源码导入不自动开启服务或执行初始化。
 
 ## 4. 验证与交付
 
