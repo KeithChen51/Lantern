@@ -4,7 +4,7 @@ export const inject = ['tools', 'llm'];
 
 export async function apply(ctx, config) {
   const { defineTool } = await import(config.toolsModule);
-  const allowed = new Set(['knowledge_search', 'knowledge_read', 'attachment_read']);
+  const allowed = new Set(['knowledge_cite', 'knowledge_recommend', 'knowledge_browse', 'knowledge_search', 'knowledge_outline', 'knowledge_read', 'knowledge_files', 'knowledge_file_read', 'attachment_read']);
   ctx.tools.guard(execution => allowed.has(execution.name) ? undefined : '路引仅允许知识读取和本次对话附件读取。');
   async function call(path, body, signal) {
     const response = await fetch(`${config.bridge}${path}`, {

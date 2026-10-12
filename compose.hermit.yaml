@@ -5,8 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.hermit
-      additional_contexts:
-        knowledge: ${HERMIT_INDEX_DIR:?Set HERMIT_INDEX_DIR to the directory containing knowledge-vectors.json}
     env_file:
       - .env.runtime
     ports:

@@ -10,7 +10,6 @@ export PATH="/app/deploy/system/bin:$PATH"
 openssl version
 node --version
 npm --version
-gzip -dc deploy/offline/knowledge-vectors.json.gz > src/lib/hermit/knowledge/knowledge-vectors.json
 npm ci --ignore-scripts --no-fund --no-audit --include=dev
 node scripts/intranet/engine-mirror.mjs &
 mirror_pid=$!
@@ -23,7 +22,7 @@ done
 [[ "$ready" == true ]]
 export PRISMA_ENGINES_MIRROR=http://127.0.0.1:18766
 export DATABASE_URL='mysql://build:build@127.0.0.1:3306/build_only'
-export HERMIT_KNOWLEDGE_USE_PREBUILT=true HERMIT_BUNDLE_REQUIRED=true
+export HERMIT_BUNDLE_REQUIRED=true
 export HERMIT_DSH_ROOT='' HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite
 export KNOWLEDGE_HUB_SQLITE_PATH=/tmp/lantern-build-only.sqlite
 npm run db:generate

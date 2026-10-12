@@ -6,7 +6,5 @@
   "platform": "linux",
   "arch": "x64",
   "opensslSource": "Debian bookworm from verified candidate image",
-  "embeddingModel": "Qwen/Qwen3-Embedding-8B",
-  "embeddingDimension": 4096,
   "prismaEngineCommit": "c2990dca591cba766e3b7ef5d9e8a84796e47ab7"
 }

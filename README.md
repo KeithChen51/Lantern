@@ -95,16 +95,16 @@ src/
     hermit/                   # ChatPanel / ChatInput / MessageBubble
     ui/                       # FeatureCard 等 UI 组件
   lib/
-    hermit/                   # RAG 检索、系统提示词与知识源
+    hermit/                   # 路引提示词与静态知识源
 scripts/
-  build-knowledge.ts          # 生成 Hermit 知识向量
+  build-knowledge.ts          # 校验 Hermit 静态文本知识源
 ```
 
 ## 当前实现状态
 
 - 已有 `Heart / 本心`、`Mirror / 镜鉴`、`Action / 笃行`、`Hermit / 路引` 页面，以及按功能开关显示的 `Games / 文化游戏` 入口。
 - 已归档 `一般参悟案例-格式统一版` 最终稿，位置见 `docs/content/action-canwu-cases/2026-06-final/`；当前是待进入 `Action / 笃行` 的内容源，尚未作为结构化页面或管理端发布内容上线。
-- `Hermit` 已具备基于本地知识源的 RAG 对话链路。
+- `Hermit` 通过知识中台的文件索引按需读取资料，逐步展开目录、元数据与正文，不需要向量化模型。
 - Workshop 页面和 API 已下线，直接访问 `/workshop`、`/admin/workshop` 或旧 API 会返回 404；历史 Prisma 数据模型暂时保留以兼容已有迁移和数据。
 - 数据持久化基于 Prisma + MySQL；本地执行迁移、种子和运行时 API 需要 `DATABASE_URL`。
 - Phase 1 运行环境假设见：[Lighthouse Phase 1 Runtime Assumptions](docs/deployment/lighthouse-phase1-runtime-assumptions.md)。

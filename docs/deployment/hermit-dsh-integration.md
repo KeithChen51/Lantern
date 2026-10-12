@@ -2,6 +2,8 @@
 
 关联需求：[GitHub #11](https://github.com/KeithChen51/Lantern/issues/11)。产品定义见 [路引权威定义](../design/hermit-authoritative-definition.md)。
 
+> 当前构建与运行要求（2026-10-12）：知识查询改为调用知识中台文件索引并按需读取正文，不再使用向量检索或 embedding 配置。下方旧验收文字中涉及旧检索方式的内容按历史记录理解。
+
 ## 运行前提
 
 - Lighthouse 原框架和 Classic Amber 保持不变；回答在对话中，知识文档在页内阅读。
@@ -13,11 +15,11 @@
 
 ## 请求与工具边界
 
-每次请求启动一个独立 DSH 子进程与临时 home/cwd，固定 sdk-minimal profile，不接受客户端指定的服务器路径、profile 或 DSH session。只暴露 `knowledge_search`、`knowledge_read`、`attachment_read`。知识查询沿用现有领域/相关性/证据门槛；知识读取不启用 maintenance 绕过；附件只能读取当前请求携带且属于当前浏览器 owner cookie 的 ID。
+每次请求启动一个独立 DSH 子进程与临时 home/cwd，固定 sdk-minimal profile，不接受客户端指定的服务器路径、profile 或 DSH session。只暴露 `knowledge_search`、`knowledge_read`、`attachment_read`。知识查询先返回目录和资源元数据，再由模型按需调用 `knowledge_read` 展开正文；知识读取不启用 maintenance 绕过；附件只能读取当前请求携带且属于当前浏览器 owner cookie 的 ID。
 
 客户端使用 `/api/chat` 的 AI SDK UIMessage 流，`data-document` 由服务端真实读取文档后发送，客户端提供的工具结果不会作为可信来源重放。阅读区通过现有 `/api/resources/:id?version=...` 获取对应版本。
 
-停止生成关闭该请求的 DSH 子进程。已有知识查询不支持在数据库/embedding 请求内部即时取消，仅在调用前后检查取消状态。运行限制为单进程最多 2 个 DSH 请求、每次 180 秒、最多 20 次工具调用；目前没有跨实例全局配额。
+停止生成关闭该请求的 DSH 子进程。知识查询和正文读取均通过中台索引执行，取消状态在工具调用前后检查。运行限制为单进程最多 2 个 DSH 请求、每次 180 秒、最多 20 次工具调用；目前没有跨实例全局配额。
 
 ## 上传边界
 
@@ -50,7 +52,7 @@ Smoke 启动真实 DSH 子进程和确定性本地模型端点，验证工具调
 
 ### 本地验收补充
 
-- TypeScript、ESLint、生产构建通过（使用已有 176 chunks 的预构建知识索引，未重新调用 embedding）。
+- TypeScript、ESLint、生产构建通过（构建仅校验静态文本知识源，不调用外部向量服务）。
 - 33 个测试文件、142 项测试通过。全量套件中的 `lighthouse-form-runtime-contract.test.ts` 浏览器 fixture 无输出；在原工作区复现同样失败，未修改该测试或全局样式。
 - 浏览器实际验证 `/hermit` 页面及 TXT 上传，从读取中到就绪；修复异步上传队列使用已清空 FileList 的问题。
 - 文档推荐/读取流通过接口契约测试；真实知识存储与模型的完整浏览器联调仍受上述依赖阻塞，不能据此标记为已上线。

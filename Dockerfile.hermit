@@ -31,9 +31,9 @@ COPY . .
 RUN npm run db:generate
 COPY --from=dsh-package /build/hermit-dsh /app/runtime/hermit-dsh
 RUN npm run check:hermit-runtime && npm run test:hermit-runtime
-# A prebuilt index is supplied as a named context; no model secrets in build layers.
-COPY --from=knowledge knowledge-vectors.json /app/src/lib/hermit/knowledge/knowledge-vectors.json
-ENV HERMIT_KNOWLEDGE_USE_PREBUILT=true HERMIT_BUNDLE_REQUIRED=true
+# The build validates text sources and does not need a model endpoint or a
+# generated vector cache. The DSH carrier is still required in this image.
+ENV HERMIT_BUNDLE_REQUIRED=true
 RUN npm run build
 # Bundle just the import CLI, keeping repository content for first-run initialization.
 RUN node scripts/package-knowledge-cli.mjs
