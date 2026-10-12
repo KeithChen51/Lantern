@@ -37,6 +37,8 @@
 
 ## 本机检查与限制
 
+1.1.3 镜像已将随包 OpenSSL 加入 `PATH`，并用 `PRISMA_QUERY_ENGINE_LIBRARY` 指定随包 Debian/OpenSSL 3 查询引擎，避免精简基础镜像误判为 OpenSSL 1.1。使用仓库 Dockerfile 重新构建；不要通过更换 Windows 引擎或临时下载公网引擎处理此问题。
+
 已检查 Shell/JavaScript 语法、离线包 SHA-256、归档内容和 Dockerfile 无 RUN。Windows 当前 Docker Linux daemon 不可用，未执行完整 Linux 流水线，内网流水线结果才是本次构建是否走通的依据。遇到错误保留完整日志；不要在内网 DSH 改文件。
 
 ## 2026-10-10 提交号触发修复

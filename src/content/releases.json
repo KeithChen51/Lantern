@@ -17,6 +17,7 @@
         "type": "修复",
         "items": [
           "后台登录与退出统一读取运行时 ADMIN_COOKIE_SECURE；默认启用 Secure，HTTP 测试环境可显式设置 false。",
+          "内网镜像显式使用随包 OpenSSL 与 Prisma 引擎，修复精简基础镜像中的知识库初始化失败。",
           "补充环境配置与浏览器验收说明，生产构建继续使用 production 模式。"
         ]
       }
