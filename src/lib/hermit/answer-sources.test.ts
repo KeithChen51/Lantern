@@ -126,10 +126,19 @@ describe("answer source evidence", () => {
 
     const result = await sources.finalize("正文 [伪造](#hermit-citation-88) [[cite:1]]\n`[[cite:2]]` [[cite:404]]\n```md\n[[cite:1]]\n```");
     expect(result.text).toContain("正文 伪造 [1](#hermit-citation-1)");
-    expect(result.text).toContain("` ");
+    expect(result.text).toContain("`` ");
     expect(result.text).not.toContain("hermit-citation-88");
     expect(result.text).not.toContain("[[cite:");
     expect(result.citations.map(item => item.startLine)).toEqual([2]);
+  });
+
+  it.each(["    [[cite:1]]", "\\[[cite:1]]", "[read](https://example.com/[[cite:1]])", "[label [[cite:1]]](https://example.com)"])("does not count non-prose markers as citations: %s", async text => {
+    const sources = createAnswerSources({ hub: { get: vi.fn(async () => resource()) } });
+    sources.recordRead(read());
+    await sources.tools.knowledge_cite.execute({ resourceId: "guide", versionId: "v1" });
+    const result = await sources.finalize(text);
+    expect(result.citations).toEqual([]);
+    expect(result.text).not.toContain("#hermit-citation-");
   });
 
   it("revokes citations and recommendations when the server version becomes inaccessible", async () => {

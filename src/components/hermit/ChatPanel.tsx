@@ -280,6 +280,7 @@ export function ChatPanel() {
 
   function handleRetry() {
     if (isLoading) return;
+    setWasAborted(false);
     setRequestError(null);
     clearError();
     void regenerate({ body: pendingBodyRef.current }).catch((regenerateError) => {

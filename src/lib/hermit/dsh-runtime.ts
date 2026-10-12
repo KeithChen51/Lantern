@@ -5,10 +5,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
-import type { createHermitAgentTools } from "./agent-tools";
+import type { HermitAgentTool } from "./agent-tools";
 import type { HermitProviderSettings } from "./model-provider";
 
-type AgentTools = ReturnType<typeof createHermitAgentTools>;
+type AgentTools = Record<string, HermitAgentTool>;
 type Harness = { run(prompt: string): Promise<{ finalResponse: string }>; close(): Promise<void> };
 type Sdk = { DeepSeekHarness: new (options: Record<string, unknown>) => Harness };
 const nativeImport = new Function("url", "return import(url)") as (url: string) => Promise<Sdk>;

@@ -44,6 +44,10 @@ const markdownComponents: Components = {
   h2: ({ children, node }) => <h2 {...sourceLineAttributes(node)}>{children}</h2>,
   h3: ({ children, node }) => <h3 {...sourceLineAttributes(node)}>{children}</h3>,
   h4: ({ children, node }) => <h4 {...sourceLineAttributes(node)}>{children}</h4>,
+  h5: ({ children, node }) => <h5 {...sourceLineAttributes(node)}>{children}</h5>,
+  h6: ({ children, node }) => <h6 {...sourceLineAttributes(node)}>{children}</h6>,
+  pre: ({ children, node }) => <pre {...sourceLineAttributes(node)}>{children}</pre>,
+  tr: ({ children, node }) => <tr {...sourceLineAttributes(node)}>{children}</tr>,
   li: ({ children, node }) => <li {...sourceLineAttributes(node)}>{children}</li>,
   blockquote: ({ children, node }) => <blockquote {...sourceLineAttributes(node)}>{children}</blockquote>,
   table: ({ children }) => <div className={styles.readerProseTableWrap}><table>{children}</table></div>,
@@ -79,7 +83,7 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
           // Keep the plain text body for the short actionable error extractor.
         }
         if (!response.ok) throw new Error(getHermitApiError(payload, "文档暂时无法打开，请稍后重试。"));
-        if (!isHermitResourceResponse(payload)) throw new Error("resource-response-invalid");
+        if (!isHermitResourceResponse(payload) || payload.id !== document.resourceId || payload.version.id !== document.versionId) throw new Error("resource-response-invalid");
         if (active) setResource(payload);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;

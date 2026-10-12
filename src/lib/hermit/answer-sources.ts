@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
 import type { KnowledgeHub } from "@/modules/knowledge-hub/service";
 
 const identifier = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/);
@@ -279,77 +282,32 @@ export function stripSourceMarkers(text: string) {
   return value;
 }
 
-type Fence = { end: number };
-
-function fenceAt(text: string, index: number): Fence | null {
-  if (index > 0 && text[index - 1] !== "\n") return null;
-  const lineEnd = text.indexOf("\n", index);
-  const openingLineEnd = lineEnd === -1 ? text.length : lineEnd + 1;
-  const openingLine = text.slice(index, lineEnd === -1 ? text.length : lineEnd).replace(/\r$/, "");
-  const indentation = openingLine.match(/^[ \t]{0,3}/)?.[0].length ?? 0;
-  const character = openingLine[indentation];
-  if (character !== "`" && character !== "~") return null;
-  let length = 0;
-  while (openingLine[indentation + length] === character) length += 1;
-  if (length < 3) return null;
-
-  let cursor = openingLineEnd;
-  while (cursor <= text.length) {
-    const candidateEnd = text.indexOf("\n", cursor);
-    const candidateLineEnd = candidateEnd === -1 ? text.length : candidateEnd;
-    const candidate = text.slice(cursor, candidateLineEnd).replace(/\r$/, "");
-    const candidateIndentation = candidate.match(/^[ \t]{0,3}/)?.[0].length ?? 0;
-    let closingLength = 0;
-    while (candidate[candidateIndentation + closingLength] === character) closingLength += 1;
-    if (closingLength >= length && candidate.slice(candidateIndentation + closingLength).trim() === "") {
-      return { end: candidateEnd === -1 ? text.length : candidateEnd + 1 };
-    }
-    if (candidateEnd === -1) break;
-    cursor = candidateEnd + 1;
-  }
-  return { end: text.length };
-}
+type MarkdownNode = {
+  type: string;
+  children?: MarkdownNode[];
+  position?: { start: { offset?: number }; end: { offset?: number } };
+};
+const markdownParser = unified().use(remarkParse).use(remarkGfm);
+const nonProseNodes = new Set(["code", "inlineCode", "html", "link", "linkReference", "image", "imageReference", "definition"]);
 
 function replaceProseMarkers(text: string, onMarker: (declarationNumber: number) => string) {
-  const output: string[] = [];
-  let index = 0;
-  while (index < text.length) {
-    const fence = fenceAt(text, index);
-    if (fence) {
-      output.push(stripSourceMarkers(text.slice(index, fence.end)));
-      index = fence.end;
-      continue;
+  const proseRanges: Array<{ start: number; end: number }> = [];
+  const visit = (node: MarkdownNode) => {
+    if (nonProseNodes.has(node.type)) return;
+    if (node.type === "text" && node.position?.start.offset !== undefined && node.position.end.offset !== undefined) {
+      proseRanges.push({ start: node.position.start.offset, end: node.position.end.offset });
     }
-    if (text[index] === "`") {
-      let length = 1;
-      while (text[index + length] === "`") length += 1;
-      const close = text.indexOf("`".repeat(length), index + length);
-      const end = close === -1 ? text.length : close + length;
-      output.push(stripSourceMarkers(text.slice(index, end)));
-      index = end;
-      continue;
-    }
-    const remainder = text.slice(index);
-    const valid = /^\[\[cite:(\d+)\]\]/i.exec(remainder);
-    if (valid) {
-      output.push(onMarker(Number(valid[1])));
-      index += valid[0].length;
-      continue;
-    }
-    const invalid = /^\[\[cite(?::[^\]\r\n]*)?\]\]/i.exec(remainder);
-    if (invalid) {
-      index += invalid[0].length;
-      continue;
-    }
-    const partial = /^\[\[cite(?::[^\]\r\n]*)?$/i.exec(remainder);
-    if (partial) {
-      index = text.length;
-      continue;
-    }
-    output.push(text[index]);
-    index += 1;
-  }
-  return output.join("");
+    node.children?.forEach(visit);
+  };
+  visit(markdownParser.parse(text) as MarkdownNode);
+  return text.replace(/\[\[cite(?::[^\]\r\n]*)?\]\]|\[\[cite(?::[^\]\r\n]*)?$/gi, (marker: string, offset: number) => {
+    const match = /^\[\[cite:(\d+)\]\]$/i.exec(marker);
+    if (!match) return "";
+    let escapes = 0;
+    for (let index = offset - 1; index >= 0 && text[index] === "\\"; index--) escapes++;
+    if (escapes % 2 || !proseRanges.some(range => offset >= range.start && offset + marker.length <= range.end)) return "";
+    return onMarker(Number(match[1]));
+  });
 }
 
 export function createAnswerSources(deps: { hub: AnswerSourceHub }) {

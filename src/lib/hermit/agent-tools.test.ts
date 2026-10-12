@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createHermitAgentTools } from "./agent-tools";
+import { z } from "zod";
+import { createHermitAgentTools, type HermitAgentTool } from "./agent-tools";
 
 function fixture(attachmentText = "当前附件") {
   const resource = { id: "policy", type: "document" as const, title: "服务指引", summary: "", tags: [], source: "灯塔", businessScope: "", visibility: "public" as const, archived: false, publishedVersionId: "v1", createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z", version: { id: "v1", number: 1, title: "服务指引", markdown: "正文", checksum: "sum", changeNote: "", createdAt: "2026-01-01T00:00:00.000Z", publishedAt: "2026-01-01T00:00:00.000Z", validity: "effective" as const, effectiveFrom: null, effectiveTo: null, files: [], citations: [] }, validity: "effective" as const, relations: [] };
@@ -24,7 +25,7 @@ describe("Hermit request-scoped progressive knowledge tools", () => {
     await tools.knowledge_outline.execute({ resourceId: "policy", versionId: "v1" });
     await tools.knowledge_read.execute({ resourceId: "policy", versionId: "v1", startLine: 1, lineCount: 1 });
     expect(hub.search).toHaveBeenCalledWith({ query: "服务", type: undefined, offset: 0, limit: 20, sort: "relevance" });
-    expect(onDocument).toHaveBeenCalledExactlyOnceWith({ resourceId: "policy", versionId: "v1", title: "服务指引", source: "灯塔" });
+    expect(onDocument).toHaveBeenCalledExactlyOnceWith({ resourceId: "policy", versionId: "v1", title: "服务指引", source: "灯塔", startLine: 1, endLine: 1, offset: 0, endOffset: 2 });
   });
 
   it("restricts attachment and Skill reads to request data and exact text paths", async () => {
@@ -49,6 +50,16 @@ describe("Hermit request-scoped progressive knowledge tools", () => {
       await expect(tools.attachment_read.execute({ id: "other" })).rejects.toThrow("不属于本次请求");
     }
     await expect(tools.attachment_read.execute({ id: "mine" })).rejects.toThrow("调用次数已达上限");
+  });
+
+  it("counts citation and recommendation tools in the same request budget", async () => {
+    const { hub, abort } = fixture();
+    const tools = createHermitAgentTools({ hub, attachments: [], signal: abort.signal, onDocument: () => {},
+      additionalTools: { knowledge_recommend: { description: "test", schema: z.object({}), execute: async () => ({ accepted: true }) } },
+    });
+    for (let index = 0; index < 20; index += 1) await (tools as Record<string, HermitAgentTool>).knowledge_recommend.execute({});
+    await expect(tools.knowledge_read.execute({ resourceId: "policy", versionId: "v1" })).rejects.toThrow("调用次数已达上限");
+    expect(hub.get).not.toHaveBeenCalled();
   });
 
   it("caps aggregate returned characters for one request", async () => {

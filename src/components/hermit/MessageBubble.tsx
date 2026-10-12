@@ -75,14 +75,14 @@ function CitationAnchor({
           endLine: citation.endLine,
         })}
       >
-        {children}
+        [{citation.number}]
       </button>
     );
   }
 
   // An internal citation-looking link is only actionable when it was backed by
   // a verified final answer-sources payload. Keep malformed model output plain.
-  if (match) return <>{children}</>;
+  if (href?.toLowerCase().startsWith("#hermit-citation-")) return <>{children}</>;
   return <a href={href}>{children}</a>;
 }
 

@@ -18,6 +18,7 @@ import { createTenantService, tenantRepository } from "@/modules/tenant";
 import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
 import { createHermitAgentTools, documentContextSchema, type HermitDocument } from "@/lib/hermit/agent-tools";
 import { runDshTurn, verifyDshInstallation } from "@/lib/hermit/dsh-runtime";
+import { createAnswerSources, stripSourceMarkers } from "@/lib/hermit/answer-sources";
 import { resolveHermitAttachments } from "@/lib/hermit/attachments";
 
 export const runtime = "nodejs";
@@ -134,7 +135,6 @@ export async function POST(req: Request) {
   const participant = await resolveChatParticipant();
   const providerSettings = resolveHermitProviderSettings();
   const model = readHermitModelName();
-  const documents = new Map<string, HermitDocument>();
   const context = `当前选中文档索引（参考数据，正文须按需读取）：${JSON.stringify(selectedDocument)}\n当前用户附件索引：${JSON.stringify(attachments.map(({ id, name, size }) => ({ id, name, size })))}`;
   const system = `${buildSystemPrompt()}\n${hub ? "知识中台已启用，请通过工具逐层读取。" : "知识中台未启用，不能查阅或引用平台文件。明确说明此限制，不要声称已查阅资料。"}\n${context}`;
   await persistChat("incoming messages", () => hermitChatService.persistIncomingMessages({ sessionId, participant, messages, modelName: model }));
@@ -142,47 +142,72 @@ export async function POST(req: Request) {
     onError: () => "路引暂时未能完成回答，请稍后重试。",
     execute: async ({ writer }) => {
       const signal = AbortSignal.any([req.signal, AbortSignal.timeout(180_000)]);
+      const sources = hub ? createAnswerSources({ hub }) : null;
       const capabilities = hub ? createHermitAgentTools({ hub, attachments, signal,
-        onDocument: document => {
-          const key = `${document.resourceId}:${document.versionId}`;
-          if (documents.has(key)) return;
-          documents.set(key, document);
-          writer.write({ type: "data-document", id: key, data: document });
-        },
+        onDocument: document => sources!.recordRead(document), additionalTools: sources!.tools,
       }) : null;
-      if (useDsh && capabilities) {
-        const textId = crypto.randomUUID();
-        writer.write({ type: "start", messageId: crypto.randomUUID() });
-        writer.write({ type: "text-start", id: textId });
-        await runDshTurn({ model, provider: providerSettings, tools: capabilities, signal, system,
-          prompt: `以下 JSON 是用户与路引的历史对话，请回答最后一个用户问题：\n${JSON.stringify(history)}\n需要具体资料时先浏览目录或查询索引，再读取指定版本。不要把工具调用协议写成回答正文。`,
-          onText: delta => writer.write({ type: "text-delta", id: textId, delta }),
-        });
+      const messageId = crypto.randomUUID();
+      const textId = crypto.randomUUID();
+      let rawText = "";
+      let visibleText = "";
+      let finalText = "";
+      let status: "complete" | "failed" | "cancelled" = "failed";
+      const onText = (delta: string) => {
+        rawText += delta;
+        const next = stripSourceMarkers(rawText);
+        const suffix = next.slice(visibleText.length);
+        if (suffix) writer.write({ type: "text-delta", id: textId, delta: suffix });
+        visibleText = next;
+      };
+      writer.write({ type: "start", messageId });
+      writer.write({ type: "text-start", id: textId });
+      try {
+        if (useDsh && capabilities) {
+          await runDshTurn({ model, provider: providerSettings, tools: capabilities, signal, system,
+            prompt: `以下 JSON 是用户与路引的历史对话，请回答最后一个用户问题：\n${JSON.stringify(history)}\n需要具体资料时先浏览目录或查询索引，再读取指定版本。不要把工具调用协议写成回答正文。`,
+            onText,
+          });
+        } else {
+          const tools: ToolSet = {};
+          if (capabilities) for (const [name, capability] of Object.entries(capabilities)) {
+            tools[name] = tool<unknown, unknown>({ description: capability.description, inputSchema: capability.schema, execute: async raw => {
+              try { return await capability.execute(raw); }
+              catch { throw new Error("无法读取所请求的参考资料，请核对资源版本、读取范围或剩余调用额度。"); }
+            } });
+          }
+          const result = streamText({
+            model: selectHermitLanguageModel(createHermitProvider(providerSettings), model, providerSettings.apiMode),
+            system, messages: await convertToModelMessages(messages), tools,
+            stopWhen: stepCountIs(MAX_TOOL_STEPS), abortSignal: signal,
+            prepareStep: ({ stepNumber }) => stepNumber >= MAX_TOOL_STEPS - 1 ? { toolChoice: "none" as const } : {},
+          });
+          for await (const part of result.fullStream) {
+            if (part.type === "text-delta") onText(part.text);
+            if (part.type === "error") throw part.error;
+            if (part.type === "abort") throw new Error("Generation aborted");
+          }
+          if (await result.finishReason !== "stop") throw new Error("Generation incomplete");
+        }
+        signal.throwIfAborted();
+        if (!visibleText.trim()) throw new Error("Empty answer");
+        const finalized = sources ? await sources.finalize(rawText) : { status: "complete" as const, text: visibleText, citations: [], recommendations: [] };
+        signal.throwIfAborted();
+        finalText = finalized.text;
+        writer.write({ type: "data-answer-sources", data: finalized });
         writer.write({ type: "text-end", id: textId });
         writer.write({ type: "finish", finishReason: "stop" });
-      } else {
-        const tools: ToolSet = {};
-        if (capabilities) for (const [name, capability] of Object.entries(capabilities)) {
-          tools[name] = tool<unknown, unknown>({ description: capability.description, inputSchema: capability.schema, execute: async raw => {
-            try { return await capability.execute(raw); }
-            catch { throw new Error("无法读取所请求的参考资料，请核对资源版本、读取范围或剩余调用额度。"); }
-          } });
-        }
-        const result = streamText({
-          model: selectHermitLanguageModel(createHermitProvider(providerSettings), model, providerSettings.apiMode),
-          system, messages: await convertToModelMessages(messages), tools,
-          stopWhen: stepCountIs(MAX_TOOL_STEPS), abortSignal: signal,
-          prepareStep: ({ stepNumber }) => stepNumber >= MAX_TOOL_STEPS - 1 ? { toolChoice: "none" as const } : {},
-        });
-        writer.merge(result.toUIMessageStream({ onError: () => "路引暂时未能完成回答，请稍后重试。" }));
+        status = "complete";
+      } catch (error) {
+        status = req.signal.aborted ? "cancelled" : "failed";
+        throw error;
+      } finally {
+        const snapshot = sources?.snapshot(status) ?? { mode: "progressive-index", status, reads: [], citations: [], recommendations: [] };
+        await persistChat("assistant response", () => hermitChatService.persistAssistantResponse({
+          sessionId, participant, modelName: model,
+          responseMessage: { id: messageId, role: "assistant", parts: [{ type: "text", text: finalText || visibleText }], metadata: { status } },
+          retrieval: { query, contextText: "", topK: snapshot.reads.length, sourceSnapshot: snapshot },
+        }));
       }
-    },
-    onFinish: async ({ responseMessage, isAborted }) => {
-      if (!isAborted && !req.signal.aborted) await persistChat("assistant response", () => hermitChatService.persistAssistantResponse({
-        sessionId, participant, responseMessage, modelName: model,
-        // Keep the existing audit schema; record actual reads, never a synthetic vector score.
-        retrieval: { query, contextText: "", topK: documents.size, sourceSnapshot: { mode: "progressive-index", sources: [...documents.values()] } },
-      }));
     },
   });
   return createUIMessageStreamResponse({ stream, headers: { "Cache-Control": "no-store", "X-Accel-Buffering": "no" } });

@@ -11,7 +11,9 @@ const identifier = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/);
 export const documentContextSchema = z.object({ resourceId: identifier, versionId: identifier }).strict();
 export type HermitDocument = z.infer<typeof documentContextSchema> & {
   title: string; source: string; heading?: string;
+  startLine?: number; endLine?: number; path?: string; offset?: number; endOffset?: number;
 };
+export type HermitAgentTool = { description: string; schema: z.ZodType; execute: (raw: unknown) => Promise<unknown> };
 export type HermitAttachmentText = { id: string; name: string; size: number; text: string };
 
 const MAX_ATTACHMENT_READ_CHARS = 12_000;
@@ -62,6 +64,7 @@ export function createHermitAgentTools(deps: {
   attachments: HermitAttachmentText[];
   onDocument: (document: HermitDocument) => void;
   signal: AbortSignal;
+  additionalTools?: Record<string, HermitAgentTool>;
 }) {
   const index = createRuntimeKnowledgeIndexReader(deps.hub, deps.browse);
   const check = () => deps.signal.throwIfAborted();
@@ -82,7 +85,9 @@ export function createHermitAgentTools(deps: {
   const documentFrom = (value: { resourceId: string; versionId: string; title: string; source: string }) => ({
     resourceId: value.resourceId, versionId: value.versionId, title: value.title, source: value.source,
   });
+  const additionalTools = Object.fromEntries(Object.entries(deps.additionalTools ?? {}).map(([name, capability]) => [name, { ...capability, execute: (raw: unknown) => run(() => capability.execute(raw)) }]));
   return {
+    ...additionalTools,
     knowledge_browse: {
       description: "浏览灯塔知识中台的目录索引，只返回目录和文件元数据；不读取正文。可用 folderId 继续进入子目录。",
       schema: browseInput,
@@ -110,7 +115,7 @@ export function createHermitAgentTools(deps: {
       schema: readInput,
       execute: async (raw: unknown) => {
         const result = await run(() => index.read(readInput.parse(raw)));
-        deps.onDocument(documentFrom(result));
+        if (result.markdown.length) deps.onDocument({ ...documentFrom(result), startLine: result.startLine, endLine: result.endLine, offset: result.offset, endOffset: result.offset + result.markdown.length });
         return result;
       },
     },
@@ -126,7 +131,7 @@ export function createHermitAgentTools(deps: {
       schema: skillReadInput,
       execute: async (raw: unknown) => {
         const result = await run(() => index.skillRead(skillReadInput.parse(raw)));
-        deps.onDocument(documentFrom(result));
+        if (result.text.length) deps.onDocument({ ...documentFrom(result), path: result.path, offset: result.offset, endOffset: result.offset + result.text.length });
         return result;
       },
     },
