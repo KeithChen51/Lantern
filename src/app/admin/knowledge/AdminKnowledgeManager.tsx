@@ -826,7 +826,7 @@ export function AdminKnowledgeManager() {
           </div>
 
           <div className={styles.searchLine}>
-            <label className={styles.searchBox}><span className={styles.visuallyHidden}>搜索当前目录</span>{icon("search")}<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索当前目录中的文件和文件夹" /></label>
+            <label data-lh-input-frame className={styles.searchBox}><span className={styles.visuallyHidden}>搜索当前目录</span>{icon("search")}<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索当前目录中的文件和文件夹" /></label>
             <span className={styles.itemCount}>{isTrash ? "回收站" : currentFolderName} · {visibleFolders.length + visibleResources.length} 项</span>
           </div>
 

@@ -5,7 +5,7 @@
 .breadcrumb a:hover { border-color: var(--color-primary-text); text-decoration: none; }
 .readingActions a, .railNote a, .backTop, .articleFooter a { color: var(--color-primary-text); }
 .reader a:hover, .searchPage a:hover { text-decoration: underline; text-underline-offset: .25em; }
-.reader :is(a, summary, [tabindex]):focus-visible, .searchPage :is(a, input, select, button):focus-visible { outline: 2px solid var(--lh-focus-outline); outline-offset: var(--lh-focus-offset); }
+.reader :is(a, summary, [tabindex]):focus-visible, .searchPage :is(a, button):focus-visible { outline: 2px solid var(--lh-focus-outline); outline-offset: var(--lh-focus-offset); }
 .readingLayout { display: grid; grid-template-columns: minmax(0, 834px) 262px; gap: 1.5rem; align-items: start; }
 .paper { min-width: 0; background: var(--lh-refine-surface, var(--lh-surface-reading)); border: 1px solid var(--lh-refine-line, var(--color-line)); border-radius: var(--lh-card-radius, var(--radius-lg)); padding: 2.5rem; }
 .articleHeader { padding-bottom: 0; margin-bottom: 2.5rem; border-bottom: 0; }
