@@ -23,6 +23,12 @@
 
 ## 构建过程
 
+### 1.1.2 游戏目录默认显示
+
+未设置 `NEXT_PUBLIC_SHOW_GAMES` 时默认展示文化游戏预告页、导航及搜索入口。只有构建时明确设置 `NEXT_PUBLIC_SHOW_GAMES=false` 才隐藏；旧环境若保留了 false，应删除或改为 true 后重新构建。该公开变量在构建时固化，修改运行容器环境不能替代重新构建。两款游戏仍是“开发中”预告，不提供玩法入口。
+
+### 构建与依赖
+
 使用内网 Node 镜像运行 `docker run --security-opt seccomp=unconfined --pids-limit -1 --memory 4g` 完成 npm ci、Prisma 生成、真实 DSH 工具/文本/取消 smoke、Next 构建及 standalone/知识 CLI 打包。随后 Dockerfile 只 COPY 组装镜像，无 RUN，兼容内网 classic Docker 的线程限制。
 
 不从 GitHub 下载 DSH、不从公网下载 Prisma、不需要构建期模型密钥。npm 包仍需要内网镜像源。DSH 和系统依赖面向 Linux x64；Node 必须 24。基底中的 Debian/glibc 兼容性由本次内网构建验证。
