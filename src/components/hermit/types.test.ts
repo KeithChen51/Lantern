@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UIMessage } from "ai";
-import { formatHermitFileSize, getDocumentRecommendations, getHermitApiError, isSupportedHermitFile } from "./types";
+import { formatHermitFileSize, getAnswerSources, getDocumentRecommendations, getHermitApiError, getHermitCitationFromHref, getHermitCitations, getTextContent, isSupportedHermitFile } from "./types";
 
 describe("Hermit UI data helpers", () => {
   it("accepts the supported attachment formats and rejects legacy .doc", () => {
@@ -9,35 +9,75 @@ describe("Hermit UI data helpers", () => {
     expect(isSupportedHermitFile(new File(["legacy"], "handover.doc"))).toBe(false);
   });
 
-  it("extracts document recommendations from streamed data parts", () => {
+  it("uses only the completed answer-sources event for text, citations, and recommendations", () => {
     const message = {
       id: "assistant-1",
       role: "assistant",
       parts: [
+        { type: "text", text: "流式草稿。" },
         {
           type: "data-document",
           id: "document-part-1",
           data: {
-            resourceId: "service-guide",
-            versionId: "v3",
-            title: "交车延期沟通指引",
+            resourceId: "legacy-guide",
+            versionId: "legacy-v1",
+            title: "不应自动显示",
             source: "灯塔知识中台",
-            heading: "先确认客户最在意的时间点",
+          },
+        },
+        {
+          type: "data-answer-sources",
+          data: {
+            status: "complete",
+            text: "请先确认事实 [1](#hermit-citation-1)。",
+            citations: [
+              { number: 1, resourceId: "service-guide", versionId: "v3", title: "交车延期沟通指引", source: "灯塔知识中台", startLine: 8, endLine: 10 },
+              { number: 1, resourceId: "duplicate", versionId: "v1", title: "重复引用", source: "灯塔知识中台" },
+              { number: 2, resourceId: "bad", versionId: "v1", title: "无效行号", source: "灯塔知识中台", startLine: 0 },
+            ],
+            recommendations: [
+              { resourceId: "service-guide", versionId: "v3", title: "交车延期沟通指引", source: "灯塔知识中台", reason: "补充确认客户预期的具体话术。" },
+              { resourceId: "service-guide", versionId: "v3", title: "重复推荐", source: "灯塔知识中台", reason: "重复项应合并。" },
+              { resourceId: "missing-reason", versionId: "v1", title: "没有理由", source: "灯塔知识中台" },
+            ],
           },
         },
       ],
     } as unknown as UIMessage;
 
+    expect(getTextContent(message)).toBe("请先确认事实 [1](#hermit-citation-1)。");
+    expect(getHermitCitations(message)).toEqual([
+      { number: 1, resourceId: "service-guide", versionId: "v3", title: "交车延期沟通指引", source: "灯塔知识中台", startLine: 8, endLine: 10 },
+    ]);
     expect(getDocumentRecommendations(message)).toEqual([
       {
-        id: "document-part-1",
+        id: "recommendation:service-guide:v3",
         resourceId: "service-guide",
         versionId: "v3",
         title: "交车延期沟通指引",
         source: "灯塔知识中台",
-        heading: "先确认客户最在意的时间点",
+        reason: "补充确认客户预期的具体话术。",
       },
     ]);
+    expect(getHermitCitationFromHref("#hermit-citation-1", getHermitCitations(message))?.resourceId).toBe("service-guide");
+    expect(getHermitCitationFromHref("#hermit-citation-9", getHermitCitations(message))).toBeNull();
+    expect(getHermitCitationFromHref("#hermit-citation-1-extra", getHermitCitations(message))).toBeNull();
+    expect(getHermitCitationFromHref("https://example.com", getHermitCitations(message))).toBeNull();
+    expect(getAnswerSources(message)?.status).toBe("complete");
+  });
+
+  it("falls back to streamed text when the final event is absent or incomplete", () => {
+    const message = {
+      id: "assistant-2",
+      role: "assistant",
+      parts: [
+        { type: "text", text: "流式回答。" },
+        { type: "data-answer-sources", data: { status: "streaming", text: "不应使用", citations: [], recommendations: [] } },
+      ],
+    } as unknown as UIMessage;
+
+    expect(getTextContent(message)).toBe("流式回答。");
+    expect(getAnswerSources(message)).toBeNull();
   });
 
   it("formats attachment sizes for compact chips", () => {

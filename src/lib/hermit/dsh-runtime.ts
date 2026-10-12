@@ -5,10 +5,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
-import type { createHermitAgentTools } from "./agent-tools";
+import type { HermitAgentTool } from "./agent-tools";
 import type { HermitProviderSettings } from "./model-provider";
 
-type AgentTools = ReturnType<typeof createHermitAgentTools>;
+type AgentTools = Record<string, HermitAgentTool>;
 type Harness = { run(prompt: string): Promise<{ finalResponse: string }>; close(): Promise<void> };
 type Sdk = { DeepSeekHarness: new (options: Record<string, unknown>) => Harness };
 const nativeImport = new Function("url", "return import(url)") as (url: string) => Promise<Sdk>;
@@ -37,8 +37,8 @@ export async function runDshTurn(input: {
       for await (const chunk of req) { bytes += chunk.length; if (bytes > 64_000) throw new Error("Tool request too large"); chunks.push(Buffer.from(chunk)); }
       const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
       if (req.url === "/ready") {
-        const ready = z.object({ tools: z.array(z.string()).length(3) }).strict().parse(value);
-        if ([...ready.tools].sort().join(",") !== "attachment_read,knowledge_read,knowledge_search") throw new Error("Incomplete tools");
+        const ready = z.object({ tools: z.array(z.string()).length(Object.keys(input.tools).length) }).strict().parse(value);
+        if ([...ready.tools].sort().join(",") !== Object.keys(input.tools).sort().join(",")) throw new Error("Incomplete tools");
         toolsReady = true;
         res.writeHead(200, { "Content-Type": "application/json" }).end("{}"); return;
       }
@@ -48,8 +48,8 @@ export async function runDshTurn(input: {
         res.writeHead(200, { "Content-Type": "application/json" }).end("{}"); return;
       }
       if (req.url !== "/tool" || ++calls > 20) throw new Error("Tool limit reached");
-      const data = z.object({ name: z.enum(["knowledge_search", "knowledge_read", "attachment_read"]), arguments: z.unknown() }).strict().parse(value);
-      const result = await input.tools[data.name].execute(data.arguments);
+      const data = z.object({ name: z.string().refine(name => Object.hasOwn(input.tools, name)), arguments: z.unknown() }).strict().parse(value);
+      const result = await input.tools[data.name as keyof AgentTools].execute(data.arguments);
       res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(result));
     } catch { if (!res.headersSent) res.writeHead(400); res.end(JSON.stringify({ error: "无法读取所请求的参考资料。" })); }
   });

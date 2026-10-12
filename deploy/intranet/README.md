@@ -5,7 +5,7 @@
 ## 交付步骤
 
 1. 在内网 Gitee 仓库的 dev 工作副本中，将本包根目录内容复制到仓库根目录（Jenkinsfile 与 package.json 同级），检查差异后提交到 dev。不要把压缩包本身作为源码上传，不要把它套在 source/ 等新目录下。
-2. 务必提交整个 deploy/offline/：包含 Linux DSH、Prisma 引擎、OpenSSL 与知识索引。本包没有 .git，不改变仓库 remote；不要替换内网凭证和已有运行环境文件。
+2. 务必提交整个 deploy/offline/：包含 Linux DSH、Prisma 引擎和 OpenSSL。本包没有 .git，不改变仓库 remote；不要替换内网凭证和已有运行环境文件。
 3. 现有流水线源码分支选 dev，流水线定义改为“仓库内 Jenkinsfile”，路径 Jenkinsfile。如果平台当前保存的是界面内流水线脚本，需要让它读取仓库文件，否则本次 Jenkinsfile 不会生效。
 4. 保留现有代码与镜像仓库凭证，确认下表参数，再运行流水线。成功后产生 :dev 和 :dev-<提交号> 镜像；失败把流水线日志带回本机处理。
 
@@ -27,7 +27,7 @@
 
 不从 GitHub 下载 DSH、不从公网下载 Prisma、不需要构建期模型密钥。npm 包仍需要内网镜像源。DSH 和系统依赖面向 Linux x64；Node 必须 24。基底中的 Debian/glibc 兼容性由本次内网构建验证。
 
-运行部署时还需独立配置模型、embedding（知识索引 Qwen/Qwen3-Embedding-8B / 4096 维）、SQLite 持久卷；其他业务依赖的测试 MySQL、迁移和上传持久化仍沿用测试环境安排。此包不等于完整部署迁移交付。不能把流水线成功当作业务验收通过。
+运行部署时只需独立配置聊天模型、SQLite 持久卷；知识资源由首次启动时的知识 CLI 导入并由文件索引按需读取。其他业务依赖的测试 MySQL、迁移和上传持久化仍沿用测试环境安排。此包不等于完整部署迁移交付。不能把流水线成功当作业务验收通过。
 
 ## 本机检查与限制
 
@@ -65,4 +65,4 @@ docker run --rm --network none -v lantern-knowledge:/data --entrypoint node <已
 
 受限内网宿主机可能还需与 Jenkinsfile 一致的线程兼容参数，应按运行环境核对。
 
-离线 manifest.json 的 applicationCommit=5d369d7 表示这些离线依赖提取时的原始应用来源，不表示本次最终应用版本。DSH、Prisma、OpenSSL 与知识索引的来源和校验值保持不变；实际应用版本以 Git 提交及 dev-提交号镜像标签为准。
+离线 manifest.json 的 applicationCommit=5d369d7 表示这些离线依赖提取时的原始应用来源，不表示本次最终应用版本。DSH、Prisma 与 OpenSSL 的来源和校验值保持不变；实际应用版本以 Git 提交及 dev-提交号镜像标签为准。

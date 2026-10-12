@@ -21,13 +21,6 @@ OPENAI_BASE_URL=""
 OPENAI_MODEL="qwen3.6-plus"
 OPENAI_API_MODE="chat"
 OPENAI_EXTRA_HEADERS=""
-EMBEDDING_API_KEY=""
-EMBEDDING_BASE_URL=""
-EMBEDDING_MODEL=""
-HERMIT_RAG_MIN_SCORE="0.55"
-HERMIT_RAG_STRONG_SCORE="0.75"
-HERMIT_RAG_OUT_OF_DOMAIN_SCORE="0.80"
-HERMIT_KNOWLEDGE_REQUIRE_DATABASE="false"
 ```
 
 Prisma reads `DATABASE_URL` when running migration, seed, and runtime queries. Local development can keep model-provider keys in `.env.local`, but database commands must run with `DATABASE_URL` available to Prisma.
@@ -48,45 +41,24 @@ The default is `chat` because internal and domestic OpenAI-compatible gateways m
 
 Before production rollout, run a real internal-model connection test with the final company gateway URL, model name, and auth policy. The code is compatible with the OpenAI-compatible shape, but the final gateway still needs to prove: streaming `/chat/completions` works with AI SDK parsing, non-streaming fallback responses are not returned during chat, error status codes are readable, timeout behavior is acceptable, and rate/concurrency limits are documented.
 
-## Hermit Embedding And RAG
+## Hermit knowledge access
 
-Yes, an embedding model is needed at runtime if Hermit RAG is enabled.
+Hermit uses the knowledge hub's ordinary file index and progressive disclosure
+flow. A request first receives the available folders and compact resource
+metadata, then reads the selected document or section when the question needs
+it. The index keeps the resource ID, version, source path, visibility and
+location information so the response can cite the exact managed document.
 
-The current RAG flow uses embeddings twice:
+`npm run build:knowledge` only verifies that static Markdown and Action source
+documents are readable. It performs no network calls, does not generate a
+vector cache, and does not require an embedding model. Managed resources are
+imported with `npm run hub:bootstrap` (MySQL) or the packaged knowledge CLI
+(SQLite) and remain in the configured knowledge store.
 
-1. During `npm run build`, `npm run build:knowledge` reads static Hermit knowledge, brand/normative markdown, static Action cases, and, when `DATABASE_URL` is available, published managed content versions. It then calls the configured embedding API and writes `knowledge-vectors.json` into the build output.
-2. During runtime chat, every user query calls the same embedding API to produce a query vector and compare it with the built knowledge vectors.
-
-In normal deployment, production, preview, and any private-cloud build host must configure:
-
-- `EMBEDDING_BASE_URL`: the internal embedding endpoint root, normally ending in `/v1`.
-- `EMBEDDING_API_KEY`: the embedding endpoint credential. If omitted, the app falls back to `OPENAI_API_KEY`.
-- `EMBEDDING_MODEL`: the embedding model name used by the company gateway.
-- `HERMIT_KNOWLEDGE_USE_PREBUILT`: keep `false` for normal builds. Set `true` only when the deployment package already contains a validated `src/lib/hermit/knowledge/knowledge-vectors.json` and the build host should not call the embedding API.
-- `HERMIT_RAG_MIN_SCORE`: minimum cosine score for a chunk to enter the prompt.
-- `HERMIT_RAG_STRONG_SCORE`: score at which published practice, Action, or norm sources can be treated as exact evidence.
-- `HERMIT_RAG_OUT_OF_DOMAIN_SCORE`: stricter score required when the user query has no service-domain signal.
-- `HERMIT_KNOWLEDGE_REQUIRE_DATABASE`: keep `false` for preview builds that may not have migrated database content yet. Set `true` only when production builds must fail if database-backed Content sources cannot be loaded.
-
-The embedding model used at build time and runtime must be the same model with the same vector dimension. Hermit stores the build-time model name and dimension in `knowledge-vectors.json`; runtime RAG will reject mismatched embedding configuration and continue the chat without retrieved context rather than using distorted similarity scores.
-
-If the internal embedding service is unstable only on the build host, use the prebuilt-index fallback:
-
-```bash
-HERMIT_KNOWLEDGE_USE_PREBUILT=true
-EMBEDDING_MODEL="<model stored in knowledge-vectors.json>"
-npm run build
-```
-
-This validates and packages the existing `knowledge-vectors.json` instead of regenerating it. It does not remove the runtime dependency on query embeddings: `/api/chat` still needs a working `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, and matching `EMBEDDING_MODEL` to retrieve context for each user question.
-
-Runtime retrieval is no longer raw top-K. It now applies service-domain detection, a minimum relevance threshold, a stronger out-of-domain threshold, and evidence tiering. If a question is unrelated or no chunk crosses the minimum score, Hermit does not inject the nearest weak snippets into the model prompt.
-
-If the company procurement only includes a chat model and no embedding endpoint, choose one of these before production:
-
-- procure or enable an embedding model on the same internal model gateway;
-- prebuild and serve an internal embedding-compatible query endpoint for Hermit;
-- temporarily disable RAG and accept prompt-only answers, which reduces source grounding and answer accuracy.
+Production and preview deployments therefore only need the chat model
+configuration described above, the database/storage configuration, and the
+normal knowledge-hub initialization. No embedding endpoint, prebuilt index, or
+similarity-threshold variables are required.
 
 ## Phase 1 Startup Order
 
@@ -113,8 +85,8 @@ the company private server.
    container hostname; Next.js standalone must bind to all interfaces for the
    healthcheck and public proxy to reach it.
 4. Set the model-provider variables from the required environment list above.
-   For Hermit RAG, the Railway build and runtime service must both have the
-   same `EMBEDDING_*` values.
+   Knowledge resources are read from the initialized hub; Railway does not
+   need a separate embedding endpoint or vector index during build or runtime.
 5. Deploy the GitHub branch. `railway.json` sets:
    - build command: `npm run build`
    - pre-deploy command: `npm run db:setup`
@@ -133,5 +105,5 @@ serve static assets directly.
 - The preview identity switcher is only for Railway/private preview walkthroughs;
   it is not a production login module and should be replaced by IAM / WeCom SSO.
 - The former Workshop administrator review flow is no longer part of the active product surface.
-- Hermit vector retrieval remains isolated from the historical Workshop persistence slice.
+- Hermit knowledge access remains isolated from the historical Workshop persistence slice and uses the knowledge hub index.
 - Real OA / WeCom login, real AI initial review, learning reports, batch import, and full content management are outside Phase 1.

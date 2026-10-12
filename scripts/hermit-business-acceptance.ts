@@ -734,7 +734,7 @@ function redacted(value: string): string {
   return value
     .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, "Bearer [REDACTED]")
     .replace(/\b(?:sk|rk|pk)(?:-[A-Za-z0-9]+)?-[A-Za-z0-9_-]{12,}\b/gi, "[REDACTED_KEY]")
-    .replace(/\b(OPENAI_API_KEY|EMBEDDING_API_KEY|HERMIT_MODEL_KEY|DATABASE_URL|HERMIT_ACCEPTANCE_BEARER_TOKEN)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
+    .replace(/\b(OPENAI_API_KEY|HERMIT_MODEL_KEY|DATABASE_URL|HERMIT_ACCEPTANCE_BEARER_TOKEN)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
     .replace(/(https?:\/\/)([^\s/:@]+):([^\s/@]+)@/gi, "$1[REDACTED]@")
     .replace(/([?&](?:token|api_key|apikey|key|secret|password)=)[^&\s]+/gi, "$1[REDACTED]");
 }

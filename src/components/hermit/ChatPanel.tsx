@@ -74,6 +74,7 @@ export function ChatPanel() {
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [readerDocument, setReaderDocument] = useState<HermitDocumentRecommendation | null>(null);
   const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(null);
+  const [wasAborted, setWasAborted] = useState(false);
   const followLatestRef = useRef(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -101,6 +102,7 @@ export function ChatPanel() {
   const visibleMessages = messages.filter(isVisibleMessage);
   const showThinkingIndicator = shouldShowThinkingIndicator(messages, isLoading);
   const displayedError = requestError ?? (error ? "这次请求没有完成，请重试。" : null);
+  const lastMessageId = messages[messages.length - 1]?.id;
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -246,6 +248,7 @@ export function ChatPanel() {
     pendingBodyRef.current = body;
     setInput("");
     setRequestError(null);
+    setWasAborted(false);
     clearError();
 
     try {
@@ -269,8 +272,15 @@ export function ChatPanel() {
     void submitText(question);
   }
 
+  function handleStop() {
+    if (!isLoading) return;
+    setWasAborted(true);
+    stop();
+  }
+
   function handleRetry() {
     if (isLoading) return;
+    setWasAborted(false);
     setRequestError(null);
     clearError();
     void regenerate({ body: pendingBodyRef.current }).catch((regenerateError) => {
@@ -295,7 +305,7 @@ export function ChatPanel() {
         uploadError={uploadError}
         onInputChange={setInput}
         onSubmit={handleSubmit}
-        onStop={stop}
+        onStop={handleStop}
         onFilesSelected={handleFilesSelected}
         onRemoveAttachment={handleRemoveAttachment}
         onRetryAttachment={handleRetryAttachment}
@@ -331,7 +341,12 @@ export function ChatPanel() {
               </div>
             )}
             {visibleMessages.map((message) => (
-              <MessageBubble key={message.id} message={message} onOpenDocument={setReaderDocument} />
+              <MessageBubble
+                key={message.id}
+                message={message}
+                onOpenDocument={setReaderDocument}
+                showRecommendations={message.id !== lastMessageId || (!isLoading && !displayedError && !wasAborted)}
+              />
             ))}
             {showThinkingIndicator && <TypingIndicator label="思考中" />}
           </div>
@@ -348,7 +363,7 @@ export function ChatPanel() {
               value={input}
               onChange={setInput}
               onSubmit={handleSubmit}
-              onStop={stop}
+              onStop={handleStop}
               isLoading={isLoading}
               isUploading={isUploadingAttachments}
               attachments={attachments}
