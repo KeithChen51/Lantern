@@ -8,7 +8,7 @@ CODING 事项记录需求，使用 Pull Request / Merge Request（以下统称 P
 默认流程：需求 Issue → 从 dev 创建工作分支 → 开发与验证 → PR 到 dev →
 版本评估 → dev 到 main 的发布 PR → 合并与发布验证。
 
-main 是稳定发布分支，dev 是日常集成分支。非发版阶段不默认修改 main，
+main 是本机发送到内网的交付基线，dev 是日常集成分支。交付后在内网进行测试和生产部署，版本形成与环境部署分别记录。非交付阶段不默认修改 main，
 日常变更也不直接提交到 dev，而是通过工作分支的 PR 汇入 dev。
 本文规定协作行为，不代表远端分支保护、CI 或部署审批已经配置。
 
@@ -19,6 +19,7 @@ main 是稳定发布分支，dev 是日常集成分支。非发版阶段不默�
 
 | 工作内容 | 入口 |
 | --- | --- |
+| 版本与内网交付 | [版本规范](docs/release-notes.md)、[版本源](src/content/releases.json)；main 交付前必须评估升版，不依赖 GitHub Release |
 | 项目概况、本地启动 | [README.md](README.md)、[package.json](package.json)；Node.js >= 20.9.0，安装依赖后运行 npm run dev |
 | 环境配置与数据结构 | [.env.example](.env.example)、[prisma/schema.prisma](prisma/schema.prisma)、[prisma/migrations](prisma/migrations) |
 | 页面与 API | [src/app](src/app)；共享组件在 [src/components](src/components) |
@@ -104,12 +105,12 @@ main 是稳定发布分支，dev 是日常集成分支。非发版阶段不默�
 1. 本次 dev 相对 main 的完整变更清单、关联 Issue 和发布范围。
 2. 功能验收、必要回归和发布构建结果；未完成工作、已知风险是否阻塞发布。
 3. 数据迁移、环境变量、知识库和内容产物、部署顺序及回滚条件。
-4. 发布说明和版本 / 标签计划（按项目实际约定，不自动改版本号）。
+4. 按 docs/release-notes.md 核对交付版本：功能升次版本、修复升补丁版本、重大不兼容升级升主版本；交付内容变化必须在合入 main 前升版，纯文档例外需说明。以 releases.json 为唯一来源同步包版本及 CHANGELOG，填写交付形成日。不得以未部署到内网为由沿用旧版本；不依赖 GitHub Release 或标签。
 
 把评估结论和证据写入发布 PR。评估通过不等于已获合并或部署授权。
 发布 PR 目标必须是 main、来源必须是 dev；不得夹带未评估的额外提交。
 评估后若 dev 发生变化，重新核对新增差异并补充相应验证。
-合并后记录实际发布状态并验证运行结果；合并 main 不等于部署成功。
+合并后记录交付版本和 main 完整 SHA；从干净且已同步的本机 main 导出内网交付包，记录包的 SHA-256。内网测试和生产部署状态分别记录，同一产物从测试晋级生产不升版；代码修复须形成下一版本。合并 main 不等于已传输、测试通过或部署成功。
 
 ## Issue 模板
 
