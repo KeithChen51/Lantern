@@ -49,7 +49,15 @@ export function useLhScrollProgress({
   }, [onProgress]);
 
   React.useEffect(() => {
-    if (!enabled || (respectReducedMotion && prefersReducedMotion)) return;
+    if (!enabled) return;
+    if (
+      respectReducedMotion &&
+      (prefersReducedMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    ) {
+      // Restore the resting state when the preference changes mid-scroll.
+      onProgressRef.current(0);
+      return;
+    }
 
     let animationFrame = 0;
 
@@ -95,7 +103,14 @@ export function useLhElementScrollProgress<T extends HTMLElement>({
   }, [onProgress]);
 
   React.useEffect(() => {
-    if (!enabled || (respectReducedMotion && prefersReducedMotion)) return;
+    if (!enabled) return;
+    if (
+      respectReducedMotion &&
+      (prefersReducedMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    ) {
+      onProgressRef.current(0);
+      return;
+    }
 
     let animationFrame = 0;
 

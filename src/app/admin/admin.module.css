@@ -32,7 +32,7 @@
 .adminHomeSectionHeader h2 { color: var(--color-ink); font-family: var(--font-serif-stack); font-size: var(--title-section); font-weight: var(--weight-bold); line-height: 1.4; }
 .adminHomeSectionHeader > div > p:last-child { margin-top: .5rem; color: var(--color-muted); font-size: var(--type-body); line-height: var(--leading-body); }
 .adminAreaGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
-.adminAreaCard { display: grid; min-height: 14rem; grid-template-rows: auto 1fr auto; gap: 1.25rem; padding: 1.5rem; transition: border-color var(--lh-motion-fast) var(--lh-ease-standard), box-shadow var(--lh-motion-fast) var(--lh-ease-standard), transform var(--lh-motion-fast) var(--lh-ease-standard); }
+.adminAreaCard { display: grid; min-height: 14rem; grid-template-rows: auto 1fr auto; gap: 1.25rem; padding: 1.5rem; transition: border-color var(--lh-motion-fast) var(--lh-ease-standard), box-shadow var(--lh-motion-fast) var(--lh-ease-standard); }
 .adminAreaCard:hover { border-color: var(--lh-refine-line, var(--color-line-strong)); box-shadow: var(--lh-card-hover-shadow); }
 
 @media (max-width: 700px) {

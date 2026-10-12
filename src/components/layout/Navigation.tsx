@@ -65,7 +65,7 @@ function Logo({
         data-expanded="false"
         type="button"
         onClick={onTogglePin}
-        className="group grid min-h-12 grid-cols-1 items-center justify-items-center rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
+        className="group grid min-h-12 grid-cols-1 items-center justify-items-center rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-2 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-[background,border-color,box-shadow,color,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
         aria-label="展开侧栏"
         title="展开侧栏"
       >
@@ -86,7 +86,7 @@ function Logo({
         data-lh-logo
         data-expanded="true"
         href="/"
-        className="grid min-h-12 grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-3 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
+        className="grid min-h-12 grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 rounded-[var(--lh-card-radius)] border border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] p-3 text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)] transition-[background,border-color,box-shadow,color,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
         aria-label="灯塔首页"
       >
         <LighthouseMark className="h-12 w-8" />
@@ -303,7 +303,7 @@ function SidebarFeedbackLink({
       onClick={onNavigate}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:translate-y-px active:scale-[0.985]",
+        "group relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:brightness-[0.97]",
         isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
         isActive
           ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
@@ -404,7 +404,7 @@ function NavLinks({
         href={item.href}
         onClick={onNavigate}
         className={cn(
-          "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)]",
+          "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)]",
           isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
           isActive
             ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"

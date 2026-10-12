@@ -44,48 +44,7 @@
   min-width: 0;
 }
 
-.pageHeader :global([data-lh-v3-heading]) {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.pageHeader :global([data-lh-v3-heading-copy]) {
-  min-width: 0;
-}
-
-.pageHeader :global([data-lh-v3-heading-title]) {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.pageHeader :global([data-lh-v3-heading-description]) {
-  color: var(--hermit-secondary);
-  font-size: 16px;
-  line-height: 28px;
-}
-
-.pageHeader :global(h1) {
-  margin: 0;
-  color: var(--hermit-ink);
-  font-family: var(--font-noto-stack, "Noto Serif SC", serif);
-  font-size: 44px;
-  font-weight: 700;
-  line-height: 56px;
-  letter-spacing: 0;
-}
-
-.pageHeader :global(p) {
-  margin: 12px 0 0;
-  color: var(--hermit-secondary);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 28px;
-}
-
+/* PageHeading owns typography and spacing, exactly as on other V3 pages. */
 .identity {
   display: inline-flex;
   width: 36px;
@@ -252,7 +211,7 @@
   font-weight: 500;
   line-height: 22px;
   box-shadow: none;
-  transition: color 160ms ease, transform 160ms ease;
+  transition: color 160ms ease;
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-examples] [data-lh-suggestion-button]::after {
@@ -265,7 +224,6 @@
   border-color: transparent;
   background: transparent;
   color: var(--hermit-accent);
-  transform: translateX(2px);
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-input] {
@@ -351,8 +309,8 @@
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-textarea]:focus-visible {
-  outline: 2px solid rgba(166, 93, 18, 0.56);
-  outline-offset: 3px;
+  outline: none;
+  outline-offset: 0;
   box-shadow: none;
 }
 
@@ -437,13 +395,12 @@
   background: var(--hermit-accent) !important;
   color: #fffdf8 !important;
   box-shadow: none !important;
-  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+  transition: background 160ms ease, border-color 160ms ease;
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit]:hover {
   border-color: var(--hermit-accent-deep) !important;
   background: var(--hermit-accent-deep) !important;
-  transform: translateY(-1px);
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit]:disabled {
@@ -826,13 +783,12 @@
   background: var(--hermit-surface);
   padding: 10px 12px;
   text-align: left;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  transition: border-color 160ms ease, background 160ms ease;
 }
 
 .documentCard:hover {
   border-color: rgba(166, 93, 18, 0.42);
   background: #fffaf0;
-  transform: translateY(-1px);
 }
 
 .documentCardIcon {
@@ -1229,17 +1185,6 @@
     padding: 0;
   }
 
-  .pageHeader :global(h1) {
-    font-size: 32px;
-    line-height: 44px;
-  }
-
-  .pageHeader :global(p) {
-    margin-top: 8px;
-    font-size: 14px;
-    line-height: 22px;
-  }
-
   .identity {
     width: 32px;
     height: 32px;
@@ -1360,8 +1305,7 @@
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  padding-top: 24px;
-  padding-bottom: 24px;
+  /* Keep the shared V3 shell padding; only constrain its height. */
 }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main-frame]):has(> .page) {
   height: 100%;
@@ -1372,7 +1316,7 @@
   height: 100%;
   min-height: 0;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 16px;
+  gap: 0;
 }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page .chatFrame,
 .chatLayout,
@@ -1385,7 +1329,7 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  padding-block: 16px 0;
+  padding-block: 0;
 }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-main],
 .readerBody {
@@ -1411,7 +1355,7 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-block: 16px 0;
+  padding-block: 0;
 }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-inner] {
   min-height: 100%;
@@ -1427,10 +1371,5 @@
   font-size: 12px;
 }
 @media (max-width: 767px) {
-  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main][data-lh-v3]):has(.page) {
-    padding-top: 72px;
-    padding-bottom: 12px;
-  }
-  .pageHeader :global([data-lh-v3-heading-description]) { font-size: 14px; line-height: 22px; }
   .readerFooter { padding: 12px 16px; }
 }

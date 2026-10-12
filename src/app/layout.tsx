@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./visual-v3.css";
+import "./input-focus.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { isGamesModuleEnabled } from "@/config/features";
 
