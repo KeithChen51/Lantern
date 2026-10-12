@@ -89,6 +89,17 @@ describe("answer source evidence", () => {
     }]);
   });
 
+  it("searches every trusted read range for a citation", async () => {
+    const get = vi.fn(async () => resource());
+    const sources = createAnswerSources({ hub: { get } });
+    sources.recordRead(read({ startLine: 2, endLine: 2, text: "第一行" }));
+    sources.recordRead(read({ startLine: 4, endLine: 4, text: "第三行" }));
+
+    await expect(sources.tools.knowledge_cite.execute({ resourceId: "guide", versionId: "v1", startLine: 4, endLine: 4 })).resolves.toEqual({ marker: "[[cite:1]]" });
+    const result = await sources.finalize("结论 [[cite:1]]");
+    expect(result.citations[0]).toMatchObject({ startLine: 4, endLine: 4 });
+  });
+
   it("does not cite package files, but can recommend read resources with a six item cap", async () => {
     const get = vi.fn(async (resourceId: string) => resource({ id: resourceId, title: resourceId, version: { ...resource().version, id: "v1" } }));
     const sources = createAnswerSources({ hub: { get } });
@@ -156,6 +167,16 @@ describe("stripSourceMarkers", () => {
     expect(stripSourceMarkers("a [")).toBe("a ");
     expect(stripSourceMarkers("a [[cite:")).toBe("a ");
     expect(stripSourceMarkers("`[[cite:1]]` [x](#hermit-citation-1)")).toBe("`` x");
+  });
+
+  it("keeps every streamed prefix monotonic across marker, ordinary-link, and forged-link splits", () => {
+    const answer = "这是说明。[[cite:1]]，继续阅读 [普通链接](https://example.com)；[伪造](#hermit-citation-1)结束。";
+    const outputs = Array.from({ length: answer.length + 1 }, (_, index) => stripSourceMarkers(answer.slice(0, index)));
+    for (let index = 0; index + 1 < outputs.length; index += 1) {
+      expect(outputs[index + 1].startsWith(outputs[index])).toBe(true);
+      expect(outputs[index]).not.toMatch(/\[\[cite/);
+    }
+    expect(outputs.at(-1)).toBe("这是说明。，继续阅读 [普通链接](https://example.com)；伪造结束。");
   });
 });
 

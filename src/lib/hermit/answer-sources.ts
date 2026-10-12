@@ -237,7 +237,24 @@ function stripInternalCitationAnchors(value: string) {
   let result = value.replace(/\[([^\]]*)\]\(\s*#hermit-citation-[^)]*\)/gi, "$1");
   result = result.replace(/<a\b[^>]*\bhref\s*=\s*(["'])#hermit-citation-[^"']*\1[^>]*>([\s\S]*?)<\/a>/gi, "$2");
   result = result.replace(/<a\b[^>]*\bhref\s*=\s*(["'])#hermit-citation-[^"']*\1[^>]*>/gi, "");
+  // A model may stop in the middle of a forged internal link.  Keep its
+  // visible label while discarding the unfinished destination as well.
+  result = result.replace(/\[([^\]\r\n]*)\]\(\s*#hermit-citation-[^\)\r\n]*$/gim, "$1");
   return result;
+}
+
+function pendingMarkdownLinkStart(value: string) {
+  const match = /\[[^\]\r\n]*(?:\](?:\(\s*[^\)\r\n]*)?)?$/g.exec(value);
+  return match?.index ?? -1;
+}
+
+function trailingCitationPrefixStart(value: string) {
+  for (let start = value.length - 1; start >= 0; start -= 1) {
+    if (value[start] !== "[") continue;
+    const suffix = value.slice(start);
+    if (suffix === "[" || /^\[\[(?:c|ci|cit|cite(?::[^)\r\n]*)?)?$/i.test(suffix)) return start;
+  }
+  return -1;
 }
 
 /** Remove source protocol markers before text is emitted during streaming. */
@@ -245,23 +262,19 @@ export function stripSourceMarkers(text: string) {
   let value = stripInternalCitationAnchors(String(text ?? ""));
   value = value.replace(/\[\[cite(?::[^\]\r\n]*)?\]\]/gi, "");
   value = value.replace(/\[\[cite(?::[^\]\r\n]*)?$/gim, "");
+  // Hold an unfinished Markdown link until its closing `)` arrives.  This
+  // keeps a split forged internal anchor (and ordinary Markdown links) from
+  // shrinking already-emitted stream text when the next chunk completes it.
+  const pendingLink = pendingMarkdownLinkStart(value);
+  if (pendingLink >= 0) value = value.slice(0, pendingLink);
   // Hold back a possible marker prefix so a later chunk cannot turn an
   // already-emitted `[` or `[[cite:` into a visible protocol token.  The
   // completed answer is finalized separately and may retain an ordinary
   // trailing bracket if it never becomes a marker.
   while (true) {
-    const start = value.lastIndexOf("[");
+    const start = trailingCitationPrefixStart(value);
     if (start < 0) break;
-    const suffix = value.slice(start);
-    if (suffix === "[") {
-      value = value.slice(0, start);
-      continue;
-    }
-    if (/^\[\[(?:c(?:i(?:t(?:e)?)?)?(?::[^\]\r\n]*)?)?$/i.test(suffix)) {
-      value = value.slice(0, start);
-      continue;
-    }
-    break;
+    value = value.slice(0, start);
   }
   return value;
 }
@@ -363,8 +376,8 @@ export function createAnswerSources(deps: { hub: AnswerSourceHub }) {
     return true;
   };
 
-  const findRead = (resourceId: string, versionId: string, markdownOnly: boolean) => {
-    return [...reads.values()].find(read => read.resourceId === resourceId && read.versionId === versionId && (!markdownOnly || !read.path));
+  const findReads = (resourceId: string, versionId: string, markdownOnly: boolean) => {
+    return [...reads.values()].filter(read => read.resourceId === resourceId && read.versionId === versionId && (!markdownOnly || !read.path));
   };
 
   const getServerResource = async (resourceId: string, versionId: string) => {
@@ -377,18 +390,18 @@ export function createAnswerSources(deps: { hub: AnswerSourceHub }) {
   };
 
   const resolveCitation = async (declaration: CitationDeclaration): Promise<ResolvedCitation | null> => {
-    const read = findRead(declaration.input.resourceId, declaration.input.versionId, true);
-    if (!read) return null;
     const metadata = await getServerResource(declaration.input.resourceId, declaration.input.versionId);
     if (!metadata) return null;
-    const range = resolveRange(declaration.input, read, metadata.resource.version.markdown);
-    if (!range) return null;
-    return { declaration, metadata, read, ...range };
+    const match = findReads(declaration.input.resourceId, declaration.input.versionId, true)
+      .map(read => ({ read, range: resolveRange(declaration.input, read, metadata.resource.version.markdown) }))
+      .find(candidate => candidate.range !== null);
+    if (!match || !match.range) return null;
+    return { declaration, metadata, read: match.read, ...match.range };
   };
 
   const resolveRecommendation = async (declaration: RecommendationDeclaration) => {
     const { resourceId, versionId } = declaration.input;
-    if (!findRead(resourceId, versionId, false)) return null;
+    if (!findReads(resourceId, versionId, false).length) return null;
     const metadata = await getServerResource(resourceId, versionId);
     if (!metadata) return null;
     return { metadata, reason: declaration.input.reason };
@@ -402,10 +415,14 @@ export function createAnswerSources(deps: { hub: AnswerSourceHub }) {
         const input = citeSchema.parse(raw);
         const resolved = await getServerResource(input.resourceId, input.versionId);
         if (!resolved) throw new Error("该资料版本不可访问或尚未发布。");
-        const read = findRead(input.resourceId, input.versionId, true);
-        if (!read) throw new Error("只能引用本次回答实际读取过的 Markdown 资料。");
-        const range = resolveRange(input, read, resolved.resource.version.markdown);
-        if (!range) throw new Error("引用行号不在本次读取的可信范围内。");
+        const match = findReads(input.resourceId, input.versionId, true)
+          .map(read => ({ read, range: resolveRange(input, read, resolved.resource.version.markdown) }))
+          .find(candidate => candidate.range !== null);
+        if (!match || !match.range) {
+          if (!findReads(input.resourceId, input.versionId, true).length) throw new Error("只能引用本次回答实际读取过的 Markdown 资料。");
+          throw new Error("引用行号不在本次读取的可信范围内。");
+        }
+        const range = match.range;
         const declarationKey = [input.resourceId, input.versionId, range.startLine, range.endLine].join("|");
         const existing = [...citations.values()].find(declaration => {
           const candidate = declaration.input;
@@ -424,7 +441,7 @@ export function createAnswerSources(deps: { hub: AnswerSourceHub }) {
         const input = recommendSchema.parse(raw);
         const resolved = await getServerResource(input.resourceId, input.versionId);
         if (!resolved) throw new Error("该资料版本不可访问或尚未发布。");
-        if (!findRead(input.resourceId, input.versionId, false)) throw new Error("只能推荐本次回答实际读取过的资料。");
+        if (!findReads(input.resourceId, input.versionId, false).length) throw new Error("只能推荐本次回答实际读取过的资料。");
         const key = resourceKey(input.resourceId, input.versionId);
         if (recommendations.has(key)) return { accepted: true, resourceId: input.resourceId, versionId: input.versionId, title: resolved.title, source: resolved.source, reason: input.reason };
         if (recommendations.size >= 6) throw new Error("本次回答最多推荐 6 份资料。");
