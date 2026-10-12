@@ -42,18 +42,58 @@ describe("knowledge index reader", () => {
     expect(documents.resources[0]).toMatchObject({ id: "policy", path: "知识文档/服务指引" });
   });
 
+  it("enumerates bounded search pages before applying tag and visibility filters", async () => {
+    const late = {
+      id: "late-policy", type: "document" as const, title: "后页指引", summary: "摘要", source: "灯塔", tags: ["目标"], visibility: "public" as const,
+      versionId: "late-v1", version: 1, publishedAt: now, updatedAt: now, validity: "effective", score: 1,
+      excerpt: "不应返回", citation: null,
+    };
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({ ...late, id: `other-${index}`, tags: ["其他"], versionId: `other-v${index}` }));
+    const search = vi.fn(async (input: { offset?: number; limit?: number }) => input.offset === 0
+      ? { items: firstPage, total: 101, offset: 0, limit: input.limit ?? 100 }
+      : { items: [late], total: 101, offset: 100, limit: input.limit ?? 100 });
+    const { hub } = hubFixture();
+    const reader = createKnowledgeIndexReader({ ...hub, search } as never);
+    const result = await reader.search({ tag: "目标", visibility: "public", limit: 20 });
+    expect(result.items).toMatchObject([{ id: "late-policy" }]);
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(search).toHaveBeenLastCalledWith({ query: "", type: undefined, offset: 100, limit: 100, sort: "relevance" });
+  });
+
+  it("passes logical folder pagination through to the hub search", async () => {
+    const { hub, search } = hubFixture();
+    const item = {
+      id: "late-policy", type: "document" as const, title: "后页指引", summary: "摘要", source: "灯塔", tags: [], visibility: "public" as const,
+      versionId: "late-v1", version: 1, publishedAt: now, updatedAt: now, validity: "effective", score: 1,
+      excerpt: "不应返回", citation: null,
+    };
+    search.mockResolvedValue({ items: [item], total: 101, offset: 100, limit: 1 } as never);
+    const reader = createKnowledgeIndexReader(hub);
+    const result = await reader.browse({ folderId: "logical:document", offset: 100, limit: 1 });
+    expect(result).toMatchObject({ offset: 100, limit: 1, total: 101, resources: [{ id: "late-policy" }] });
+    expect(hub.search).toHaveBeenCalledWith({ query: "", type: "document", offset: 100, limit: 1, sort: "updated" });
+  });
+
   it("uses actual MySQL folder locations through the optional adapter", async () => {
     const { hub } = hubFixture();
     const listing: KnowledgeIndexListing = {
-      folders: [{ id: "folder-a", name: "白皮书", parentId: null, deleted: false }, { id: "draft-folder", name: "待发布草稿", parentId: null, deleted: false }],
+      folders: [
+        { id: "base-whitepapers", name: "白皮书", parentId: null, deleted: false },
+        { id: "base-cases", name: "参悟案例", parentId: null, deleted: false },
+        { id: "base-guidelines", name: "行为准则", parentId: null, deleted: false },
+        { id: "base-skills", name: "Skill", parentId: null, deleted: false },
+        { id: "folder-a", name: "资料", parentId: null, deleted: false },
+        { id: "draft-folder", name: "待发布草稿", parentId: null, deleted: false },
+      ],
       resources: [{ id: "policy", name: "服务指引.md", folderId: "folder-a", type: "document", title: "服务指引", visibility: "public", archived: false, publishedVersionId: "v1", latestVersionId: "v1", updatedAt: now }],
     };
     const reader = createKnowledgeIndexReader(hub, async () => listing);
     const result = await reader.browse({ folderId: "folder-a" });
-    expect(result).toMatchObject({ mode: "mysql", path: "白皮书" });
-    expect(result.resources[0]).toMatchObject({ id: "policy", name: "服务指引.md", path: "白皮书/服务指引.md" });
+    expect(result).toMatchObject({ mode: "mysql", path: "资料" });
+    expect(result.resources[0]).toMatchObject({ id: "policy", name: "服务指引.md", path: "资料/服务指引.md" });
     const root = await reader.browse({});
     expect(root.folders.map(folder => folder.name)).not.toContain("待发布草稿");
+    expect(root.folders.map(folder => folder.name)).toEqual(expect.arrayContaining(["白皮书", "参悟案例", "行为准则", "Skill"]));
   });
 
   it("returns section metadata and bounded line or offset reads", async () => {
@@ -70,6 +110,25 @@ describe("knowledge index reader", () => {
     expect(offset.markdown).toHaveLength(12_000);
     expect(offset.nextOffset).toBe(12_000);
     expect(offset.markdown.length).toBeLessThanOrEqual(12_000);
+
+    const longLine = resource({ version: { ...value.version, markdown: "x".repeat(13_000), citations: [] } });
+    get.mockResolvedValueOnce(longLine as never);
+    const firstLong = await reader.read({ resourceId: "policy", versionId: "v1", startLine: 1, lineCount: 1 });
+    expect(firstLong).toMatchObject({ markdown: "x".repeat(12_000), startLine: 1, endLine: 1, nextOffset: 12_000, nextLine: null });
+    get.mockResolvedValueOnce(longLine as never);
+    const secondLong = await reader.read({ resourceId: "policy", versionId: "v1", offset: firstLong.nextOffset! });
+    expect(firstLong.markdown + secondLong.markdown).toBe("x".repeat(13_000));
+
+    const newline = resource({ version: { ...value.version, markdown: "第一行\n第二行\n第三行", citations: [] } });
+    get.mockResolvedValueOnce(newline as never);
+    const firstLine = await reader.read({ resourceId: "policy", versionId: "v1", offset: 0, lineCount: 1 });
+    expect(firstLine).toMatchObject({ markdown: "第一行", startLine: 1, endLine: 1, nextOffset: 3 });
+    get.mockResolvedValueOnce(newline as never);
+    const continuation = await reader.read({ resourceId: "policy", versionId: "v1", offset: firstLine.nextOffset!, lineCount: 1 });
+    expect(continuation).toMatchObject({ markdown: "\n", startLine: 1, endLine: 1, nextOffset: 4 });
+    get.mockResolvedValueOnce(newline as never);
+    const secondLine = await reader.read({ resourceId: "policy", versionId: "v1", offset: continuation.nextOffset!, lineCount: 1 });
+    expect(firstLine.markdown + continuation.markdown + secondLine.markdown).toContain("第一行\n第二行");
   });
 
   it("lists and reads only exact text files in a published Skill version", async () => {
@@ -83,6 +142,8 @@ describe("knowledge index reader", () => {
     const reader = createKnowledgeIndexReader(hub);
     const files = await reader.skillFiles({ resourceId: "skill", versionId: "s1" });
     expect(files.files).toMatchObject([{ path: "SKILL.md", isText: true }, { path: "scripts/check.py", isText: true }, { path: "assets/logo.bin", isText: false }]);
+    const filesPage = await reader.skillFiles({ resourceId: "skill", versionId: "s1", offset: 1, limit: 1 });
+    expect(filesPage).toMatchObject({ offset: 1, limit: 1, total: 3, hasMore: true, files: [{ path: "scripts/check.py" }] });
     const content = await reader.skillRead({ resourceId: "skill", versionId: "s1", path: "SKILL.md" });
     expect(content.text).toHaveLength(12_000);
     expect(content.truncated).toBe(true);

@@ -1,6 +1,7 @@
 import type { KnowledgeHub } from "./service";
 import { HubError } from "./service";
 import type { ResourceType } from "./types";
+import { baseFolders } from "./base-folders";
 import { z } from "zod";
 
 /**
@@ -30,6 +31,13 @@ export type KnowledgeIndexHub = Pick<KnowledgeHub, "get" | "search">;
 
 const identifier = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/);
 const resourceContext = z.object({ resourceId: identifier, versionId: identifier }).strict();
+export const MAX_KNOWLEDGE_READ_CHARS = 12_000;
+export const MAX_KNOWLEDGE_READ_LINES = 120;
+export const MAX_SKILL_READ_CHARS = 12_000;
+export const MAX_INDEX_SUMMARY_CHARS = 600;
+export const MAX_INDEX_SCAN_ITEMS = 5_000;
+export const MAX_OUTLINE_SECTIONS = 100;
+export const MAX_OUTLINE_FILES = 100;
 
 export const browseInputSchema = z.object({
   folderId: z.string().trim().min(1).max(120).nullable().default(null),
@@ -46,7 +54,12 @@ export const indexSearchInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(20),
 }).strict();
 
-export const outlineInputSchema = resourceContext;
+export const outlineInputSchema = resourceContext.extend({
+  sectionOffset: z.number().int().min(0).max(100_000).default(0),
+  sectionLimit: z.number().int().min(1).max(MAX_OUTLINE_SECTIONS).default(MAX_OUTLINE_SECTIONS),
+  fileOffset: z.number().int().min(0).max(100_000).default(0),
+  fileLimit: z.number().int().min(1).max(MAX_OUTLINE_FILES).default(MAX_OUTLINE_FILES),
+}).strict();
 
 const readInputBase = resourceContext.extend({
   offset: z.number().int().min(0).max(2_000_000).optional(),
@@ -59,7 +72,10 @@ const readInputBase = resourceContext.extend({
 });
 export const readInputSchema = readInputBase;
 
-export const skillFilesInputSchema = resourceContext;
+export const skillFilesInputSchema = resourceContext.extend({
+  offset: z.number().int().min(0).max(100_000).default(0),
+  limit: z.number().int().min(1).max(100).default(20),
+}).strict();
 export const skillReadInputSchema = resourceContext.extend({
   path: z.string().min(1).max(240)
     .refine(value => !value.startsWith("/") && !value.includes("\\") && !value.includes(":"), "必须使用 Skill 包内的相对路径。")
@@ -117,7 +133,15 @@ export type KnowledgeIndexOutline = {
   version: number;
   publishedAt: string | null;
   sections: Array<{ id: string; heading: string; startLine: number; endLine: number }>;
+  sectionOffset: number;
+  sectionLimit: number;
+  sectionsTotal: number;
+  sectionsHasMore: boolean;
   files: Array<{ path: string; mediaType: string; checksum: string; size: number; isText: boolean }>;
+  fileOffset: number;
+  fileLimit: number;
+  filesTotal: number;
+  filesHasMore: boolean;
 };
 
 export type KnowledgeReadResult = KnowledgeIndexOutline & {
@@ -142,13 +166,8 @@ export type KnowledgeSkillReadResult = KnowledgeSkillFile & {
   truncated: boolean;
 };
 
-export const MAX_KNOWLEDGE_READ_CHARS = 12_000;
-export const MAX_KNOWLEDGE_READ_LINES = 120;
-export const MAX_SKILL_READ_CHARS = 12_000;
-export const MAX_INDEX_SUMMARY_CHARS = 600;
-
 const logicalFolders: Array<{ id: string; name: string; type: ResourceType }> = [
-  { id: "logical:notice", name: "白皮书", type: "notice" },
+  { id: "logical:notice", name: "通知与规范", type: "notice" },
   { id: "logical:case", name: "参悟案例", type: "case" },
   { id: "logical:document", name: "知识文档", type: "document" },
   { id: "logical:skill", name: "Skill", type: "skill" },
@@ -211,8 +230,20 @@ function paged<T>(items: T[], offset: number, limit: number) {
   return { items: items.slice(offset, offset + limit), total: items.length, offset, limit, hasMore: offset + limit < items.length };
 }
 
+function endLineForText(startLine: number, text: string) {
+  if (!text) return startLine;
+  const newlineCount = text.split("\n").length - 1;
+  return startLine + newlineCount - (text.endsWith("\n") ? 1 : 0);
+}
+
 function compactMetadata<T extends { summary: string; source: string; tags: string[] }>(item: T) {
   return { ...item, summary: item.summary.slice(0, MAX_INDEX_SUMMARY_CHARS), source: item.source.slice(0, 400), tags: item.tags.slice(0, 20) };
+}
+
+function metadataOnly<T extends { summary: string; source: string; tags: string[]; excerpt?: unknown; citation?: unknown }>(item: T) {
+  const { excerpt: _excerpt, citation: _citation, ...metadata } = item;
+  void _excerpt; void _citation;
+  return compactMetadata(metadata);
 }
 
 /**
@@ -223,23 +254,38 @@ function compactMetadata<T extends { summary: string; source: string; tags: stri
 export class KnowledgeIndexReader {
   constructor(private readonly hub: KnowledgeIndexHub, private readonly browseAdapter?: KnowledgeIndexBrowse) {}
 
+  private async collectSearchPages(input: { query: string; type?: ResourceType; sort: "relevance" | "published" | "updated" }) {
+    type Item = Awaited<ReturnType<KnowledgeHub["search"]>>["items"][number];
+    const items: Item[] = [];
+    let offset = 0;
+    let total = 0;
+    let complete = true;
+    while (items.length < MAX_INDEX_SCAN_ITEMS) {
+      const page = await this.hub.search({ ...input, offset, limit: 100 });
+      total = page.total;
+      items.push(...page.items);
+      if (!page.items.length || items.length >= page.total || page.items.length < 100) break;
+      offset += page.items.length;
+    }
+    if (items.length < total) complete = false;
+    return { items, total, complete };
+  }
+
   async search(raw: unknown = {}): Promise<KnowledgeIndexSearchResult> {
     const input = indexSearchInputSchema.parse(raw);
     const filtered = input.tag !== undefined || input.visibility !== undefined;
-    const result = await this.hub.search({ query: input.query, type: input.type, offset: filtered ? 0 : input.offset, limit: filtered ? 100 : input.limit, sort: "relevance" });
+    const result = filtered
+      ? await this.collectSearchPages({ query: input.query, type: input.type, sort: "relevance" })
+      : { ...(await this.hub.search({ query: input.query, type: input.type, offset: input.offset, limit: input.limit, sort: "relevance" })), complete: true };
     const matched = filtered ? result.items.filter(item => (!input.tag || item.tags.some(tag => tag.toLocaleLowerCase() === input.tag!.toLocaleLowerCase())) && (!input.visibility || item.visibility === input.visibility)) : result.items;
     const items = filtered ? matched.slice(input.offset, input.offset + input.limit) : matched;
     return {
       query: input.query,
-      items: items.map(item => {
-        const { excerpt: _excerpt, citation: _citation, ...metadata } = item;
-        void _excerpt; void _citation;
-        return compactMetadata(metadata);
-      }),
-      total: filtered ? matched.length : result.total,
+      items: items.map(item => metadataOnly(item)),
+      total: filtered ? (result.complete ? matched.length : Math.max(matched.length, result.total)) : result.total,
       offset: input.offset,
       limit: input.limit,
-      hasMore: input.offset + input.limit < (filtered ? matched.length : result.total),
+      hasMore: input.offset + input.limit < (filtered ? (result.complete ? matched.length : Math.max(matched.length, result.total)) : result.total) || (filtered && !result.complete),
     };
   }
 
@@ -247,11 +293,20 @@ export class KnowledgeIndexReader {
     const input = browseInputSchema.parse(raw);
     if (!this.browseAdapter) return this.browseLogical(input);
     const listing = await this.browseAdapter();
+    const published = await this.collectSearchPages({ query: "", sort: "updated" });
+    const publishedById = new Map(published.items.map(item => [`${item.id}:${item.versionId}`, item]));
     const folders = listing.folders.filter(folder => !folder.deleted);
     const folderMap = new Map(folders.map(folder => [folder.id, folder]));
     if (input.folderId && !folderMap.has(input.folderId)) throw new HubError("not_found", `文件夹不存在：${input.folderId}`);
-    const listedResources = listing.resources.filter(resource => !resource.archived && !!resource.publishedVersionId);
-    const visibleFolderIds = new Set<string>();
+    const listedResources = listing.resources.filter(resource => !resource.archived && !!resource.publishedVersionId && publishedById.has(`${resource.id}:${resource.publishedVersionId}`));
+    // The four managed base folders are part of the public root contract even
+    // when they are empty. Other folders remain visible only through a current
+    // published resource, so draft/archive-only names cannot leak here.
+    const canonicalNames = new Set(baseFolders.map(folder => folder.name));
+    const canonicalRootIds = folders
+      .filter(folder => folder.parentId === null && canonicalNames.has(folder.name))
+      .map(folder => folder.id);
+    const visibleFolderIds = new Set<string>([...baseFolders.map(folder => folder.id), ...canonicalRootIds]);
     for (const resource of listedResources) {
       let current = resource.folderId;
       while (current) {
@@ -275,22 +330,10 @@ export class KnowledgeIndexReader {
       return true;
     };
     const childFolders = folders.filter(folder => folder.parentId === input.folderId && visibleFolderIds.has(folder.id)).map(folder => ({ ...folder, path: folderPath(folder.id, folderMap) }));
-    const resources = listedResources.filter(resource => (resource.folderId ?? null) === input.folderId && activeFolder(resource.folderId)).map(resource => ({
-      id: resource.id,
-      name: resource.name,
-      title: resource.title,
-      type: resource.type as ResourceType,
-      summary: "",
-      source: "灯塔知识中台",
-      tags: [],
-      visibility: resource.visibility as "public" | "internal",
-      versionId: resource.publishedVersionId!,
-      version: 0,
-      publishedAt: "",
-      updatedAt: resource.updatedAt,
-      validity: "unknown",
-      path: [folderPath(resource.folderId, folderMap), resource.name].filter(Boolean).join("/"),
-    }));
+    const resources = listedResources.filter(resource => (resource.folderId ?? null) === input.folderId && activeFolder(resource.folderId)).map(resource => {
+      const metadata = publishedById.get(`${resource.id}:${resource.publishedVersionId!}`)!;
+      return { ...metadataOnly(metadata), name: resource.name, path: [folderPath(resource.folderId, folderMap), resource.name].filter(Boolean).join("/") };
+    });
     const page = paged([...childFolders, ...resources] as Array<typeof childFolders[number] | typeof resources[number]>, input.offset, input.limit);
     return {
       mode: "mysql",
@@ -313,29 +356,56 @@ export class KnowledgeIndexReader {
     }
     const target = logical.get(input.folderId);
     if (!target) throw new HubError("not_found", `逻辑文件夹不存在：${input.folderId}`);
-    const result = await this.hub.search({ query: "", type: target.type, offset: 0, limit: 100, sort: "updated" });
+    const result = await this.hub.search({ query: "", type: target.type, offset: input.offset, limit: input.limit, sort: "updated" });
     const resources = result.items.map(item => {
-      const { excerpt: _excerpt, citation: _citation, ...metadata } = item;
-      void _excerpt; void _citation;
-      return { ...compactMetadata(metadata), path: `${target.name}/${item.title}` };
+      return { ...metadataOnly(item), path: `${target.name}/${item.title}` };
     });
-    const page = paged(resources, input.offset, input.limit);
-    return { mode: "logical", folderId: target.id, path: target.name, folders: [], resources: page.items, total: page.total, offset: page.offset, limit: page.limit, hasMore: page.hasMore };
+    return {
+      mode: "logical",
+      folderId: target.id,
+      path: target.name,
+      folders: [],
+      resources,
+      total: result.total,
+      offset: result.offset,
+      limit: result.limit,
+      hasMore: result.offset + result.items.length < result.total,
+    };
   }
 
   async outline(raw: unknown): Promise<KnowledgeIndexOutline> {
     const input = outlineInputSchema.parse(raw);
     const resource = await this.hub.get(input.resourceId, input.versionId);
-    return this.outlineResource(resource);
+    return this.outlineResource(resource, input);
   }
 
-  private outlineResource(resource: Awaited<ReturnType<KnowledgeHub["get"]>>): KnowledgeIndexOutline {
+  private outlineResource(
+    resource: Awaited<ReturnType<KnowledgeHub["get"]>>,
+    window: { sectionOffset: number; sectionLimit: number; fileOffset: number; fileLimit: number } = {
+      sectionOffset: 0,
+      sectionLimit: MAX_OUTLINE_SECTIONS,
+      fileOffset: 0,
+      fileLimit: MAX_OUTLINE_FILES,
+    },
+  ): KnowledgeIndexOutline {
+    const sections = resource.version.citations.map(({ id, heading, startLine, endLine }) => ({ id, heading, startLine, endLine }));
+    const files = resource.version.files.map(file => ({ path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) }));
+    const sectionPage = paged(sections, window.sectionOffset, window.sectionLimit);
+    const filePage = paged(files, window.fileOffset, window.fileLimit);
     return {
       ...resourceMetadata(resource),
       resourceId: resource.id,
       publishedAt: resource.version.publishedAt,
-      sections: resource.version.citations.map(({ id, heading, startLine, endLine }) => ({ id, heading, startLine, endLine })),
-      files: resource.version.files.map(file => ({ path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) })),
+      sections: sectionPage.items,
+      sectionOffset: sectionPage.offset,
+      sectionLimit: sectionPage.limit,
+      sectionsTotal: sectionPage.total,
+      sectionsHasMore: sectionPage.hasMore,
+      files: filePage.items,
+      fileOffset: filePage.offset,
+      fileLimit: filePage.limit,
+      filesTotal: filePage.total,
+      filesHasMore: filePage.hasMore,
     };
   }
 
@@ -352,25 +422,37 @@ export class KnowledgeIndexReader {
     let nextOffset: number | null = null;
     let nextLine: number | null = null;
     if (input.startLine !== undefined) {
-      const startIndex = input.startLine - 1;
-      text = lines.slice(startIndex, startIndex + lineCount).join("\n").slice(0, MAX_KNOWLEDGE_READ_CHARS);
+      const startIndex = Math.min(input.startLine - 1, lines.length);
+      const fullBlock = lines.slice(startIndex, startIndex + lineCount).join("\n");
+      text = fullBlock.slice(0, MAX_KNOWLEDGE_READ_CHARS);
       startLine = input.startLine;
-      endLine = Math.min(lines.length, startIndex + lineCount);
-      if (endLine < lines.length || text.length < lines.slice(startIndex, startIndex + lineCount).join("\n").length) nextLine = endLine + 1;
-      offset = lines.slice(0, startIndex).join("\n").length + (startIndex > 0 ? 1 : 0);
+      offset = startIndex >= lines.length ? markdown.length : lines.slice(0, startIndex).join("\n").length + (startIndex > 0 ? 1 : 0);
+      if (text.length < fullBlock.length) {
+        endLine = endLineForText(startLine, text);
+        nextOffset = offset + text.length < markdown.length ? offset + text.length : null;
+      } else {
+        endLine = Math.min(lines.length, startIndex + lineCount);
+        if (endLine < lines.length) nextLine = endLine + 1;
+      }
     } else {
       offset = Math.min(offset, markdown.length);
       const rawText = markdown.slice(offset, offset + MAX_KNOWLEDGE_READ_CHARS);
       const rawLines = rawText.split("\n");
       text = rawLines.slice(0, lineCount).join("\n");
+      // An offset may point at the newline separating two lines. Returning an
+      // empty string would repeat the same offset forever, so consume that
+      // separator and let the next offset continue with the next line.
+      if (!text && rawText.length) text = rawText.slice(0, 1);
       startLine = offset === 0 ? 1 : markdown.slice(0, offset).split("\n").length;
-      endLine = Math.min(lines.length, startLine + rawLines.slice(0, lineCount).length - 1);
+      endLine = endLineForText(startLine, text);
       if (offset + text.length < markdown.length) nextOffset = offset + text.length;
-      if (endLine < lines.length && text.length >= rawText.length) nextLine = endLine + 1;
     }
     const truncated = (nextOffset !== null || nextLine !== null);
     const citations = resource.version.citations;
-    const outline = this.outlineResource(resource);
+    const outline = this.outlineResource(resource, { sectionOffset: 0, sectionLimit: MAX_OUTLINE_SECTIONS, fileOffset: 0, fileLimit: 0 });
+    const relevantSections = citations
+      .filter(citation => citation.endLine >= startLine && citation.startLine <= endLine)
+      .map(({ id, heading, startLine: citationStart, endLine: citationEnd }) => ({ id, heading, startLine: citationStart, endLine: citationEnd }));
     return {
       ...outline,
       markdown: text,
@@ -380,20 +462,30 @@ export class KnowledgeIndexReader {
       nextOffset,
       nextLine,
       truncated,
-      sections: citations.filter(citation => citation.endLine >= startLine && citation.startLine <= endLine).map(({ id, heading, startLine: citationStart, endLine: citationEnd }) => ({ id, heading, startLine: citationStart, endLine: citationEnd })),
+      sections: relevantSections.slice(0, MAX_OUTLINE_SECTIONS),
+      sectionOffset: 0,
+      sectionLimit: MAX_OUTLINE_SECTIONS,
+      sectionsTotal: relevantSections.length,
+      sectionsHasMore: relevantSections.length > MAX_OUTLINE_SECTIONS,
     };
   }
 
-  async skillFiles(raw: unknown): Promise<{ resourceId: string; versionId: string; title: string; source: string; files: KnowledgeSkillFile[] }> {
+  async skillFiles(raw: unknown): Promise<{ resourceId: string; versionId: string; title: string; source: string; files: KnowledgeSkillFile[]; offset: number; limit: number; total: number; hasMore: boolean }> {
     const input = skillFilesInputSchema.parse(raw);
     const resource = await this.hub.get(input.resourceId, input.versionId);
     if (resource.type !== "skill") throw new HubError("invalid", "只有 Skill 资源可以读取包内文件。" );
+    const files = resource.version.files.map(file => ({ path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) }));
+    const page = paged(files, input.offset, input.limit);
     return {
       resourceId: resource.id,
       versionId: resource.version.id,
       title: resource.title,
       source: resource.source,
-      files: resource.version.files.map(file => ({ path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) })),
+      files: page.items,
+      offset: page.offset,
+      limit: page.limit,
+      total: page.total,
+      hasMore: page.hasMore,
     };
   }
 

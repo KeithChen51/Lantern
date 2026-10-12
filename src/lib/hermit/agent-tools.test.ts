@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createHermitAgentTools } from "./agent-tools";
 
-function fixture() {
+function fixture(attachmentText = "当前附件") {
   const resource = { id: "policy", type: "document" as const, title: "服务指引", summary: "", tags: [], source: "灯塔", businessScope: "", visibility: "public" as const, archived: false, publishedVersionId: "v1", createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z", version: { id: "v1", number: 1, title: "服务指引", markdown: "正文", checksum: "sum", changeNote: "", createdAt: "2026-01-01T00:00:00.000Z", publishedAt: "2026-01-01T00:00:00.000Z", validity: "effective" as const, effectiveFrom: null, effectiveTo: null, files: [], citations: [] }, validity: "effective" as const, relations: [] };
   const hub = {
     get: vi.fn(async () => resource),
@@ -9,7 +9,7 @@ function fixture() {
   };
   const onDocument = vi.fn();
   const abort = new AbortController();
-  const tools = createHermitAgentTools({ hub, browse: async () => ({ folders: [], resources: [] }), onDocument, signal: abort.signal, attachments: [{ id: "mine", name: "note.txt", size: 8, text: "当前附件" }] });
+  const tools = createHermitAgentTools({ hub, browse: async () => ({ folders: [], resources: [] }), onDocument, signal: abort.signal, attachments: [{ id: "mine", name: "note.txt", size: attachmentText.length, text: attachmentText }] });
   return { tools, hub, onDocument, abort };
 }
 
@@ -41,5 +41,19 @@ describe("Hermit request-scoped progressive knowledge tools", () => {
     abort.abort();
     await expect(tools.knowledge_search.execute({ query: "new query" })).rejects.toThrow();
     expect(hub.search).not.toHaveBeenCalled();
+  });
+
+  it("counts failed calls toward the request tool budget", async () => {
+    const { tools } = fixture();
+    for (let index = 0; index < 20; index += 1) {
+      await expect(tools.attachment_read.execute({ id: "other" })).rejects.toThrow("不属于本次请求");
+    }
+    await expect(tools.attachment_read.execute({ id: "mine" })).rejects.toThrow("调用次数已达上限");
+  });
+
+  it("caps aggregate returned characters for one request", async () => {
+    const { tools } = fixture("x".repeat(12_000));
+    for (let index = 0; index < 6; index += 1) await tools.attachment_read.execute({ id: "mine" });
+    await expect(tools.attachment_read.execute({ id: "mine" })).rejects.toThrow("总量上限");
   });
 });
