@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     <form action="/search" className={styles.searchForm}>
       <label className={styles.searchQueryLabel}>
         <span className={styles.visuallyHidden}>关键词</span>
-        <span className={styles.searchQueryControl}>
+        <span data-lh-input-frame className={styles.searchQueryControl}>
           <input name="q" defaultValue={query} placeholder="搜索政策、案例、白皮书…" aria-label="关键词" />
           <Icon icon={lighthouseIcons.search} aria-hidden="true" />
         </span>

@@ -64,7 +64,7 @@ export const LhButton = React.forwardRef<HTMLButtonElement, LhButtonProps>(
       data-lh-button
       ref={ref}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:translate-y-px active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100",
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] transition-[background,border-color,box-shadow,color,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-55",
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -94,7 +94,7 @@ export const LhIconButton = React.forwardRef<HTMLButtonElement, LhIconButtonProp
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] leading-[var(--leading-control)] transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:translate-y-px active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100",
+        "inline-flex shrink-0 items-center justify-center rounded-[var(--lh-control-radius)] border font-[var(--weight-extrabold)] leading-[var(--leading-control)] transition-[background,border-color,box-shadow,color,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-55",
         size === "sm" ? "h-9 w-9 text-[length:var(--type-control)]" : "h-11 w-11 text-[length:var(--type-reading)]",
         buttonVariants[variant],
         className,
@@ -205,7 +205,7 @@ export function LhBackLink({ className, icon, children, ...props }: LhBackLinkPr
     <Link
       data-lh-back-link
       className={cn(
-        "inline-flex min-h-10 items-center gap-2 rounded-[var(--lh-control-radius)] border border-line bg-panel px-3 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text transition-[background,border-color,box-shadow,color,transform] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-line-strong hover:bg-primary-soft active:translate-y-px active:scale-[0.985]",
+        "inline-flex min-h-10 items-center gap-2 rounded-[var(--lh-control-radius)] border border-line bg-panel px-3 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text transition-[background,border-color,box-shadow,color,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] hover:border-line-strong hover:bg-primary-soft active:brightness-[0.97]",
         className,
       )}
       {...props}
@@ -515,7 +515,7 @@ export const LhChatFooter = React.forwardRef<HTMLElement, React.HTMLAttributes<H
 LhChatFooter.displayName = "LhChatFooter";
 
 export const LhChatInputShell = React.forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElement>>(
-  ({ className, ...props }, ref) => <form data-lh-chat-input ref={ref} className={className} {...props} />,
+  ({ className, ...props }, ref) => <form data-lh-chat-input data-lh-input-frame ref={ref} className={className} {...props} />,
 );
 LhChatInputShell.displayName = "LhChatInputShell";
 

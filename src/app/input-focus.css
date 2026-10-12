@@ -1,0 +1,21 @@
+/* Text entry has one visible focus boundary. Composite controls put it on
+   their outer frame; buttons, links and other controls keep focus-visible. */
+html[data-lighthouse-interface="classic"] [data-lh-shell] :is(input, textarea, select):not(:where([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"], [type="button"], [type="submit"], [type="reset"])):focus {
+  outline: none;
+  outline-offset: 0;
+  border-color: var(--lh-focus-outline);
+  box-shadow: var(--shadow-focus);
+}
+html[data-lighthouse-interface="classic"] [data-lh-shell] :is(input, textarea, select)[aria-invalid="true"]:focus {
+  border-color: var(--lh-danger-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lh-danger-text) 18%, transparent);
+}
+html[data-lighthouse-interface="classic"] [data-lh-input-frame]:focus-within {
+  border-color: var(--lh-focus-outline);
+  box-shadow: var(--shadow-focus);
+}
+html[data-lighthouse-interface="classic"] [data-lh-shell] [data-lh-input-frame] :is(input, textarea):focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
+}

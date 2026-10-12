@@ -426,3 +426,7 @@ Rules:
 - [ ] Disabled, loading, empty, and error states include enough copy for recovery.
 - [ ] Component anatomy and misuse boundaries are documented before adding a new primitive.
 - [ ] Significant component changes update `src/components/ui/lighthouse-design-system.test.ts`.
+
+## Text-entry focus boundary
+
+Text fields use one focus boundary: the existing rounded border changes to the accent color, with a subtle outer halo. Do not draw an outline around the editable text inside a composite control. Mark composite controls with `data-lh-input-frame`; their frame owns focus-within while the nested input/textarea has no extra outline or shadow. Keyboard focus remains visible; buttons, links, checkboxes and radio controls retain their focus-visible indicators. Invalid fields retain the error color on focus.

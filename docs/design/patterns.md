@@ -352,3 +352,17 @@ Design changes should land in the system before they land as page-local styling.
 ### Hermit viewport and reading regions
 
 Hermit uses a viewport-height workspace below its shared heading. The heading and composer keep their space; only the conversation body scrolls. On desktop the knowledge reader has its own vertical scroll body, with its title, close action and reference action remaining visible. Opening or switching a document starts its body at the top without moving the conversation. Closing it preserves the conversation position. On narrow screens the reader temporarily replaces the conversation and provides a return action. Streaming follows the latest reply only while the user is already at the bottom; otherwise a latest-reply button lets the user return explicitly. This behavior is scoped to Hermit and does not change the Home/Heart layout or shared navigation.
+
+## 2026-10-12 clarification: brand home and workspace alignment
+
+Home/Heart always renders its approved brand composition (hero, prologue, core, five values, pathways and closing). Enabling the knowledge hub must not replace this composition with ResourceView. The home copy remains the authored brand presentation; publishing a hub whitepaper updates its resource page and AI source, not the home layout or copy automatically.
+
+Hermit inherits the shared V3 shell padding and PageHeading typography/margins. Its viewport containment only controls height and scroll ownership, without moving the page title. Page navigation does not animate the main container's padding or width.
+
+### Comfort and page transitions
+
+- Route changes keep the navigation stable and apply the new page padding immediately. Do not animate the main container's width, padding or position between Home and workspaces.
+- Reserve the vertical scrollbar gutter so long pages and viewport workspaces share the same content axis.
+- Buttons, navigation items and case/document cards keep their bounds on hover and press. Use color, border and subtle shadow feedback; do not scale or translate the target itself.
+- Retain the approved Home scroll narrative and brief message/popover reveals. Avoid adding a second page-entry animation on top of them.
+- With reduced motion enabled, shell descendants disable animated transitions, repeated animations and smooth scrolling. Loading labels remain available when spinner motion stops.

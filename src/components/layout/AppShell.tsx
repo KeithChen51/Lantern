@@ -59,7 +59,7 @@ export function AppShell({ children }: AppShellProps) {
         data-lh-home-main={isHomeSurface ? "true" : undefined}
         data-sidebar-pinned={isSidebarPinned ? "true" : "false"}
         className={cn(
-          "min-h-screen transition-[padding] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)]",
+          "min-h-screen",
           isHomeSurface
             ? "px-0 pb-0 pt-0"
             : "px-4 pb-8 pt-24 md:px-6",
