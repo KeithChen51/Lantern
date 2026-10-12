@@ -1,0 +1,62 @@
+{
+  "sources": [
+    {
+      "family": "Source Han Serif SC",
+      "version": "2.003R",
+      "url": "https://github.com/adobe-fonts/source-han-serif/tree/2.003R/Variable/WOFF2/OTF",
+      "license": "SIL Open Font License 1.1"
+    },
+    {
+      "family": "Source Han Sans SC",
+      "url": "https://github.com/adobe-fonts/source-han-sans",
+      "note": "Existing project font files retained; upstream license included."
+    },
+    {
+      "family": "Smiley Sans",
+      "url": "https://github.com/atelier-anchor/smiley-sans",
+      "note": "Existing project font file retained; upstream license included."
+    }
+  ],
+  "files": [
+    {
+      "path": "fonts/brand/smiley-sans/LICENSE.txt",
+      "bytes": 4422,
+      "sha256": "9401f4050f1b66c26b6ccdc8b0e14a3c1cc37aac122eda84386f25854a9bec72"
+    },
+    {
+      "path": "fonts/brand/smiley-sans/SmileySans-Oblique.woff2",
+      "bytes": 1150924,
+      "sha256": "731f22973349404b15a88a99ef3b5dd4104c0965c23b7e485c1f11e84fea99e2"
+    },
+    {
+      "path": "fonts/brand/source-han-sans-cn/LICENSE.txt",
+      "bytes": 4463,
+      "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
+      "path": "fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf",
+      "bytes": 8569308,
+      "sha256": "62383707c086a32f3afd5e293f34c7eff64c7fea31f579fdc6cbe34d920519a6"
+    },
+    {
+      "path": "fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf",
+      "bytes": 8406556,
+      "sha256": "a94e558a2fe972bee4f46bce0843abff37063fd68c33f1e7d9058f6f09432b01"
+    },
+    {
+      "path": "fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf",
+      "bytes": 8429224,
+      "sha256": "e2bc8a2e7f37474b774fff8db758681ece40bb6947a90d571bce9dd60671a8e4"
+    },
+    {
+      "path": "fonts/brand/source-han-serif-sc/LICENSE.txt",
+      "bytes": 4463,
+      "sha256": "9ff5bb567e1b92c801fc1069e5fbf992ff8efccacb9db94e5959a5b3ba9bb903"
+    },
+    {
+      "path": "fonts/brand/source-han-serif-sc/SourceHanSerifSC-VF.otf.woff2",
+      "bytes": 19747252,
+      "sha256": "3b9451444b4a3554ab061a43cb79dc11c72c0dbc381f148c56c542dca9c0a7e3"
+    }
+  ]
+}

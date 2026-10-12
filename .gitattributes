@@ -6,3 +6,6 @@ deploy/offline/** -text
 
 # Shell entry points must remain executable by Linux bash after Windows checkout.
 *.sh text eol=lf
+
+# Bundled fonts and license text are checked against byte-exact hashes.
+public/fonts/** -text

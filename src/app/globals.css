@@ -1,12 +1,19 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Source Han Serif SC";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/fonts/brand/source-han-serif-sc/SourceHanSerifSC-VF.otf.woff2") format("woff2");
+}
+
+@font-face {
   font-family: "Source Han Sans SC";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src:
-    local("Source Han Sans SC"),
     url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf") format("opentype");
 }
 
@@ -16,7 +23,6 @@
   font-weight: 500;
   font-display: swap;
   src:
-    local("Source Han Sans SC Medium"),
     url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype");
 }
 
@@ -26,7 +32,6 @@
   font-weight: 700 900;
   font-display: swap;
   src:
-    local("Source Han Sans SC Bold"),
     url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype");
 }
 
@@ -36,7 +41,6 @@
   font-weight: 400;
   font-display: swap;
   src:
-    local("Smiley Sans Oblique"),
     url("/fonts/brand/smiley-sans/SmileySans-Oblique.woff2") format("woff2");
 }
 
