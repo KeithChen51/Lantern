@@ -11,7 +11,7 @@
 - `HERMIT_RUNTIME=dsh`
 - `KNOWLEDGE_HUB_ENABLED=true`
 - 已按[独立运行时说明](./hermit-runtime-package.md)打包 DSH `0.2.0-rc.2`；默认使用 `runtime/hermit-dsh`，开发时才覆盖绝对路径 `HERMIT_DSH_ROOT`
-- 模型网关和 embedding 配置可用，且中台已有已发布资源
+- 模型网关可用，且中台已有已发布资源；知识读取使用文件索引，不需要 embedding 服务
 - 第二调用方需连接同一中台：MySQL 使用同一 `DATABASE_URL`；SQLite 使用 `KNOWLEDGE_HUB_DRIVER=sqlite` 与同一数据库的绝对路径 `KNOWLEDGE_HUB_SQLITE_PATH`
 
 模型密钥、数据库连接串和受控实例 Cookie 只放在进程环境中。脚本允许使用 `HERMIT_ACCEPTANCE_BEARER_TOKEN` 或 `HERMIT_ACCEPTANCE_COOKIE` 访问需要认证的受控实例，但不会读取它们生成报告，也不会把它们写入命令参数或仓库文件。
@@ -83,4 +83,4 @@ npx tsx scripts/knowledge-hub.ts get --input <temporary-get.json>
 - 无依据问题是否明确说明灯塔没有对应资料，并拒绝伪造数字、日期或来源；
 - 追问是否承接了选中的文档版本，且没有把文档中的指令当成系统或工具命令执行。
 
-真实 DSH、模型网关、中台数据库、embedding 服务或 CLI 数据库任一项不可用时，报告会明确记录限制并退出 `2`，不能据此宣称业务验收完成。该脚本不能替代浏览器视觉验收、正式权限验收、生产部署验证或长期运行观测。
+真实 DSH、模型网关、中台数据库或 CLI 数据库任一项不可用时，报告会明确记录限制并退出 `2`，不能据此宣称业务验收完成。该脚本不能替代浏览器视觉验收、正式权限验收、生产部署验证或长期运行观测。

@@ -1,5 +1,7 @@
 # 2026-10-10 运行包与内网流水线整合评估
 
+> 历史评估记录（已被 2026-10-12 的文件索引方案取代）。其中关于向量索引或 embedding 的描述只反映当时构建，不是当前部署要求。
+
 ## 发布范围
 
 关联 #10、#11、#18、#22，整合原 PR #19 与内网流水线工作树。
@@ -30,7 +32,7 @@
 
 本次不新增 MySQL migration；现有主线的知识管理迁移仍须先执行。MySQL 保持应用默认驱动，使用 DATABASE_URL 和 hub:bootstrap。SQLite 是显式单实例模式，使用 KNOWLEDGE_HUB_DRIVER=sqlite 及持久化 KNOWLEDGE_HUB_SQLITE_PATH，通过 knowledge-cli/import.cjs --publish 初始化。
 
-DSH 部署要求 Node 24、匹配平台的内置 runtime、HERMIT_BUNDLE_REQUIRED=true。模型和 embedding 凭证只在运行时提供；知识索引为 Qwen/Qwen3-Embedding-8B / 4096 维。内网流水线只构建并推送 dev/dev-提交号 镜像，不部署容器或迁移数据库。
+DSH 部署要求 Node 24、匹配平台的内置 runtime、HERMIT_BUNDLE_REQUIRED=true。模型凭证只在运行时提供；当前知识资源通过文件索引和知识 CLI 初始化。内网流水线只构建并推送 dev/dev-提交号镜像，不部署容器或迁移数据库。
 
 需要文件夹、回收站、浏览器上传等后台文件管理功能时选择 MySQL；SQLite 不提供这些能力。附件仍为单进程短期暂存。不同存储驱动间不自动迁移。回滚前备份知识卷，切回旧镜像并保留数据；不得以重复初始化覆盖已维护知识。
 
