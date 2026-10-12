@@ -877,8 +877,35 @@
   white-space: nowrap;
 }
 
+.documentCardReason {
+  overflow: hidden;
+  color: var(--hermit-secondary);
+  font-size: 12px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .documentCardArrow {
   color: var(--hermit-accent);
+}
+
+.citationButton {
+  display: inline;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--hermit-accent);
+  font: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.citationButton:hover {
+  color: var(--hermit-accent-deep);
 }
 
 /* Reader */

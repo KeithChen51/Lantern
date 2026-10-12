@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { UIMessage } from "ai";
 import type { ReactNode } from "react";
@@ -14,14 +14,15 @@ import {
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import styles from "./hermit-v3.module.css";
 import { HermitIdentity } from "./HermitIdentity";
-import { getDocumentRecommendations, getTextContent, type HermitDocumentRecommendation } from "./types";
+import { getDocumentRecommendations, getHermitCitationFromHref, getHermitCitations, getTextContent, type HermitCitation, type HermitDocumentRecommendation } from "./types";
 
 interface MessageBubbleProps {
   message: UIMessage;
   onOpenDocument?: (document: HermitDocumentRecommendation) => void;
+  showRecommendations?: boolean;
 }
 
-const markdownComponents = {
+const markdownComponents: Components = {
   p: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
   strong: ({ children }: { children?: ReactNode }) => <strong>{children}</strong>,
   ul: ({ children }: { children?: ReactNode }) => <ul>{children}</ul>,
@@ -42,6 +43,48 @@ const markdownComponents = {
   td: ({ children }: { children?: ReactNode }) => <td>{children}</td>,
   hr: () => <hr />,
 };
+
+function CitationAnchor({
+  href,
+  children,
+  citations,
+  onOpenDocument,
+}: {
+  href?: string;
+  children?: ReactNode;
+  citations: HermitCitation[];
+  onOpenDocument?: (document: HermitDocumentRecommendation) => void;
+}) {
+  const match = href?.match(/^#hermit-citation-(\d+)$/);
+  const citation = getHermitCitationFromHref(href, citations);
+
+  if (match && citation) {
+    return (
+      <button
+        type="button"
+        className={styles.citationButton}
+        data-lh-hermit-citation={citation.number}
+        aria-label={`打开引用 ${citation.number}：${citation.title}`}
+        onClick={() => onOpenDocument?.({
+          id: `citation:${citation.number}:${citation.resourceId}:${citation.versionId}`,
+          resourceId: citation.resourceId,
+          versionId: citation.versionId,
+          title: citation.title,
+          source: citation.source,
+          startLine: citation.startLine,
+          endLine: citation.endLine,
+        })}
+      >
+        {children}
+      </button>
+    );
+  }
+
+  // An internal citation-looking link is only actionable when it was backed by
+  // a verified final answer-sources payload. Keep malformed model output plain.
+  if (match) return <>{children}</>;
+  return <a href={href}>{children}</a>;
+}
 
 const TABLE_SEPARATOR_DASHES = /[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g;
 
@@ -79,10 +122,11 @@ function UserAvatar() {
   );
 }
 
-export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
+export function MessageBubble({ message, onOpenDocument, showRecommendations = true }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
-  const documents = getDocumentRecommendations(message);
+  const citations = getHermitCitations(message);
+  const documents = showRecommendations ? getDocumentRecommendations(message) : [];
 
   if (isUser) {
     return (
@@ -104,23 +148,30 @@ export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
       <LhMessageBubbleFrame>
         <div data-lh-message-meta>
           <strong>路引</strong>
-          <span data-lh-message-meta-note>{documents.length ? "结合灯塔知识回答" : "服务文化助手"}</span>
+          <span data-lh-message-meta-note>{documents.length || citations.length ? "结合灯塔知识回答" : "服务文化助手"}</span>
         </div>
         <div data-lh-message-prose>
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              ...markdownComponents,
+              a: ({ href, children }) => <CitationAnchor href={href} citations={citations} onOpenDocument={onOpenDocument}>{children}</CitationAnchor>,
+            }}
+          >
             {normalizeMarkdownTableSeparators(text)}
           </ReactMarkdown>
         </div>
         {documents.length > 0 && (
-          <section className={styles.readerRecommendations} aria-label="灯塔知识中台推荐文档">
+          <section className={styles.readerRecommendations} aria-label="灯塔知识中台推荐文档" data-lh-hermit-recommendations>
             <div className={styles.readerRecommendationsHeading}>
               <Icon icon={lighthouseIcons.document} aria-hidden="true" />
-              灯塔知识中台推荐
+              推荐阅读
             </div>
             {documents.map((document) => (
               <button
                 type="button"
                 className={styles.documentCard}
+                data-lh-hermit-recommendation={`${document.resourceId}:${document.versionId}`}
                 key={document.id}
                 onClick={() => onOpenDocument?.(document)}
                 aria-label={`打开文档：${document.title}`}
@@ -128,7 +179,8 @@ export function MessageBubble({ message, onOpenDocument }: MessageBubbleProps) {
                 <span className={styles.documentCardIcon} aria-hidden="true"><Icon icon={lighthouseIcons.document} /></span>
                 <span className={styles.documentCardCopy}>
                   <span className={styles.documentCardTitle}>{document.title}</span>
-                  <span className={styles.documentCardMeta}>{document.source}{document.heading ? ` · ${document.heading}` : ""}</span>
+                  <span className={styles.documentCardMeta}>{document.source}</span>
+                  {document.reason && <span className={styles.documentCardReason}>{document.reason}</span>}
                   <span className={styles.documentReadLink}>阅读文档 →</span>
                 </span>
                 <Icon className={styles.documentCardArrow} icon={lighthouseIcons.arrowRightUp} aria-hidden="true" />

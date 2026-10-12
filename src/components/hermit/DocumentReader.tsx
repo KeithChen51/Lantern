@@ -19,7 +19,33 @@ function safeUrlTransform(url: string): string {
   return "#";
 }
 
+function sourceLineAttributes(node: unknown): Record<string, string> {
+  if (typeof node !== "object" || node === null || !("position" in node)) return {};
+  const position = (node as { position?: unknown }).position;
+  if (typeof position !== "object" || position === null) return {};
+  const start = (position as { start?: unknown }).start;
+  const end = (position as { end?: unknown }).end;
+  const startLine = typeof start === "object" && start !== null && "line" in start && typeof (start as { line?: unknown }).line === "number"
+    ? (start as { line: number }).line
+    : undefined;
+  const endLine = typeof end === "object" && end !== null && "line" in end && typeof (end as { line?: unknown }).line === "number"
+    ? (end as { line: number }).line
+    : startLine;
+  if (!startLine || !endLine) return {};
+  return {
+    "data-lh-source-start-line": String(startLine),
+    "data-lh-source-end-line": String(endLine),
+  };
+}
+
 const markdownComponents: Components = {
+  p: ({ children, node }) => <p {...sourceLineAttributes(node)}>{children}</p>,
+  h1: ({ children, node }) => <h1 {...sourceLineAttributes(node)}>{children}</h1>,
+  h2: ({ children, node }) => <h2 {...sourceLineAttributes(node)}>{children}</h2>,
+  h3: ({ children, node }) => <h3 {...sourceLineAttributes(node)}>{children}</h3>,
+  h4: ({ children, node }) => <h4 {...sourceLineAttributes(node)}>{children}</h4>,
+  li: ({ children, node }) => <li {...sourceLineAttributes(node)}>{children}</li>,
+  blockquote: ({ children, node }) => <blockquote {...sourceLineAttributes(node)}>{children}</blockquote>,
   table: ({ children }) => <div className={styles.readerProseTableWrap}><table>{children}</table></div>,
   a: ({ href, children }) => <a href={href ? safeUrlTransform(href) : undefined}>{children}</a>,
 };
@@ -72,6 +98,23 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
       controller.abort();
     };
   }, [document.resourceId, document.versionId, reloadToken]);
+
+  useEffect(() => {
+    if (!resource || !document.startLine || !bodyRef.current) return;
+    const body = bodyRef.current;
+    const targetStart = document.startLine;
+    const targetEnd = document.endLine ?? targetStart;
+    const target = Array.from(body.querySelectorAll<HTMLElement>("[data-lh-source-start-line]"))
+      .find((element) => {
+        const startLine = Number(element.dataset.lhSourceStartLine);
+        const endLine = Number(element.dataset.lhSourceEndLine ?? element.dataset.lhSourceStartLine);
+        return Number.isFinite(startLine) && Number.isFinite(endLine) && startLine <= targetEnd && endLine >= targetStart;
+      });
+    if (!target) return;
+    const bodyRect = body.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    body.scrollTo({ top: Math.max(0, body.scrollTop + targetRect.top - bodyRect.top - 16), behavior: "auto" });
+  }, [document.endLine, document.resourceId, document.startLine, document.versionId, resource]);
 
   return (
     <aside className={styles.readerPanel} aria-label="知识文档阅读区" data-lh-hermit-document-reader>
