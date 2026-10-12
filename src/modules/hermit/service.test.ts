@@ -23,7 +23,7 @@ class MemoryHermitChatRepository implements HermitChatRepository {
     const key = `${input.sessionId}:${input.externalMessageId}`;
     const existing = this.messages.get(key);
     const record = existing ?? { id: `message-${this.sequence++}`, ...input };
-    this.messages.set(key, { ...record, ...input });
+    this.messages.set(key, record);
     return this.messages.get(key)!;
   }
 
@@ -81,6 +81,18 @@ describe("hermit chat service", () => {
         modelName: null,
       }),
     ]);
+  });
+
+  it("keeps server-finalized assistant content and status when client history is replayed", async () => {
+    const repository = new MemoryHermitChatRepository();
+    const service = createHermitChatService(repository);
+    await service.persistAssistantResponse({ sessionId: "session", participant, modelName: "test",
+      responseMessage: { ...textMessage("answer", "assistant", "依据资料。[1](#hermit-citation-1)"), metadata: { status: "complete" } },
+      retrieval: { query: "question", contextText: "", topK: 1, sourceSnapshot: { mode: "progressive-index", status: "complete", reads: [{ resourceId: "guide", versionId: "v1" }], citations: [{ number: 1 }], recommendations: [] } },
+    });
+    await service.persistIncomingMessages({ sessionId: "session", participant, modelName: "test", messages: [textMessage("answer", "assistant", "依据资料。"), textMessage("next", "user", "继续说明")] });
+    expect(repository.messages.get("session:answer")).toMatchObject({ content: "依据资料。[1](#hermit-citation-1)", metadata: { status: "complete" } });
+    expect(repository.traces).toHaveLength(1);
   });
 
   it("persists assistant responses with retrieval traces", async () => {

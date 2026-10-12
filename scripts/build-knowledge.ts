@@ -1,46 +1,32 @@
 /**
- * Knowledge Base Builder
+ * Verify the static text sources that are available to the knowledge hub.
  *
- * Builds Hermit retrieval vectors from static knowledge files, static Action
- * cases, and optionally published database content when DATABASE_URL is set.
+ * Knowledge is imported into the hub and read progressively through the hub
+ * index at runtime. The build must stay deterministic and must not call an
+ * embedding service or materialize a vector cache.
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import * as dotenv from "dotenv";
-import { ContentStatus, ContentType, PrismaClient } from "@prisma/client";
-import { ACTION_CASES, isMarkdownActionCase, isStructuredActionCase } from "../src/app/action/action-cases";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import {
-  buildKnowledgeChunks,
+  ACTION_CASES,
+  isMarkdownActionCase,
+  isStructuredActionCase,
+} from "../src/app/action/action-cases";
+import {
   formatActionCaseKnowledgeDocuments,
-  formatContentItemKnowledgeDocument,
   formatMarkdownKnowledgeDocument,
   type KnowledgeSourceDocument,
   type KnowledgeSourceType,
 } from "../src/lib/hermit/knowledge-builder";
 
-const envPath = path.join(process.cwd(), ".env.local");
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-}
-
 const KNOWLEDGE_DIR = path.join(process.cwd(), "src/lib/hermit/knowledge");
-const OUTPUT_PATH = path.join(KNOWLEDGE_DIR, "knowledge-vectors.json");
-const BASE_URL = process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1";
-const API_KEY = process.env.EMBEDDING_API_KEY || process.env.OPENAI_API_KEY || "";
-const MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
-const REQUIRE_DATABASE = process.env.HERMIT_KNOWLEDGE_REQUIRE_DATABASE === "true";
-const USE_PREBUILT_INDEX = process.env.HERMIT_KNOWLEDGE_USE_PREBUILT === "true";
 
-const CONTENT_TYPE_TO_SOURCE_TYPE: Partial<Record<ContentType, KnowledgeSourceType>> = {
-  [ContentType.HEART]: "heart",
-  [ContentType.MIRROR_CASE]: "mirror_case",
-  [ContentType.ACTION_CASE]: "action_case",
-  [ContentType.NORM_FILE]: "norm_file",
-  [ContentType.TRAINING]: "training",
-};
-
-const STATIC_EXTRA_MARKDOWN_FILES: Array<{ filePath: string; sourceType: KnowledgeSourceType; sourceLabel: string }> = [
+const STATIC_EXTRA_MARKDOWN_FILES: Array<{
+  filePath: string;
+  sourceType: KnowledgeSourceType;
+  sourceLabel: string;
+}> = [
   {
     filePath: path.join(process.cwd(), "public/胖东来企业全面调研报告.md"),
     sourceType: "mirror_case",
@@ -64,8 +50,12 @@ function inferKnowledgeFileSourceType(fileName: string): KnowledgeSourceType {
   return "manual";
 }
 
-function readMarkdownFile(filePath: string, sourceType: KnowledgeSourceType, sourceLabel: string) {
-  const content = fs.readFileSync(filePath, "utf-8");
+function readMarkdownFile(
+  filePath: string,
+  sourceType: KnowledgeSourceType,
+  sourceLabel: string,
+): KnowledgeSourceDocument {
+  const content = fs.readFileSync(filePath, "utf8");
   const title = extractTitle(content, filePath);
   return formatMarkdownKnowledgeDocument({
     id: `file:${relativeId(filePath)}`,
@@ -77,14 +67,18 @@ function readMarkdownFile(filePath: string, sourceType: KnowledgeSourceType, sou
   });
 }
 
-function readMarkdownDirectory(dirPath: string, sourceLabel: string): KnowledgeSourceDocument[] {
+function readMarkdownDirectory(dirPath: string, sourceLabel: string) {
   if (!fs.existsSync(dirPath)) return [];
 
   return fs
     .readdirSync(dirPath)
     .filter((fileName) => fileName.endsWith(".md"))
     .map((fileName) =>
-      readMarkdownFile(path.join(dirPath, fileName), inferKnowledgeFileSourceType(fileName), sourceLabel),
+      readMarkdownFile(
+        path.join(dirPath, fileName),
+        inferKnowledgeFileSourceType(fileName),
+        sourceLabel,
+      ),
     );
 }
 
@@ -103,140 +97,8 @@ function readStaticMarkdownDocuments(): KnowledgeSourceDocument[] {
   return documents;
 }
 
-async function readDatabaseKnowledgeDocuments(): Promise<KnowledgeSourceDocument[]> {
-  if (!process.env.DATABASE_URL) return [];
-
-  const prisma = new PrismaClient();
-  try {
-    const contentItems = await prisma.contentItem.findMany({
-      where: {
-        status: ContentStatus.PUBLISHED,
-        publishedVersionId: { not: null },
-        contentType: {
-          in: [
-            ContentType.HEART,
-            ContentType.MIRROR_CASE,
-            ContentType.ACTION_CASE,
-            ContentType.NORM_FILE,
-            ContentType.TRAINING,
-          ],
-        },
-      },
-      include: { publishedVersion: true },
-      orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-    });
-
-    return contentItems.flatMap((item) => {
-      const sourceType = CONTENT_TYPE_TO_SOURCE_TYPE[item.contentType];
-      if (!sourceType) return [];
-      const version = item.publishedVersion;
-      if (!version?.bodyMarkdown.trim()) return [];
-      return [
-        formatContentItemKnowledgeDocument({
-          id: item.id,
-          title: version.title || item.title,
-          contentType: sourceType,
-          bodyMarkdown: version.bodyMarkdown,
-          updatedAt: item.updatedAt,
-        }),
-      ];
-    });
-  } catch (error) {
-    if (REQUIRE_DATABASE) throw error;
-    console.warn("[Hermit Knowledge] Database sources skipped:", error);
-    return [];
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-async function embed(texts: string[]): Promise<number[][]> {
-  console.log(`  Embedding ${texts.length} chunk(s) via ${MODEL}...`);
-
-  const baseUrl = BASE_URL.replace(/\/+$/, "");
-  const url = baseUrl.endsWith("/embeddings")
-    ? baseUrl
-    : `${baseUrl}/embeddings`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      input: texts,
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Embedding API error ${res.status}: ${body}`);
-  }
-
-  const json = await res.json();
-  return json.data
-    .sort((a: { index: number }, b: { index: number }) => a.index - b.index)
-    .map((d: { embedding: number[] }) => d.embedding);
-}
-
-function validatePrebuiltKnowledgeIndex() {
-  const relativeOutputPath = path.relative(process.cwd(), OUTPUT_PATH).replace(/\\/g, "/");
-  if (!fs.existsSync(OUTPUT_PATH)) {
-    throw new Error(
-      `HERMIT_KNOWLEDGE_USE_PREBUILT=true but ${relativeOutputPath} does not exist. Build the index locally first or unset HERMIT_KNOWLEDGE_USE_PREBUILT.`,
-    );
-  }
-
-  const raw = JSON.parse(fs.readFileSync(OUTPUT_PATH, "utf-8")) as {
-    model?: unknown;
-    dimension?: unknown;
-    chunks?: unknown;
-  };
-  if (typeof raw.model !== "string" || !raw.model.trim()) {
-    throw new Error(`Prebuilt ${relativeOutputPath} is missing a valid model field.`);
-  }
-  if (typeof raw.dimension !== "number" || !Number.isFinite(raw.dimension) || raw.dimension <= 0) {
-    throw new Error(`Prebuilt ${relativeOutputPath} is missing a valid positive dimension.`);
-  }
-  if (!Array.isArray(raw.chunks) || raw.chunks.length === 0) {
-    throw new Error(`Prebuilt ${relativeOutputPath} has no knowledge chunks.`);
-  }
-
-  const invalidChunk = raw.chunks.find((chunk) => {
-    if (!chunk || typeof chunk !== "object") return true;
-    const vector = (chunk as { vector?: unknown }).vector;
-    return !Array.isArray(vector) || vector.length !== raw.dimension;
-  });
-  if (invalidChunk) {
-    throw new Error(`Prebuilt ${relativeOutputPath} contains a chunk with an invalid vector dimension.`);
-  }
-
-  if (process.env.EMBEDDING_MODEL && process.env.EMBEDDING_MODEL !== raw.model) {
-    throw new Error(
-      `HERMIT_KNOWLEDGE_USE_PREBUILT=true but EMBEDDING_MODEL is "${process.env.EMBEDDING_MODEL}" while the prebuilt index model is "${raw.model}". Set EMBEDDING_MODEL to "${raw.model}" or rebuild the index with the deployment model.`,
-    );
-  }
-
-  console.log(
-    `Using prebuilt ${relativeOutputPath}: ${raw.chunks.length} chunks, dim=${raw.dimension}, model=${raw.model}.`,
-  );
-  console.log("Skipping embedding build because HERMIT_KNOWLEDGE_USE_PREBUILT=true.");
-}
-
-async function main() {
-  console.log("Hermit Knowledge Base Builder\n");
-  if (USE_PREBUILT_INDEX) {
-    validatePrebuiltKnowledgeIndex();
-    return;
-  }
-
-  console.log(`  Embedding API: ${BASE_URL}`);
-  console.log(`  Model:         ${MODEL}\n`);
-
-  const documents = [
-    ...readStaticMarkdownDocuments(),
+function readStaticActionDocuments(): KnowledgeSourceDocument[] {
+  return [
     ...formatActionCaseKnowledgeDocuments(ACTION_CASES.filter(isStructuredActionCase)),
     ...ACTION_CASES.filter(isMarkdownActionCase).map((actionCase) =>
       formatMarkdownKnowledgeDocument({
@@ -248,38 +110,34 @@ async function main() {
         content: actionCase.markdown,
       }),
     ),
-    ...(await readDatabaseKnowledgeDocuments()),
   ];
-
-  const chunks = buildKnowledgeChunks(documents);
-  if (chunks.length === 0) {
-    console.log("No knowledge chunks found.");
-    return;
-  }
-
-  console.log(`  Documents: ${documents.length}`);
-  console.log(`  Chunks:    ${chunks.length}\n`);
-
-  const texts = chunks.map(
-    (chunk) =>
-      `${chunk.heading}\nSource: ${chunk.source}\nType: ${chunk.sourceType}\nEvidence: ${chunk.evidenceTier}\n\n${chunk.content}`,
-  );
-
-  const vectors = await embed(texts);
-  const index = {
-    model: MODEL,
-    dimension: vectors[0]?.length || 0,
-    chunks: chunks.map((chunk, index) => ({
-      ...chunk,
-      vector: vectors[index],
-    })),
-  };
-
-  fs.writeFileSync(OUTPUT_PATH, JSON.stringify(index, null, 2), "utf-8");
-  console.log(`\nSaved ${index.chunks.length} vectors (dim=${index.dimension}) to knowledge-vectors.json`);
 }
 
-main().catch((err) => {
-  console.error("Build failed:", err);
-  process.exit(1);
-});
+function verifyDocuments(documents: KnowledgeSourceDocument[]) {
+  const invalid = documents.filter(
+    (document) => !document.id.trim() || !document.title.trim() || !document.content.trim(),
+  );
+  if (invalid.length > 0) {
+    throw new Error(
+      `Knowledge source check failed: ${invalid.map((document) => document.id || "<unknown>").join(", ")}`,
+    );
+  }
+}
+
+function main() {
+  const documents = [...readStaticMarkdownDocuments(), ...readStaticActionDocuments()];
+  verifyDocuments(documents);
+
+  const characters = documents.reduce((total, document) => total + document.content.length, 0);
+  console.log(
+    `[Lantern Knowledge] Verified ${documents.length} static text source(s) (${characters} characters). ` +
+      "Runtime access uses the indexed knowledge hub; no embedding API or vector cache is required.",
+  );
+}
+
+try {
+  main();
+} catch (error) {
+  console.error("Knowledge source check failed:", error);
+  process.exitCode = 1;
+}

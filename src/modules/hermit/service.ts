@@ -56,11 +56,11 @@ function buildSessionInput(
   };
 }
 
-function toMessageInput(message: UIMessage, sessionId: string, modelName: string): HermitMessageInput | null {
+function toMessageInput(message: UIMessage, sessionId: string, modelName: string, allowEmpty = false): HermitMessageInput | null {
   if (!isPersistableRole(message.role)) return null;
 
   const content = extractTextContent(message);
-  if (!message.id || !content) return null;
+  if (!message.id || (!content && !allowEmpty)) return null;
 
   return {
     sessionId,
@@ -81,6 +81,9 @@ export class HermitChatService {
     );
 
     for (const message of input.messages) {
+      // Assistant content and completion status are owned by the server. A client
+      // history replay must not overwrite the finalized answer or its audit.
+      if (message.role !== "user") continue;
       const messageInput = toMessageInput(message, input.sessionId, input.modelName);
       if (!messageInput) continue;
 
@@ -91,12 +94,14 @@ export class HermitChatService {
   async persistAssistantResponse(input: PersistAssistantResponseInput) {
     await this.repository.upsertSession(buildSessionInput(input.sessionId, input.participant, null));
 
-    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.modelName);
+    const snapshot = input.retrieval.sourceSnapshot;
+    const hasEvidence = !!snapshot && typeof snapshot === "object" && "mode" in snapshot && snapshot.mode === "progressive-index" && "reads" in snapshot && Array.isArray(snapshot.reads) && snapshot.reads.length > 0;
+    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.modelName, hasEvidence);
     if (!messageInput) return;
 
     const storedMessage = await this.repository.upsertMessage(messageInput);
     const contextText = input.retrieval.contextText.trim();
-    if (!contextText) return;
+    if (!contextText && !hasEvidence) return;
 
     await this.repository.addRetrievalTrace({
       chatMessageId: storedMessage.id,
