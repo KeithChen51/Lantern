@@ -93,6 +93,10 @@ describe("knowledge index reader", () => {
     expect(result.resources[0]).toMatchObject({ id: "policy", name: "服务指引.md", path: "资料/服务指引.md" });
     const root = await reader.browse({});
     expect(root.folders.map(folder => folder.name)).not.toContain("待发布草稿");
+    // A future published pointer must not hide the currently effective version.
+    listing.resources[0].publishedVersionId = "future-v2";
+    const current = await reader.browse({ folderId: "folder-a" });
+    expect(current.resources[0].versionId).toBe("v1");
     expect(root.folders.map(folder => folder.name)).toEqual(expect.arrayContaining(["白皮书", "参悟案例", "行为准则", "Skill"]));
   });
 

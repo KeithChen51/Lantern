@@ -259,7 +259,6 @@ export class KnowledgeIndexReader {
     const items: Item[] = [];
     let offset = 0;
     let total = 0;
-    let complete = true;
     while (items.length < MAX_INDEX_SCAN_ITEMS) {
       const page = await this.hub.search({ ...input, offset, limit: 100 });
       total = page.total;
@@ -267,8 +266,8 @@ export class KnowledgeIndexReader {
       if (!page.items.length || items.length >= page.total || page.items.length < 100) break;
       offset += page.items.length;
     }
-    if (items.length < total) complete = false;
-    return { items, total, complete };
+    if (items.length < total) throw new HubError("invalid", "索引范围过大，请缩小关键词或类型后再查询。");
+    return { items, total };
   }
 
   async search(raw: unknown = {}): Promise<KnowledgeIndexSearchResult> {
@@ -276,16 +275,16 @@ export class KnowledgeIndexReader {
     const filtered = input.tag !== undefined || input.visibility !== undefined;
     const result = filtered
       ? await this.collectSearchPages({ query: input.query, type: input.type, sort: "relevance" })
-      : { ...(await this.hub.search({ query: input.query, type: input.type, offset: input.offset, limit: input.limit, sort: "relevance" })), complete: true };
+      : await this.hub.search({ query: input.query, type: input.type, offset: input.offset, limit: input.limit, sort: "relevance" });
     const matched = filtered ? result.items.filter(item => (!input.tag || item.tags.some(tag => tag.toLocaleLowerCase() === input.tag!.toLocaleLowerCase())) && (!input.visibility || item.visibility === input.visibility)) : result.items;
     const items = filtered ? matched.slice(input.offset, input.offset + input.limit) : matched;
     return {
       query: input.query,
       items: items.map(item => metadataOnly(item)),
-      total: filtered ? (result.complete ? matched.length : Math.max(matched.length, result.total)) : result.total,
+      total: filtered ? matched.length : result.total,
       offset: input.offset,
       limit: input.limit,
-      hasMore: input.offset + input.limit < (filtered ? (result.complete ? matched.length : Math.max(matched.length, result.total)) : result.total) || (filtered && !result.complete),
+      hasMore: input.offset + input.limit < (filtered ? matched.length : result.total),
     };
   }
 
@@ -294,15 +293,15 @@ export class KnowledgeIndexReader {
     if (!this.browseAdapter) return this.browseLogical(input);
     const listing = await this.browseAdapter();
     const published = await this.collectSearchPages({ query: "", sort: "updated" });
-    const publishedById = new Map(published.items.map(item => [`${item.id}:${item.versionId}`, item]));
+    const publishedById = new Map(published.items.map(item => [item.id, item]));
     const folders = listing.folders.filter(folder => !folder.deleted);
     const folderMap = new Map(folders.map(folder => [folder.id, folder]));
     if (input.folderId && !folderMap.has(input.folderId)) throw new HubError("not_found", `文件夹不存在：${input.folderId}`);
-    const listedResources = listing.resources.filter(resource => !resource.archived && !!resource.publishedVersionId && publishedById.has(`${resource.id}:${resource.publishedVersionId}`));
+    const listedResources = listing.resources.filter(resource => !resource.archived && !!resource.publishedVersionId && publishedById.has(resource.id));
     // The four managed base folders are part of the public root contract even
     // when they are empty. Other folders remain visible only through a current
     // published resource, so draft/archive-only names cannot leak here.
-    const canonicalNames = new Set(baseFolders.map(folder => folder.name));
+    const canonicalNames = new Set<string>(baseFolders.map(folder => folder.name));
     const canonicalRootIds = folders
       .filter(folder => folder.parentId === null && canonicalNames.has(folder.name))
       .map(folder => folder.id);
@@ -331,7 +330,7 @@ export class KnowledgeIndexReader {
     };
     const childFolders = folders.filter(folder => folder.parentId === input.folderId && visibleFolderIds.has(folder.id)).map(folder => ({ ...folder, path: folderPath(folder.id, folderMap) }));
     const resources = listedResources.filter(resource => (resource.folderId ?? null) === input.folderId && activeFolder(resource.folderId)).map(resource => {
-      const metadata = publishedById.get(`${resource.id}:${resource.publishedVersionId!}`)!;
+      const metadata = publishedById.get(resource.id)!;
       return { ...metadataOnly(metadata), name: resource.name, path: [folderPath(resource.folderId, folderMap), resource.name].filter(Boolean).join("/") };
     });
     const page = paged([...childFolders, ...resources] as Array<typeof childFolders[number] | typeof resources[number]>, input.offset, input.limit);
