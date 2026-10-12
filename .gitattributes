@@ -9,3 +9,5 @@ deploy/offline/** -text
 
 # Bundled fonts and license text are checked against byte-exact hashes.
 public/fonts/** -text
+# Preserve upstream license bytes, including upstream trailing spaces.
+public/fonts/**/LICENSE.txt whitespace=-blank-at-eol
