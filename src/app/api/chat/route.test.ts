@@ -16,7 +16,7 @@ describe("DSH chat transport boundary", () => {
     vi.clearAllMocks();
     vi.stubEnv("HERMIT_RUNTIME", "dsh"); vi.stubEnv("DATABASE_URL", "");
     mocks.verify.mockResolvedValue({}); mocks.resolve.mockResolvedValue([]);
-    mocks.get.mockResolvedValue({ id: "guide", title: "服务指引", source: "灯塔", version: { id: "v1", markdown: "保持透明沟通", citations: [] } });
+    mocks.get.mockResolvedValue({ id: "guide", type: "document", title: "服务指引", summary: "沟通方法", tags: [], visibility: "internal", source: "灯塔", validity: "effective", version: { id: "v1", number: 1, publishedAt: "2026-10-12T00:00:00Z", markdown: "保持透明沟通", citations: [], files: [] } });
     mocks.search.mockResolvedValue({ items: [], total: 0, offset: 0, limit: 20 });
     mocks.run.mockImplementation(async ({ onText, tools }) => {
       await tools.knowledge_read.execute({ resourceId: "guide", versionId: "v1" });
@@ -82,7 +82,7 @@ describe("ordinary chat progressive tool loop", () => {
     vi.stubEnv("OPENAI_EXTRA_HEADERS", "");
     vi.stubEnv("EMBEDDING_BASE_URL", "http://127.0.0.1:1/must-not-be-used");
     mocks.resolve.mockResolvedValue([]);
-    mocks.get.mockResolvedValue({ id: "guide", type: "document", title: "服务指引", source: "灯塔", validity: "effective", version: { id: "v1", markdown: "独有正文：保持透明沟通", citations: [], files: [] } });
+    mocks.get.mockResolvedValue({ id: "guide", type: "document", title: "服务指引", summary: "沟通方法", tags: [], visibility: "internal", source: "灯塔", validity: "effective", version: { id: "v1", markdown: "独有正文：保持透明沟通", citations: [], files: [] } });
     mocks.search.mockResolvedValue({ items: [{ id: "guide", type: "document", title: "服务指引", summary: "沟通方法", source: "灯塔", tags: [], visibility: "internal", versionId: "v1", version: 1, validity: "effective", excerpt: "不应预先披露的正文" }], total: 1, offset: 0, limit: 20 });
     const calls: Array<{ url: string; body: string }> = [];
     const gateway = createServer(async (req, res) => {

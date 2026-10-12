@@ -163,7 +163,10 @@ export async function POST(req: Request) {
       } else {
         const tools: ToolSet = {};
         if (capabilities) for (const [name, capability] of Object.entries(capabilities)) {
-          tools[name] = tool<unknown, unknown>({ description: capability.description, inputSchema: capability.schema, execute: raw => capability.execute(raw) });
+          tools[name] = tool<unknown, unknown>({ description: capability.description, inputSchema: capability.schema, execute: async raw => {
+            try { return await capability.execute(raw); }
+            catch { throw new Error("无法读取所请求的参考资料，请核对资源版本、读取范围或剩余调用额度。"); }
+          } });
         }
         const result = streamText({
           model: selectHermitLanguageModel(createHermitProvider(providerSettings), model, providerSettings.apiMode),
@@ -171,7 +174,7 @@ export async function POST(req: Request) {
           stopWhen: stepCountIs(MAX_TOOL_STEPS), abortSignal: signal,
           prepareStep: ({ stepNumber }) => stepNumber >= MAX_TOOL_STEPS - 1 ? { toolChoice: "none" as const } : {},
         });
-        writer.merge(result.toUIMessageStream());
+        writer.merge(result.toUIMessageStream({ onError: () => "路引暂时未能完成回答，请稍后重试。" }));
       }
     },
     onFinish: async ({ responseMessage, isAborted }) => {
