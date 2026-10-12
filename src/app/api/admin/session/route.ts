@@ -21,7 +21,8 @@ export async function POST(request: Request) {
     response.cookies.set(ADMIN_PORTAL_COOKIE, createAdminPortalSessionCookieValue(), {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      // Runtime opt-out for HTTP test deployments; HTTPS stays secure by default.
+      secure: process.env.ADMIN_COOKIE_SECURE !== "false",
       path: "/",
       maxAge: ADMIN_PORTAL_TTL_SECONDS,
     });
@@ -36,7 +37,7 @@ export async function DELETE() {
   response.cookies.set(ADMIN_PORTAL_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.ADMIN_COOKIE_SECURE !== "false",
     path: "/",
     maxAge: 0,
   });

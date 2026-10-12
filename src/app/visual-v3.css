@@ -208,7 +208,7 @@ html[data-lighthouse-interface="classic"] [data-lh-v3] :is([data-lh-panel], [dat
   box-shadow: none;
 }
 
-html[data-lighthouse-interface="classic"] [data-lh-v3] :is(button, a, input, textarea, select, summary):focus-visible {
+html[data-lighthouse-interface="classic"] [data-lh-v3] :is(button, a, summary):focus-visible {
   outline: 2px solid var(--lh-focus-outline);
   outline-offset: 3px;
 }
