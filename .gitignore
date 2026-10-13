@@ -108,3 +108,4 @@ knowledge-vectors.json
 /deploy/system/
 /deploy/runtime-data/
 /build-image.txt
+/build-manifest.json
