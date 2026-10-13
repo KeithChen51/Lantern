@@ -1,6 +1,7 @@
 // Test double for host orchestration only; never used by deployment commands.
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 const args = process.argv.slice(2);
 const root = process.env.FAKE_FIXTURE;
 const config = JSON.parse(fs.readFileSync(path.join(root, "fake-config.json"), "utf8"));
@@ -43,11 +44,21 @@ if (args[0] === "image") {
   } else if (args.includes("run") && args.at(-1) === "migrate" && process.env.FAKE_FAIL_MIGRATE) process.exit(7);
   else if (args.includes("exec") && args.some(x => x.includes("mysqldump"))) {
     if (process.env.FAKE_FAIL_BACKUP) process.exit(8);
-    out("CREATE TABLE resource (id int);\nINSERT INTO resource VALUES (1);\n");
+    out(`CREATE TABLE resource (id int);\nINSERT INTO resource VALUES (${process.env.FAKE_CORRUPT_DUMP ? 2 : 1});\n`);
   } else if (args.includes("exec") && args.some(x => x.includes("printf %s"))) out("lighthouse_test");
 } else if (args[0] === "start") { state.stopped = false; save(); }
 else if (args[0] === "run") {
-  if (args.includes("node") && args.includes("-i")) {
+  if (args.includes("/compare-mysql-dumps.mjs")) {
+    const source = target => {
+      const mount = args.find(value => value.startsWith("type=bind,") && value.includes(`target=${target},`));
+      const value = mount.match(/source=(.*?),target=/)[1];
+      return process.platform === "win32"
+        ? spawnSync("C:/Program Files/Git/bin/bash.exe", ["-c", 'cygpath -w "$1"', "sh", value], { encoding: "utf8" }).stdout.trim()
+        : value;
+    };
+    const result = spawnSync(process.execPath, [source("/compare-mysql-dumps.mjs"), source("/original.sql.gz"), source("/restored.sql.gz")], { encoding: "utf8" });
+    out(result.stdout ?? ""); process.stderr.write(result.stderr ?? ""); process.exit(result.status ?? 1);
+  } else if (args.includes("node") && args.includes("-i")) {
     let input = "";
     for await (const chunk of process.stdin) input += chunk;
     const c = JSON.parse(input);

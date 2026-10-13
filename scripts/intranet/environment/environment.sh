@@ -278,7 +278,12 @@ restore_verify() {
   start_database
   gzip -dc "$backup/database.sql.gz" | compose exec -T mysql sh -eu -c 'export MYSQL_PWD="$MYSQL_PASSWORD"; exec mysql -u "$MYSQL_USER" "$MYSQL_DATABASE"'
   dump_database | gzip > "$DATA_ROOT/recovery/restored-database.sql.gz"
-  cmp <(gzip -dc "$backup/database.sql.gz") <(gzip -dc "$DATA_ROOT/recovery/restored-database.sql.gz") || fail 'Restored logical database differs from backup'
+  docker run --rm --pull never --network none --read-only --user 0:0 --entrypoint node \
+    --mount "type=bind,source=$SCRIPT_ROOT/scripts/intranet/environment/compare-mysql-dumps.mjs,target=/compare-mysql-dumps.mjs,readonly" \
+    --mount "type=bind,source=$backup/database.sql.gz,target=/original.sql.gz,readonly" \
+    --mount "type=bind,source=$DATA_ROOT/recovery/restored-database.sql.gz,target=/restored.sql.gz,readonly" \
+    "$LIGHTHOUSE_TOOLS_IMAGE" /compare-mysql-dumps.mjs /original.sql.gz /restored.sql.gz \
+    || fail 'Restored logical database differs from backup or could not be verified'
   printf 'Isolated restore verified; app was not started. Private recovery material: %s/recovery\n' "$DATA_ROOT"
 }
 

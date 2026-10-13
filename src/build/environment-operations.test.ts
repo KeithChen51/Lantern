@@ -32,7 +32,7 @@ function fixture() {
   const bin = join(root, "bin"); mkdirSync(bin);
   writeFileSync(join(bin, "docker"), '#!/usr/bin/env bash\nexec "$FAKE_NODE" "$FAKE_SCRIPT" "$@"\n', { mode: 0o755 });
   const env = { ...process.env, PATH: `${bin}${process.platform === "win32" ? ";" : ":"}${process.env.PATH}`, FAKE_FIXTURE: root, FAKE_NODE: process.execPath.replaceAll("\\", "/"), FAKE_SCRIPT: resolve("scripts/intranet/environment/fake-docker.mjs").replaceAll("\\", "/") };
-  const run = (mode: string, extra: Record<string, string> = {}, extraArgs: string[] = []) => spawnSync(bash, [resolve("scripts/intranet/environment/environment.sh"), mode, config, ...extraArgs], { env: { ...env, ...extra }, encoding: "utf8" });
+  const run = (mode: string, extra: Record<string, string> = {}, extraArgs: string[] = []) => spawnSync(bash, [resolve("scripts/intranet/environment/environment.sh"), mode, config, ...extraArgs], { env: { ...env, MSYS_NO_PATHCONV: "1", ...extra }, encoding: "utf8" });
   const calls = () => existsSync(join(root, "docker-calls.jsonl")) ? readFileSync(join(root, "docker-calls.jsonl"), "utf8").trim().split("\n").map(line => JSON.parse(line) as string[]) : [];
   return { root, data, app, backups, config, appImage, toolsImage, env, run, calls };
 }
@@ -115,8 +115,20 @@ describe("guarded deployment orchestration", () => {
     const result = f.run("restore-verify", {}, [backupDir!]); expect(result.status, result.stderr).toBe(0);
     expect(readFileSync(join(target, "app", "upload.txt"), "utf8")).toBe("important existing upload");
     expect(existsSync(join(target, "recovery", "original-app-container.json"))).toBe(true);
+    const comparator = f.calls().slice(before).find(x => x.includes("/compare-mysql-dumps.mjs"));
+    expect(comparator).toBeTruthy();
+    expect(comparator).toContain("--read-only");
+    expect(comparator).toContain("none");
+    expect(comparator).toContain("0:0");
+    expect(comparator?.filter(x => x.startsWith("type=bind,")).every(x => x.endsWith(",readonly"))).toBe(true);
+    expect(result.stdout).toContain('"equal":true');
     expect(f.calls().slice(before).some(x => x.at(-1) === "app" || x.at(-1) === "initialize" || x.at(-1) === "migrate")).toBe(false);
     const second = f.run("restore-verify", {}, [backupDir!]); expect(second.status).not.toBe(0); expect(second.stderr).toContain("new empty root");
+    writeFileSync(f.config, control.replace(`DATA_ROOT=${unix(target)}`, `DATA_ROOT=${unix(join(f.root, "corrupted-restore"))}`));
+    const corrupted = f.run("restore-verify", { FAKE_CORRUPT_DUMP: "1" }, [backupDir!]);
+    expect(corrupted.status).not.toBe(0);
+    expect(corrupted.stdout).toContain('"equal":false');
+    expect(corrupted.stderr).toContain("Restored logical database differs");
   }, 30_000);
   it.each(["app-equal", "app-child", "app-parent", "mysql-equal", "mysql-child", "mysql-parent"])("rejects existing-test backup root overlapping actual data: %s", (scenario) => {
     const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
