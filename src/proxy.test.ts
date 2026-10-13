@@ -1,0 +1,44 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { proxy } from "./proxy";
+import { REQUEST_PATH_HEADER } from "./modules/auth/page-access";
+
+const { employee } = vi.hoisted(() => ({ employee: vi.fn() }));
+vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee }));
+beforeEach(() => { employee.mockReset(); });
+describe("employee request gate", () => {
+  it("redirects anonymous deep links with a safe internal return and no caching", async () => {
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/auth/device?user_code=ABCD-EFGH"));
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2Fauth%2Fdevice%3Fuser_code%3DABCD-EFGH");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+  });
+  it.each(["/_next/static/chunks/heart.js", "/_next/data/build/heart.json", "/files/internal.pdf", "/files/internal.html", "/_next/image?url=%2Fimages%2Fgames%2Fservice-store.webp&w=640&q=75"])("rejects anonymous business asset %s without login redirects", async path => {
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`));
+    expect(response.status).toBe(401); expect(response.headers.has("location")).toBe(false);
+  });
+  it("rejects anonymous RSC and spoofed public-layout header", async () => {
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/heart", { headers: { rsc: "1", [REQUEST_PATH_HEADER]: "/login" } }));
+    expect(response.status).toBe(401);
+  });
+  it("overwrites client-supplied layout path on authenticated requests", async () => {
+    employee.mockResolvedValue({ userId: "employee" });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/admin/knowledge", { headers: { [REQUEST_PATH_HEADER]: "/login" } }));
+    expect(response.headers.get(`x-middleware-request-${REQUEST_PATH_HEADER}`)).toBe("/admin/knowledge");
+    expect(response.headers.get("cache-control")).toContain("private");
+  });
+  it("allows native login and leaves tool bearer APIs to endpoint guards", async () => {
+    for (const path of ["/login", "/auth/confirm", "/api/auth/token", "/api/client/v1/resources"]) {
+      const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`)); expect(response.status).toBe(200);
+    }
+    expect(employee).not.toHaveBeenCalled();
+  });
+  it("returns safe service outage response before protected work", async () => {
+    employee.mockRejectedValue(new Error("private adapter detail"));
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/action"));
+    expect(response.status).toBe(503); expect(await response.text()).not.toContain("private adapter detail");
+  });
+});

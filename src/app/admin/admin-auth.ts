@@ -1,8 +1,6 @@
-import { cookies } from "next/headers";
-import { ADMIN_PORTAL_COOKIE } from "@/modules/admin";
-import { verifyAdminPortalSessionCookieValue } from "@/modules/admin/portal";
+import { headers } from "next/headers";
+import { requireKnowledgeAdmin } from "@/modules/auth/access";
 
 export async function isAdminPortalAuthenticated() {
-  const cookieStore = await cookies();
-  return verifyAdminPortalSessionCookieValue(cookieStore.get(ADMIN_PORTAL_COOKIE)?.value);
+  try { await requireKnowledgeAdmin(await headers()); return true; } catch { return false; }
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { authFetch } from "@/components/auth/auth-fetch";
+
 import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -142,7 +144,7 @@ function errorMessage(payload: unknown, fallback: string) {
 }
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...init, cache: "no-store" });
+  const response = await authFetch(url, { ...init, cache: "no-store" });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(errorMessage(payload, `请求失败：${response.status}`)) as Error & { code?: string; payload?: unknown };
@@ -600,7 +602,7 @@ export function AdminKnowledgeManager() {
       formData.append("folderId", batch.folderId ?? "");
       formData.append("type", batch.type);
       formData.append("conflict", conflict);
-      const response = await fetch("/api/admin/knowledge/upload", { method: "POST", body: formData, cache: "no-store" });
+      const response = await authFetch("/api/admin/knowledge/upload", { method: "POST", body: formData, cache: "no-store" });
       const payload = await response.json().catch(() => ({})) as { results?: UploadResult[]; excluded?: string[]; error?: unknown };
       const results = payload.results ?? [];
       setUploadExcluded(payload.excluded ?? []);

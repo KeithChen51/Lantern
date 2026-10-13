@@ -9,7 +9,7 @@ import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { useLhScrollProgress } from "@/hooks/use-lighthouse-motion";
 import { cn } from "@/lib/utils";
-import { getFeedbackHref } from "./feedback-link";
+import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { getHeaderSearchMatches } from "./header-search";
 import { getVisibleNavItems } from "./navigation-model";
 
@@ -283,44 +283,6 @@ function SidebarSearchPanel({
   );
 }
 
-function SidebarFeedbackLink({
-  isExpanded,
-  className,
-  onNavigate,
-}: {
-  isExpanded: boolean;
-  className?: string;
-  onNavigate?: () => void;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname.startsWith("/feedback");
-
-  return (
-    <Link
-      data-lh-feedback-link
-      data-active={isActive ? "true" : "false"}
-      href={getFeedbackHref(pathname)}
-      onClick={onNavigate}
-      aria-current={isActive ? "page" : undefined}
-      className={cn(
-        "group relative grid min-h-11 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] active:brightness-[0.97]",
-        isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
-        isActive
-          ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
-          : "border-transparent text-[var(--color-deck-text-soft)] hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
-        className,
-      )}
-      title={isExpanded ? undefined : "意见反馈"}
-    >
-      <Icon
-        icon={lighthouseIcons.edit}
-        className={cn("h-5 w-5", isActive ? "text-action" : "text-[var(--color-deck-icon)] group-hover:text-action")}
-      />
-      {isExpanded && <span className="text-left text-[length:var(--type-control)] font-[var(--weight-bold)] leading-[var(--leading-control)]">意见反馈</span>}
-    </Link>
-  );
-}
-
 function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; className?: string }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -384,6 +346,18 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
   );
 }
 
+function SessionLinks({ isExpanded, onNavigate }: { isExpanded: boolean; onNavigate?: () => void }) {
+  const session = useEmployeeSession();
+  return <div className="grid gap-2 text-[length:var(--type-control)] text-[var(--color-deck-text-soft)]">
+    <Link href="/auth/tools" onClick={onNavigate} title="工具授权" className="flex min-h-11 items-center rounded-[var(--lh-control-radius)] px-3 hover:bg-[var(--lh-deck-panel-hover)] focus-visible:outline-2 focus-visible:outline-primary">{isExpanded ? "工具授权" : "授权"}</Link>
+    {isExpanded && <p className="truncate px-3" title={session?.user.account}>{session?.user.displayName}</p>}
+    <form action="/api/auth/logout" method="post">
+      <input type="hidden" name="csrfToken" value={session?.csrfToken ?? ""} />
+      <button type="submit" className="min-h-11 w-full rounded-[var(--lh-control-radius)] px-3 text-left hover:bg-[var(--lh-deck-panel-hover)] focus-visible:outline-2 focus-visible:outline-primary">退出登录</button>
+    </form>
+  </div>;
+}
+
 function NavLinks({
   isExpanded,
   pathname,
@@ -393,7 +367,8 @@ function NavLinks({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  return getVisibleNavItems().map((item) => {
+  const session = useEmployeeSession();
+  return getVisibleNavItems(session?.capabilities).map((item) => {
     const isActive = isItemActive(pathname, item.href);
 
     return (
@@ -483,7 +458,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         </div>
 
         <div data-lh-sidebar-utility-group className="mt-auto grid gap-2">
-          <SidebarFeedbackLink isExpanded={isExpanded} />
+          <SessionLinks isExpanded={isExpanded} />
           <SidebarNotifications isExpanded={isExpanded} />
         </div>
       </nav>
@@ -522,7 +497,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
           </div>
 
           <div data-lh-sidebar-utility-group className="mt-auto grid gap-2">
-            <SidebarFeedbackLink isExpanded onNavigate={onMobileClose} />
+            <SessionLinks isExpanded onNavigate={onMobileClose} />
             <SidebarNotifications isExpanded />
           </div>
         </nav>

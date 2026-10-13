@@ -5,14 +5,17 @@ import { usePathname } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Navigation } from "@/components/layout/Navigation";
 import { cn } from "@/lib/utils";
+import { SessionProvider } from "@/components/auth/SessionContext";
+import type { WebSession } from "@/components/auth/auth-fetch";
 
 const SIDEBAR_STORAGE_KEY = "lighthouse-sidebar-pinned";
 
 interface AppShellProps {
   children: React.ReactNode;
+  session: WebSession;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, session }: AppShellProps) {
   const pathname = usePathname();
   const isHomeSurface = pathname === "/" || pathname === "/heart";
   const [isSidebarPinned, setIsSidebarPinned] = React.useState(false);
@@ -36,7 +39,7 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div
+    <SessionProvider session={session}><div
       data-lh-shell
       data-lh-home-shell={isHomeSurface ? "true" : undefined}
       className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink"
@@ -69,6 +72,6 @@ export function AppShell({ children }: AppShellProps) {
       >
         <div data-lh-main-frame className={cn("mx-auto w-full", isHomeSurface ? "max-w-none" : "max-w-[1680px]")}>{children}</div>
       </main>
-    </div>
+    </div></SessionProvider>
   );
 }
