@@ -35,14 +35,14 @@ RUN npm run check:hermit-runtime && npm run test:hermit-runtime
 # generated vector cache. The DSH carrier is still required in this image.
 ENV HERMIT_BUNDLE_REQUIRED=true
 RUN npm run build
-# Bundle just the import CLI, keeping repository content for first-run initialization.
+# Operator-only direct-DB maintenance CLI; never distribute this image to employees.
 RUN node scripts/package-knowledge-cli.mjs
 
 FROM node:24.11.1-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 \
-    HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite \
-    KNOWLEDGE_HUB_SQLITE_PATH=/data/knowledge/lighthouse.sqlite
+    AUTH_MODE=portal AUTH_ALLOW_LOCAL_HTTP=false PORTAL_ALLOW_LEGACY_CONFIRMATION=false \
+    HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=mysql
 WORKDIR /app
 COPY --from=lighthouse-build --chown=node:node /app/.next/standalone ./
 COPY --from=lighthouse-build --chown=node:node /app/release/knowledge-cli ./knowledge-cli
@@ -51,5 +51,5 @@ USER node
 EXPOSE 3000
 VOLUME ["/data"]
 # Do not auto-import/publish into an existing knowledge store on every restart.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:3000/hermit').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:3000/api/health/ready',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "server.js"]

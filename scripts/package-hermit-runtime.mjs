@@ -398,6 +398,9 @@ function copyableFile(relativePath, requiredAssets = new Set()) {
   const normalized = relativePath.replaceAll('\\', '/')
   const parts = normalized.split('/')
   const file = parts.at(-1) ?? ''
+  // Credential/config files never belong in a redistributable runtime carrier,
+  // even if a package incorrectly lists one as a required runtime asset.
+  if (file === '.env' || file.startsWith('.env.')) return false
   if (requiredAssets.has(normalized)) return true
   if (file === 'package.json') return true
   if (/^(LICENSE|LICENCE|NOTICE|COPYING)(\.|$)/i.test(file)) return true
@@ -409,7 +412,7 @@ function copyableFile(relativePath, requiredAssets = new Set()) {
   return ['.js', '.mjs', '.cjs', '.json', '.node', '.wasm'].includes(extension)
 }
 
-function copyRuntimeTree(sourceDir, targetDir, sourceRoot, requiredAssets = new Set()) {
+export function copyRuntimeTree(sourceDir, targetDir, sourceRoot, requiredAssets = new Set()) {
   const visit = (sourcePath, targetPath, relativePath) => {
     const info = lstatSync(sourcePath)
     if (info.isSymbolicLink()) {
@@ -810,10 +813,12 @@ function stageRuntime(options) {
   return { source, output, sourceCommit, packageCount: packages.length, fileCount: files.length, bytes: files.reduce((total, file) => total + file.bytes, 0) }
 }
 
-try {
-  const result = stageRuntime(parseArgs(process.argv.slice(2)))
-  process.stdout.write(JSON.stringify(result) + '\n')
-} catch (error) {
-  process.stderr.write('package-hermit-runtime: ' + (error instanceof Error ? error.stack ?? error.message : String(error)) + '\n')
-  process.exitCode = 1
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    const result = stageRuntime(parseArgs(process.argv.slice(2)))
+    process.stdout.write(JSON.stringify(result) + '\n')
+  } catch (error) {
+    process.stderr.write('package-hermit-runtime: ' + (error instanceof Error ? error.stack ?? error.message : String(error)) + '\n')
+    process.exitCode = 1
+  }
 }

@@ -33,7 +33,7 @@
 
 不从 GitHub 下载 DSH、不从公网下载 Prisma、不需要构建期模型密钥。npm 包仍需要内网镜像源。DSH 和系统依赖面向 Linux x64；Node 必须 24。基底中的 Debian/glibc 兼容性由本次内网构建验证。
 
-运行部署时只需独立配置聊天模型、SQLite 持久卷；知识资源由首次启动时的知识 CLI 导入并由文件索引按需读取。其他业务依赖的测试 MySQL、迁移和上传持久化仍沿用测试环境安排。此包不等于完整部署迁移交付。不能把流水线成功当作业务验收通过。
+员工应用部署必须配置统一门户、HTTPS origin、MySQL 与知识中台，先应用 Prisma 迁移，再由可信运维手动导入并发布知识。聊天模型及上传持久化也需独立配置。缺少认证配置或 schema 时关闭业务访问；不能把流水线成功当作业务验收通过。完整参数、部署顺序与平台验收条件见 [员工访问部署说明](../../docs/deployment/lighthouse-access.md)。
 
 ## 本机检查与限制
 
@@ -59,19 +59,24 @@
 
 ## 存储模式边界
 
-默认应用存储仍为 MySQL。内网示例使用 SQLite 提供知识读取、路引与 CLI/MCP；后台文件管理器仅支持 MySQL，在 SQLite 模式返回明确的 503 提示，防止写入另一套数据库。需要后台管理时须配置 MySQL 并执行现有 Prisma 迁移及 hub:bootstrap。SQLite 使用独立 CLI 导入，无需运行 MySQL 迁移；已有知识资源不会被重复导入覆盖。
+员工应用的生产存储必须为 MySQL：`AUTH_MODE=portal`、`KNOWLEDGE_HUB_ENABLED=true`、`KNOWLEDGE_HUB_DRIVER=mysql`，并配置该环境的 `DATABASE_URL`。镜像不预置本机数据库地址、不复制运行数据库，不在启动时自动迁移或导入。SQLite 仅保留独立运维用途；不能用它启动正式员工应用，也不能作为 MySQL 故障回退。
+
+`knowledge-cli`、源码的 hub CLI/MCP 均是受信任运维的直连数据库接口，不是员工工具。员工接收独立 `packages/lighthouse-client`，只通过浏览器授权取得 `knowledge:read`。服务器镜像、环境文件及门户密钥不向员工分发。
 
 ## 首次启动与离线来源
 
-空 SQLite 卷必须先初始化知识，再进行页面及路引验收。使用与应用相同的镜像、KNOWLEDGE_HUB_SQLITE_PATH 和持久卷运行：
+生产启动前先备份现有数据库与文件，使用本次可信运维源码并注入目标 MySQL 环境：
 
 ```sh
-docker run --rm --network none -v lighthouse-knowledge:/data --entrypoint node <已验证的镜像标签> knowledge-cli/import.cjs --publish
+npm run db:deploy
+npm run hub:import-existing -- --publish
 ```
 
-随后应用容器使用同一 lighthouse-knowledge:/data 卷启动。该命令只适用于 SQLite 示例；需要后台文件管理时请使用 MySQL 迁移与 hub:bootstrap。不要把构建阶段的空 SQLite 文件作为运行数据。重复导入会跳过已存在资源，不覆盖人工维护内容。
+完成迁移与初始化后再启动新应用，并检查 `/api/health/ready`。首次导入跳过既有固定 ID，不覆盖管理员维护版本；上述初始化不能代替人工资源、完整历史版本及文件的跨数据库迁移。旧共享管理员密码、预览身份和演示种子不再用于员工登录。
 
-已有部署必须继续挂载原持久卷（例如 `lantern-knowledge:/data`）；不能只因命名更新创建空卷。新镜像默认 `/data/knowledge/lighthouse.sqlite`，新文件不存在时复用同目录的 `lantern.sqlite`。路径与离线迁移步骤见 [命名兼容说明](../../docs/deployment/lighthouse-naming-migration.md)。
+已有部署保留原持久卷与 SQLite 文件（包括历史 `lantern-knowledge`），明确实际路径并完成一致备份，再验收 MySQL 迁移/导入；不能只改驱动或创建新空卷。独立 SQLite 运维仍保留旧文件名回退；详见 [命名兼容说明](../../docs/deployment/lighthouse-naming-migration.md)。当前交付不自动进行 SQLite→MySQL 数据搬迁。
+
+健康检查改用 `/api/health/ready` 的直接 200，认证配置或迁移未就绪返回 503。公开 `/api/health/live` 只表示进程存活；不能用 `/hermit` 跳转到登录后的 200 认定业务就绪。镜像构建、真实门户/MySQL 验收、测试部署与生产部署分别记录。
 
 受限内网宿主机可能还需与 Jenkinsfile 一致的线程兼容参数，应按运行环境核对。
 

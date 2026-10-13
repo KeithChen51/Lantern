@@ -4,11 +4,20 @@ services:
     platform: linux/amd64
     env_file:
       - .env.runtime
+    environment:
+      NODE_ENV: production
+      AUTH_MODE: portal
+      AUTH_ALLOW_LOCAL_HTTP: "false"
+      KNOWLEDGE_HUB_ENABLED: "true"
+      KNOWLEDGE_HUB_DRIVER: mysql
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
-      - lighthouse-knowledge:/data
+      # Retain the actual existing volume name on upgrade; do not create an empty replacement.
+      - lighthouse-data:/data
     init: true
     restart: unless-stopped
 volumes:
-  lighthouse-knowledge:
+  lighthouse-data:
+    external: true
+    name: ${LIGHTHOUSE_DATA_VOLUME:?Set LIGHTHOUSE_DATA_VOLUME to the existing or explicitly initialized volume}
