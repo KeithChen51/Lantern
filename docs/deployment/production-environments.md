@@ -150,6 +150,8 @@ bash "$SOURCE/scripts/intranet/environment/environment.sh" restore-verify \
 
 同一命令可验证 existing-test.sh 的 completed 备份；额外先在该备份目录执行 `sha256sum --check --status RECOVERY-SHA256SUMS`，核对旧 compose/额外恢复配置。脚本校验包、拒绝原 project/数据库/目录，准备隔离 MySQL，恢复 SQL/app 文件，比较全部文件摘要及重新 dump 的完整逻辑 SQL；保存原 app.env/control/container-inspect 到新目录下的私密 `recovery`。不执行 migrate、initialize、app启动或公网 callback。目标已经使用过就拒绝，不能以“验证恢复”为由覆盖原环境。
 
+SQL 比较仅允许一种已验证的等价写法：MySQL 恢复后在字符字段的相同 `utf8mb4` 排序规则前补写 `CHARACTER SET utf8mb4`。比较器只在 `CREATE TABLE` 的字符列定义前缀中统一这一写法，保留其余 SQL 字节；行数据、默认值、注释、排序规则、索引或其他结构变化仍会失败。比较器随 `scripts/intranet/environment/` 交付，通过已选定的 tools 镜像断网、只读执行，不要求服务器另装 Node，也不会修改备份。
+
 验证 SQL/文件一致覆盖历史资料、版本、发布、可见性、目录、回收站、授权密文等持久状态，但不替代真实门户解密/登录验收。恢复正式服务需从旧实际环境恢复匹配加密密钥，人工评估 schema 与旧 app 兼容性、处理备份后新增数据，再制定切换；禁止直接覆盖生产或测试。隔离验证完成后，可人工 `compose stop mysql` 保留验证数据；另行决定是否清理。本文和脚本不自动删库、删卷或自动回滚。
 
 ## 必须回传的验收结果

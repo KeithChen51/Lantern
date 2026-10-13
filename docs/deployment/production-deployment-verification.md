@@ -2,6 +2,8 @@
 
 日期：2026-10-13。关联 [Issue #50](https://github.com/KeithChen51/Lantern/issues/50)。本记录是本地实现与验证证据，不代表内网已部署或生产已验收。
 
+后续已将两个 PR 的实际 head 合并，并完成真实 Linux 镜像和 MySQL 验证，见[账号与部署 PR 本机合并验证](pr49-pr51-local-verification.md)。下文保留前一轮记录，其“Docker engine 不可用”和相应待验收项是当时状态，应以新记录区分已补测与仍需内网验证的部分。
+
 ## 源码与依赖
 
 - 部署开发分支 `codex/50-production-deployment`，基于 `origin/dev` 的 `32ecb100c1f57d02d3dfc172e930c4812e88573b`；开发 PR 目标为 dev。
