@@ -33,6 +33,7 @@ export NODE_ENV=production
 printf "Next production build: NODE_ENV=%s\n" "$NODE_ENV"
 npm run build
 node scripts/package-knowledge-cli.mjs
+node scripts/package-intranet-operations.mjs
 cp node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node .next/standalone/node_modules/.prisma/client/
 # Empty directory owned by node when copied into the final image/volume.
 mkdir -p deploy/runtime-data/knowledge
