@@ -81,6 +81,18 @@ describe("guarded deployment orchestration", () => {
     expect(result.status).not.toBe(0); expect(result.stderr).toContain("does not match");
     expect(f.calls().some(x => x.includes("stop") || x.at(-1) === "migrate")).toBe(false);
   }, 30_000);
+  it("rejects a valid but different target database before app stop, backup or migration", () => {
+    const f = fixture();
+    writeFileSync(f.config, readFileSync(f.config, "utf8")
+      .replace("MYSQL_DATABASE=lighthouse_test", "MYSQL_DATABASE=lighthouse_other")
+      .replace("@mysql:3306/lighthouse_test", "@mysql:3306/lighthouse_other"));
+    const result = f.run("upgrade");
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Do not change the existing database connection");
+    expect(result.stderr).not.toContain("private-db-secret");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate" || x.some(y => y.includes("mysqldump")))).toBe(false);
+    expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
+  }, 30_000);
   it("refuses initialization on existing files and refuses shell interpolation", () => {
     const f = fixture(); const result = f.run("initialize");
     expect(result.status).not.toBe(0); expect(result.stderr).toContain("empty MySQL and app");
