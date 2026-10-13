@@ -4,7 +4,7 @@ import type { HubResource, HubStore, HubTransaction, HubVersion, Interaction, Re
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 type ResourceRow = Prisma.HubResourceGetPayload<{ include: { versions: true } }>;
 function resource(row: ResourceRow): HubResource {
-  return { ...row, visibility: row.visibility as HubResource["visibility"], type: row.type as HubResource["type"], tags: row.tags as string[], createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(), versions: row.versions.sort((a, b) => a.number - b.number).map(v => ({ ...v, validity: v.validity as HubVersion["validity"], createdAt: v.createdAt.toISOString(), publishedAt: v.publishedAt?.toISOString() ?? null, effectiveFrom: v.effectiveFrom?.toISOString() ?? null, effectiveTo: v.effectiveTo?.toISOString() ?? null, files: v.files as unknown as HubVersion["files"], citations: v.citations as unknown as HubVersion["citations"] })) };
+  return { ...row, visibility: row.visibility as HubResource["visibility"], type: row.type as HubResource["type"], tags: row.tags as string[], createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(), versions: row.versions.sort((a, b) => a.number - b.number).map(v => ({ ...v, metadata: v.metadata as unknown as HubVersion["metadata"], validity: v.validity as HubVersion["validity"], createdAt: v.createdAt.toISOString(), publishedAt: v.publishedAt?.toISOString() ?? null, effectiveFrom: v.effectiveFrom?.toISOString() ?? null, effectiveTo: v.effectiveTo?.toISOString() ?? null, files: v.files as unknown as HubVersion["files"], citations: v.citations as unknown as HubVersion["citations"] })) };
 }
 function interaction(row: Prisma.HubInteractionGetPayload<object>): Interaction {
   return { ...row, scope: row.scope as Interaction["scope"], consentAt: row.consentAt.toISOString(), receivedAt: row.receivedAt.toISOString(), messages: row.messages as unknown as Interaction["messages"], resourceVersions: row.resourceVersions as string[] };
@@ -21,7 +21,7 @@ export function createPrismaHubTransaction(client: Prisma.TransactionClient): Hu
       const row = { ...data, tags: json(data.tags), createdAt: new Date(data.createdAt), updatedAt: new Date(data.updatedAt) };
       await client.hubResource.upsert({ where: { id: value.id }, create: row, update: row });
       for (const v of versions) {
-        const version = { ...v, resourceId: value.id, createdAt: new Date(v.createdAt), publishedAt: v.publishedAt ? new Date(v.publishedAt) : null, effectiveFrom: v.effectiveFrom ? new Date(v.effectiveFrom) : null, effectiveTo: v.effectiveTo ? new Date(v.effectiveTo) : null, files: json(v.files), citations: json(v.citations) };
+        const version = { ...v, resourceId: value.id, createdAt: new Date(v.createdAt), publishedAt: v.publishedAt ? new Date(v.publishedAt) : null, effectiveFrom: v.effectiveFrom ? new Date(v.effectiveFrom) : null, effectiveTo: v.effectiveTo ? new Date(v.effectiveTo) : null, metadata: v.metadata ? json(v.metadata) : Prisma.DbNull, files: json(v.files), citations: json(v.citations) };
         // Once stored, version content is immutable. Publication is the only update.
         await client.hubVersion.upsert({ where: { id: v.id }, create: version, update: { publishedAt: version.publishedAt } });
       }

@@ -1,7 +1,8 @@
+import { hubJson } from "@/modules/knowledge-hub/http";
+import { requireKnowledgeAdmin, assertWebMutation } from "@/modules/auth/access";
 import { assertKnowledgeManagerStorage } from "@/modules/knowledge-hub/manager-storage";
 import { z } from "zod";
-import { requireAdminPortalFromHeaders, adminJsonError } from "../../../_admin";
-import { AppError } from "@/shared/errors";
+import { adminJsonError } from "../../../_admin";
 import { HubError } from "@/modules/knowledge-hub/service";
 import { importManagedResource } from "@/modules/knowledge-hub/manager";
 import { MAX_UPLOAD_BYTES, markdownInput, readSkillZip, skillInput, type UploadEntry } from "@/modules/knowledge-hub/upload";
@@ -36,15 +37,10 @@ async function limitedForm(request: Request) {
 }
 export async function POST(request: Request) {
   try {
-    requireAdminPortalFromHeaders(request.headers);
+    const principal = await requireKnowledgeAdmin(request, { write: true });
+    assertWebMutation(request, principal);
+    const actor = { userId: principal.userId, account: principal.account, requestId: crypto.randomUUID() };
     assertKnowledgeManagerStorage();
-    const origin = request.headers.get("origin");
-    if (origin) {
-      let parsed: URL;
-      try { parsed = new URL(origin); } catch { throw new AppError("forbidden", "不接受跨站上传。", 403); }
-      const host = request.headers.get("host") || new URL(request.url).host;
-      if (!["http:", "https:"].includes(parsed.protocol) || parsed.host !== host) throw new AppError("forbidden", "不接受跨站上传。", 403);
-    }
     const form = await limitedForm(request);
     const files = form.getAll("files").filter((f): f is File => typeof f !== "string");
     if (!files.length || files.length > 100) throw new HubError("invalid", "请选择 1–100 个文件。");
@@ -64,19 +60,19 @@ export async function POST(request: Request) {
       const name = isZip ? files[0].name.replace(/\.zip$/i, "") : paths[0].includes("/") ? paths[0].split("/")[0] : "Skill";
       const { request: input, excluded } = skillInput(unpacked.entries, name);
       try {
-        const result = await importManagedResource(input, folderId, name, conflict);
-        return Response.json({ results: [result], excluded: [...unpacked.excluded, ...excluded] });
-      } catch (error) { return Response.json({ results: [{ name, ...failure(error) }] }); }
+        const result = await importManagedResource(input, folderId, name, conflict, actor);
+        return hubJson({ results: [result], excluded: [...unpacked.excluded, ...excluded] });
+      } catch (error) { return hubJson({ results: [{ name, ...failure(error) }] }); }
     }
     const results = [];
     for (const entry of entries) {
       const name = entry.path.split("/").at(-1)!;
-      try { results.push({ ...await importManagedResource(markdownInput(entry, type), folderId, name, conflict), path: entry.path }); }
+      try { results.push({ ...await importManagedResource(markdownInput(entry, type), folderId, name, conflict, actor), path: entry.path }); }
       catch (error) { results.push({ name, path: entry.path, ...failure(error) }); }
     }
-    return Response.json({ results });
+    return hubJson({ results });
   } catch (error) {
-    if (error instanceof HubError || error instanceof z.ZodError) return Response.json(failure(error), { status: 400 });
+    if (error instanceof HubError || error instanceof z.ZodError) return hubJson(failure(error), { status: 400 });
     return adminJsonError(error);
   }
 }

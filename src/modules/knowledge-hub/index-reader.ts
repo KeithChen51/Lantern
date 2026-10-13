@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { KnowledgeHub } from "./service";
 import { HubError } from "./service";
 import type { ResourceType } from "./types";
@@ -137,7 +138,7 @@ export type KnowledgeIndexOutline = {
   sectionLimit: number;
   sectionsTotal: number;
   sectionsHasMore: boolean;
-  files: Array<{ path: string; mediaType: string; checksum: string; size: number; isText: boolean }>;
+  files: Array<{ fileId: string; path: string; mediaType: string; checksum: string; size: number; isText: boolean }>;
   fileOffset: number;
   fileLimit: number;
   filesTotal: number;
@@ -154,7 +155,7 @@ export type KnowledgeReadResult = KnowledgeIndexOutline & {
   truncated: boolean;
 };
 
-export type KnowledgeSkillFile = { path: string; mediaType: string; checksum: string; size: number; isText: boolean };
+export type KnowledgeSkillFile = { fileId: string; path: string; mediaType: string; checksum: string; size: number; isText: boolean };
 export type KnowledgeSkillReadResult = KnowledgeSkillFile & {
   resourceId: string;
   versionId: string;
@@ -191,6 +192,12 @@ function isTextFile(mediaType: string, path: string) {
 
 function decodeSize(contentBase64: string) {
   return Buffer.from(contentBase64, "base64").byteLength;
+}
+
+export function knowledgeFileId(path: string) { return createHash("sha256").update(path).digest("hex"); }
+export function knowledgeDownloads(resource: Awaited<ReturnType<KnowledgeHub["get"]>>) {
+  return [{ fileId: "package", label: "Resource package", mediaType: resource.type === "skill" || resource.version.files.length ? "application/zip" : "text/markdown" },
+    { fileId: "markdown", label: "Resource Markdown", mediaType: "text/markdown" }];
 }
 
 function resourceMetadata(resource: Awaited<ReturnType<KnowledgeHub["get"]>>, extra: Partial<KnowledgeIndexResource> = {}): KnowledgeIndexResource {
@@ -240,10 +247,10 @@ function compactMetadata<T extends { summary: string; source: string; tags: stri
   return { ...item, summary: item.summary.slice(0, MAX_INDEX_SUMMARY_CHARS), source: item.source.slice(0, 400), tags: item.tags.slice(0, 20) };
 }
 
-function metadataOnly<T extends { summary: string; source: string; tags: string[]; excerpt?: unknown; citation?: unknown }>(item: T) {
-  const { excerpt: _excerpt, citation: _citation, ...metadata } = item;
-  void _excerpt; void _citation;
-  return compactMetadata(metadata);
+function metadataOnly(item: KnowledgeIndexResource) {
+  return compactMetadata({ id: item.id, title: item.title.slice(0, 200), type: item.type, summary: item.summary,
+    source: item.source, tags: item.tags, visibility: item.visibility, versionId: item.versionId,
+    version: item.version, publishedAt: item.publishedAt, updatedAt: item.updatedAt, validity: item.validity });
 }
 
 /**
@@ -331,7 +338,8 @@ export class KnowledgeIndexReader {
     const childFolders = folders.filter(folder => folder.parentId === input.folderId && visibleFolderIds.has(folder.id)).map(folder => ({ ...folder, path: folderPath(folder.id, folderMap) }));
     const resources = listedResources.filter(resource => (resource.folderId ?? null) === input.folderId && activeFolder(resource.folderId)).map(resource => {
       const metadata = publishedById.get(resource.id)!;
-      return { ...metadataOnly(metadata), name: resource.name, path: [folderPath(resource.folderId, folderMap), resource.name].filter(Boolean).join("/") };
+      const name = resource.latestVersionId === resource.publishedVersionId ? resource.name : metadata.title;
+      return { ...metadataOnly(metadata), name, path: [folderPath(resource.folderId, folderMap), name].filter(Boolean).join("/") };
     });
     const page = paged([...childFolders, ...resources] as Array<typeof childFolders[number] | typeof resources[number]>, input.offset, input.limit);
     return {
@@ -372,6 +380,12 @@ export class KnowledgeIndexReader {
     };
   }
 
+  async get(resourceId: string, versionId?: string) {
+    const resource = await this.hub.get(resourceId, versionId);
+    return { ...compactMetadata(resourceMetadata(resource)), resourceId: resource.id,
+      sectionsTotal: resource.version.citations.length, filesTotal: resource.version.files.length, downloads: knowledgeDownloads(resource) };
+  }
+
   async outline(raw: unknown): Promise<KnowledgeIndexOutline> {
     const input = outlineInputSchema.parse(raw);
     const resource = await this.hub.get(input.resourceId, input.versionId);
@@ -387,12 +401,12 @@ export class KnowledgeIndexReader {
       fileLimit: MAX_OUTLINE_FILES,
     },
   ): KnowledgeIndexOutline {
-    const sections = resource.version.citations.map(({ id, heading, startLine, endLine }) => ({ id, heading, startLine, endLine }));
-    const files = resource.version.files.map(file => ({ path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) }));
+    const sections = resource.version.citations.map(({ id, heading, startLine, endLine }) => ({ id, heading: heading.slice(0, 200), startLine, endLine }));
+    const files = resource.version.files.map(file => ({ fileId: knowledgeFileId(file.path), path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) }));
     const sectionPage = paged(sections, window.sectionOffset, window.sectionLimit);
     const filePage = paged(files, window.fileOffset, window.fileLimit);
     return {
-      ...resourceMetadata(resource),
+      ...compactMetadata(resourceMetadata(resource)),
       resourceId: resource.id,
       publishedAt: resource.version.publishedAt,
       sections: sectionPage.items,
@@ -451,7 +465,7 @@ export class KnowledgeIndexReader {
     const outline = this.outlineResource(resource, { sectionOffset: 0, sectionLimit: MAX_OUTLINE_SECTIONS, fileOffset: 0, fileLimit: 0 });
     const relevantSections = citations
       .filter(citation => citation.endLine >= startLine && citation.startLine <= endLine)
-      .map(({ id, heading, startLine: citationStart, endLine: citationEnd }) => ({ id, heading, startLine: citationStart, endLine: citationEnd }));
+      .map(({ id, heading, startLine: citationStart, endLine: citationEnd }) => ({ id, heading: heading.slice(0, 200), startLine: citationStart, endLine: citationEnd }));
     return {
       ...outline,
       markdown: text,
@@ -469,11 +483,10 @@ export class KnowledgeIndexReader {
     };
   }
 
-  async skillFiles(raw: unknown): Promise<{ resourceId: string; versionId: string; title: string; source: string; files: KnowledgeSkillFile[]; offset: number; limit: number; total: number; hasMore: boolean }> {
+  async skillFiles(raw: unknown): Promise<{ resourceId: string; versionId: string; title: string; source: string; files: KnowledgeSkillFile[]; offset: number; limit: number; total: number; hasMore: boolean; downloads: ReturnType<typeof knowledgeDownloads> }> {
     const input = skillFilesInputSchema.parse(raw);
     const resource = await this.hub.get(input.resourceId, input.versionId);
-    if (resource.type !== "skill") throw new HubError("invalid", "只有 Skill 资源可以读取包内文件。" );
-    const files = resource.version.files.map(file => ({ path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) }));
+    const files = resource.version.files.map(file => ({ fileId: knowledgeFileId(file.path), path: file.path, mediaType: file.mediaType, checksum: file.checksum, size: decodeSize(file.contentBase64), isText: isTextFile(file.mediaType, file.path) }));
     const page = paged(files, input.offset, input.limit);
     return {
       resourceId: resource.id,
@@ -481,6 +494,7 @@ export class KnowledgeIndexReader {
       title: resource.title,
       source: resource.source,
       files: page.items,
+      downloads: knowledgeDownloads(resource),
       offset: page.offset,
       limit: page.limit,
       total: page.total,
@@ -491,18 +505,19 @@ export class KnowledgeIndexReader {
   async skillRead(raw: unknown): Promise<KnowledgeSkillReadResult> {
     const input = skillReadInputSchema.parse(raw);
     const resource = await this.hub.get(input.resourceId, input.versionId);
-    if (resource.type !== "skill") throw new HubError("invalid", "只有 Skill 资源可以读取包内文件。" );
     const file = resource.version.files.find(candidate => candidate.path === input.path);
     if (!file) throw new HubError("not_found", `Skill 文件不存在：${input.path}`);
     const textFile = isTextFile(file.mediaType, file.path);
     if (!textFile) throw new HubError("invalid", "为避免执行或泄露二进制内容，只能读取 Skill 中的文本文件。" );
     const text = Buffer.from(file.contentBase64, "base64").toString("utf8");
-    const value = text.slice(input.offset, input.offset + MAX_SKILL_READ_CHARS);
+    let value = text.slice(input.offset, input.offset + MAX_SKILL_READ_CHARS).split("\n").slice(0, MAX_KNOWLEDGE_READ_LINES).join("\n");
+    if (!value && input.offset < text.length) value = text.slice(input.offset, input.offset + 1);
     return {
       resourceId: resource.id,
       versionId: resource.version.id,
       title: resource.title,
       source: resource.source,
+      fileId: knowledgeFileId(file.path),
       path: file.path,
       mediaType: file.mediaType,
       checksum: file.checksum,

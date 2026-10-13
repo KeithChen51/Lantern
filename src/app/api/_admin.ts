@@ -1,30 +1,17 @@
 import { headers } from "next/headers";
-import { isAdminPortalCookieHeaderAuthorized } from "@/modules/admin";
-import { AppError, toErrorResponse } from "@/shared/errors";
-
-function readCookieHeader(requestHeaders: Headers) {
-  return requestHeaders.get("cookie");
-}
+import { requireKnowledgeAdmin, authErrorResponse } from "@/modules/auth/access";
+import { AppError } from "@/shared/errors";
 
 export function assertDatabaseConfigured() {
-  if (!process.env.DATABASE_URL) {
-    throw new AppError("bad_request", "数据库尚未配置，暂时无法使用管理后台。", 503);
-  }
+  if (!process.env.DATABASE_URL) throw new AppError("bad_request", "数据库尚未配置。", 503);
 }
-
-export function requireAdminPortalFromHeaders(requestHeaders: Headers) {
-  if (!isAdminPortalCookieHeaderAuthorized(readCookieHeader(requestHeaders))) {
-    throw new AppError("forbidden", "请输入管理密码后再访问后台。", 403);
-  }
+// Legacy callers must await this guard. Knowledge administration is the only supported admin capability.
+export async function requireAdminPortalFromHeaders(requestHeaders: Headers) {
+  return requireKnowledgeAdmin(requestHeaders);
 }
-
 export async function requireAdminPortal() {
   const requestHeaders = await headers();
-  requireAdminPortalFromHeaders(requestHeaders);
+  await requireAdminPortalFromHeaders(requestHeaders);
   return requestHeaders;
 }
-
-export function adminJsonError(error: unknown) {
-  const response = toErrorResponse(error);
-  return Response.json(response.body, { status: response.status });
-}
+export function adminJsonError(error: unknown) { return authErrorResponse(error); }

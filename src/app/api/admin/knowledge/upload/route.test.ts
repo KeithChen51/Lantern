@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ authorize: vi.fn(), importResource: vi.fn() }));
-vi.mock("../../../_admin", () => ({ requireAdminPortalFromHeaders: mocks.authorize, adminJsonError: () => Response.json({ error: "Forbidden" }, { status: 403 }) }));
+vi.mock("@/modules/auth/access", () => ({ requireKnowledgeAdmin: mocks.authorize, assertWebMutation: (request: Request) => { if (request.headers.get("origin") !== "http://localhost:3301") throw new Error("Forbidden"); }, authErrorResponse: () => Response.json({ error: "Forbidden" }, { status: 403 }) }));
 vi.mock("@/modules/knowledge-hub/manager", () => ({ importManagedResource: mocks.importResource }));
 import { POST } from "./route";
 import { HubError } from "@/modules/knowledge-hub/service";
@@ -11,7 +11,7 @@ function request(files = [new File(["# 资料\n\n正文"], "doc.md")]) {
   files.forEach(file => data.append("files", file));
   return new Request(url, { method: "POST", body: data, headers: { origin: "http://localhost:3301" } });
 }
-beforeEach(() => { vi.clearAllMocks(); mocks.authorize.mockImplementation(() => {}); mocks.importResource.mockImplementation(async (_input, _folder, name) => ({ name, resourceId: "id", versionId: "v1" })); });
+beforeEach(() => { vi.clearAllMocks(); mocks.authorize.mockImplementation(async () => ({ userId: "employee", account: "employee" })); mocks.importResource.mockImplementation(async (_input, _folder, name) => ({ name, resourceId: "id", versionId: "v1" })); });
 describe("admin knowledge upload boundary", () => {
   it("rejects unauthorized requests before importing", async () => {
     mocks.authorize.mockImplementation(() => { throw new Error("Forbidden"); });

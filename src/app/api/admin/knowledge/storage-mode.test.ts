@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../_admin", async importOriginal => ({
-  ...await importOriginal<typeof import("../../_admin")>(),
-  requireAdminPortalFromHeaders: vi.fn(),
-}));
+vi.mock("@/modules/auth/access", () => ({ requireKnowledgeAdmin: vi.fn(async () => ({ userId: "employee" })), assertWebMutation: vi.fn(), authErrorResponse: (error: { status: number; message: string }) => Response.json({ error: error.message }, { status: error.status ?? 503 }) }));
 
 import { GET, POST } from "./route";
 import { GET as preview } from "./[id]/route";

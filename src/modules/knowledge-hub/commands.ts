@@ -1,3 +1,4 @@
+/** Direct-storage operations only. Never expose this command set to employee client transports. */
 import { z } from "zod";
 import { importSchema, interactionSchema, searchSchema, type KnowledgeHub } from "./service";
 
@@ -21,7 +22,7 @@ export async function executeCommand(hub: KnowledgeHub, command: Command, input:
     case "search": return hub.search(commands.search.schema.parse(input));
     case "get": { const x = commands.get.schema.parse(input); return hub.get(x.id, x.versionId); }
     case "preview": { const x = commands.preview.schema.parse(input); return hub.get(x.id, x.versionId, true); }
-    case "history": return hub.history(commands.history.schema.parse(input).id);
+    case "history": return hub.history(commands.history.schema.parse(input).id, true);
     case "import": return hub.import(input);
     case "publish": { const x = commands.publish.schema.parse(input); return hub.publish(x.id, x.versionId); }
     case "archive": return hub.archive(commands.archive.schema.parse(input).id);

@@ -1,0 +1,6 @@
+import { clientResourceGet } from "@/modules/knowledge-hub/client-http";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  return clientResourceGet(request, "read", context);
+}

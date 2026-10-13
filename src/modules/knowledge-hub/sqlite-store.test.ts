@@ -90,7 +90,7 @@ describe.skipIf(!builtin?.call(process, "node:sqlite"))("SQLite knowledge persis
     const b = new KnowledgeHub(open(path));
     const results = await Promise.all([a.import(input), b.import(input), a.import(input)]);
     expect(new Set(results.map(result => result.versionId)).size).toBe(1);
-    expect(await b.history(input.id)).toHaveLength(1);
+    expect(await b.history(input.id, true)).toHaveLength(1);
   });
 
   it("preserves interaction consent, provenance and version relations across connections", async () => {

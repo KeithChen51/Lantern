@@ -1,3 +1,4 @@
+/** Operations-only direct-storage MCP. Employee MCP uses packages/lighthouse-client HTTP transport. */
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { commands, executeCommand, type Command } from "./commands";
