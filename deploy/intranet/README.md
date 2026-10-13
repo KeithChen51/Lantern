@@ -18,8 +18,8 @@
 
 | 任务 | 参数 | 产物标签 |
 | --- | --- | --- |
-| 测试构建 | `dev`（默认） | `dev-<12 位提交号>`；兼容别名 `dev` |
-| 生产构建 | `master` | `master-<12 位提交号>`；别名 `master` |
+| 测试构建 | `dev`（默认） | `dev-<12 位提交号>-<构建批次号>`；兼容别名 `dev` |
+| 生产构建 | `master` | `master-<12 位提交号>-<构建批次号>`；别名 `master` |
 
 提交 SHA 或 MR ref 只是触发信息。检出的 HEAD 必须等于该任务实际拉取的 `origin/dev` 或 `origin/master`；配置错误会拒绝发布。SCM 回退 `checkout scm` 时也必须选对应分支。
 
@@ -31,13 +31,15 @@
 | `NPM_REGISTRY` | 内网 npm 镜像源；仅构建期安装依赖 |
 | `REG_HOST` / `REG_PROJECT` / `REG_REPO` | 内部镜像仓库位置；沿用现有默认值 |
 
-应用仓库名为 `lighthouse`，运维仓库名为 `lighthouse-tools`。两个镜像的 OCI `revision` 标签为完整 Git SHA，`version` 为 package.json 版本。已有提交标签若对应不同镜像 ID，流水线拒绝覆盖；镜像仓库也应启用不可变提交标签策略。别名可以更新，部署记录应固定 `build-manifest.json` 中的 `repository@sha256:...`。
+应用仓库名为 `lighthouse`，运维仓库名为 `lighthouse-tools`。两个镜像的 OCI `revision` 标签为完整 Git SHA，`version` 为 package.json 版本。`BUILD_NUMBER` 必须为正整数，同一提交重跑使用新批次标签，前一批次部分推送失败不会占用后一批次的标签。已有批次标签一律拒绝覆盖，无法确认远端不存在时也停止发布；镜像仓库也应启用不可变批次标签策略。别名可以更新，部署记录应固定 `build-manifest.json` 中的 `repository@sha256:...`。同一分支使用一个固定构建任务；新建/重置任务编号时需确保不复用已有批次标签。
 
-`build-manifest.json` 归档分支、完整提交、应用版本、应用与运维镜像标签及实际推送的仓库摘要；`build-image.txt` 保留两个摘要。它们证明构建身份，业务联调仍需在目标环境完成。
+`build-manifest.json` 归档分支、构建批次号、完整提交、应用版本、应用与运维镜像标签及实际推送的仓库摘要；`build-image.txt` 保留两个摘要。它们证明构建身份，业务联调仍需在目标环境完成。
 
 ## 构建与离线验证
 
 构建容器运行 npm ci --ignore-scripts --include=dev、离线 Prisma 生成、真实 DSH smoke、项目 build 与知识 CLI 打包。不要改成 npm install 或在内网修改锁文件。
+
+Git 检出及提交核对发生在 Jenkins 宿主。打包器要求传入已核对的完整 `BUILD_REVISION`，不在 Node slim 容器中调用 Git；缺失或格式错误会停止打包。
 
 应用 Dockerfile 只组装 standalone、CLI 和系统依赖。运维镜像单独携带本次 CI 安装的 Linux 依赖、Prisma 6.19.3 CLI、生成客户端、随包 query/schema 引擎、schema/migrations 和初始化内容。运维镜像仅用于受控服务器操作，不提供给员工终端。镜像运行时不安装依赖、不下载 Prisma 引擎。
 

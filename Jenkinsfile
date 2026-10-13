@@ -10,6 +10,7 @@ pipeline {
           env.IMAGES_PUBLISHED = 'false'
           env.LIGHTHOUSE_BUILD_BRANCH = (env.LIGHTHOUSE_BUILD_BRANCH ?: 'dev').trim()
           if (!(env.LIGHTHOUSE_BUILD_BRANCH in ['dev', 'master'])) { error('LIGHTHOUSE_BUILD_BRANCH must be dev or master') }
+          if (!(env.BUILD_NUMBER ==~ /[1-9][0-9]*/)) { error('BUILD_NUMBER must be a positive integer') }
           // Trigger SHAs/MR refs describe the event, not the selected source branch.
           if (env.GIT_REPO_URL && env.CREDENTIALS_ID) {
             checkout([$class: 'GitSCM', branches: [[name: '*/' + env.LIGHTHOUSE_BUILD_BRANCH]], userRemoteConfigs: [[url: env.GIT_REPO_URL, credentialsId: env.CREDENTIALS_ID]]])
@@ -21,6 +22,7 @@ pipeline {
             rm -f build-image.txt build-manifest.json
             # BEGIN CHECKOUT GUARD (also exercised against temporary Git repositories)
             case "$LIGHTHOUSE_BUILD_BRANCH" in dev|master) ;; *) echo 'Invalid configured build branch'; exit 1 ;; esac
+            case "$BUILD_NUMBER" in ''|*[!0-9]*|0*) echo 'Invalid build number'; exit 1 ;; esac
             target_head=$(git rev-parse --verify "refs/remotes/origin/$LIGHTHOUSE_BUILD_BRANCH")
             actual_head=$(git rev-parse HEAD)
             if [ "$actual_head" != "$target_head" ]; then
@@ -39,7 +41,7 @@ pipeline {
           env.TOOLS_IMAGE_REPO = "${env.IMAGE_REPO}-tools"
           env.BUILD_REVISION = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
           env.BUILD_SHA = env.BUILD_REVISION.take(12)
-          env.IMAGE_TAG = "${env.LIGHTHOUSE_BUILD_BRANCH}-${env.BUILD_SHA}"
+          env.IMAGE_TAG = "${env.LIGHTHOUSE_BUILD_BRANCH}-${env.BUILD_SHA}-${env.BUILD_NUMBER}"
           env.DOCKER_CONFIG = "${pwd(tmp: true)}/docker-config-${env.BUILD_NUMBER}"
           if (!env.CODING_DOCKER_CREDENTIAL_ID) { error('Missing CODING_DOCKER_CREDENTIAL_ID username/password credential ID') }
         }
@@ -109,15 +111,17 @@ pipeline {
           set -eu
           publish_immutable() {
             image=$1
-            built_id=$(docker image inspect "$image" --format '{{.Id}}')
-            if docker pull "$image" > /dev/null 2>&1; then
-              remote_id=$(docker image inspect "$image" --format '{{.Id}}')
-              if [ "$remote_id" != "$built_id" ]; then
-                echo "Refusing to replace existing immutable image: $image"
-                exit 1
-              fi
+            if remote_manifest=$(docker manifest inspect "$image" 2>&1); then
+              echo "Refusing to replace existing immutable image: $image"
+              exit 1
+            else
+              # Accept only Docker's explicit not-found response for this exact tag.
+              # Auth, transport, registry or unsupported-command errors are not absence.
+              case "$remote_manifest" in
+                "no such manifest: $image") ;;
+                *) echo "Cannot verify remote tag absence; refusing to publish: $image"; exit 1 ;;
+              esac
             fi
-            docker tag "$built_id" "$image"
             docker push "$image"
           }
           publish_immutable "$IMAGE_REPO:$IMAGE_TAG"
@@ -137,8 +141,8 @@ pipeline {
             [ ${#hash} -eq 64 ]
             case "$hash" in *[!0-9a-f]*) exit 1 ;; esac
           done
-          printf '{"schemaVersion":1,"branch":"%s","revision":"%s","version":"%s","application":{"tag":"%s","digest":"%s"},"operations":{"tag":"%s","digest":"%s"}}\n' \
-            "$LIGHTHOUSE_BUILD_BRANCH" "$BUILD_REVISION" "$APP_VERSION" \
+          printf '{"schemaVersion":1,"branch":"%s","buildNumber":%s,"revision":"%s","version":"%s","application":{"tag":"%s","digest":"%s"},"operations":{"tag":"%s","digest":"%s"}}\n' \
+            "$LIGHTHOUSE_BUILD_BRANCH" "$BUILD_NUMBER" "$BUILD_REVISION" "$APP_VERSION" \
             "$IMAGE_REPO:$IMAGE_TAG" "$app_digest" "$TOOLS_IMAGE_REPO:$IMAGE_TAG" "$tools_digest" > build-manifest.json
           docker tag "$IMAGE_REPO:$IMAGE_TAG" "$IMAGE_REPO:$LIGHTHOUSE_BUILD_BRANCH"
           docker tag "$TOOLS_IMAGE_REPO:$IMAGE_TAG" "$TOOLS_IMAGE_REPO:$LIGHTHOUSE_BUILD_BRANCH"
