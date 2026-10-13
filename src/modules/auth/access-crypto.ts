@@ -41,7 +41,8 @@ export function safeReturnTo(value: unknown): string {
     }
     if (/%[0-9a-f]{2}/i.test(decoded) || /[\\\u0000-\u0020\u007f]/.test(decoded) || decoded.startsWith("//")) return "/";
     const parsed = new URL(decoded, "https://return.invalid");
-    if (parsed.origin !== "https://return.invalid" || /^\/(?:api|auth|login)(?:\/|$)/i.test(parsed.pathname)) return "/";
+    if (parsed.origin !== "https://return.invalid" || /^\/(?:api|login)(?:\/|$)/i.test(parsed.pathname)) return "/";
+    if (/^\/auth(?:\/|$)/i.test(parsed.pathname) && !["/auth/device", "/auth/tools"].includes(parsed.pathname)) return "/";
     return value;
   } catch { return "/"; }
 }

@@ -18,6 +18,17 @@ function dbFixture() {
 }
 
 describe("transactional AccessStore", () => {
+  it("filters revoked records before enumeration limits, preserving logout after churn", async () => {
+    const store = new MemoryAccessStore();
+    await store.transaction(async tx => {
+      for (let i = 0; i < 1001; i++) await tx.put({ ...row, kind: "session", id: `session:${i}`, payload: { grantId: "grant", csrfToken: "fixture", active: false, lastUsedAt: 1 } });
+      await tx.put({ ...row, kind: "session", id: "session:live", payload: { grantId: "grant", csrfToken: "fixture", active: true, lastUsedAt: 1 } });
+    });
+    expect(await store.transaction(tx => tx.find("session", { subjectId: "owner", activeOnly: true }))).toHaveLength(1);
+    const f = dbFixture();
+    await f.store.transaction(tx => tx.find("session", { parentId: "grant", activeOnly: true }));
+    expect(f.db.accessRecord.findMany).toHaveBeenCalledWith({ where: { kind: "session", parentId: "grant", payload: { path: "$.active", equals: true } }, take: 1001 });
+  });
   it("serializes concurrent memory mutations and rolls back thrown callbacks", async () => {
     const store = new MemoryAccessStore(); await store.transaction(async (tx) => tx.put(row));
     await Promise.all(Array.from({ length: 20 }, () => store.transaction(async (tx) => { const current = await tx.get("bucket", row.id); current!.payload.count++; await tx.put(current!); })));

@@ -12,9 +12,8 @@ function noStore<T extends Response>(response: T): T {
 
 export async function proxy(request: NextRequest) {
   const path = normalizeAccessPath(request.nextUrl.pathname);
-  // NextURL resolves /_next/data/<build>/<page>.json to its page pathname.
-  // Classify the original URL as well so data remains an asset, not an HTML
-  // redirect and never an accidentally public login payload.
+  // Classify the raw URL where available. The production adapter may normalize
+  // /_next/data to its page first; that path still passes the employee gate.
   const kind = classifyAccessPath(new URL(request.url).pathname, request.nextUrl.searchParams.get("url"));
   if (kind === "invalid") return noStore(new NextResponse("无效的请求路径。", { status: 400 }));
   const forwarded = new Headers(request.headers);
@@ -36,6 +35,9 @@ export async function proxy(request: NextRequest) {
     return noStore(NextResponse.next({ request: { headers: forwarded } }));
   } catch (error) {
     const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 503;
+    // Next's production adapter strips flight headers and _rsc from some
+    // requests. Those receive the same no-store login redirect as navigation;
+    // both paths deny access before rendering any business payload.
     if (status === 401 && kind === "page" && !request.headers.has("rsc")) {
       const target = new URL("/login", readAccessConfig().origin);
       target.searchParams.set("returnTo", `${request.nextUrl.pathname}${request.nextUrl.search}`);

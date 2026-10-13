@@ -111,7 +111,7 @@ export class AccessService {
     });
   }
   private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: { roles: string[]; at: number } | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
-    const grants = await tx.find("grant", { subjectId: identity.account, expiresAfter: this.now() });
+    const grants = await tx.find("grant", { subjectId: identity.account, expiresAfter: this.now(), activeOnly: true });
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
     const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
@@ -196,13 +196,13 @@ export class AccessService {
   async logout(principal: Principal, all = false): Promise<void> {
     await this.store.transaction(async (tx) => {
       await this.authorizeWeb(tx, principal);
-      const grants = all ? await tx.find("grant", { subjectId: principal.account, expiresAfter: this.now() }) : [await this.activeGrant(tx, principal.grantId)];
-      for (const grant of grants) { grant.payload.active = false; await this.save(tx, grant); for (const session of await tx.find("session", { parentId: grant.id, expiresAfter: this.now() })) { session.payload.active = false; await this.save(tx, session); for (const device of await tx.find("device", { parentId: session.id, expiresAfter: this.now() })) { device.payload.status = "revoked"; await this.save(tx, device); } } for (const client of await tx.find("client", { parentId: grant.id, expiresAfter: this.now() })) { client.payload.active = false; await this.save(tx, client); } }
+      const grants = all ? await tx.find("grant", { subjectId: principal.account, expiresAfter: this.now(), activeOnly: true }) : [await this.activeGrant(tx, principal.grantId)];
+      for (const grant of grants) { grant.payload.active = false; await this.save(tx, grant); for (const session of await tx.find("session", { parentId: grant.id, expiresAfter: this.now(), activeOnly: true })) { session.payload.active = false; await this.save(tx, session); for (const device of await tx.find("device", { parentId: session.id, expiresAfter: this.now() })) { device.payload.status = "revoked"; await this.save(tx, device); } } for (const client of await tx.find("client", { parentId: grant.id, expiresAfter: this.now(), activeOnly: true })) { client.payload.active = false; await this.save(tx, client); } }
       await this.audit(tx, all ? "logout-all" : "logout", principal.account, principal.credentialId);
     });
   }
   async listClients(principal: Principal): Promise<ClientView[]> {
-    return this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); const clients = await tx.find("client", { subjectId: principal.account, expiresAfter: this.now() }); const items: ClientView[] = []; for (const client of clients) { const grant = await tx.get("grant", client.payload.grantId); if (client.payload.active && !expired(client, this.now()) && grant?.payload.active && !expired(grant, this.now())) items.push({ id: client.id, name: client.payload.name, createdAt: client.createdAt, lastUsedAt: client.payload.lastUsedAt, expiresAt: Math.min(client.expiresAt, grant.expiresAt) }); } return items; });
+    return this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); const clients = await tx.find("client", { subjectId: principal.account, expiresAfter: this.now(), activeOnly: true }); const items: ClientView[] = []; for (const client of clients) { const grant = await tx.get("grant", client.payload.grantId); if (client.payload.active && !expired(client, this.now()) && grant?.payload.active && !expired(grant, this.now())) items.push({ id: client.id, name: client.payload.name, createdAt: client.createdAt, lastUsedAt: client.payload.lastUsedAt, expiresAt: Math.min(client.expiresAt, grant.expiresAt) }); } return items; });
   }
   async revokeClient(principal: Principal, id: string): Promise<void> {
     await this.store.transaction(async (tx) => { if (principal.channel === "web") await this.authorizeWeb(tx, principal); else { if (principal.credentialId !== id) throw new AccessError("Client ownership required", 403); await this.activeGrant(tx, principal.grantId); } const client = await tx.get("client", id); if (!client || client.subjectId !== principal.account) throw new AccessError("Client ownership required", 403); client.payload.active = false; await this.save(tx, client); await this.audit(tx, "client-revoke", principal.account, id); });
@@ -273,7 +273,7 @@ export class AccessService {
       if (device.payload.status === "pending") { await this.save(tx, device); return new OAuthError("authorization_pending"); }
       const grant = await this.deviceParent(tx, device), expiresAt = Math.min(now + this.duration(this.config.clientMs, 8 * HOUR), grant.expiresAt);
       if (now - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
-      const clients = await tx.find("client", { subjectId: grant.payload.account, expiresAfter: this.now() });
+      const clients = await tx.find("client", { subjectId: grant.payload.account, expiresAfter: this.now(), activeOnly: true });
       if (clients.filter((client) => client.payload.active && !expired(client, now)).length >= 50) return new OAuthError("access_denied");
       const client = this.record("client", clientRecordId, grant.payload.account, grant.id, { grantId: grant.id, sessionId: device.payload.approvedSessionId!, name: device.payload.name, active: true, currentRefreshHash: hashToken(refreshToken), lastUsedAt: now }, expiresAt);
       device.payload.status = "exchanged"; await this.save(tx, device); await tx.put(client);

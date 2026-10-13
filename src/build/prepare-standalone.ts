@@ -1,6 +1,16 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+function assertNoEnvironmentFiles(directory: string) {
+  if (!fs.existsSync(directory)) return;
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === ".env" || entry.name.startsWith(".env.")) {
+      throw new Error("Environment files must be injected at deployment time, not packaged in standalone assets.");
+    }
+    if (entry.isDirectory() && entry.name !== "node_modules") assertNoEnvironmentFiles(path.join(directory, entry.name));
+  }
+}
+
 function copyDirectory(source: string, destination: string) {
   if (!fs.existsSync(source)) return false;
 
@@ -33,6 +43,10 @@ export function copyStandaloneAssets(projectRoot = process.cwd()) {
   if (!fs.existsSync(standaloneServer)) {
     throw new Error("Next standalone server output was not found. Run next build with output: \"standalone\" first.");
   }
+
+  assertNoEnvironmentFiles(standaloneDir);
+  assertNoEnvironmentFiles(path.join(projectRoot, "public"));
+  assertNoEnvironmentFiles(path.join(projectRoot, "runtime", "hermit-dsh"));
 
   const staticSource = path.join(projectRoot, ".next", "static");
   const staticDestination = path.join(standaloneDir, ".next", "static");

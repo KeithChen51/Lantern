@@ -7,7 +7,7 @@ export type WebSession = {
 
 export class AuthRequestError extends Error {
   constructor(public readonly status: number) {
-    super(status === 401 ? "登录已失效，请重新登录。" : status === 403 ? "没有执行此操作的权限，请刷新页面或联系管理员。" : "统一登录服务暂不可用，请稍后重试。");
+    super(status === 401 ? "登录已失效，请重新登录。" : status === 403 ? "没有执行此操作的权限，请刷新页面或联系管理员。" : "服务暂不可用，请稍后重试。");
   }
 }
 

@@ -31,7 +31,10 @@
     "package:hermit-runtime": "node scripts/package-hermit-runtime.mjs",
     "check:hermit-runtime": "tsx scripts/check-hermit-runtime.ts",
     "test:hermit-runtime": "tsx scripts/hermit-dsh-smoke.ts",
-    "check:fonts": "node scripts/check-fonts.mjs"
+    "check:fonts": "node scripts/check-fonts.mjs",
+    "lighthouse": "node packages/lighthouse-client/src/cli.js",
+    "test:client": "npm test --prefix packages/lighthouse-client",
+    "auth:prune": "tsx scripts/auth-prune.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -21,7 +21,7 @@ export type AccessRecord<K extends AccessKind = AccessKind> = {
   payload: AccessPayloads[K]; expiresAt: number; createdAt: number; updatedAt: number;
 };
 export type EmployeeShadow = { id: string; account: string; displayName: string; active: boolean; employee: boolean; conflicting?: boolean };
-type IndexedQuery = { subjectId?: string; parentId?: string; expiresAfter?: number };
+type IndexedQuery = { subjectId?: string; parentId?: string; expiresAfter?: number; activeOnly?: boolean };
 export interface AccessTransaction {
   get<K extends AccessKind>(kind: K, id: string): Promise<AccessRecord<K> | null>;
   put<K extends AccessKind>(record: AccessRecord<K>): Promise<void>;
@@ -60,7 +60,7 @@ export class MemoryAccessStore implements AccessStore {
       put: async (record) => { records.set(record.id, structuredClone(record)); },
       find: async <K extends AccessKind>(kind: K, query: IndexedQuery) => {
         if (query.subjectId === undefined && query.parentId === undefined) throw new Error("Indexed query required");
-        const found = [...records.values()].filter((row) => row.kind === kind && (query.subjectId === undefined || row.subjectId === query.subjectId) && (query.parentId === undefined || row.parentId === query.parentId) && (query.expiresAfter === undefined || row.expiresAt > query.expiresAfter));
+        const found = [...records.values()].filter((row) => row.kind === kind && (query.subjectId === undefined || row.subjectId === query.subjectId) && (query.parentId === undefined || row.parentId === query.parentId) && (query.expiresAfter === undefined || row.expiresAt > query.expiresAfter) && (!query.activeOnly || ("active" in row.payload && row.payload.active)));
         if (found.length > ENUMERATION_LIMIT) throw new AccessError("Too many active authorization records", 503);
         return structuredClone(found) as AccessRecord<K>[];
       },
@@ -83,7 +83,7 @@ type DbRecord = { id: string; kind: string; subjectId: string; parentId: string 
 // Structural delegate keeps this additive change compilable before the controller regenerates Prisma.
 type RecordDelegate = {
   findUnique(args: { where: { id: string } }): Promise<DbRecord | null>;
-  findMany(args: { where: { kind: string; subjectId?: string; parentId?: string; expiresAt?: { gt: Date } }; take: number }): Promise<DbRecord[]>;
+  findMany(args: { where: { kind: string; subjectId?: string; parentId?: string; expiresAt?: { gt: Date }; payload?: { path: string; equals: boolean } }; take: number }): Promise<DbRecord[]>;
   upsert(args: { where: { id: string }; create: Omit<DbRecord, "payload"> & { payload: Prisma.InputJsonValue }; update: Omit<DbRecord, "payload"> & { payload: Prisma.InputJsonValue } }): Promise<unknown>;
 };
 function deserialize<K extends AccessKind>(row: DbRecord): AccessRecord<K> {
@@ -105,8 +105,8 @@ export class PrismaAccessStore implements AccessStore {
             },
             find: async <K extends AccessKind>(kind: K, query: IndexedQuery) => {
               if (query.subjectId === undefined && query.parentId === undefined) throw new Error("Indexed query required");
-              const { expiresAfter, ...index } = query;
-              const rows = await records.findMany({ where: { kind, ...index, ...(expiresAfter === undefined ? {} : { expiresAt: { gt: new Date(expiresAfter) } }) }, take: ENUMERATION_LIMIT + 1 });
+              const { expiresAfter, activeOnly, ...index } = query;
+              const rows = await records.findMany({ where: { kind, ...index, ...(expiresAfter === undefined ? {} : { expiresAt: { gt: new Date(expiresAfter) } }), ...(activeOnly ? { payload: { path: "$.active", equals: true } } : {}) }, take: ENUMERATION_LIMIT + 1 });
               if (rows.length > ENUMERATION_LIMIT) throw new AccessError("Too many authorization records", 503);
               return rows.map((row) => deserialize<K>(row));
             },
