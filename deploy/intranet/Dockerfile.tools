@@ -1,0 +1,18 @@
+ARG NODE_IMAGE=ipd-docker.pkg.coding.byd.com/aftersales_ai/base/node:24.18.0-slim
+FROM ${NODE_IMAGE}
+ARG SOURCE_REVISION
+ARG APP_VERSION
+LABEL org.opencontainers.image.revision="${SOURCE_REVISION}" org.opencontainers.image.version="${APP_VERSION}"
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 KNOWLEDGE_HUB_DRIVER=mysql
+ENV LD_LIBRARY_PATH=/opt/lighthouse-system/lib PATH="/opt/lighthouse-system/bin:${PATH}"
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/app/engines/schema-engine PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
+COPY system/ /opt/lighthouse-system/
+COPY --chown=node:node operations.cjs package.json build-manifest.json ./
+COPY --chown=node:node engines/ ./engines/
+COPY --chown=node:node node_modules/ ./node_modules/
+COPY --chown=node:node prisma/ ./prisma/
+COPY --chown=node:node knowledge-cli/ ./knowledge-cli/
+USER node
+ENTRYPOINT ["node", "/app/operations.cjs"]
+CMD ["help"]
