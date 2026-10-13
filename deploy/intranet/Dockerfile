@@ -1,5 +1,8 @@
 ARG NODE_IMAGE=ipd-docker.pkg.coding.byd.com/aftersales_ai/base/node:24.18.0-slim
 FROM ${NODE_IMAGE}
+ARG SOURCE_REVISION
+ARG APP_VERSION
+LABEL org.opencontainers.image.revision="${SOURCE_REVISION}" org.opencontainers.image.version="${APP_VERSION}"
 WORKDIR /app
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1
 ENV LD_LIBRARY_PATH=/opt/lantern-system/lib

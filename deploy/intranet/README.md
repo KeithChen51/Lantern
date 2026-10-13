@@ -1,76 +1,63 @@
-# 上传 Gitee dev 后由流水线构建
+# 内网测试先行、生产独立构建
 
-关联：GitHub Issue #22。本次整合 PR #19 的运行包与当前 dev 的知识管理、标准化 Skill 和版本通知。流水线仍只发布 dev 测试镜像；合入 main 不自动部署生产。
+关联 Issue #50。应用和运维镜像从同一个提交构建，生产与测试分别保留自己的数据库、上传目录和配置。初始化与升级是独立操作。
 
-## 交付步骤
+## 部署顺序
 
-1. 在内网 Gitee 仓库的 dev 工作副本中，将本包根目录内容复制到仓库根目录（Jenkinsfile 与 package.json 同级），检查差异后提交到 dev。不要把压缩包本身作为源码上传，不要把它套在 source/ 等新目录下。
-2. 务必提交整个 deploy/offline/：包含 Linux DSH、Prisma 引擎和 OpenSSL。本包没有 .git，不改变仓库 remote；不要替换内网凭证和已有运行环境文件。
-3. 现有流水线源码分支选 dev，流水线定义改为“仓库内 Jenkinsfile”，路径 Jenkinsfile。如果平台当前保存的是界面内流水线脚本，需要让它读取仓库文件，否则本次 Jenkinsfile 不会生效。
-4. 保留现有代码与镜像仓库凭证，确认下表参数，再运行流水线。成功后产生 :dev 和 :dev-<提交号> 镜像；失败把流水线日志带回本机处理。
+1. 本机完成开发、验证并形成 main 交付包后，更新内网代码平台的 dev 分支。
+2. dev 流水线构建应用及运维镜像，在现有 HTTP 内网 IP 测试入口部署、联调。账号模块必须使用其约定的 test HTTP 配置。
+3. 测试通过后，内网提交 dev → master 的 PR。master 流水线重新构建生产用镜像，归档该次构建的提交、版本和两个镜像摘要。
+4. 首次生产部署显式执行迁移、预览与空库初始化，再通过正式 HTTPS 入口联调。
+5. 后续功能仍先在 dev 测试，通过 PR 到 master 后构建生产镜像；生产升级只执行必要迁移，保留已有知识、版本、附件、目录与删除状态。
 
-| 参数 | 配置 |
+本机 main 与内网 master 是不同仓库的交付/生产基线。流水线不部署容器，不迁移数据库，不运行 demo seed，也不自动导入知识。环境脚本与验收步骤见 [生产与测试部署](../../docs/deployment/production-environments.md)。
+
+## 两个流水线任务共用根目录 Jenkinsfile
+
+分别配置源码分支及 `LIGHTHOUSE_BUILD_BRANCH`：
+
+| 任务 | 参数 | 产物标签 |
+| --- | --- | --- |
+| 测试构建 | `dev`（默认） | `dev-<12 位提交号>`；兼容别名 `dev` |
+| 生产构建 | `master` | `master-<12 位提交号>`；别名 `master` |
+
+提交 SHA 或 MR ref 只是触发信息。检出的 HEAD 必须等于该任务实际拉取的 `origin/dev` 或 `origin/master`；配置错误会拒绝发布。SCM 回退 `checkout scm` 时也必须选对应分支。
+
+| 参数 | 用途 |
 | --- | --- |
-| GIT_BUILD_REF | dev（可用 refs/heads/dev），或 CODING 传入的完整提交 SHA；其他分支名拒绝 |
-| GIT_REPO_URL / CREDENTIALS_ID | 现有内网 Gitee 地址和代码凭证；多分支流水线也支持 checkout scm |
-| CODING_DOCKER_CREDENTIAL_ID | 现有镜像仓库用户名/密码凭证 ID；必须有拉取 base、推送应用权限 |
-| NODE_IMAGE | 默认 ipd-docker.pkg.coding.byd.com/aftersales_ai/base/node:24.18.0-slim |
-| NPM_REGISTRY | 默认 http://hub.byd.com:9081/repository/npm-npmmirror/ |
-| REG_HOST / REG_PROJECT / REG_REPO | 默认 ipd-docker.pkg.coding.byd.com / aftersales_ai / aftersales_ai |
+| `GIT_REPO_URL` / `CREDENTIALS_ID` | 内网仓库 URL 与原代码凭证；也可使用任务 SCM 配置 |
+| `CODING_DOCKER_CREDENTIAL_ID` | 现有镜像仓库用户名/密码凭证 ID |
+| `NODE_IMAGE` | 已验证的内部 Node 24 Linux x64 基础镜像，建议配置固定摘要 |
+| `NPM_REGISTRY` | 内网 npm 镜像源；仅构建期安装依赖 |
+| `REG_HOST` / `REG_PROJECT` / `REG_REPO` | 内部镜像仓库位置；沿用现有默认值 |
 
-镜像目标：`ipd-docker.pkg.coding.byd.com/aftersales_ai/aftersales_ai/lighthouse:dev`。
-不使用 DOCKER_IMAGE_VERSION 覆盖，避免测试流程误覆盖生产标签。不推送 latest、不部署容器、不迁移数据库。
+应用仓库名为 `lighthouse`，运维仓库名为 `lighthouse-tools`。两个镜像的 OCI `revision` 标签为完整 Git SHA，`version` 为 package.json 版本。已有提交标签若对应不同镜像 ID，流水线拒绝覆盖；镜像仓库也应启用不可变提交标签策略。别名可以更新，部署记录应固定 `build-manifest.json` 中的 `repository@sha256:...`。
 
-## 构建过程
+`build-manifest.json` 归档分支、完整提交、应用版本、应用与运维镜像标签及实际推送的仓库摘要；`build-image.txt` 保留两个摘要。它们证明构建身份，业务联调仍需在目标环境完成。
 
-### 1.1.2 游戏目录默认显示
+## 构建与离线验证
 
-未设置 `NEXT_PUBLIC_SHOW_GAMES` 时默认展示文化游戏预告页、导航及搜索入口。只有构建时明确设置 `NEXT_PUBLIC_SHOW_GAMES=false` 才隐藏；旧环境若保留了 false，应删除或改为 true 后重新构建。该公开变量在构建时固化，修改运行容器环境不能替代重新构建。两款游戏仍是“开发中”预告，不提供玩法入口。
+构建容器运行 npm ci --ignore-scripts --include=dev、离线 Prisma 生成、真实 DSH smoke、项目 build 与知识 CLI 打包。不要改成 npm install 或在内网修改锁文件。
 
-### 构建与依赖
+应用 Dockerfile 只组装 standalone、CLI 和系统依赖。运维镜像单独携带本次 CI 安装的 Linux 依赖、Prisma 6.19.3 CLI、生成客户端、随包 query/schema 引擎、schema/migrations 和初始化内容。运维镜像仅用于受控服务器操作，不提供给员工终端。镜像运行时不安装依赖、不下载 Prisma 引擎。
 
-使用内网 Node 镜像运行 `docker run --security-opt seccomp=unconfined --pids-limit -1 --memory 4g` 完成 npm ci、Prisma 生成、真实 DSH 工具/文本/取消 smoke、Next 构建及 standalone/知识 CLI 打包。随后 Dockerfile 只 COPY 组装镜像，无 RUN，兼容内网 classic Docker 的线程限制。
+流水线使用 `--network none` 验证应用 Linux DSH/SQLite，并验证运维镜像的完整提交与版本、Prisma 包及原生引擎版本、22 项只读初始化预览。CI 保留既有 `seccomp=unconfined`、`pids-limit -1`、`memory 4g` 线程兼容参数；这不意味着运行环境必须使用同样的权限。
 
-不从 GitHub 下载 DSH、不从公网下载 Prisma、不需要构建期模型密钥。npm 包仍需要内网镜像源。DSH 和系统依赖面向 Linux x64；Node 必须 24。基底中的 Debian/glibc 兼容性由本次内网构建验证。
+## 运维镜像命令
 
-运行部署时只需独立配置聊天模型、SQLite 持久卷；知识资源由首次启动时的知识 CLI 导入并由文件索引按需读取。其他业务依赖的测试 MySQL、迁移和上传持久化仍沿用测试环境安排。此包不等于完整部署迁移交付。不能把流水线成功当作业务验收通过。
+默认命令只显示帮助；未知命令及多余参数返回错误。
 
-## 本机检查与限制
+| 命令 | 行为 |
+| --- | --- |
+| `verify` | 离线校验工具和初始资源清单，不连接数据库 |
+| `inventory` | 输出初始化预览，不连接数据库 |
+| `migrate` | 使用运行时 MySQL DATABASE_URL 执行 Prisma migrate deploy |
+| `initialize` | 显式空库初始化；已有资源/目录/审计数据时拒绝，事务失败回滚 |
 
-1.1.3 镜像已将随包 OpenSSL 加入 `PATH`，并用 `PRISMA_QUERY_ENGINE_LIBRARY` 指定随包 Debian/OpenSSL 3 查询引擎，避免精简基础镜像误判为 OpenSSL 1.1。使用仓库 Dockerfile 重新构建；不要通过更换 Windows 引擎或临时下载公网引擎处理此问题。
+初始化内容为 1 份品牌白皮书、1 份标杆转译资料、18 个参悟案例和 2 个 Skill，共 22 项；行为准则文件夹初始为空。升级不得调用 `initialize`、`hub:bootstrap` 或 `db:setup`。旧通用 import CLI 保留给独立的人工内容流程，不是发布升级入口。
 
-已检查 Shell/JavaScript 语法、离线包 SHA-256、归档内容和 Dockerfile 无 RUN。Windows 当前 Docker Linux daemon 不可用，未执行完整 Linux 流水线，内网流水线结果才是本次构建是否走通的依据。遇到错误保留完整日志；不要在内网 DSH 改文件。
+镜像支持离线运行，但构建仍需可用的内部 npm 源与基础镜像。离线依赖 manifest 中的 applicationCommit 只是原始提取来源；本次构建身份以 OCI 标签及流水线归档为准。
 
-## 2026-10-10 提交号触发修复
+## 本机验证与内网验收
 
-构建 #24 传入完整 SHA，旧检查误当成非 dev 分支。现在接受完整 SHA 作为触发信息，仍使用原凭证检出 dev 并检查 HEAD 等于 origin/dev。本计划构建当前拉取到的 dev，不构建 MR 临时合并结果。checkout scm 回退时计划 SCM 分支也须选 dev。Groovy 编译和 12 个触发参数测试通过；待内网重新运行确认。
-
-## 2026-10-10：npm 11.16 锁文件修复
-
-构建 #27 已通过全部离线校验，npm ci 报缺少 @emnapi/core@1.10.0 和 @emnapi/runtime@1.10.0。使用 npm 11.16.0 在本机复现同一错误，补全 @rolldown/binding-wasm32-wasi 下两条嵌套锁记录，其他已锁定依赖不变。npm 11.16.0 的 npm ci --dry-run 校验通过。无需在内网改用 npm install 或跳过锁文件检查。
-
-## 2026-10-10：生产构建环境修复
-
-构建 #28 在 /_global-error 预渲染时报 useContext 空引用。旧 Jenkinsfile 向构建容器传 NODE_ENV=development，Next CLI 保留已有值，不会自动覆盖为 production。现在容器改用 production，并在 npm run build 前显式 export NODE_ENV=production。npm ci 继续使用 --include=dev 安装构建工具。相同 Next 16.1.1 / React 19.2.3 的最小页面使用 webpack 构建做对照：development 复现相同 key 警告和 /_global-error useContext 报错；production 静态预渲染及构建通过。未执行完整灯塔 Linux 构建，待内网确认。
-
-## 2026-10-10：镜像验证容器线程参数
-
-内网已完成源码构建和镜像组装（7c3e4000fc36），但随后验证容器在 Node 启动时 uv_thread_create 断言失败。验证 docker run 漏了构建容器已有的线程兼容参数，现补上 --security-opt seccomp=unconfined --pids-limit -1 --memory 4g，保留 --network none 和镜像 USER node。Groovy/Shell 语法与模拟 Docker 参数捕获检查通过；实际内网验证需重跑。若之后部署在同类受限宿主机，也应核对运行容器的线程限制与 seccomp 配置，不能仅因镜像组装成功就视为可运行。
-
-## 存储模式边界
-
-默认应用存储仍为 MySQL。内网示例使用 SQLite 提供知识读取、路引与 CLI/MCP；后台文件管理器仅支持 MySQL，在 SQLite 模式返回明确的 503 提示，防止写入另一套数据库。需要后台管理时须配置 MySQL 并执行现有 Prisma 迁移及 hub:bootstrap。SQLite 使用独立 CLI 导入，无需运行 MySQL 迁移；已有知识资源不会被重复导入覆盖。
-
-## 首次启动与离线来源
-
-空 SQLite 卷必须先初始化知识，再进行页面及路引验收。使用与应用相同的镜像、KNOWLEDGE_HUB_SQLITE_PATH 和持久卷运行：
-
-```sh
-docker run --rm --network none -v lantern-knowledge:/data --entrypoint node <已验证的镜像标签> knowledge-cli/import.cjs --publish
-```
-
-随后应用容器使用同一 lantern-knowledge:/data 卷启动。该命令只适用于 SQLite 示例；需要后台文件管理时请使用 MySQL 迁移与 hub:bootstrap。不要把构建阶段的空 SQLite 文件作为运行数据。重复导入会跳过已存在资源，不覆盖人工维护内容。
-
-受限内网宿主机可能还需与 Jenkinsfile 一致的线程兼容参数，应按运行环境核对。
-
-离线 manifest.json 的 applicationCommit=5d369d7 表示这些离线依赖提取时的原始应用来源，不表示本次最终应用版本。DSH、Prisma 与 OpenSSL 的来源和校验值保持不变；实际应用版本以 Git 提交及 dev-提交号镜像标签为准。
+执行 `node --test scripts/intranet/operations.test.mjs`，覆盖真实打包预览、固定命令分派、失败停止和 Git 分支守卫。Linux CI 内执行真正的运维 `verify`。当本机 Docker daemon 不可用时，不将本机预览测试当作 Linux 镜像或数据库部署验证；保留流水线完整日志和构建清单回传。
