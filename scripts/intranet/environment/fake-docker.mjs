@@ -22,7 +22,7 @@ if (args[0] === "image") {
   if (!args.includes("--format")) out(JSON.stringify([{ Id: id, Config: { Env: ["AUTH_ENCRYPTION_KEY=stable-secret"] } }]));
   else if (format.includes(".NetworkSettings.Networks")) out("existing_app\n");
   else if (format.includes(".Mounts")) {
-    if (format.includes("/var/lib/mysql")) out(format.includes(".Type") ? `volume|original-mysql|${config.dataRoot}/mysql` : `${config.dataRoot}/mysql`);
+    if (format.includes("/var/lib/mysql")) out(format.includes(".Type") ? `volume|original-mysql|${config.mysqlRoot ?? `${config.dataRoot}/mysql`}` : config.mysqlRoot ?? `${config.dataRoot}/mysql`);
     else if (format.includes(".Type")) out(`volume|original-anonymous|${config.dataRoot}/app`);
     else out(`${config.dataRoot}/app`);
   } else if (format.includes(".Config.Env")) out(`DATABASE_URL=mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test\n${process.env.FAKE_OLD_AUTH ? "AUTH_ENCRYPTION_KEY=stable-secret\n" : ""}`);

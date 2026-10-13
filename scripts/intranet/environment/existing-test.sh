@@ -33,7 +33,13 @@ docker inspect --format '{{range $k,$v := .NetworkSettings.Networks}}{{println $
 APP_MOUNT=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}|{{.Name}}|{{.Source}}{{end}}{{end}}' "$APP_CONTAINER")
 MYSQL_MOUNT=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/mysql"}}{{.Type}}|{{.Name}}|{{.Source}}{{end}}{{end}}' "$MYSQL_CONTAINER")
 [[ -n "$APP_MOUNT" && -n "$MYSQL_MOUNT" ]] || fail 'Expected persistent app /data and MySQL mounts'
-SOURCE_ROOT=${APP_MOUNT##*|}
+for mount in "$APP_MOUNT" "$MYSQL_MOUNT"; do
+  mount_source=${mount##*|}
+  [[ "$mount_source" == /* ]] || fail 'Actual data mount source must be absolute'
+  mount_source=$(readlink -m -- "$mount_source")
+  [[ "$mount_source" != / && "$ROOT" != "$mount_source" && "$ROOT" != "$mount_source/"* && "$mount_source" != "$ROOT/"* ]] || fail 'Backup directory must be separate from actual data mounts'
+done
+SOURCE_ROOT=$(readlink -m -- "${APP_MOUNT##*|}")
 SOURCE_APP_ID=$(docker inspect --format '{{.Image}}' "$APP_CONTAINER")
 IFS='|' read -r _ SOURCE_REVISION SOURCE_VERSION <<< "$(record "$SOURCE_APP_ID")"
 MYSQL_ID=$(docker inspect --format '{{.Image}}' "$MYSQL_CONTAINER")

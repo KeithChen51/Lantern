@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve, join, sep } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -117,6 +117,27 @@ describe("guarded deployment orchestration", () => {
     expect(existsSync(join(target, "recovery", "original-app-container.json"))).toBe(true);
     expect(f.calls().slice(before).some(x => x.at(-1) === "app" || x.at(-1) === "initialize" || x.at(-1) === "migrate")).toBe(false);
     const second = f.run("restore-verify", {}, [backupDir!]); expect(second.status).not.toBe(0); expect(second.stderr).toContain("new empty root");
+  }, 30_000);
+  it.each(["app-equal", "app-child", "app-parent", "mysql-equal", "mysql-child", "mysql-parent"])("rejects existing-test backup root overlapping actual data: %s", (scenario) => {
+    const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
+    let target: string;
+    if (scenario === "mysql-parent") {
+      target = join(f.data, "mysql", "nested");
+      const mysqlRoot = join(target, "database"); mkdirSync(mysqlRoot, { recursive: true });
+      const configFile = join(f.root, "fake-config.json");
+      writeFileSync(configFile, JSON.stringify({ ...JSON.parse(readFileSync(configFile, "utf8")), mysqlRoot: unix(mysqlRoot) }));
+    } else {
+      const source = scenario.startsWith("app") ? f.app : join(f.data, "mysql");
+      target = scenario.endsWith("equal") ? source : scenario.endsWith("child") ? join(source, "backup") : f.data;
+    }
+    const before = existsSync(target) ? readdirSync(target).sort() : undefined;
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "backup", composeFile, f.config, "legacy-test", unix(target), f.appImage, f.toolsImage, "existing_app"], { env: f.env, encoding: "utf8" });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Backup directory must be separate from actual data mounts");
+    expect(f.calls().some(x => x.includes("stop") || x.some(y => y.includes("mysqldump")) || x.includes("--volumes-from"))).toBe(false);
+    expect(existsSync(`${f.config}.operations-lock`)).toBe(false);
+    if (before) expect(readdirSync(target).sort()).toEqual(before);
+    else expect(existsSync(target)).toBe(false);
   }, 30_000);
   it("upgrades the existing test with no dependency startup, new volume or initialization", () => {
     const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
