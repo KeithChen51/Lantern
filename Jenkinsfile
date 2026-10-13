@@ -122,6 +122,8 @@ pipeline {
               # Auth, transport, registry or unsupported-command errors are not absence.
               case "$remote_manifest" in
                 "no such manifest: $image") ;;
+                # CODING returns the registry error with the requested tag reference.
+                "unknown: MANIFEST_UNKNOWN: manifest not found. reference: ${image##*:}") ;;
                 *) echo "Cannot verify remote tag absence; refusing to publish: $image"; exit 1 ;;
               esac
             fi
