@@ -119,28 +119,42 @@ test('pipeline fails closed for existing or uncertain batch tags and publishes o
       case "$1" in
         manifest)
           case "$SCENARIO" in
-            absent) printf 'no such manifest: %s' "$3" >&2; return 1 ;;
+            absent|push_failure) printf 'no such manifest: %s' "$3" >&2; return 1 ;;
+            registry_absent) printf 'unknown: MANIFEST_UNKNOWN: manifest not found. reference: %s\\n' "\${3##*:}" >&2; return 1 ;;
+            registry_wrong_tag) printf 'unknown: MANIFEST_UNKNOWN: manifest not found. reference: dev-other-25' >&2; return 1 ;;
+            registry_missing_tag) printf 'unknown: MANIFEST_UNKNOWN: manifest not found. reference: ' >&2; return 1 ;;
+            registry_other_code) printf 'unknown: NAME_UNKNOWN: manifest not found. reference: %s' "\${3##*:}" >&2; return 1 ;;
+            registry_mixed) printf 'unauthorized: authentication required\\nunknown: MANIFEST_UNKNOWN: manifest not found. reference: %s' "\${3##*:}" >&2; return 1 ;;
+            registry_suffix) printf 'unknown: MANIFEST_UNKNOWN: manifest not found. reference: %s-extra' "\${3##*:}" >&2; return 1 ;;
+            generic_not_found) printf 'manifest not found' >&2; return 1 ;;
             existing) printf '{"schemaVersion":2}'; return 0 ;;
             wrong_tag) printf 'no such manifest: other.invalid/app:old' >&2; return 1 ;;
             unauthorized) printf 'unauthorized: authentication required' >&2; return 1 ;;
             transport) printf 'connection refused' >&2; return 1 ;;
             unsupported) printf 'docker: manifest is not a docker command' >&2; return 1 ;;
           esac ;;
-        push) printf '%s\\n' "$1" ;;
+        push) printf 'push %s\\n' "$2"; if [ "$SCENARIO" = push_failure ]; then return 7; fi ;;
         *) return 9 ;;
       esac
     }
   `;
   const bash = process.platform === 'win32' ? 'C:\\Program Files\\Git\\bin\\bash.exe' : 'bash';
-  const check = scenario => spawnSync(bash, ['-c', `set -eu\n${fakeDocker}\n${publish}\npublish_immutable example.invalid/app:dev-abc-25`], { encoding: 'utf8', env: { ...process.env, SCENARIO: scenario } });
-  const absent = check('absent');
-  assert.equal(absent.status, 0, absent.stderr);
-  assert.match(absent.stdout, /push/);
-  for (const scenario of ['existing', 'wrong_tag', 'unauthorized', 'transport', 'unsupported']) {
-    const conflict = check(scenario);
-    assert.equal(conflict.status, 1, conflict.stderr);
-    assert.match(conflict.stdout, /Refusing|refusing/);
-    assert.doesNotMatch(conflict.stdout, /(?:^|\n)push(?:\n|$)/);
+  const check = (scenario, image) => spawnSync(bash, ['-c', `set -eu\n${fakeDocker}\n${publish}\npublish_immutable "$TEST_IMAGE"\nprintf REACHED_AFTER_PUSH`], { encoding: 'utf8', env: { ...process.env, SCENARIO: scenario, TEST_IMAGE: image } });
+  for (const image of ['example.invalid:5000/team/app:dev-438827282a2c-1', 'example.invalid:5000/team/app-tools:dev-438827282a2c-1']) {
+    for (const scenario of ['absent', 'registry_absent']) {
+      const absent = check(scenario, image);
+      assert.equal(absent.status, 0, `${scenario}: ${absent.stderr}\n${absent.stdout}`);
+      assert.equal(absent.stdout, `push ${image}\nREACHED_AFTER_PUSH`);
+    }
+    for (const scenario of ['existing', 'wrong_tag', 'unauthorized', 'transport', 'unsupported', 'registry_wrong_tag', 'registry_missing_tag', 'registry_other_code', 'registry_mixed', 'registry_suffix', 'generic_not_found']) {
+      const conflict = check(scenario, image);
+      assert.equal(conflict.status, 1, `${scenario}: ${conflict.stderr}`);
+      assert.match(conflict.stdout, /Refusing|refusing/);
+      assert.doesNotMatch(conflict.stdout, /(?:^|\n)push |REACHED_AFTER_PUSH/);
+    }
+    const failedPush = check('push_failure', image);
+    assert.equal(failedPush.status, 7, failedPush.stderr);
+    assert.equal(failedPush.stdout, `push ${image}\n`);
   }
 });
 
