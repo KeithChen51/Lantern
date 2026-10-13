@@ -39,12 +39,16 @@ type StoredHermitAttachment = ResolvedHermitAttachment & {
   expiresAt: number;
 };
 
-const HERMIT_ATTACHMENT_STORE_KEY = Symbol.for("lantern.hermit.attachment-store");
+const HERMIT_ATTACHMENT_STORE_KEY = Symbol.for("lighthouse.hermit.attachment-store");
+// Reuse the process-local legacy cache across hot reloads of renamed modules.
+const LEGACY_HERMIT_ATTACHMENT_STORE_KEY = Symbol.for("lantern.hermit.attachment-store");
 const globalStore = globalThis as typeof globalThis & {
   [HERMIT_ATTACHMENT_STORE_KEY]?: Map<string, StoredHermitAttachment>;
+  [LEGACY_HERMIT_ATTACHMENT_STORE_KEY]?: Map<string, StoredHermitAttachment>;
 };
-const attachments = globalStore[HERMIT_ATTACHMENT_STORE_KEY] ?? new Map<string, StoredHermitAttachment>();
+const attachments = globalStore[HERMIT_ATTACHMENT_STORE_KEY] ?? globalStore[LEGACY_HERMIT_ATTACHMENT_STORE_KEY] ?? new Map<string, StoredHermitAttachment>();
 globalStore[HERMIT_ATTACHMENT_STORE_KEY] = attachments;
+globalStore[LEGACY_HERMIT_ATTACHMENT_STORE_KEY] = attachments;
 
 function getCookieValue(request: Request, cookieName: string) {
   const cookieHeader = request.headers.get("cookie");

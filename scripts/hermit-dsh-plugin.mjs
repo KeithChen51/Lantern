@@ -1,5 +1,5 @@
 // Runs only inside the dedicated sdk-minimal profile, never the user's DSH home.
-export const name = 'lantern-hermit-tools';
+export const name = 'lighthouse-hermit-tools';
 export const inject = ['tools', 'llm'];
 
 export async function apply(ctx, config) {

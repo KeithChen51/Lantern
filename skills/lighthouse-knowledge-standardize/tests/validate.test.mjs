@@ -93,7 +93,7 @@ test("indented code and inline code are preserved as examples", async () => {
   assert.ok(r.body.endsWith(example));
 });
 test("CLI reports separately, refuses overwrite, preserves input and blocks invalid exports", async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "lantern-standardize-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "lighthouse-standardize-"));
   const input = path.join(dir, "input.md"), output = path.join(dir, "import.json");
   const cli = fileURLToPath(new URL("../scripts/check.mjs", import.meta.url));
   try {

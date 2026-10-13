@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { DSH_SUPPORTED_VERSION, verifyDshInstallation } from "./dsh-installation";
 const roots: string[] = [];
 async function carrier(platform = process.platform) {
-  const root = await mkdtemp(path.join(tmpdir(), "lantern-carrier-test-")); roots.push(root);
+  const root = await mkdtemp(path.join(tmpdir(), "lighthouse-carrier-test-")); roots.push(root);
   await writeFile(path.join(root, "runtime-manifest.json"), JSON.stringify({ format: 1, dshVersion: DSH_SUPPORTED_VERSION, platform, arch: process.arch }));
   for (const name of ["sdk-client", "sdk-protocol", "tools", "llm-pi-ai"]) {
     const dir = path.join(root, "node_modules", "@deepseek-ai", `dsh-${name}`);

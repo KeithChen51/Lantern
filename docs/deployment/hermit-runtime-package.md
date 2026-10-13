@@ -35,7 +35,7 @@ docker compose -f compose.hermit.yaml run --rm lighthouse node knowledge-cli/imp
 docker compose -f compose.hermit.yaml up -d
 ```
 
-`.env.runtime` 配置 `OPENAI_BASE_URL`、`OPENAI_API_KEY`、`OPENAI_MODEL` 及必要的 API mode/额外头。不要配置开发机的 `HERMIT_DSH_ROOT`。若数据库选 SQLite，使用镜像默认的 `/data/knowledge/lantern.sqlite` 和持久卷；`DATABASE_URL` 不应指向无关业务环境。
+`.env.runtime` 配置 `OPENAI_BASE_URL`、`OPENAI_API_KEY`、`OPENAI_MODEL` 及必要的 API mode/额外头。不要配置开发机的 `HERMIT_DSH_ROOT`。若数据库选 SQLite，使用镜像默认的 `/data/knowledge/lighthouse.sqlite` 和持久卷；`DATABASE_URL` 不应指向无关业务环境。
 
 服务默认只映射 `127.0.0.1:3000`。按内网现有反向代理/访问控制提供入口；本包不新增 SSO 或用户级知识权限。资料仍按中台已发布/归档规则访问。
 

@@ -246,7 +246,7 @@ function endpoint(baseUrl: string, requestPath: string): string {
 function requestHeaders(accept: string): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: accept,
-    "User-Agent": "lantern-hermit-business-acceptance/1",
+    "User-Agent": "lighthouse-hermit-business-acceptance/1",
   };
   const cookie = process.env.HERMIT_ACCEPTANCE_COOKIE?.trim();
   const token = process.env.HERMIT_ACCEPTANCE_BEARER_TOKEN?.trim();
@@ -657,13 +657,13 @@ function parseLastJson(value: string): unknown {
 }
 
 async function runCliGet(config: RunnerConfig, card: DocumentCard, expected: ResourceMeta): Promise<SecondCallerResult["comparisons"][number]> {
-  const tempRoot = await mkdtemp(path.join(tmpdir(), "lantern-hermit-acceptance-"));
+  const tempRoot = await mkdtemp(path.join(tmpdir(), "lighthouse-hermit-acceptance-"));
   const inputPath = path.join(tempRoot, "get.json");
   try {
     await writeFile(inputPath, JSON.stringify({ id: card.resourceId, versionId: card.versionId }), "utf8");
     const child = config.cliContainer
       ? await runChild("docker", ["exec", config.cliContainer, "node", "-e",
-        "const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process');const dir=fs.mkdtempSync(path.join(os.tmpdir(),'lantern-acceptance-'));try{const file=path.join(dir,'get.json');fs.writeFileSync(file,process.argv[1]);const r=cp.spawnSync(process.execPath,['knowledge-cli/hub.cjs','get','--input',file],{stdio:'inherit'});process.exitCode=r.status??1;}finally{fs.rmSync(dir,{recursive:true,force:true});}",
+        "const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process');const dir=fs.mkdtempSync(path.join(os.tmpdir(),'lighthouse-acceptance-'));try{const file=path.join(dir,'get.json');fs.writeFileSync(file,process.argv[1]);const r=cp.spawnSync(process.execPath,['knowledge-cli/hub.cjs','get','--input',file],{stdio:'inherit'});process.exitCode=r.status??1;}finally{fs.rmSync(dir,{recursive:true,force:true});}",
         JSON.stringify({ id: card.resourceId, versionId: card.versionId })], config.cliRoot, config.requestTimeoutMs)
       : await runChild(process.execPath, ["--import", "tsx", "scripts/knowledge-hub.ts", "get", "--input", inputPath], config.cliRoot, config.requestTimeoutMs);
     const parsed = parseLastJson(child.stdout);
@@ -756,7 +756,7 @@ function makeConfig(): RunnerConfig {
     },
   });
   if (parsed.values.help) {
-    console.log("Usage: npx tsx scripts/hermit-business-acceptance.ts --base-url <running-lantern-url> [--output <report.json>] [--limit 1-4]");
+    console.log("Usage: npx tsx scripts/hermit-business-acceptance.ts --base-url <running-lighthouse-url> [--output <report.json>] [--limit 1-4]");
     process.exit(0);
   }
   const rawBaseUrl = stringValue(parsed.values["base-url"]) ?? process.env.HERMIT_ACCEPTANCE_BASE_URL?.trim();

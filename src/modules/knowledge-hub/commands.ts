@@ -2,12 +2,12 @@ import { z } from "zod";
 import { importSchema, interactionSchema, searchSchema, type KnowledgeHub } from "./service";
 
 export const commands = {
-  search: { description: "Search published Lantern resources. Sort by relevance, published or updated. Returns versioned citations, not generated answers.", schema: searchSchema },
+  search: { description: "Search published lighthouse resources. Sort by relevance, published or updated. Returns versioned citations, not generated answers.", schema: searchSchema },
   get: { description: "Read a resource and its exact published version, citations and package files.", schema: z.object({ id: z.string().min(1), versionId: z.string().optional() }) },
   preview: { description: "Local maintenance: preview a specific draft or archived version before publishing.", schema: z.object({ id: z.string().min(1), versionId: z.string().min(1) }) },
   history: { description: "Local maintenance: list immutable resource versions, including drafts.", schema: z.object({ id: z.string().min(1) }) },
   import: { description: "Import Markdown as a draft. Reuse a stable resource id for updates. Does not publish. File contents use base64 and relative package paths.", schema: importSchema },
-  publish: { description: "Explicitly publish a prepared version. It becomes available to Lantern pages and search.", schema: z.object({ id: z.string().min(1), versionId: z.string().min(1) }) },
+  publish: { description: "Explicitly publish a prepared version. It becomes available to lighthouse pages and search.", schema: z.object({ id: z.string().min(1), versionId: z.string().min(1) }) },
   archive: { description: "Archive a resource, removing it from public reads and search without deleting its history.", schema: z.object({ id: z.string().min(1) }) },
   relate: { description: "Record an explicit relationship between two exact versions.", schema: z.object({ fromVersionId: z.string(), toVersionId: z.string(), kind: z.enum(["based_on", "supersedes", "related", "companion"]) }) },
   receive_interaction: { description: "Return a conversation ONLY after the user explicitly agrees to the specified content scope and purpose. No answer means no consent. This stores runtime data, not searchable knowledge.", schema: interactionSchema },

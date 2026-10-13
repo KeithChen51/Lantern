@@ -52,6 +52,6 @@ node scripts/check.mjs input.md --id service-waiting --export new-import.json
 npm run hub -- import --input /absolute/path/new-import.json
 ```
 
-该 JSON 也可作为 `lantern_import` 的参数。导入创建草稿，发布仍需单独操作。相同 id 是更新，新的 id 才是另一资源；不能把标题重命名等同于创建新资源。本地校验无法发现远端同名/id 冲突。
+该 JSON 也可作为 `lighthouse_import` 的参数。导入创建草稿，发布仍需单独操作。相同 id 是更新，新的 id 才是另一资源；不能把标题重命名等同于创建新资源。本地校验无法发现远端同名/id 冲突。
 
 校验报告不能写进知识正文。协议与工具输出均不包含数据库配置或凭据。

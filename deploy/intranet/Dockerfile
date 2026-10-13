@@ -2,11 +2,11 @@ ARG NODE_IMAGE=ipd-docker.pkg.coding.byd.com/aftersales_ai/base/node:24.18.0-sli
 FROM ${NODE_IMAGE}
 WORKDIR /app
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1
-ENV LD_LIBRARY_PATH=/opt/lantern-system/lib
-ENV PATH="/opt/lantern-system/bin:${PATH}"
+ENV LD_LIBRARY_PATH=/opt/lighthouse-system/lib
+ENV PATH="/opt/lighthouse-system/bin:${PATH}"
 ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
-ENV HERMIT_DSH_ROOT="" HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite KNOWLEDGE_HUB_SQLITE_PATH=/data/knowledge/lantern.sqlite
-COPY system/ /opt/lantern-system/
+ENV HERMIT_DSH_ROOT="" HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite KNOWLEDGE_HUB_SQLITE_PATH=/data/knowledge/lighthouse.sqlite
+COPY system/ /opt/lighthouse-system/
 COPY --chown=node:node standalone/ ./
 COPY --chown=node:node knowledge-cli/ ./knowledge-cli/
 COPY --chown=node:node runtime-data/ /data/

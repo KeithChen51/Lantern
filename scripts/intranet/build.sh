@@ -24,7 +24,7 @@ export PRISMA_ENGINES_MIRROR=http://127.0.0.1:18766
 export DATABASE_URL='mysql://build:build@127.0.0.1:3306/build_only'
 export HERMIT_BUNDLE_REQUIRED=true
 export HERMIT_DSH_ROOT='' HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite
-export KNOWLEDGE_HUB_SQLITE_PATH=/tmp/lantern-build-only.sqlite
+export KNOWLEDGE_HUB_SQLITE_PATH=/tmp/lighthouse-build-only.sqlite
 npm run db:generate
 npm run check:hermit-runtime
 npm run test:hermit-runtime

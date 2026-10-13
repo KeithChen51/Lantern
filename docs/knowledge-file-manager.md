@@ -47,7 +47,7 @@
 
 ## 部署内置标准化 Skill
 
-源码部署执行 `npm run hub:bootstrap`：先应用数据库迁移，再首次导入并发布内置知识及 `lantern-knowledge-standardize`。部署环境必须已设置自己的 `DATABASE_URL`。
+源码部署执行 `npm run hub:bootstrap`：先应用数据库迁移，再首次导入并发布内置知识及 `lighthouse-knowledge-standardize`。部署环境必须已设置自己的 `DATABASE_URL`。
 
 Standalone 构建也携带完整 Skill 导入包及初始化程序。应用数据库迁移后，在 standalone 根目录执行：
 
@@ -56,7 +56,7 @@ node scripts/knowledge-install-builtin.cjs
 node server.js
 ```
 
-初始化使用固定资源 ID `lantern-knowledge-standardize`，已存在时跳过；重复部署不覆盖维护者的版本。包中包含 `SKILL.md`、模板、字段说明、检查脚本及锁定依赖清单，不包含 `node_modules`。用户下载后在本地安装依赖使用，不在中台运行 Skill。该命令只安装内置 Skill；空数据库的白皮书等资料仍需前述首次初始化。
+初始化保留固定资源 ID `lantern-knowledge-standardize`，已存在时跳过；重复部署不覆盖维护者的版本。维护目录和 Skill 名称现为 `lighthouse-knowledge-standardize`，资源 ID 与下载文件名保持历史身份，避免生成第二份资源或破坏既有链接。已有库的旧版本不会自动改写；管理员可按正常版本维护流程显式更新。包中包含 `SKILL.md`、模板、字段说明、检查脚本及锁定依赖清单，不包含 `node_modules`。用户下载后在本地安装依赖使用，不在中台运行 Skill。该命令只安装内置 Skill；空数据库的白皮书等资料仍需前述首次初始化。
 
 ## 本地验收记录（2026-10-10）
 

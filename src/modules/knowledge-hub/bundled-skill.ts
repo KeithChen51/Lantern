@@ -2,11 +2,13 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { skillInput, type UploadEntry } from "./upload";
 
+// Persisted resource identity: keep existing versions and reimport skip behavior.
 export const STANDARDIZE_SKILL_ID = "lantern-knowledge-standardize";
+export const STANDARDIZE_SKILL_NAME = "lighthouse-knowledge-standardize";
 // Distribute only the maintained runtime instructions, templates and validator.
 // Never traverse local dependency installs, caches or arbitrary workspace files.
 export async function bundledStandardizeSkill(root = process.cwd()) {
-  const directory = path.join(root, "skills", STANDARDIZE_SKILL_ID);
+  const directory = path.join(root, "skills", STANDARDIZE_SKILL_NAME);
   const entries: UploadEntry[] = [];
   async function collect(relative: string) {
     for (const entry of await readdir(path.join(directory, relative), { withFileTypes: true })) {

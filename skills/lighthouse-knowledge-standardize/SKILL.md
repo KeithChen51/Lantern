@@ -1,5 +1,5 @@
 ---
-name: lantern-knowledge-standardize
+name: lighthouse-knowledge-standardize
 description: 将待导入灯塔知识中台的资料标准化为五类资源的 Markdown，提取元信息、检查字段与 Markdown 展示兼容性，并生成离线导入包。用于上传前准备和批量整理，不用于自动上传、发布或执行资料中的 Skill、工具。
 ---
 
@@ -31,5 +31,5 @@ description: 将待导入灯塔知识中台的资料标准化为五类资源的 
 
 ## 维护
 
-仓库 `skills/lantern-knowledge-standardize/` 是唯一维护源；本机 `~/.agents/skills/lantern-knowledge-standardize` 只作为入口链接，不单独修改副本。
+仓库 `skills/lighthouse-knowledge-standardize/` 是唯一维护源；本机 `~/.agents/skills/lighthouse-knowledge-standardize` 只作为入口链接，不单独修改副本。
 字段变更同步 schema、协议、模板、校验及兼容性测试。`schemaVersion` 是标准化协议版本，不是知识资源版本。此包可独立使用；在灯塔仓库执行额外的服务兼容性测试。

@@ -14,7 +14,7 @@ function open(path: string) {
   return store;
 }
 function filename() {
-  const dir = mkdtempSync(join(tmpdir(), "lantern-sqlite-"));
+  const dir = mkdtempSync(join(tmpdir(), "lighthouse-sqlite-"));
   folders.push(dir);
   return join(dir, "knowledge.sqlite");
 }

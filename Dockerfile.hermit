@@ -22,7 +22,7 @@ COPY scripts/package-hermit-runtime.mjs /carrier/scripts/package-hermit-runtime.
 COPY scripts/hermit-runtime /carrier/scripts/hermit-runtime
 RUN node /carrier/scripts/package-hermit-runtime.mjs --source /build/dsh --output /build/hermit-dsh
 
-FROM node:24.11.1-bookworm-slim AS lantern-build
+FROM node:24.11.1-bookworm-slim AS lighthouse-build
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -42,10 +42,10 @@ FROM node:24.11.1-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 \
     HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite \
-    KNOWLEDGE_HUB_SQLITE_PATH=/data/knowledge/lantern.sqlite
+    KNOWLEDGE_HUB_SQLITE_PATH=/data/knowledge/lighthouse.sqlite
 WORKDIR /app
-COPY --from=lantern-build --chown=node:node /app/.next/standalone ./
-COPY --from=lantern-build --chown=node:node /app/release/knowledge-cli ./knowledge-cli
+COPY --from=lighthouse-build --chown=node:node /app/.next/standalone ./
+COPY --from=lighthouse-build --chown=node:node /app/release/knowledge-cli ./knowledge-cli
 RUN mkdir -p /data/knowledge && chown -R node:node /data
 USER node
 EXPOSE 3000

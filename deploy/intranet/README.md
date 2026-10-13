@@ -66,10 +66,12 @@
 空 SQLite 卷必须先初始化知识，再进行页面及路引验收。使用与应用相同的镜像、KNOWLEDGE_HUB_SQLITE_PATH 和持久卷运行：
 
 ```sh
-docker run --rm --network none -v lantern-knowledge:/data --entrypoint node <已验证的镜像标签> knowledge-cli/import.cjs --publish
+docker run --rm --network none -v lighthouse-knowledge:/data --entrypoint node <已验证的镜像标签> knowledge-cli/import.cjs --publish
 ```
 
-随后应用容器使用同一 lantern-knowledge:/data 卷启动。该命令只适用于 SQLite 示例；需要后台文件管理时请使用 MySQL 迁移与 hub:bootstrap。不要把构建阶段的空 SQLite 文件作为运行数据。重复导入会跳过已存在资源，不覆盖人工维护内容。
+随后应用容器使用同一 lighthouse-knowledge:/data 卷启动。该命令只适用于 SQLite 示例；需要后台文件管理时请使用 MySQL 迁移与 hub:bootstrap。不要把构建阶段的空 SQLite 文件作为运行数据。重复导入会跳过已存在资源，不覆盖人工维护内容。
+
+已有部署必须继续挂载原持久卷（例如 `lantern-knowledge:/data`）；不能只因命名更新创建空卷。新镜像默认 `/data/knowledge/lighthouse.sqlite`，新文件不存在时复用同目录的 `lantern.sqlite`。路径与离线迁移步骤见 [命名兼容说明](../../docs/deployment/lighthouse-naming-migration.md)。
 
 受限内网宿主机可能还需与 Jenkinsfile 一致的线程兼容参数，应按运行环境核对。
 

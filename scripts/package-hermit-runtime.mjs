@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Materialize the private Lantern Hermit DSH runtime carrier.
+ * Materialize the private lighthouse Hermit DSH runtime carrier.
  *
  * This script reads only already-built package outputs from a DSH checkout. It
  * never installs packages and never writes back to that checkout.
@@ -79,7 +79,7 @@ const TRIMMED_ROWS = {
       '@deepseek-ai/dsh-tool-workspace-dependencies',
     ],
   },
-  rationale: 'The carrier mounts a fixed native-tools SDK tree and receives provider/tool overlays from Lantern. Disabled shell, PTY, DeepSeek fallback, MCP, jobs, office, workspace, and CLI package-manager rows are outside that tree.',
+  rationale: 'The carrier mounts a fixed native-tools SDK tree and receives provider/tool overlays from lighthouse. Disabled shell, PTY, DeepSeek fallback, MCP, jobs, office, workspace, and CLI package-manager rows are outside that tree.',
 }
 
 function fail(message) {
@@ -736,7 +736,7 @@ function stageRuntime(options) {
     dependencies[name] = record.manifest.version
   }
   const carrierManifest = {
-    name: '@lantern/hermit-dsh-runtime',
+    name: '@lighthouse/hermit-dsh-runtime',
     private: true,
     version: DSH_VERSION,
     type: 'module',

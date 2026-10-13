@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyStandaloneAssets } from "./prepare-standalone";
 
 function createTempProject() {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lantern-standalone-"));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lighthouse-standalone-"));
   fs.mkdirSync(path.join(projectRoot, ".next", "standalone"), { recursive: true });
   fs.mkdirSync(path.join(projectRoot, ".next", "static", "chunks"), { recursive: true });
   fs.mkdirSync(path.join(projectRoot, "public"), { recursive: true });
