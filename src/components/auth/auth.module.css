@@ -1,0 +1,15 @@
+.surface { min-height: 100dvh; display: grid; place-items: center; padding: 2rem 1rem; background: var(--color-page); color: var(--color-ink); }
+.card { width: min(100%, 30rem); padding: 2rem; border: 1px solid var(--color-line); border-radius: 1.25rem; background: var(--color-panel); box-shadow: 0 12px 40px #152b2410; }
+.brand { font-size: 1rem; color: var(--color-muted); margin: 1rem 0 .25rem; }
+.card h1 { font-size: 1.7rem; font-weight: 700; margin-bottom: 1.25rem; }
+.card p { line-height: 1.7; margin: .75rem 0; }
+.card form { margin-top: 1.25rem; }
+.card button { min-height: 44px; border-radius: .65rem; padding: .6rem 1rem; border: 1px solid var(--color-primary-deep); background: var(--color-primary); color: var(--color-on-primary); cursor: pointer; }
+.card button:hover { filter: brightness(.92); }
+.card button:focus-visible, .card a:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+.card button:disabled { opacity: .5; cursor: not-allowed; }
+.card a { text-decoration: underline; text-underline-offset: 4px; }
+.notice { border: 1px solid var(--color-line); padding: .75rem; border-radius: .5rem; background: var(--color-surface-quiet); }
+.card dl { display: grid; gap: .5rem; }
+.card dt { color: var(--color-muted); }
+.card dd { overflow-wrap: anywhere; }

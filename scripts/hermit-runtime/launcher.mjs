@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Private carrier launcher for Lantern's Hermit DSH runtime.
+ * Private carrier launcher for lighthouse's Hermit DSH runtime.
  *
  * The public DSH CLI resolves profiles and package-manager state. This carrier
  * owns one already-materialized sdk-minimal tree, so it only parses the

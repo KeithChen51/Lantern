@@ -3,7 +3,7 @@ import type { KnowledgeHub } from "./service";
 import { safePackagePath } from "./upload";
 
 export async function knowledgeDownload(resource: Awaited<ReturnType<KnowledgeHub["get"]>>) {
-  const headers = new Headers({ "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+  const headers = new Headers({ "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Resource-Version": resource.version.id });
   if (resource.type === "skill" || resource.version.files.length) {
     const zip = new JSZip();
     for (const file of resource.version.files) zip.file(safePackagePath(file.path), file.contentBase64, { base64: true });

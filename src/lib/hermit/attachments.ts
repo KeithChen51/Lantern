@@ -1,13 +1,14 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import mammoth from "mammoth";
 import { PDFParse } from "pdf-parse";
 import { AppError } from "@/shared/errors";
+import type { Principal } from "@/modules/auth/access";
+import { assertHermitPrincipal } from "@/modules/hermit/access";
 
 /**
  * Hermit attachments are deliberately process-local for the first DSH slice.
  * They are never written to a public upload directory or to the knowledge hub.
  */
-export const HERMIT_ATTACHMENT_OWNER_COOKIE = "lh_hermit_attachment_owner";
 export const HERMIT_ATTACHMENT_TTL_MS = 30 * 60 * 1000;
 export const HERMIT_ATTACHMENT_MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const HERMIT_ATTACHMENT_MAX_REQUEST_BYTES = 12 * 1024 * 1024;
@@ -35,55 +36,25 @@ export type ResolvedHermitAttachment = {
 };
 
 type StoredHermitAttachment = ResolvedHermitAttachment & {
-  ownerId: string;
+  userId: string;
+  grantId: string;
+  credentialId: string;
   expiresAt: number;
 };
 
-const HERMIT_ATTACHMENT_STORE_KEY = Symbol.for("lantern.hermit.attachment-store");
+const HERMIT_ATTACHMENT_STORE_KEY = Symbol.for("lighthouse.hermit.attachment-store");
+// Reuse the process-local legacy cache across hot reloads of renamed modules.
+const LEGACY_HERMIT_ATTACHMENT_STORE_KEY = Symbol.for("lantern.hermit.attachment-store");
 const globalStore = globalThis as typeof globalThis & {
   [HERMIT_ATTACHMENT_STORE_KEY]?: Map<string, StoredHermitAttachment>;
+  [LEGACY_HERMIT_ATTACHMENT_STORE_KEY]?: Map<string, StoredHermitAttachment>;
 };
-const attachments = globalStore[HERMIT_ATTACHMENT_STORE_KEY] ?? new Map<string, StoredHermitAttachment>();
+const attachments = globalStore[HERMIT_ATTACHMENT_STORE_KEY] ?? globalStore[LEGACY_HERMIT_ATTACHMENT_STORE_KEY] ?? new Map<string, StoredHermitAttachment>();
 globalStore[HERMIT_ATTACHMENT_STORE_KEY] = attachments;
+globalStore[LEGACY_HERMIT_ATTACHMENT_STORE_KEY] = attachments;
 
-function getCookieValue(request: Request, cookieName: string) {
-  const cookieHeader = request.headers.get("cookie");
-  if (!cookieHeader) return null;
-
-  for (const part of cookieHeader.split(";")) {
-    const separator = part.indexOf("=");
-    if (separator < 0) continue;
-    const name = part.slice(0, separator).trim();
-    if (name !== cookieName) continue;
-    const value = part.slice(separator + 1).trim();
-    return value || null;
-  }
-
-  return null;
-}
-
-function isValidOwnerId(value: string | null): value is string {
-  return Boolean(value && /^[A-Za-z0-9_-]{32,64}$/.test(value));
-}
-
-function newOwnerId() {
-  return randomBytes(32).toString("base64url");
-}
-
-export function readHermitAttachmentOwner(request: Request) {
-  const cookieValue = getCookieValue(request, HERMIT_ATTACHMENT_OWNER_COOKIE);
-  return isValidOwnerId(cookieValue) ? cookieValue : null;
-}
-
-export function createHermitAttachmentOwner() {
-  return newOwnerId();
-}
-
-export function buildHermitAttachmentOwnerCookie(ownerId: string) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  return `${HERMIT_ATTACHMENT_OWNER_COOKIE}=${ownerId}; Path=/; Max-Age=${Math.floor(
-    HERMIT_ATTACHMENT_TTL_MS / 1000,
-  )}; HttpOnly; SameSite=Lax${secure}`;
+function ownsAttachment(attachment: StoredHermitAttachment, principal: Principal) {
+  return attachment.userId === principal.userId && attachment.grantId === principal.grantId && attachment.credentialId === principal.credentialId;
 }
 
 function purgeExpiredAttachments(now = Date.now()) {
@@ -92,10 +63,10 @@ function purgeExpiredAttachments(now = Date.now()) {
   }
 }
 
-function countOwnerAttachments(ownerId: string) {
+function countOwnerAttachments(principal: Principal) {
   let count = 0;
   for (const attachment of attachments.values()) {
-    if (attachment.ownerId === ownerId) count += 1;
+    if (ownsAttachment(attachment, principal)) count += 1;
   }
   return count;
 }
@@ -261,27 +232,25 @@ function assertRequestBodySize(request: Request) {
   }
 }
 
-export async function saveHermitAttachment(request: Request, file: File): Promise<{
-  summary: HermitAttachmentSummary;
-  ownerId: string;
-  shouldSetOwnerCookie: boolean;
-}> {
+export async function saveHermitAttachment(request: Request, file: File, principal: Principal): Promise<{ summary: HermitAttachmentSummary }> {
+  assertHermitPrincipal(principal, "hermit:attachment:self");
+  request.signal.throwIfAborted();
   assertRequestBodySize(request);
   purgeExpiredAttachments();
 
-  const existingOwnerId = readHermitAttachmentOwner(request);
-  const ownerId = existingOwnerId ?? createHermitAttachmentOwner();
-  if (countOwnerAttachments(ownerId) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
-    throw new AppError("validation_error", "每个浏览器最多保留 5 个附件，请先移除旧附件。", 422);
+  if (countOwnerAttachments(principal) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
+    throw new AppError("validation_error", "每个登录会话最多保留 5 个附件，请先移除旧附件。", 422);
   }
   if (attachments.size >= HERMIT_ATTACHMENT_MAX_STORE_ENTRIES) {
     throw new AppError("bad_request", "附件暂存空间已满，请稍后重试。", 503);
   }
 
   const parsed = await parseHermitAttachment(file);
+  request.signal.throwIfAborted();
+  assertHermitPrincipal(principal, "hermit:attachment:self");
   purgeExpiredAttachments();
-  if (countOwnerAttachments(ownerId) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
-    throw new AppError("validation_error", "每个浏览器最多保留 5 个附件，请先移除旧附件。", 422);
+  if (countOwnerAttachments(principal) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
+    throw new AppError("validation_error", "每个登录会话最多保留 5 个附件，请先移除旧附件。", 422);
   }
   if (attachments.size >= HERMIT_ATTACHMENT_MAX_STORE_ENTRIES) {
     throw new AppError("bad_request", "附件暂存空间已满，请稍后重试。", 503);
@@ -298,18 +267,21 @@ export async function saveHermitAttachment(request: Request, file: File): Promis
     id: summary.id,
     name: summary.name,
     size: summary.size,
-    ownerId,
+    userId: principal.userId,
+    grantId: principal.grantId,
+    credentialId: principal.credentialId,
     text: parsed.text,
-    expiresAt: Date.now() + HERMIT_ATTACHMENT_TTL_MS,
+    expiresAt: Math.min(Date.now() + HERMIT_ATTACHMENT_TTL_MS, principal.expiresAt),
   });
 
-  return { summary, ownerId, shouldSetOwnerCookie: !existingOwnerId };
+  return { summary };
 }
 
 export async function resolveHermitAttachments(
-  request: Request,
+  principal: Principal,
   ids: string[],
 ): Promise<ResolvedHermitAttachment[]> {
+  assertHermitPrincipal(principal, "hermit:attachment:self");
   purgeExpiredAttachments();
   if (ids.length === 0) return [];
   if (ids.length > HERMIT_ATTACHMENT_MAX_RESOLVE_IDS) {
@@ -324,15 +296,10 @@ export async function resolveHermitAttachments(
     throw new AppError("validation_error", "附件标识不能重复。", 422);
   }
 
-  const ownerId = readHermitAttachmentOwner(request);
-  if (!ownerId) {
-    throw new AppError("not_found", "附件不存在或已过期。", 404);
-  }
-
   const resolved: ResolvedHermitAttachment[] = [];
   for (const id of normalizedIds) {
     const attachment = attachments.get(id);
-    if (!attachment || attachment.ownerId !== ownerId) {
+    if (!attachment || !ownsAttachment(attachment, principal)) {
       throw new AppError("not_found", "附件不存在或已过期。", 404);
     }
     resolved.push({ id: attachment.id, name: attachment.name, size: attachment.size, text: attachment.text });
@@ -340,16 +307,16 @@ export async function resolveHermitAttachments(
   return resolved;
 }
 
-export async function deleteHermitAttachment(request: Request, id: string) {
+export async function deleteHermitAttachment(principal: Principal, id: string) {
+  assertHermitPrincipal(principal, "hermit:attachment:self");
   purgeExpiredAttachments();
-  const ownerId = readHermitAttachmentOwner(request);
   const normalizedId = typeof id === "string" ? id.trim() : "";
-  if (!ownerId || !/^[0-9a-f-]{36}$/i.test(normalizedId)) {
+  if (!/^[0-9a-f-]{36}$/i.test(normalizedId)) {
     throw new AppError("not_found", "附件不存在或已过期。", 404);
   }
 
   const attachment = attachments.get(normalizedId);
-  if (!attachment || attachment.ownerId !== ownerId) {
+  if (!attachment || !ownsAttachment(attachment, principal)) {
     throw new AppError("not_found", "附件不存在或已过期。", 404);
   }
 

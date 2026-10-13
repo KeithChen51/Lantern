@@ -18,7 +18,7 @@ describe("knowledge hub publication and retrieval", () => {
     expect((await hub.search()).items[0]).toMatchObject({ visibility: "internal" });
     await hub.import({ ...input, type: "case", visibility: "public" });
     await hub.import({ ...input, type: "case", markdown: "# 更新内容" });
-    expect(store.resources.get(input.id)?.visibility).toBe("public");
+    expect(store.resources.get(input.id)?.visibility).toBe("internal");
     expect((await hub.get(input.id)).publishedVersionId).toBe(first.versionId);
     await expect(hub.import({ ...input, type: "case", visibility: "invalid" })).rejects.toThrow();
   });
@@ -27,7 +27,7 @@ describe("knowledge hub publication and retrieval", () => {
     const v1 = await hub.import(input);
     const retry = await hub.import(input);
     expect(retry).toMatchObject({ duplicate: true, versionId: v1.versionId });
-    expect((await hub.history(input.id))).toHaveLength(1);
+    expect((await hub.history(input.id, true))).toHaveLength(1);
     expect((await hub.search()).total).toBe(0);
     await expect(hub.get(input.id, v1.versionId)).rejects.toThrow("No published");
     await hub.publish(input.id, v1.versionId);
@@ -45,11 +45,11 @@ describe("knowledge hub publication and retrieval", () => {
     const { hub, store } = setup();
     const v1 = await hub.import(input);
     const renamed = await hub.import({ ...input, title: "新标题" });
-    expect(renamed).toMatchObject({ duplicate: true, metadataChanged: true });
-    expect(store.audits.at(-1)?.action).toBe("metadata_updated");
+    expect(renamed).toMatchObject({ duplicate: false, metadataChanged: true });
+    expect(store.audits.at(-1)?.action).toBe("imported");
     await hub.import({ ...input, markdown: "# 第二版" });
     await expect(hub.import({ ...input, markdown: "冲突", baseVersionId: v1.versionId })).rejects.toThrow("Resource changed");
-    expect(await hub.history(input.id)).toHaveLength(2);
+    expect(await hub.history(input.id, true)).toHaveLength(3);
   });
   it("serializes concurrent duplicate imports", async () => {
     const { hub } = setup();
@@ -69,7 +69,7 @@ describe("knowledge hub publication and retrieval", () => {
     time("2026-11-02T00:00:00.000Z");
     expect((await hub.search()).total).toBe(0);
     expect((await hub.search({ includeInactive: true })).items[0].validity).toBe("expired");
-    expect((await hub.get(input.id, first.versionId)).version.id).toBe(first.versionId);
+    await expect(hub.get(input.id, first.versionId)).rejects.toThrow("No published");
   });
   it("archives resource without deleting history and hides relations to drafts", async () => {
     const { hub } = setup();
@@ -80,7 +80,7 @@ describe("knowledge hub publication and retrieval", () => {
     await hub.archive(input.id);
     expect((await hub.search()).total).toBe(0);
     await expect(hub.get(input.id, a.versionId)).rejects.toThrow();
-    expect(await hub.history(input.id)).toHaveLength(1);
+    expect(await hub.history(input.id, true)).toHaveLength(1);
     expect((await hub.get(input.id, a.versionId, true)).archived).toBe(true);
   });
   it("orders and paginates resources consistently, including natural Chinese queries", async () => {
@@ -132,4 +132,20 @@ describe("interaction curation", () => {
     expect(await hub.get(input.id)).not.toHaveProperty("provenance");
     await expect(hub.attachProvenance(draft.versionId, interaction.id, ["m2"])).rejects.toThrow("unpublished");
   });
+});
+
+
+it("never leaks mutable draft metadata and hides historical reads when the current resource expires", async () => {
+  const { hub, store, time } = setup();
+  const first = await hub.import({ ...input, summary: "Published", tags: ["published"] }); await hub.publish(input.id, first.versionId);
+  const draft = await hub.import({ ...input, title: "DRAFT SECRET", summary: "DRAFT SUMMARY", source: "DRAFT SOURCE", tags: ["draft"], markdown: "DRAFT BODY" });
+  expect((await hub.get(input.id))).toMatchObject({ title: input.title, summary: "Published", source: input.source });
+  expect(JSON.stringify(await hub.search())).not.toContain("DRAFT");
+  expect((await hub.history(input.id)).map(v => v.id)).toEqual([first.versionId]);
+  const legacy = store.resources.get(input.id)!; delete legacy.versions[0].metadata;
+  expect(await hub.get(input.id)).toMatchObject({ title: input.title, summary: "", source: "", tags: [] });
+  await hub.publish(input.id, draft.versionId);
+  const next = await hub.import({ ...input, markdown: "Expires", effectiveTo: "2026-10-01T00:00:00.000Z" }); await hub.publish(input.id, next.versionId);
+  time("2026-10-02T00:00:00.000Z");
+  await expect(hub.get(input.id, first.versionId)).rejects.toThrow("No published"); await expect(hub.history(input.id)).rejects.toThrow("No published");
 });

@@ -20,6 +20,7 @@ import { verifyDshInstallation } from "./dsh-installation";
 export async function runDshTurn(input: {
   prompt: string; system: string; provider: HermitProviderSettings; model: string;
   tools: AgentTools; signal: AbortSignal; onText: (text: string) => void;
+  assertAccess?: () => Promise<void>;
 }) {
   if (activeRuns >= 2) throw new Error("路引当前正在处理较多请求，请稍后再试。");
   activeRuns++;
@@ -36,6 +37,12 @@ export async function runDshTurn(input: {
       const chunks: Buffer[] = []; let bytes = 0;
       for await (const chunk of req) { bytes += chunk.length; if (bytes > 64_000) throw new Error("Tool request too large"); chunks.push(Buffer.from(chunk)); }
       const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      if (req.url === "/access") {
+        z.object({}).strict().parse(value);
+        try { await input.assertAccess?.(); signal.throwIfAborted(); }
+        catch { lifetime.abort(); res.writeHead(403).end(); return; }
+        res.writeHead(200, { "Content-Type": "application/json" }).end("{}"); return;
+      }
       if (req.url === "/ready") {
         const ready = z.object({ tools: z.array(z.string()).length(Object.keys(input.tools).length) }).strict().parse(value);
         if ([...ready.tools].sort().join(",") !== Object.keys(input.tools).sort().join(",")) throw new Error("Incomplete tools");
@@ -59,7 +66,7 @@ export async function runDshTurn(input: {
     const endpoint = new URL(input.provider.baseURL);
     if (endpoint.username || endpoint.password || !["http:", "https:"].includes(endpoint.protocol)) throw new Error("模型网关地址必须是不含账号密码的 HTTP(S) URL。");
     const installation = await verifyDshInstallation();
-    home = await mkdtemp(path.join(tmpdir(), "lantern-dsh-"));
+    home = await mkdtemp(path.join(tmpdir(), "lighthouse-dsh-"));
     await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", resolve); });
     const address = server.address(); if (!address || typeof address === "string") throw new Error("Bridge unavailable");
     const plugin = path.join(home, "hermit-plugin.mjs");
@@ -81,7 +88,7 @@ export async function runDshTurn(input: {
       ...["persistent-bash", "persistent-pwsh", "terminal-bash", "terminal-pwsh", "pty", "llm-deepseek"].map(id => ({ id, disabled: true })),
       { id: "tools", config: { mode: "native" } },
       { insert: [
-        { id: "hermit-provider", name: pathToFileURL(installation.providerPath).href, config: { providers: { "lantern-gateway": {
+        { id: "hermit-provider", name: pathToFileURL(installation.providerPath).href, config: { providers: { "lighthouse-gateway": {
           apiKeyEnv: "HERMIT_MODEL_KEY", api: input.provider.apiMode === "responses" ? "openai-responses" : "openai-completions",
           baseURL: input.provider.baseURL, models: [{ id: input.model, name: input.model, contextWindow: 32768 }], retryPolicy: { mode: "normal", maxRetries: 0 },
         } } } },
@@ -94,7 +101,7 @@ export async function runDshTurn(input: {
     if (Object.keys(input.provider.headers).length) {
       const route = patches[patches.length - 1] as { insert: Array<{ config: unknown }> };
       const providerConfig = route.insert[0].config as { providers: Record<string, Record<string, unknown>> };
-      providerConfig.providers["lantern-gateway"].headers = "__HERMIT_HEADERS__";
+      providerConfig.providers["lighthouse-gateway"].headers = "__HERMIT_HEADERS__";
       patchText = JSON.stringify(patches, null, 2).replace('"__HERMIT_HEADERS__"', '!!js JSON.parse(process.env.HERMIT_MODEL_HEADERS)');
     }
     await writeFile(patch, patchText, { mode: 0o600 });
@@ -103,8 +110,9 @@ export async function runDshTurn(input: {
     Object.assign(env, { HERMIT_MODEL_KEY: input.provider.apiKey, HERMIT_MODEL_HEADERS: JSON.stringify(input.provider.headers), HERMIT_BRIDGE_TOKEN: token, DSH_SYSTEM_PROMPT: input.system });
     const sdk = await nativeImport(pathToFileURL(installation.sdkPath).href);
     harness = new sdk.DeepSeekHarness({ dshBin: installation.bin, profile: "sdk-minimal", patches: [patch], dshHome: home, cwd: home, processCwd: home,
-      env, provider: "lantern-gateway", model: input.model, maxTokens: 4096, requestTimeoutMs: 170_000, initializeTimeoutMs: 30_000 });
+      env, provider: "lighthouse-gateway", model: input.model, maxTokens: 4096, requestTimeoutMs: 170_000, initializeTimeoutMs: 30_000 });
     signal.addEventListener("abort", abort, { once: true }); signal.throwIfAborted();
+    await input.assertAccess?.(); signal.throwIfAborted();
     const result = await harness.run(input.prompt); signal.throwIfAborted();
     if (!toolsReady) throw new Error("路引资料工具未能初始化，请联系维护人员。");
     if (!streamed && result.finalResponse) input.onText(result.finalResponse);
@@ -118,7 +126,7 @@ export async function runDshTurn(input: {
       server.closeAllConnections();
       try {
         if (server.listening) await new Promise<void>(resolve => server.close(() => resolve()));
-        if (home && path.dirname(path.resolve(home)) === path.resolve(tmpdir()) && path.basename(home).startsWith("lantern-dsh-")) await rm(home, { recursive: true, force: true });
+        if (home && path.dirname(path.resolve(home)) === path.resolve(tmpdir()) && path.basename(home).startsWith("lighthouse-dsh-")) await rm(home, { recursive: true, force: true });
       } finally { activeRuns--; }
     }
   }

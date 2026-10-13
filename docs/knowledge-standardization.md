@@ -4,17 +4,17 @@
 
 ## 维护入口
 
-- [Skill](../skills/lantern-knowledge-standardize/SKILL.md)
-- [字段与正文协议 v1](../skills/lantern-knowledge-standardize/references/protocol.md)
-- [机器字段规则及类型章节](../skills/lantern-knowledge-standardize/scripts/schema.mjs)
+- [Skill](../skills/lighthouse-knowledge-standardize/SKILL.md)
+- [字段与正文协议 v1](../skills/lighthouse-knowledge-standardize/references/protocol.md)
+- [机器字段规则及类型章节](../skills/lighthouse-knowledge-standardize/scripts/schema.mjs)
 
-仓库目录是唯一维护源，可将整个技能目录分发给维护者。Codex 本机建议在 `~/.agents/skills/lantern-knowledge-standardize` 创建指向此目录的链接；若工作区移动/归档，应先把入口改指向保留该技能的稳定检出目录。不要编辑额外复制出来的版本。
+仓库目录是唯一维护源，可将整个技能目录分发给维护者。Codex 本机建议在 `~/.agents/skills/lighthouse-knowledge-standardize` 创建指向此目录的链接；若工作区移动/归档，应先把入口改指向保留该技能的稳定检出目录。不要编辑额外复制出来的版本。
 
 ## 使用
 
 进入 Skill 目录，执行 `npm ci --ignore-scripts` 安装锁定依赖。用户可要求 AI：
 
-> 使用 lantern-knowledge-standardize 整理这份资料，保留事实边界，输出 Markdown 和单独检查报告，暂不上传。
+> 使用 lighthouse-knowledge-standardize 整理这份资料，保留事实边界，输出 Markdown 和单独检查报告，暂不上传。
 
 ```sh
 node scripts/check.mjs /absolute/path/article.md
@@ -28,7 +28,7 @@ npm test
 
 五类资源保持 `notice/case/document/skill/tool`。公共元信息映射现有 import 字段，正文类型信息用固定二级章节承载。没有新增数据库字段、虚拟权限、目录或 subtype。原始 Markdown 可供复审；导出的 JSON 内部已移除 frontmatter，避免前端把元信息当文章显示。
 
-在用户明确要求后，可从灯塔项目运行 `npm run hub -- import --input /absolute/path/new-import.json`；此命令只导入草稿，发布另行操作。MCP 的 `lantern_import` 使用同一 JSON。重复编号的覆盖/重命名/跳过需要后续维护端确认，离线 Skill 无法查重。
+在用户明确要求后，可从灯塔项目运行 `npm run hub -- import --input /absolute/path/new-import.json`；此命令只导入草稿，发布另行操作。MCP 的 `lighthouse_import` 使用同一 JSON。重复编号的覆盖/重命名/跳过需要后续维护端确认，离线 Skill 无法查重。
 
 现有服务可处理附件，但此 Skill 按首期约定只准备 Markdown，不移除其他任务已实现的附件能力。Skill/工具类仅为说明文档，不执行程序。真实资料转换仍由 AI/用户完成，脚本不做无依据改写。
 

@@ -11,6 +11,7 @@ import { ChatInput } from "./ChatInput";
 import { DocumentReader } from "./DocumentReader";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
 import styles from "./hermit-v3.module.css";
+import { authFetch } from "@/components/auth/auth-fetch";
 import {
   getDocumentRecommendations,
   getHermitApiError,
@@ -61,7 +62,7 @@ function createLocalAttachmentId(file: File) {
 }
 
 export function ChatPanel() {
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat", fetch: authFetch }), []);
   const pendingTextRef = useRef<string | null>(null);
   const pendingBodyRef = useRef<{ attachmentIds: string[]; documentContext?: HermitDocumentContext }>({ attachmentIds: [] });
   const uploadQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -118,7 +119,7 @@ export function ChatPanel() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("/api/hermit/attachments", { method: "POST", body: formData });
+      const response = await authFetch("/api/hermit/attachments", { method: "POST", body: formData });
       const responseText = await response.text();
       let payload: unknown = responseText;
       try {
@@ -214,7 +215,7 @@ export function ChatPanel() {
 
   async function deleteServerAttachment(id: string) {
     try {
-      await fetch("/api/hermit/attachments", {
+      await authFetch("/api/hermit/attachments", {
         method: "DELETE",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id }),
@@ -302,7 +303,7 @@ export function ChatPanel() {
         isLoading={isLoading}
         isUploading={isUploadingAttachments}
         attachments={attachments}
-        uploadError={uploadError}
+        uploadError={uploadError ?? displayedError}
         onInputChange={setInput}
         onSubmit={handleSubmit}
         onStop={handleStop}

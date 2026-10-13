@@ -3,6 +3,7 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { z, ZodError } from "zod";
 import { prisma } from "@/infrastructure/db";
 import { createPrismaHubTransaction } from "./prisma-store";
+import { hubJson } from "./http";
 import { HubError, importSchema, KnowledgeHub } from "./service";
 
 /** Resources that are required by the public Heart page or the Hermit agent. */
@@ -192,8 +193,10 @@ async function readGraph(tx: Tx): Promise<Graph> {
   };
 }
 
-async function writeAudit(tx: Tx, action: string, targetId: string, detail: unknown, now: Date) {
-  await tx.hubAudit.create({ data: { id: randomUUID(), action, targetId, detail: typeof detail === "string" ? detail : JSON.stringify(detail), createdAt: now } });
+export type KnowledgeMutationActor = { userId: string; account: string; requestId: string };
+
+async function writeAudit(tx: Tx, action: string, targetId: string, detail: unknown, now: Date, actor?: KnowledgeMutationActor) {
+  await tx.hubAudit.create({ data: { id: randomUUID(), action, targetId, detail: JSON.stringify({ detail, actor: actor ?? { channel: "operations" } }), createdAt: now } });
 }
 
 async function serializable<T>(client: PrismaClient, fn: (tx: Tx) => Promise<T>): Promise<T> {
@@ -206,8 +209,8 @@ async function serializable<T>(client: PrismaClient, fn: (tx: Tx) => Promise<T>)
   }
 }
 
-function transactionBoundHub(tx: Tx) {
-  return new KnowledgeHub({ transaction: async callback => callback(createPrismaHubTransaction(tx)) });
+function transactionBoundHub(tx: Tx, actor?: KnowledgeMutationActor) {
+  return new KnowledgeHub({ transaction: async callback => callback(createPrismaHubTransaction(tx)) }, undefined, actor);
 }
 
 /** Reuse the caller's Prisma transaction for import + publish workflows. */
@@ -282,7 +285,7 @@ export type ManagedImportResult = {
 };
 
 export class KnowledgeManager {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(private readonly client: PrismaClient, private readonly actor?: KnowledgeMutationActor) {}
 
   async list(): Promise<KnowledgeManagerListing> {
     return serializable(this.client, async tx => {
@@ -325,7 +328,7 @@ export class KnowledgeManager {
       if (resource.type !== "case") invalid("公开／内参状态仅用于参悟案例。");
       if (resource.archived) conflict("请先从回收站恢复资料。");
       await tx.hubResource.update({ where: { id: action.id }, data: { visibility: action.visibility, updatedAt: now } });
-      await writeAudit(tx, "visibility_updated", action.id, { before: resource.visibility, after: action.visibility }, now);
+      await writeAudit(tx, "visibility_updated", action.id, { before: resource.visibility, after: action.visibility }, now, this.actor);
       return { id: action.id, visibility: action.visibility };
     }
     if (action.action === "createFolder") {
@@ -338,7 +341,7 @@ export class KnowledgeManager {
       const name = ensureName(action.name);
       if (isNameTaken(graph, action.parentId, name)) conflict(`同级已有名为“${name}”的项目。`);
       const folder = await tx.hubFolder.create({ data: { id: randomUUID(), name, parentId: action.parentId, deleted: false, trashBatchId: null, createdAt: now, updatedAt: now } });
-      await writeAudit(tx, "folder_created", folder.id, { name, parentId: action.parentId }, now);
+      await writeAudit(tx, "folder_created", folder.id, { name, parentId: action.parentId }, now, this.actor);
       return { folder: { id: folder.id, name: folder.name, parentId: folder.parentId, deleted: folder.deleted } };
     }
 
@@ -359,7 +362,7 @@ export class KnowledgeManager {
         if (isNameTaken(graph, folderId, name, new Set(), new Set([resource.id]))) conflict(`同级已有名为“${name}”的项目。`);
         await tx.hubResourceLocation.upsert({ where: { resourceId: resource.id }, create: { resourceId: resource.id, folderId, name, archivedBeforeTrash: false, trashBatchId: null, updatedAt: now }, update: { name, updatedAt: now } });
       }
-      await writeAudit(tx, "renamed", action.id, { kind: action.kind, name }, now);
+      await writeAudit(tx, "renamed", action.id, { kind: action.kind, name }, now, this.actor);
       return { id: action.id, kind: action.kind, name };
     }
 
@@ -414,7 +417,7 @@ export class KnowledgeManager {
         const name = resource.location?.name ?? defaultName(resource);
         await tx.hubResourceLocation.upsert({ where: { resourceId: item.id }, create: { resourceId: item.id, folderId: action.folderId, name, archivedBeforeTrash: false, trashBatchId: null, updatedAt: now }, update: { folderId: action.folderId, updatedAt: now } });
       }
-      for (const item of action.items) await writeAudit(tx, "moved", item.id, { kind: item.kind, folderId: action.folderId }, now);
+      for (const item of action.items) await writeAudit(tx, "moved", item.id, { kind: item.kind, folderId: action.folderId }, now, this.actor);
       return { moved: action.items };
     }
 
@@ -432,8 +435,8 @@ export class KnowledgeManager {
     if (current && current.number > version.number) conflict("不能发布较旧的资源版本。");
     const publishedAt = version.publishedAt ?? now;
     await tx.hubVersion.update({ where: { id: version.id }, data: { publishedAt } });
-    await tx.hubResource.update({ where: { id: resource.id }, data: { publishedVersionId: version.id, archived: false, updatedAt: now } });
-    await writeAudit(tx, "published", resource.id, version.id, now);
+    await tx.hubResource.update({ where: { id: resource.id }, data: { publishedVersionId: version.id, archived: false, updatedAt: now, ...(version.metadata && typeof version.metadata === "object" && !Array.isArray(version.metadata) && (version.metadata.visibility === "public" || version.metadata.visibility === "internal") ? { visibility: version.metadata.visibility } : {}) } });
+    await writeAudit(tx, "published", resource.id, version.id, now, this.actor);
     return { resourceId: resource.id, versionId: version.id, publishedAt };
   }
 
@@ -467,7 +470,7 @@ export class KnowledgeManager {
       await tx.hubResource.update({ where: { id }, data: { archived: true, updatedAt: now } });
       if (resource.location) await tx.hubResourceLocation.update({ where: { resourceId: id }, data: { archivedBeforeTrash: fromFolder ? resource.archived : false, trashBatchId, updatedAt: now } });
     }
-    for (const item of items) await writeAudit(tx, "trashed", item.id, { kind: item.kind }, now);
+    for (const item of items) await writeAudit(tx, "trashed", item.id, { kind: item.kind }, now, this.actor);
     return { trashed: items };
   }
 
@@ -513,7 +516,7 @@ export class KnowledgeManager {
       await tx.hubResource.update({ where: { id }, data: { archived: false, updatedAt: now } });
       if (resource.location) await tx.hubResourceLocation.update({ where: { resourceId: id }, data: { archivedBeforeTrash: false, trashBatchId: null, updatedAt: now } });
     }
-    for (const item of items) await writeAudit(tx, "restored", item.id, { kind: item.kind }, now);
+    for (const item of items) await writeAudit(tx, "restored", item.id, { kind: item.kind }, now, this.actor);
     return { restored: items };
   }
 
@@ -570,29 +573,29 @@ export class KnowledgeManager {
       if (existingById && parsed.baseVersionId && parsed.baseVersionId !== existingById.latestVersionId) conflict("资源已经发生变化，请重新读取后再导入。");
       const targetExisting = graph.resources.get(targetResourceId);
       const baseVersionId = targetExisting?.latestVersionId ?? parsed.baseVersionId;
-      const imported = await createKnowledgeHubForTransaction(tx).import({ ...parsed, id: targetResourceId, baseVersionId });
+      const imported = await transactionBoundHub(tx, this.actor).import({ ...parsed, id: targetResourceId, baseVersionId });
       await tx.hubResourceLocation.upsert({
         where: { resourceId: imported.resourceId },
         create: { resourceId: imported.resourceId, folderId, name: effectiveName, archivedBeforeTrash: false, trashBatchId: null, updatedAt: new Date() },
         update: { folderId, name: effectiveName, archivedBeforeTrash: false, trashBatchId: null, updatedAt: new Date() },
       });
-      await writeAudit(tx, "managed_imported", imported.resourceId, { folderId, name: effectiveName, conflict: conflictMode }, new Date());
+      await writeAudit(tx, "managed_imported", imported.resourceId, { folderId, name: effectiveName, conflict: conflictMode }, new Date(), this.actor);
       return { ...imported, name: effectiveName, folderId, renamed };
     });
   }
 }
 
-export function createKnowledgeManager(client: PrismaClient = prisma) {
-  return new KnowledgeManager(client);
+export function createKnowledgeManager(client: PrismaClient = prisma, actor?: KnowledgeMutationActor) {
+  return new KnowledgeManager(client, actor);
 }
 
 /** Upload routes can use this stable function without knowing the Prisma wiring. */
-export async function importManagedResource(input: ManagedImportInput, folderId: string | null, name: string, conflictMode: ManagedImportConflict) {
-  return createKnowledgeManager().importManagedResource(input, folderId, name, conflictMode);
+export async function importManagedResource(input: ManagedImportInput, folderId: string | null, name: string, conflictMode: ManagedImportConflict, actor?: KnowledgeMutationActor) {
+  return createKnowledgeManager(undefined, actor).importManagedResource(input, folderId, name, conflictMode);
 }
 
 export function knowledgeManagerErrorResponse(error: unknown) {
-  if (error instanceof HubError) return Response.json({ error: error.message, code: error.code }, { status: error.code === "not_found" ? 404 : error.code === "conflict" ? 409 : 400 });
-  if (error instanceof ZodError) return Response.json({ error: "请求参数不正确。", code: "invalid" }, { status: 400 });
+  if (error instanceof HubError) return hubJson({ error: error.message, code: error.code }, { status: error.code === "not_found" ? 404 : error.code === "conflict" ? 409 : 400 });
+  if (error instanceof ZodError) return hubJson({ error: "请求参数不正确。", code: "invalid" }, { status: 400 });
   return null;
 }

@@ -253,3 +253,20 @@ describe("knowledge manager", () => {
     expect((await manager.importManagedResource({ ...input, id: "incoming-2" }, null, "资料.md", "rename")).name).toBe("资料 (2).md");
   });
 });
+
+
+describe("employee mutation audit transaction", () => {
+  it("stores the employee and request identity in the same successful mutation", async () => {
+    const db = new MemoryManagerDb();
+    const actor = { userId: "employee-1", account: "employee", requestId: "request-1" };
+    const manager = createKnowledgeManager(db as unknown as PrismaClient, actor);
+    await manager.apply({ action: "createFolder", name: "资料", parentId: null });
+    expect(JSON.parse(db.state.audits[0].detail)).toMatchObject({ actor, detail: { name: "资料" } });
+  });
+  it("rolls the mutation back when the audit insert fails", async () => {
+    const db = new MemoryManagerDb();
+    db.hubAudit.create = async () => { throw new Error("audit unavailable"); };
+    await expect(createKnowledgeManager(db as unknown as PrismaClient, { userId: "employee", account: "employee", requestId: "request" }).apply({ action: "createFolder", name: "资料", parentId: null })).rejects.toThrow("audit unavailable");
+    expect(db.state.folders).toEqual([]); expect(db.state.audits).toEqual([]);
+  });
+});

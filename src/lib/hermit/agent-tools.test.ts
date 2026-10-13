@@ -33,8 +33,10 @@ describe("Hermit request-scoped progressive knowledge tools", () => {
     await expect(tools.attachment_read.execute({ id: "other" })).rejects.toThrow("不属于本次请求");
     await expect(tools.knowledge_file_read.execute({ resourceId: "skill", versionId: "v1", path: "../secret" })).rejects.toThrow();
     expect(await tools.attachment_read.execute({ id: "mine" })).toMatchObject({ text: "当前附件" });
-    await expect(tools.knowledge_files.execute({ resourceId: "skill", versionId: "v1" })).rejects.toThrow("Skill");
-    await expect(tools.knowledge_file_read.execute({ resourceId: "skill", versionId: "v1", path: "SKILL.md" })).rejects.toThrow("Skill");
+    // Knowledge attachments now cover every published resource type. A
+    // document with no files is a valid empty listing, never a filesystem read.
+    expect(await tools.knowledge_files.execute({ resourceId: "policy", versionId: "v1" })).toMatchObject({ files: [], total: 0 });
+    await expect(tools.knowledge_file_read.execute({ resourceId: "policy", versionId: "v1", path: "SKILL.md" })).rejects.toThrow("文件不存在");
   });
 
   it("stops before and after an aborted knowledge call", async () => {

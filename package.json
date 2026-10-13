@@ -1,5 +1,5 @@
 {
-  "name": "lantern-app",
+  "name": "lighthouse-app",
   "version": "1.1.3",
   "private": true,
   "engines": {
@@ -21,7 +21,7 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "hub": "tsx scripts/knowledge-hub.ts",
-    "test:knowledge-standardize": "npm ci --prefix skills/lantern-knowledge-standardize --ignore-scripts && npm test --prefix skills/lantern-knowledge-standardize && node --import tsx --test skills/lantern-knowledge-standardize/tests/hub-compat.test.ts",
+    "test:knowledge-standardize": "npm ci --prefix skills/lighthouse-knowledge-standardize --ignore-scripts && npm test --prefix skills/lighthouse-knowledge-standardize && node --import tsx --test skills/lighthouse-knowledge-standardize/tests/hub-compat.test.ts",
     "hub:mcp": "tsx scripts/knowledge-mcp.ts",
     "hub:import-existing": "tsx scripts/knowledge-import-existing.ts",
     "releases:sync": "node scripts/sync-releases.mjs",
@@ -31,7 +31,10 @@
     "package:hermit-runtime": "node scripts/package-hermit-runtime.mjs",
     "check:hermit-runtime": "tsx scripts/check-hermit-runtime.ts",
     "test:hermit-runtime": "tsx scripts/hermit-dsh-smoke.ts",
-    "check:fonts": "node scripts/check-fonts.mjs"
+    "check:fonts": "node scripts/check-fonts.mjs",
+    "lighthouse": "node packages/lighthouse-client/src/cli.js",
+    "test:client": "npm test --prefix packages/lighthouse-client",
+    "auth:prune": "tsx scripts/auth-prune.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

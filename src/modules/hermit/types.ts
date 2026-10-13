@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 
 export type HermitChatParticipant = {
-  userId: string | null;
+  userId: string;
   brandId: string | null;
   regionId: string | null;
   dealerId: string | null;
@@ -16,6 +16,7 @@ export type HermitChatSessionInput = HermitChatParticipant & {
 export type HermitMessageRole = "user" | "assistant" | "system";
 
 export type HermitMessageInput = {
+  userId: string;
   sessionId: string;
   externalMessageId: string;
   role: HermitMessageRole;
@@ -31,6 +32,7 @@ export type HermitChatMessageRecord = {
 };
 
 export type HermitRetrievalTraceInput = {
+  userId: string;
   chatMessageId: string;
   query: string;
   contextText: string;
@@ -40,14 +42,14 @@ export type HermitRetrievalTraceInput = {
 
 export type PersistIncomingMessagesInput = {
   sessionId: string;
-  participant: HermitChatParticipant | null;
+  participant: HermitChatParticipant;
   messages: UIMessage[];
   modelName: string;
 };
 
 export type PersistAssistantResponseInput = {
   sessionId: string;
-  participant: HermitChatParticipant | null;
+  participant: HermitChatParticipant;
   responseMessage: UIMessage;
   modelName: string;
   retrieval: {
@@ -59,6 +61,7 @@ export type PersistAssistantResponseInput = {
 };
 
 export interface HermitChatRepository {
+  /** Atomically creates a new session or checks its immutable employee owner. */
   upsertSession(input: HermitChatSessionInput): Promise<void>;
   /** First write wins for (sessionId, externalMessageId); replay returns the original identity without modifying it. */
   upsertMessage(input: HermitMessageInput): Promise<HermitChatMessageRecord>;

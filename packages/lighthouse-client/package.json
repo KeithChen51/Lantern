@@ -1,0 +1,11 @@
+{
+  "name": "@lighthouse/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "lighthouse": "./src/cli.js" },
+  "exports": { ".": "./src/client.js", "./mcp": "./src/mcp.js", "./credentials": "./src/credentials.js", "./transport": "./src/transport.js" },
+  "engines": { "node": ">=20.9.0" },
+  "scripts": { "test": "node --test test/*.node-test.js" },
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.30.0", "zod": "^4.6.5" }
+}
