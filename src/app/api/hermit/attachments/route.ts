@@ -1,9 +1,10 @@
 import {
-  buildHermitAttachmentOwnerCookie,
   deleteHermitAttachment,
   HERMIT_ATTACHMENT_MAX_REQUEST_BYTES,
   saveHermitAttachment,
 } from "@/lib/hermit/attachments";
+import { requireEmployee, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
+import { assertHermitPrincipal } from "@/modules/hermit/access";
 import { AppError, toErrorResponse } from "@/shared/errors";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ async function readBoundedBody(request: Request, limit: number) {
   let size = 0;
   try {
     while (true) {
+      request.signal.throwIfAborted();
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
@@ -42,13 +44,17 @@ function jsonNoStore(body: unknown, init?: ResponseInit) {
   return response;
 }
 
-function withOwnerCookie(response: Response, ownerId: string, shouldSetOwnerCookie: boolean) {
-  response.headers.set("Cache-Control", "no-store");
-  if (shouldSetOwnerCookie) response.headers.set("Set-Cookie", buildHermitAttachmentOwnerCookie(ownerId));
-  return response;
+async function authenticate(request: Request): Promise<Principal> {
+  const principal = await requireEmployee(request);
+  assertHermitPrincipal(principal, "hermit:attachment:self");
+  assertWebMutation(request, principal);
+  return principal;
 }
 
 export async function POST(request: Request) {
+  let principal: Principal;
+  try { principal = await authenticate(request); }
+  catch (error) { return error instanceof AppError ? jsonError(error) : authErrorResponse(error); }
   try {
     const contentLength = request.headers.get("content-length");
     if (contentLength && Number(contentLength) > HERMIT_ATTACHMENT_MAX_REQUEST_BYTES) {
@@ -58,7 +64,7 @@ export async function POST(request: Request) {
     let formData: FormData;
     try {
       const body = await readBoundedBody(request, HERMIT_ATTACHMENT_MAX_REQUEST_BYTES);
-      formData = await new Request(request.url, { method: "POST", headers: request.headers, body }).formData();
+      formData = await new Request(request.url, { method: "POST", headers: request.headers, body: new Uint8Array(body) }).formData();
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError("bad_request", "上传请求格式无效。", 400);
@@ -68,14 +74,21 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: { code: "validation_error", message: "请在 file 字段上传一个附件。" } }, { status: 422 });
     }
 
-    const result = await saveHermitAttachment(request, files[0]);
-    return withOwnerCookie(Response.json(result.summary, { status: 201 }), result.ownerId, result.shouldSetOwnerCookie);
+    // Parsing may be slow: recheck revocation before storing parsed content.
+    await authenticate(request);
+    const result = await saveHermitAttachment(request, files[0], principal);
+    try { await authenticate(request); }
+    catch (error) { await deleteHermitAttachment(principal, result.summary.id); throw error; }
+    return jsonNoStore(result.summary, { status: 201 });
   } catch (error) {
-    return jsonError(error);
+    return error instanceof AppError ? jsonError(error) : authErrorResponse(error);
   }
 }
 
 export async function DELETE(request: Request) {
+  let principal: Principal;
+  try { principal = await authenticate(request); }
+  catch (error) { return error instanceof AppError ? jsonError(error) : authErrorResponse(error); }
   try {
     let body: { id?: unknown };
     try {
@@ -85,9 +98,9 @@ export async function DELETE(request: Request) {
       if (error instanceof AppError) throw error;
       throw new AppError("bad_request", "删除请求格式无效。", 400);
     }
-    const result = await deleteHermitAttachment(request, typeof body.id === "string" ? body.id : "");
+    const result = await deleteHermitAttachment(principal, typeof body.id === "string" ? body.id : "");
     return jsonNoStore(result);
   } catch (error) {
-    return jsonError(error);
+    return error instanceof AppError ? jsonError(error) : authErrorResponse(error);
   }
 }

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DELETE, POST } from "@/app/api/hermit/attachments/route";
 import {
   HERMIT_ATTACHMENT_MAX_FILE_BYTES,
@@ -9,19 +9,22 @@ import {
   resetHermitAttachmentStoreForTests,
 } from "./attachments";
 
+const auth = vi.hoisted(() => ({ employee: vi.fn(), mutation: vi.fn() }));
+vi.mock("@/modules/auth/access", () => ({ requireEmployee: auth.employee, assertWebMutation: auth.mutation,
+  authErrorResponse: (error: {status?: number}) => Response.json({ error: "access rejected" }, { status: error.status ?? 503 }) }));
+import { AppError } from "@/shared/errors";
+import type { Principal } from "@/modules/auth/access";
+const employee = (id = "a", credentialId = "web-" + id): Principal => ({ userId: "employee-" + id, account: id, displayName: id, grantId: "grant-" + id, credentialId, channel: "web", capabilities: ["hermit:attachment:self", "hermit:chat"], expiresAt: Date.now() + 3600000 });
+beforeEach(() => {
+  vi.clearAllMocks();
+  auth.employee.mockImplementation(async (request: Request) => employee(request.headers.get("cookie") === "employee-b" ? "b" : "a"));
+  auth.mutation.mockImplementation(() => {});
+});
 const nodeRequire = createRequire(import.meta.url);
 
 afterEach(() => {
   resetHermitAttachmentStoreForTests();
 });
-
-function cookieFrom(response: Response) {
-  const setCookie = response.headers.get("set-cookie");
-  expect(setCookie).toMatch(/lh_hermit_attachment_owner=[A-Za-z0-9_-]+/);
-  expect(setCookie).toContain("HttpOnly");
-  expect(setCookie).toContain("SameSite=Lax");
-  return setCookie!.split(";", 1)[0];
-}
 
 async function upload(name: string, contents: Buffer | string, cookie?: string) {
   const formData = new FormData();
@@ -34,7 +37,7 @@ async function upload(name: string, contents: Buffer | string, cookie?: string) 
   });
   const response = await POST(request);
   const body = await response.json();
-  return { response, body, cookie: cookie ?? (response.ok ? cookieFrom(response) : "") };
+  return { response, body, cookie: cookie ?? "employee-a" };
 }
 
 function makePdf(text: string) {
@@ -62,36 +65,82 @@ function makePdf(text: string) {
 }
 
 describe("Hermit attachment API", () => {
-  it("accepts UTF-8 text and resolves it only for the owning browser cookie", async () => {
+  it("accepts UTF-8 text and resolves it only for the owning employee and web session", async () => {
     const first = await upload("现场记录.md", "交车时间待确认\n下一次反馈：周五");
     expect(first.response.status).toBe(201);
+    expect(first.response.headers.get("set-cookie")).toBeNull();
     expect(first.body).toMatchObject({ name: "现场记录.md", status: "ready" });
 
     const resolved = await resolveHermitAttachments(
-      new Request("http://localhost", { headers: { cookie: first.cookie } }),
+      employee(),
       [first.body.id],
     );
     expect(resolved[0]).toMatchObject({ id: first.body.id, name: "现场记录.md", text: "交车时间待确认\n下一次反馈：周五" });
 
-    const other = await upload("其他.txt", "另一位用户的内容");
+    await upload("其他.txt", "另一位用户的内容", "employee-b");
     await expect(
       resolveHermitAttachments(
-        new Request("http://localhost", { headers: { cookie: other.cookie } }),
+        employee("b"),
         [first.body.id],
       ),
     ).rejects.toMatchObject({ code: "not_found", status: 404 });
   });
 
+  it.each([401, 503])("rejects auth %s before upload/delete body parsing", async status => {
+    auth.employee.mockRejectedValue(new AppError("unauthorized", "expired", status));
+    for (const handler of [POST, DELETE]) {
+      const req = new Request("http://localhost/api/hermit/attachments", { method: handler === POST ? "POST" : "DELETE", body: "malformed" });
+      const getReader = vi.spyOn(req.body!, "getReader");
+      expect((await handler(req)).status).toBe(status); expect(getReader).not.toHaveBeenCalled();
+    }
+  });
+  it("rejects another web session and does not let another employee delete an upload", async () => {
+    const ready = await upload("ready.txt", "private");
+    await expect(resolveHermitAttachments(employee("a", "web-a-new"), [ready.body.id])).rejects.toMatchObject({ status: 404 });
+    const deletion = await DELETE(new Request("http://localhost/api/hermit/attachments", { method: "DELETE", headers: { cookie: "employee-b" }, body: JSON.stringify({ id: ready.body.id }) }));
+    expect(deletion.status).toBe(404);
+    expect((await resolveHermitAttachments(employee(), [ready.body.id]))[0].text).toBe("private");
+  });
+  it("requires capability and CSRF before reading attachment data", async () => {
+    auth.mutation.mockImplementation(() => { throw new AppError("forbidden", "csrf", 403); });
+    expect((await upload("ready.txt", "text")).response.status).toBe(403);
+    auth.mutation.mockImplementation(() => {});
+    auth.employee.mockResolvedValue({ ...employee(), capabilities: ["knowledge:read"] });
+    expect((await upload("ready.txt", "text")).response.status).toBe(403);
+  });
+  it("expires uploads and rejects expired principals", async () => {
+    const ready = await upload("ready.txt", "text");
+    const realNow = Date.now();
+    const now = vi.spyOn(Date, "now").mockReturnValue(realNow + 31 * 60 * 1000);
+    try { await expect(resolveHermitAttachments(employee(), [ready.body.id])).rejects.toMatchObject({ status: 404 }); }
+    finally { now.mockRestore(); }
+    await expect(resolveHermitAttachments({ ...employee(), expiresAt: 1 }, [])).rejects.toMatchObject({ status: 401 });
+  });
+  it("never stores content if an upload aborts during parsing", async () => {
+    const { saveHermitAttachment, HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER } = await import("./attachments");
+    const controller = new AbortController();
+    const file = new File(["cancelled"], "cancelled.txt");
+    vi.spyOn(file, "arrayBuffer").mockImplementation(async () => { controller.abort(); return new TextEncoder().encode("cancelled").buffer; });
+    await expect(saveHermitAttachment(new Request("http://localhost", { signal: controller.signal }), file, employee())).rejects.toThrow();
+    // All five slots remain available after the aborted parse.
+    for (let index = 0; index < HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER; index++) expect((await upload(`${index}.txt`, "ready")).response.status).toBe(201);
+  });
+  it("removes a parsed upload when revocation is detected before returning it", async () => {
+    auth.employee.mockResolvedValueOnce(employee()).mockResolvedValueOnce(employee()).mockRejectedValueOnce(new AppError("unauthorized", "revoked", 401));
+    expect((await upload("revoked.txt", "private")).response.status).toBe(401);
+    auth.employee.mockResolvedValue(employee());
+    for (let index = 0; index < 5; index++) expect((await upload(`${index}.txt`, "ready")).response.status).toBe(201);
+  });
   it("extracts text from PDF and DOCX samples", async () => {
     const pdf = await upload("交车说明.pdf", makePdf("Hermit attachment"));
     expect(pdf.response.status).toBe(201);
-    const pdfText = await resolveHermitAttachments(new Request("http://localhost", { headers: { cookie: pdf.cookie } }), [pdf.body.id]);
+    const pdfText = await resolveHermitAttachments(employee(), [pdf.body.id]);
     expect(pdfText[0].text).toContain("Hermit attachment");
 
     const fixturePath = path.join(path.dirname(nodeRequire.resolve("mammoth")), "..", "test", "test-data", "single-paragraph.docx");
     const docx = await upload("服务说明.docx", await readFile(fixturePath), pdf.cookie);
     expect(docx.response.status).toBe(201);
-    const docxText = await resolveHermitAttachments(new Request("http://localhost", { headers: { cookie: pdf.cookie } }), [docx.body.id]);
+    const docxText = await resolveHermitAttachments(employee(), [docx.body.id]);
     expect(docxText[0].text).toBe("Walking on imported air");
   });
 
@@ -105,7 +154,7 @@ describe("Hermit attachment API", () => {
 
     const ready = await upload("ready.txt", "ready");
     await expect(
-      resolveHermitAttachments(new Request("http://localhost", { headers: { cookie: ready.cookie } }), [ready.body.id, ready.body.id]),
+      resolveHermitAttachments(employee(), [ready.body.id, ready.body.id]),
     ).rejects.toMatchObject({ code: "validation_error", status: 422 });
 
     const deleted = await DELETE(
@@ -118,7 +167,7 @@ describe("Hermit attachment API", () => {
     expect(deleted.status).toBe(200);
     expect(await deleted.json()).toEqual({ id: ready.body.id, deleted: true });
     await expect(
-      resolveHermitAttachments(new Request("http://localhost", { headers: { cookie: ready.cookie } }), [ready.body.id]),
+      resolveHermitAttachments(employee(), [ready.body.id]),
     ).rejects.toMatchObject({ code: "not_found", status: 404 });
   });
 

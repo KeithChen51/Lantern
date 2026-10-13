@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  upsertSession: vi.fn(), upsertMessage: vi.fn(), addRetrievalTrace: vi.fn(), run: vi.fn(), verify: vi.fn(), resolve: vi.fn(), get: vi.fn(), search: vi.fn(),
+  employee: vi.fn(), mutation: vi.fn(), upsertSession: vi.fn(), upsertMessage: vi.fn(), addRetrievalTrace: vi.fn(), run: vi.fn(), verify: vi.fn(), resolve: vi.fn(), get: vi.fn(), search: vi.fn(),
 }));
 vi.mock("@/lib/hermit/dsh-runtime", () => ({ runDshTurn: mocks.run, verifyDshInstallation: mocks.verify }));
 vi.mock("@/lib/hermit/attachments", () => ({ resolveHermitAttachments: mocks.resolve }));
@@ -11,9 +11,10 @@ vi.mock("@/modules/hermit", async () => {
   const { createHermitChatService } = await import("@/modules/hermit/service");
   return { createHermitChatService, hermitChatRepository: { upsertSession: mocks.upsertSession, upsertMessage: mocks.upsertMessage, addRetrievalTrace: mocks.addRetrievalTrace } };
 });
-vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-vi.mock("@/modules/auth", () => ({ authRepository: {}, createAuthService: () => ({ getCurrentUser: async () => ({ id: "test-user" }) }) }));
-vi.mock("@/modules/tenant", () => ({ tenantRepository: {}, createTenantService: () => ({ getUserOrgScope: async () => ({}) }) }));
+vi.mock("@/modules/auth/access", () => ({ requireEmployee: mocks.employee, assertWebMutation: mocks.mutation,
+  authErrorResponse: (error: {status?: number}) => Response.json({ error: "access rejected" }, { status: error.status ?? 503 }) }));
+import { AppError } from "@/shared/errors";
+const principal = { userId: "employee-a", account: "a", displayName: "Employee A", grantId: "grant-a", credentialId: "web-a", channel: "web", capabilities: ["hermit:chat", "hermit:attachment:self"], expiresAt: Date.now() + 3600000 };
 import { POST } from "./route";
 
 const question = { id: "u1", role: "user", parts: [{ type: "text", text: "客户一直追问交车时间怎么办？" }] };
@@ -21,6 +22,7 @@ const request = (body: unknown) => new Request("http://localhost/api/chat", { me
 describe("DSH chat transport boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.employee.mockResolvedValue(principal); mocks.mutation.mockImplementation(() => {}); mocks.upsertSession.mockResolvedValue(undefined);
     vi.stubEnv("HERMIT_RUNTIME", "dsh"); vi.stubEnv("DATABASE_URL", "test-audit-enabled");
     mocks.upsertMessage.mockImplementation(async input => ({ id: "stored-" + input.externalMessageId, ...input }));
     mocks.verify.mockResolvedValue({}); mocks.resolve.mockResolvedValue([]);
@@ -32,6 +34,66 @@ describe("DSH chat transport boundary", () => {
     });
   });
   afterEach(() => vi.unstubAllEnvs());
+  it.each([401, 503])("rejects authentication %s before body, storage, attachments or model work", async status => {
+    mocks.employee.mockRejectedValue(new AppError("unauthorized", "access rejected", status));
+    const req = request({ messages: [question] });
+    const getReader = vi.spyOn(req.body!, "getReader");
+    expect((await POST(req)).status).toBe(status);
+    expect(getReader).not.toHaveBeenCalled();
+    expect(mocks.resolve).not.toHaveBeenCalled();
+    expect(mocks.upsertSession).not.toHaveBeenCalled();
+    expect(mocks.verify).not.toHaveBeenCalled();
+    expect(mocks.run).not.toHaveBeenCalled();
+  });
+  it("rejects expired, tool-channel, and missing chat capability principals before work", async () => {
+    for (const invalid of [{ ...principal, expiresAt: 1 }, { ...principal, channel: "cli" }, { ...principal, capabilities: ["knowledge:read"] }]) {
+      mocks.employee.mockResolvedValue(invalid);
+      expect([401, 403]).toContain((await POST(request({ messages: [question] }))).status);
+    }
+    expect(mocks.upsertSession).not.toHaveBeenCalled(); expect(mocks.run).not.toHaveBeenCalled();
+  });
+  it("rejects a foreign session before attachment, knowledge or runtime work", async () => {
+    mocks.upsertSession.mockRejectedValue(new AppError("forbidden", "foreign session", 403));
+    expect((await POST(request({ id: "foreign", messages: [question], attachmentIds: ["file"], documentContext: { resourceId: "guide", versionId: "v1" } }))).status).toBe(403);
+    expect(mocks.resolve).not.toHaveBeenCalled(); expect(mocks.get).not.toHaveBeenCalled(); expect(mocks.run).not.toHaveBeenCalled();
+  });
+  it("rechecks revocation before model start and each tool call", async () => {
+    mocks.run.mockImplementation(async ({ tools }) => {
+      mocks.employee.mockRejectedValue(new AppError("unauthorized", "revoked", 401));
+      await tools.knowledge_read.execute({ resourceId: "guide", versionId: "v1" });
+    });
+    const stream = await (await POST(request({ messages: [question] }))).text();
+    expect(stream).toContain('"type":"error"'); expect(mocks.get).not.toHaveBeenCalled();
+  });
+  it("interrupts a quiet model request within the revocation polling bound and clears its timer", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      mocks.run.mockImplementation(async ({ signal }) => {
+        mocks.employee.mockRejectedValue(new AppError("unauthorized", "revoked", 401));
+        await new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("revoked")), { once: true }));
+      });
+      const response = await POST(request({ messages: [question] }));
+      const consuming = response.text();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(await consuming).toContain('"type":"error"');
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it("passes the trusted access check to DSH for model continuations", async () => {
+    mocks.run.mockImplementation(async ({ assertAccess, onText }) => {
+      await assertAccess(); onText("Allowed");
+      mocks.employee.mockRejectedValue(new AppError("unauthorized", "revoked", 401));
+      await assertAccess(); onText("Must not appear");
+    });
+    const stream = await (await POST(request({ messages: [question] }))).text();
+    expect(stream).toContain("Allowed"); expect(stream).not.toContain("Must not appear");
+    expect(stream).toContain('"type":"error"');
+  });
+  it("rejects a missing CSRF credential before parsing the request", async () => {
+    mocks.mutation.mockImplementation(() => { throw new AppError("forbidden", "CSRF", 403); });
+    expect((await POST(request("invalid body"))).status).toBe(403);
+    expect(mocks.upsertSession).not.toHaveBeenCalled();
+  });
   it("persists actual reads with empty context through the real service without displaying cards", async () => {
     const response = await POST(request({ messages: [question] }));
     expect(response.status).toBe(200);
@@ -115,10 +177,12 @@ describe("ordinary chat progressive tool loop", () => {
   afterEach(() => vi.unstubAllEnvs());
   it("searches metadata then reads a version before answering, without embeddings", async () => {
     vi.clearAllMocks();
+    mocks.employee.mockResolvedValue(principal); mocks.mutation.mockImplementation(() => {}); mocks.upsertSession.mockResolvedValue(undefined);
     vi.stubEnv("HERMIT_RUNTIME", ""); vi.stubEnv("DATABASE_URL", "");
     vi.stubEnv("OPENAI_API_KEY", "local-test-only"); vi.stubEnv("OPENAI_API_MODE", "chat");
     vi.stubEnv("OPENAI_EXTRA_HEADERS", "");
     vi.stubEnv("EMBEDDING_BASE_URL", "http://127.0.0.1:1/must-not-be-used");
+    mocks.employee.mockResolvedValue(principal); mocks.mutation.mockImplementation(() => {}); mocks.upsertSession.mockResolvedValue(undefined);
     mocks.resolve.mockResolvedValue([]);
     mocks.get.mockResolvedValue({ id: "guide", type: "document", title: "服务指引", summary: "沟通方法", tags: [], visibility: "internal", source: "灯塔", validity: "effective", version: { id: "v1", number: 1, publishedAt: "2026-10-12T00:00:00Z", markdown: "独有正文：保持透明沟通", citations: [], files: [] } });
     mocks.search.mockResolvedValue({ items: [{ id: "guide", type: "document", title: "服务指引", summary: "沟通方法", source: "灯塔", tags: [], visibility: "internal", versionId: "v1", version: 1, validity: "effective", excerpt: "不应预先披露的正文" }], total: 1, offset: 0, limit: 20 });

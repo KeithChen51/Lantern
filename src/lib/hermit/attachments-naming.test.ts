@@ -6,7 +6,7 @@ const legacy = Symbol.for("lantern.hermit.attachment-store");
 const cache = globalThis as typeof globalThis & { [canonical]?: Map<string, unknown>; [legacy]?: Map<string, unknown> };
 afterEach(() => { delete cache[canonical]; delete cache[legacy]; vi.resetModules(); });
 
-it("reuses the legacy process cache during hot reload and retains ownership checks", async () => {
+it("retains the hot reload cache but rejects old anonymous entries", async () => {
   vi.resetModules();
   delete cache[canonical];
   const id = randomUUID(), ownerId = "a".repeat(43);
@@ -14,8 +14,6 @@ it("reuses the legacy process cache during hot reload and retains ownership chec
   cache[legacy] = new Map([[id, entry]]);
   const { resolveHermitAttachments } = await import("./attachments");
   expect(cache[canonical]).toBe(cache[legacy]);
-  const request = new Request("http://localhost", { headers: { cookie: `lh_hermit_attachment_owner=${ownerId}` } });
-  expect(await resolveHermitAttachments(request, [id])).toEqual([{ id, name: entry.name, size: entry.size, text: entry.text }]);
-  const otherOwner = new Request("http://localhost", { headers: { cookie: `lh_hermit_attachment_owner=${"b".repeat(43)}` } });
-  await expect(resolveHermitAttachments(otherOwner, [id])).rejects.toMatchObject({ status: 404 });
+  const principal = { userId: "employee", account: "employee", displayName: "Employee", grantId: "grant", credentialId: "session", channel: "web" as const, capabilities: ["hermit:attachment:self" as const], expiresAt: Date.now() + 60000 };
+  await expect(resolveHermitAttachments(principal, [id])).rejects.toMatchObject({ status: 404 });
 });

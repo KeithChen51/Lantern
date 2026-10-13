@@ -20,6 +20,7 @@ import { verifyDshInstallation } from "./dsh-installation";
 export async function runDshTurn(input: {
   prompt: string; system: string; provider: HermitProviderSettings; model: string;
   tools: AgentTools; signal: AbortSignal; onText: (text: string) => void;
+  assertAccess?: () => Promise<void>;
 }) {
   if (activeRuns >= 2) throw new Error("路引当前正在处理较多请求，请稍后再试。");
   activeRuns++;
@@ -36,6 +37,12 @@ export async function runDshTurn(input: {
       const chunks: Buffer[] = []; let bytes = 0;
       for await (const chunk of req) { bytes += chunk.length; if (bytes > 64_000) throw new Error("Tool request too large"); chunks.push(Buffer.from(chunk)); }
       const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      if (req.url === "/access") {
+        z.object({}).strict().parse(value);
+        try { await input.assertAccess?.(); signal.throwIfAborted(); }
+        catch { lifetime.abort(); res.writeHead(403).end(); return; }
+        res.writeHead(200, { "Content-Type": "application/json" }).end("{}"); return;
+      }
       if (req.url === "/ready") {
         const ready = z.object({ tools: z.array(z.string()).length(Object.keys(input.tools).length) }).strict().parse(value);
         if ([...ready.tools].sort().join(",") !== Object.keys(input.tools).sort().join(",")) throw new Error("Incomplete tools");
@@ -105,6 +112,7 @@ export async function runDshTurn(input: {
     harness = new sdk.DeepSeekHarness({ dshBin: installation.bin, profile: "sdk-minimal", patches: [patch], dshHome: home, cwd: home, processCwd: home,
       env, provider: "lighthouse-gateway", model: input.model, maxTokens: 4096, requestTimeoutMs: 170_000, initializeTimeoutMs: 30_000 });
     signal.addEventListener("abort", abort, { once: true }); signal.throwIfAborted();
+    await input.assertAccess?.(); signal.throwIfAborted();
     const result = await harness.run(input.prompt); signal.throwIfAborted();
     if (!toolsReady) throw new Error("路引资料工具未能初始化，请联系维护人员。");
     if (!streamed && result.finalResponse) input.onText(result.finalResponse);
