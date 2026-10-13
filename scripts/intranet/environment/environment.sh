@@ -152,13 +152,15 @@ start_app() {
   compose exec -T app node -e "fetch('http://127.0.0.1:3000/api/health/ready',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"
 }
 quiesce_app() {
-  local id running previous_key configured_key
+  local id running previous_key configured_key previous_database_url
   id=$(compose ps --all -q app)
   [[ -n "$id" ]] || fail 'Backup/upgrade requires an existing app container'
   [[ "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Source}}{{end}}{{end}}' "$id")" == "$DATA_ROOT/app" ]] || fail 'Actual app data mount differs from configured root'
   local mysql_container
   mysql_container=$(compose ps --all -q mysql)
   [[ -n "$mysql_container" && "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/mysql"}}{{.Source}}{{end}}{{end}}' "$mysql_container")" == "$DATA_ROOT/mysql" ]] || fail 'Actual MySQL data mount differs from configured root'
+  previous_database_url=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$id" | sed -n 's/^DATABASE_URL=//p')
+  [[ -n "$previous_database_url" && "$DATABASE_URL" == "$previous_database_url" ]] || fail 'Do not change the existing database connection during backup or ordinary upgrade'
   previous_key=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$id" | sed -n 's/^AUTH_ENCRYPTION_KEY=//p')
   if [[ -n "$previous_key" ]]; then
     configured_key=$(compose config --format json | docker run --rm -i --pull never --network none --entrypoint node "$LIGHTHOUSE_TOOLS_IMAGE" -e 'let s="";process.stdin.on("data",x=>s+=x);process.stdin.on("end",()=>{const c=JSON.parse(s);process.stdout.write(c.services.app.environment.AUTH_ENCRYPTION_KEY||"")})')

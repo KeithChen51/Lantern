@@ -75,7 +75,7 @@ CONTROL=/data/lighthouse-config/production.env
 # 复制模板并填写；控制文件和 app 文件都 chmod 600。
 # 明确拉取 master 构建的应用/operations digest 和经确认的 MySQL digest：
 docker pull registry.example/lighthouse@sha256:APP_DIGEST
-docker pull registry.example/lighthouse-operations@sha256:TOOLS_DIGEST
+docker pull registry.example/lighthouse-tools@sha256:TOOLS_DIGEST
 docker pull registry.example/mysql@sha256:MYSQL_DIGEST
 
 bash "$SOURCE/scripts/intranet/environment/environment.sh" verify "$CONTROL"
@@ -102,7 +102,7 @@ CONTROL=/data/current-test-config/control.env
 PROJECT=current-test-project
 BACKUPS=/data/lighthouse-backups/current-test
 APP=registry.example/lighthouse@sha256:DEV_APP_DIGEST
-TOOLS=registry.example/lighthouse-operations@sha256:DEV_TOOLS_DIGEST
+TOOLS=registry.example/lighthouse-tools@sha256:DEV_TOOLS_DIGEST
 NETWORK=current-test-project_app
 
 # app/mysql 名省略时分别为 lighthouse/mysql；必要时在末尾显式指定。
@@ -116,7 +116,7 @@ bash "$SOURCE/scripts/intranet/environment/existing-test.sh" upgrade \
 
 ## 升级、每日备份与 14 天保留
 
-新生产每次升级前，把私密控制文件的 app/tools digest 改为**本次 master 构建的一致 pair**，显式拉取；MySQL digest 与原服务保持一致。保留运行文件的加密密钥。执行：
+新生产每次升级前，把私密控制文件的 app/tools digest 改为**本次 master 构建的一致 pair**，显式拉取；MySQL digest 与原服务保持一致。保留原 `DATABASE_URL` 和运行文件的加密密钥；脚本在停应用前与旧容器实际值核对，任何数据库连接变化均拒绝。数据库搬迁或凭证轮换需另行制定流程。执行：
 
 ```bash
 bash "$SOURCE/scripts/intranet/environment/environment.sh" upgrade "$CONTROL"
