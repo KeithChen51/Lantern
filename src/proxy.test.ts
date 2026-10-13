@@ -5,6 +5,7 @@ import { REQUEST_PATH_HEADER } from "./modules/auth/page-access";
 
 const { employee } = vi.hoisted(() => ({ employee: vi.fn() }));
 vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee }));
+vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: () => ({ origin: "https://lighthouse.invalid" }) }));
 beforeEach(() => { employee.mockReset(); });
 describe("employee request gate", () => {
   it("redirects anonymous deep links with a safe internal return and no caching", async () => {
@@ -13,6 +14,12 @@ describe("employee request gate", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2Fauth%2Fdevice%3Fuser_code%3DABCD-EFGH");
     expect(response.headers.get("cache-control")).toContain("no-store");
+  });
+  it("redirects to the configured origin when the request host is hostile", async () => {
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://hostile.invalid/heart?view=values", { headers: { host: "hostile.invalid", "x-forwarded-host": "hostile.invalid" } }));
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2Fheart%3Fview%3Dvalues");
   });
   it.each(["/_next/static/chunks/heart.js", "/_next/data/build/heart.json", "/files/internal.pdf", "/files/internal.html", "/_next/image?url=%2Fimages%2Fgames%2Fservice-store.webp&w=640&q=75"])("rejects anonymous business asset %s without login redirects", async path => {
     employee.mockRejectedValue({ status: 401 });

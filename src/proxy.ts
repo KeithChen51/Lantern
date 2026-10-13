@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireEmployee } from "@/modules/auth/access";
+import { readAccessConfig } from "@/modules/auth/access-config";
 import { classifyAccessPath, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 
 function noStore<T extends Response>(response: T): T {
@@ -36,7 +37,7 @@ export async function proxy(request: NextRequest) {
   } catch (error) {
     const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 503;
     if (status === 401 && kind === "page" && !request.headers.has("rsc")) {
-      const target = new URL("/login", request.url);
+      const target = new URL("/login", readAccessConfig().origin);
       target.searchParams.set("returnTo", `${request.nextUrl.pathname}${request.nextUrl.search}`);
       return noStore(NextResponse.redirect(target, 303));
     }
