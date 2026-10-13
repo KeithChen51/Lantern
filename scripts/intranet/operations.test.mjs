@@ -4,6 +4,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { gzipSync } from 'node:zlib';
+import { pathToFileURL } from 'node:url';
 import { runOperations } from './operations.mjs';
 
 const repo = process.cwd();
@@ -91,7 +93,7 @@ test('pipeline checkout guard accepts only the configured fetched dev/master tip
   const jenkins = readFileSync(path.join(repo, 'Jenkinsfile'), 'utf8');
   const guard = 'set -eu\n' + jenkins.split('# BEGIN CHECKOUT GUARD')[1].split('# END CHECKOUT GUARD')[0].split('\n').slice(1).join('\n');
   const bash = process.platform === 'win32' ? 'C:\\Program Files\\Git\\bin\\bash.exe' : 'bash';
-  const check = (branch, trigger) => spawnSync(bash, ['-c', guard], { cwd: root, encoding: 'utf8', env: { ...process.env, LIGHTHOUSE_BUILD_BRANCH: branch, GIT_BUILD_REF: trigger } });
+  const check = (branch, trigger, buildNumber = '25') => spawnSync(bash, ['-c', guard], { cwd: root, encoding: 'utf8', env: { ...process.env, LIGHTHOUSE_BUILD_BRANCH: branch, GIT_BUILD_REF: trigger, BUILD_NUMBER: buildNumber } });
   try {
     git('init', '-b', 'dev'); git('config', 'user.email', 'build-test@example.invalid'); git('config', 'user.name', 'Build Test');
     writeFileSync(path.join(root, 'fixture.txt'), 'dev'); git('add', '.'); git('commit', '-m', 'dev');
@@ -104,32 +106,68 @@ test('pipeline checkout guard accepts only the configured fetched dev/master tip
     assert.equal(check('dev', master).status, 0);
     assert.equal(check('master', 'dev').status, 1);
     assert.equal(check('main', dev).status, 1);
+    for (const value of ['', '0', '-1', '01', '1.2', '1;rm', 'abc']) assert.equal(check('dev', dev, value).status, 1);
+    assert.equal(check('dev', dev, '123456').status, 0);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('pipeline rejects replacement of an existing commit tag with a different image', () => {
+test('pipeline fails closed for existing or uncertain batch tags and publishes only explicit absence', () => {
   const jenkins = readFileSync(path.join(repo, 'Jenkinsfile'), 'utf8');
   const publish = 'publish_immutable() {' + jenkins.split('publish_immutable() {')[1].split('publish_immutable "$IMAGE_REPO:$IMAGE_TAG"')[0];
   const fakeDocker = `
-    pulled=0
     docker() {
       case "$1" in
-        image) if [ "$pulled" = 1 ] && [ "$SCENARIO" = different ]; then printf remote; else printf built; fi ;;
-        pull) if [ "$SCENARIO" = absent ]; then return 1; fi; pulled=1 ;;
-        tag|push) printf '%s\\n' "$1" ;;
+        manifest)
+          case "$SCENARIO" in
+            absent) printf 'no such manifest: %s' "$3" >&2; return 1 ;;
+            existing) printf '{"schemaVersion":2}'; return 0 ;;
+            wrong_tag) printf 'no such manifest: other.invalid/app:old' >&2; return 1 ;;
+            unauthorized) printf 'unauthorized: authentication required' >&2; return 1 ;;
+            transport) printf 'connection refused' >&2; return 1 ;;
+            unsupported) printf 'docker: manifest is not a docker command' >&2; return 1 ;;
+          esac ;;
+        push) printf '%s\\n' "$1" ;;
         *) return 9 ;;
       esac
     }
   `;
   const bash = process.platform === 'win32' ? 'C:\\Program Files\\Git\\bin\\bash.exe' : 'bash';
-  const check = scenario => spawnSync(bash, ['-c', `set -eu\n${fakeDocker}\n${publish}\npublish_immutable example.invalid/app:dev-abc`], { encoding: 'utf8', env: { ...process.env, SCENARIO: scenario } });
-  for (const scenario of ['absent', 'same']) {
-    const result = check(scenario);
-    assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /push/);
+  const check = scenario => spawnSync(bash, ['-c', `set -eu\n${fakeDocker}\n${publish}\npublish_immutable example.invalid/app:dev-abc-25`], { encoding: 'utf8', env: { ...process.env, SCENARIO: scenario } });
+  const absent = check('absent');
+  assert.equal(absent.status, 0, absent.stderr);
+  assert.match(absent.stdout, /push/);
+  for (const scenario of ['existing', 'wrong_tag', 'unauthorized', 'transport', 'unsupported']) {
+    const conflict = check(scenario);
+    assert.equal(conflict.status, 1, conflict.stderr);
+    assert.match(conflict.stdout, /Refusing|refusing/);
+    assert.doesNotMatch(conflict.stdout, /(?:^|\n)push(?:\n|$)/);
   }
-  const conflict = check('different');
-  assert.equal(conflict.status, 1, conflict.stderr);
-  assert.match(conflict.stdout, /Refusing to replace/);
-  assert.doesNotMatch(conflict.stdout, /(?:^|\n)(?:tag|push)(?:\n|$)/);
+});
+
+test('operations packaging completes with no Git on PATH and requires the host-verified full SHA', async () => {
+  const { packageOperations } = await import('../package-intranet-operations.mjs');
+  const root = mkdtempSync(path.join(tmpdir(), 'lighthouse-package-'));
+  const put = (name, value) => { const file = path.join(root, name); mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, value); };
+  try {
+    for (const invalid of [undefined, '', 'abc123', 'A'.repeat(40), `${revision}\n`]) {
+      await assert.rejects(packageOperations({ root, platform: 'linux', arch: 'x64', env: { BUILD_REVISION: invalid } }), /BUILD_REVISION/);
+    }
+    put('package.json', JSON.stringify({ version: '1.1.3' }));
+    for (const name of ['prisma', '@prisma/client']) put(`node_modules/${name}/package.json`, JSON.stringify({ version: '6.19.3' }));
+    put('node_modules/.env.private', 'not-for-distribution');
+    put('prisma/schema.prisma', 'datasource db { provider = "mysql" }');
+    put('prisma/migrations/migration_lock.toml', 'provider = "mysql"');
+    put('release/knowledge-cli/initialize.cjs', 'console.log("preview")');
+    put('deploy/system/bin/openssl', 'test fixture');
+    put('scripts/intranet/operations.mjs', 'console.log("help")');
+    put('deploy/offline/manifest.json', JSON.stringify({ prismaEngineCommit: revision }));
+    put(`deploy/offline/engines/all_commits/${revision}/debian-openssl-3.0.x/schema-engine.gz`, gzipSync('schema engine fixture'));
+    const source = `const {packageOperations}=await import(${JSON.stringify(pathToFileURL(path.join(repo, 'scripts/package-intranet-operations.mjs')).href)});await packageOperations({root:process.argv[1],platform:'linux',arch:'x64'});`;
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', source, root], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: '', BUILD_REVISION: revision } });
+    assert.equal(result.status, 0, result.stderr);
+    const output = path.join(root, 'release/intranet-operations');
+    assert.equal(JSON.parse(readFileSync(path.join(output, 'build-manifest.json'), 'utf8')).revision, revision);
+    assert.equal(readFileSync(path.join(output, 'engines/schema-engine'), 'utf8'), 'schema engine fixture');
+    assert.throws(() => readFileSync(path.join(output, 'node_modules/.env.private')));
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
