@@ -12,6 +12,8 @@
 
 本机 main 与内网 master 是不同仓库的交付/生产基线。流水线不部署容器，不迁移数据库，不运行 demo seed，也不自动导入知识。环境脚本与验收步骤见 [生产与测试部署](../../docs/deployment/production-environments.md)。
 
+本改造依赖账号 [PR #49](https://github.com/KeithChen51/Lantern/pull/49) 的认证、迁移与 `/api/health/ready`。正式交付必须先完成两项改动的集成验证：保留 production 构建、HTTP 测试的精确 origin 例外及 HTTPS 生产配置；健康检查只接受直接 200。不能单独把本开发分支当作 main 交付包。当前本地证据和内网待验收项见 [验证记录](../../docs/deployment/production-deployment-verification.md)。
+
 ## 两个流水线任务共用根目录 Jenkinsfile
 
 分别配置源码分支及 `LIGHTHOUSE_BUILD_BRANCH`：
