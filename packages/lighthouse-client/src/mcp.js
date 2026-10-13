@@ -5,15 +5,15 @@ import { ClientError, SCOPE } from './transport.js';
 import { parseVersionUri } from './client.js';
 
 export const TOOL_NAMES = Object.freeze(['knowledge_browse', 'knowledge_search', 'knowledge_get', 'knowledge_outline', 'knowledge_read', 'knowledge_files', 'knowledge_file_read']);
-const id = z.string().regex(/^[A-Za-z0-9_-][A-Za-z0-9._~-]{0,199}$/);
+const id = z.string().regex(/^[A-Za-z0-9_-][A-Za-z0-9._~-]{0,119}$/);
 const version = { resourceId: id, versionId: id.optional() };
 const offset = z.number().int().min(0).optional();
 const limit = z.number().int().min(1).max(100).optional();
 const schemas = {
-  browse: z.object({ folderId: id.optional(), offset, limit }).strict(), search: z.object({ query: z.string().min(1).max(2000), type: z.string().max(100).optional(), tag: z.string().max(100).optional(), visibility: z.string().max(100).optional(), offset, limit }).strict(),
+  browse: z.object({ folderId: id.optional(), offset, limit }).strict(), search: z.object({ query: z.string().min(1).max(500), type: z.string().max(100).optional(), tag: z.string().max(100).optional(), visibility: z.string().max(100).optional(), offset, limit }).strict(),
   get: z.object(version).strict(), outline: z.object({ ...version, sectionOffset: offset, sectionLimit: limit, fileOffset: offset, fileLimit: limit }).strict(),
   read: z.object({ ...version, offset, startLine: z.number().int().min(1).optional(), lineCount: z.number().int().min(1).max(120).optional() }).strict(),
-  files: z.object({ ...version, offset, limit }).strict(), file_read: z.object({ ...version, path: z.string().min(1).max(1000), offset }).strict(),
+  files: z.object({ ...version, offset, limit }).strict(), file_read: z.object({ ...version, path: z.string().min(1).max(240), offset }).strict(),
 };
 export function createMcpServer(client) {
   const server = new McpServer({ name: 'lighthouse', version: '0.1.0' }, { instructions: `Knowledge retrieval only. Scope ${SCOPE}. The user's Agent supplies reasoning. Preserve returned version and citation metadata.` });

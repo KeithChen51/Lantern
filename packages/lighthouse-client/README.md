@@ -37,7 +37,9 @@ are handled explicitly. Access tokens last at most 5 minutes; the client never
 extends its 8-hour grant deadline during refresh. The backend is authoritative
 for grant validity and revocation. `auth logout` revokes the grant before deleting
 its credential; on network failure the credential remains so revocation can be
-retried. Status checks `/api/client/v1/me` instead of trusting local token presence.
+retried. An `invalid_grant` response during logout clears the already revoked
+credential and reports `alreadyRevoked:true`. Status checks `/api/client/v1/me`
+instead of trusting local token presence.
 
 ## Credentials
 
@@ -80,11 +82,20 @@ The client preserves JSON version, citation and pagination metadata unchanged.
 | download | `/api/client/v1/resources/{resourceId}/download` | versionId,fileId |
 
 CLI option names use hyphens; MCP arguments use the table's camelCase names.
-Downloads require an explicit version and output path, use exclusive creation,
+Search queries are limited to 500 characters, resource/version identifiers to
+120 characters, and file-read paths to 240 characters.
+Downloads require an explicit version and output path. Select the exact `fileId`
+from the returned `files` or `downloads` metadata: an individual file uses its
+opaque 64-character lowercase SHA-256 ID; `package` selects the full ZIP/Markdown
+resource, and `markdown` selects its main Markdown body when listed. Original
+file paths are used only for `files/read`, never inferred as download identifiers.
+Downloads use exclusive creation,
 reject reserved device/stream paths and symlink parents, and never use a server
 filename as a local destination. Existing files are never overwritten.
-HTTPS responses are limited to 2 MiB, including file downloads, and requests time
-out after 15 seconds. Larger files require a separately approved limit change.
+JSON responses are limited to 2 MiB. Successful binary downloads are limited to
+16 MiB to accommodate the hub's 12 MB resource bound and ZIP overhead. Error JSON
+retains the 2 MiB limit even on a download request. Requests time out after 15
+seconds. Larger responses require a separately approved limit change.
 
 MCP serves stdio only, with exactly `knowledge_browse`, `knowledge_search`,
 `knowledge_get`, `knowledge_outline`, `knowledge_read`, `knowledge_files`, and

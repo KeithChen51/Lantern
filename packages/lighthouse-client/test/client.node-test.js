@@ -38,6 +38,15 @@ test('transport rejects redirects, malformed/oversized responses and times out e
   await assert.rejects(new Transport(origin, { timeoutMs: 10, fetch: async () => new Response(new ReadableStream({ start() {} })) }).request('/api/client/v1/me'), { code: 'request_timeout' });
   await assert.rejects(new Transport(origin, { fetch: async () => json({ error: 'invalid_grant', error_description: 'refresh-secret' }, 400) }).request('/api/auth/token', { method: 'POST' }), error => error.code === 'invalid_grant' && !error.message.includes('secret'));
 });
+test('binary downloads accept 3 MiB, reject over 16 MiB, and retain 2 MiB JSON/error bounds', async () => {
+  const path = '/api/client/v1/resources/r1/download'; const threeMiB = Buffer.alloc(3 * 1024 * 1024, 42);
+  const downloaded = await new Transport(origin, { fetch: async () => new Response(threeMiB) }).request(path, { binary: true }); assert.equal(downloaded.length, threeMiB.length);
+  await assert.rejects(new Transport(origin, { fetch: async () => new Response(Buffer.alloc(16 * 1024 * 1024 + 1)) }).request(path, { binary: true }), { code: 'response_too_large' });
+  await assert.rejects(new Transport(origin, { fetch: async () => new Response('', { headers: { 'content-length': String(16 * 1024 * 1024 + 1) } }) }).request(path, { binary: true }), { code: 'response_too_large' });
+  const bigJson = { payload: 'x'.repeat(2 * 1024 * 1024) };
+  await assert.rejects(new Transport(origin, { fetch: async () => json(bigJson) }).request('/api/client/v1/me'), { code: 'response_too_large' });
+  await assert.rejects(new Transport(origin, { fetch: async () => json(bigJson, 400) }).request(path, { binary: true }), { code: 'response_too_large' });
+});
 test('device login handles pending and slow_down without leaking token; stores only exact scope', async () => {
   const directory = await temp(); const store = new MemoryStore(); let now = 1000; const waits = []; let polls = 0; const requests = [];
   const transport = new Transport(origin, { fetch: async (url, options) => {
@@ -95,6 +104,13 @@ test('status verifies server identity; logout rotates expired access then revoke
   await store.set(origin, credential({ expiresAt: Date.now() + 200000 })); client.transport = { request: async () => { throw new ClientError('network_error'); } };
   await assert.rejects(client.logout(), { code: 'network_error' }); assert.ok(await store.get(origin));
 });
+test('logout clears already revoked refresh grants while preserving credentials on outage', async () => {
+  const store = new MemoryStore(); await store.set(origin, credential());
+  const client = new LighthouseClient(origin, { store, lock: new FileLock({ directory: await temp() }), transport: { request: async () => { throw new ClientError('invalid_grant'); } } });
+  assert.deepEqual(await client.logout(), { authenticated: false, revoked: true, alreadyRevoked: true }); assert.equal(await store.get(origin), null);
+  await store.set(origin, credential()); client.transport = { request: async () => { throw new ClientError('http_503'); } };
+  await assert.rejects(client.logout(), { code: 'http_503' }); assert.ok(await store.get(origin));
+});
 test('DPAPI uses static argv and stdin; ciphertext atomic file; secure backend failures never write plaintext', async () => {
   const directory = await temp(); const calls = [];
   const runner = async (command, args, input) => { calls.push({ command, args, input }); const payload = JSON.parse(input); return payload.operation === 'encrypt' ? Buffer.from(`encrypted:${payload.value}`).toString('base64') : Buffer.from(payload.value, 'base64').toString().slice(10); };
@@ -128,6 +144,23 @@ test('knowledge routes preserve exact version/citations and exclude maintenance'
   await assert.rejects(client.knowledge('get', { resourceId: '../auth' }), { code: 'invalid_identifier' });
   await assert.rejects(client.knowledge('search', { query: 'x', tags: 'y' }), { code: 'invalid_arguments' });
   await assert.rejects(client.knowledge('read', { resourceId: 'r1', lineCount: 121 }), { code: 'invalid_arguments' });
+  await assert.rejects(client.knowledge('get', { resourceId: 'r'.repeat(121) }), { code: 'invalid_identifier' });
+  await assert.rejects(client.knowledge('search', { query: 'q'.repeat(501) }), { code: 'invalid_arguments' });
+  await assert.rejects(client.knowledge('file_read', { resourceId: 'r1', path: 'p'.repeat(241) }), { code: 'invalid_arguments' });
+  await client.knowledge('get', { resourceId: 'r'.repeat(120) });
+  await client.knowledge('search', { query: 'q'.repeat(500) });
+  await client.knowledge('file_read', { resourceId: 'r1', path: 'p'.repeat(240) });
+});
+test('download selects only discovered opaque file IDs or package/markdown with exact version', async () => {
+  const directory = await temp(); const store = new MemoryStore(); await store.set(origin, credential({ expiresAt: Date.now() + 200000 })); const calls = [];
+  const bytes = Buffer.alloc(3 * 1024 * 1024, 42); const transport = new Transport(origin, { fetch: async (url, options) => { calls.push({ query: Object.fromEntries(url.searchParams), options }); return new Response(bytes); } });
+  const client = new LighthouseClient(origin, { store, transport, lock: new FileLock({ directory }) });
+  for (const fileId of ['a'.repeat(64), 'package', 'markdown']) {
+    const output = join(directory, `${fileId}.download`); const result = await client.download({ resourceId: 'r1', versionId: 'v1', fileId }, output);
+    assert.equal(result.bytes, bytes.length); assert.equal((await readFile(output)).length, bytes.length); assert.deepEqual(calls.at(-1).query, { versionId: 'v1', fileId });
+  }
+  for (const fileId of ['policy.md', 'folder/policy.md', 'A'.repeat(64), 'a'.repeat(63)]) await assert.rejects(client.download({ resourceId: 'r1', versionId: 'v1', fileId }, join(directory, 'unused')), { code: 'invalid_arguments' });
+  await assert.rejects(client.download({ resourceId: 'r1', fileId: 'package' }, join(directory, 'unused')), { code: 'invalid_arguments' }); assert.equal(calls.length, 3);
 });
 test('download exclusively creates explicitly chosen path and rejects reserved/symlink/overwrite targets', async () => {
   const directory = await temp(); const path = join(directory, 'file.txt'); assert.equal(await writeDownload(path, Buffer.from('data')), path); assert.equal(await readFile(path, 'utf8'), 'data');
@@ -153,6 +186,8 @@ test('MCP protocol exposes seven readonly tools, rejects unlisted/extra argument
     const tools = await client.listTools(); assert.deepEqual(tools.tools.map(tool => tool.name), TOOL_NAMES); assert.ok(tools.tools.every(tool => tool.annotations.readOnlyHint && !tool.annotations.destructiveHint));
     for (const name of ['ask', 'knowledge_publish', 'knowledge_import', 'knowledge_preview', 'knowledge_history', 'knowledge_interactions']) { const result = await client.callTool({ name, arguments: {} }); assert.equal(result.isError, true); }
     const extra = await client.callTool({ name: 'knowledge_get', arguments: { resourceId: 'r1', accessToken: 'secret' } }); assert.equal(extra.isError, true); assert.equal(calls.length, 0);
+    for (const request of [{ name: 'knowledge_search', arguments: { query: 'q'.repeat(501) } }, { name: 'knowledge_get', arguments: { resourceId: 'r'.repeat(121) } }, { name: 'knowledge_file_read', arguments: { resourceId: 'r1', path: 'p'.repeat(241) } }]) assert.equal((await client.callTool(request)).isError, true);
+    assert.equal(calls.length, 0);
     const get = await client.callTool({ name: 'knowledge_get', arguments: { resourceId: 'r1', versionId: 'v1' } }); assert.equal(JSON.parse(get.content[0].text).versionId, 'v1');
     const uri = versionUri('r1', 'v1'); const resource = await client.readResource({ uri }); assert.equal(resource.contents[0].uri, uri); assert.deepEqual(calls.at(-1), { operation: 'read', args: { resourceId: 'r1', versionId: 'v1' } });
     assert.deepEqual(parseVersionUri(uri), { resourceId: 'r1', versionId: 'v1' });

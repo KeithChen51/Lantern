@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { Transport, ClientError, CLIENT_ID, SCOPE, validateOrigin } from './transport.js';
 import { SecureStore, FileLock, validateCredential } from './credentials.js';
 
-const identifier = value => { if (typeof value !== 'string' || !/^[A-Za-z0-9_-][A-Za-z0-9._~-]{0,199}$/.test(value) || value === '..') throw new ClientError('invalid_identifier'); return encodeURIComponent(value); };
+const identifier = value => { if (typeof value !== 'string' || !/^[A-Za-z0-9_-][A-Za-z0-9._~-]{0,119}$/.test(value) || value === '..') throw new ClientError('invalid_identifier'); return encodeURIComponent(value); };
 export function versionUri(id, versionId) { return `lighthouse://resources/${identifier(id)}/versions/${identifier(versionId)}`; }
 export function parseVersionUri(value) { const match = /^lighthouse:\/\/resources\/([^/?#]+)\/versions\/([^/?#]+)$/.exec(value); if (!match) throw new ClientError('invalid_resource_uri'); const resourceId = decodeURIComponent(match[1]); const versionId = decodeURIComponent(match[2]); identifier(resourceId); identifier(versionId); return { resourceId, versionId }; }
 export class LighthouseClient {
@@ -60,14 +60,20 @@ export class LighthouseClient {
       if (!credential) return { authenticated: false, revoked: false };
       validateCredential(credential, this.origin);
       let token = credential.accessToken;
-      if (credential.expiresAt <= this.now() + 30000 && credential.grantExpiresAt > this.now()) {
-        const response = await this.transport.request('/api/auth/token', { method: 'POST', form: { grant_type: 'refresh_token', refresh_token: credential.refreshToken, client_id: CLIENT_ID } });
-        const updated = this.credential(response, credential.grantExpiresAt); await this.store.set(this.origin, updated); token = updated.accessToken;
+      try {
+        if (credential.expiresAt <= this.now() + 30000 && credential.grantExpiresAt > this.now()) {
+          const response = await this.transport.request('/api/auth/token', { method: 'POST', form: { grant_type: 'refresh_token', refresh_token: credential.refreshToken, client_id: CLIENT_ID } });
+          const updated = this.credential(response, credential.grantExpiresAt); await this.store.set(this.origin, updated); token = updated.accessToken;
+        }
+        if (credential.grantExpiresAt <= this.now()) { await this.store.delete(this.origin); return { authenticated: false, revoked: false, expired: true }; }
+        await this.transport.request('/api/client/v1/auth/revoke', { method: 'POST', token });
+        await this.store.delete(this.origin);
+        return { authenticated: false, revoked: true };
+      } catch (error) {
+        if (error.code !== 'invalid_grant') throw error;
+        await this.store.delete(this.origin);
+        return { authenticated: false, revoked: true, alreadyRevoked: true };
       }
-      if (credential.grantExpiresAt <= this.now()) { await this.store.delete(this.origin); return { authenticated: false, revoked: false, expired: true }; }
-      await this.transport.request('/api/client/v1/auth/revoke', { method: 'POST', token });
-      await this.store.delete(this.origin);
-      return { authenticated: false, revoked: true };
     });
   }
   async knowledge(operation, args = {}) {
@@ -80,18 +86,19 @@ export class LighthouseClient {
     for (const key of ['offset', 'sectionOffset', 'fileOffset']) if (query[key] !== undefined && (!Number.isInteger(query[key]) || query[key] < 0)) throw new ClientError('invalid_arguments');
     for (const key of ['limit', 'sectionLimit', 'fileLimit', 'lineCount', 'startLine']) if (query[key] !== undefined && (!Number.isInteger(query[key]) || query[key] < 1 || query[key] > (key === 'lineCount' ? 120 : key === 'startLine' ? 10000000 : 100))) throw new ClientError('invalid_arguments');
     if (query.offset !== undefined && query.startLine !== undefined) throw new ClientError('invalid_arguments');
-    if (operation === 'search' && (typeof query.query !== 'string' || !query.query || query.query.length > 2000)) throw new ClientError('invalid_arguments');
+    if (operation === 'search' && (typeof query.query !== 'string' || !query.query || query.query.length > 500)) throw new ClientError('invalid_arguments');
     for (const key of ['type', 'tag', 'visibility']) if (query[key] !== undefined && (typeof query[key] !== 'string' || query[key].length > 100)) throw new ClientError('invalid_arguments');
     if (['browse', 'search'].includes(operation)) return this.authorized(operation === 'browse' ? '/api/client/v1/resources/browse' : '/api/client/v1/resources', { query });
     const path = `/api/client/v1/resources/${identifier(resourceId)}${operation === 'get' ? '' : `/${operation === 'file_read' ? 'files/read' : operation}`}`;
     if (operation === 'file_read') {
-      if (typeof query.path !== 'string' || !query.path || query.path.length > 1000 || /[\x00-\x1f]/.test(query.path)) throw new ClientError('invalid_arguments');
+      if (typeof query.path !== 'string' || !query.path || query.path.length > 240 || /[\x00-\x1f]/.test(query.path)) throw new ClientError('invalid_arguments');
     }
     return this.authorized(path, { query });
   }
   async download(args, output) {
     if (Object.keys(args).some(key => !['resourceId', 'versionId', 'fileId'].includes(key)) || !args.versionId) throw new ClientError('invalid_arguments');
-    identifier(args.versionId); identifier(args.fileId);
+    identifier(args.versionId);
+    if (typeof args.fileId !== 'string' || !/^(?:[a-f0-9]{64}|package|markdown)$/.test(args.fileId)) throw new ClientError('invalid_arguments');
     const bytes = await this.authorized(`/api/client/v1/resources/${identifier(args.resourceId)}/download`, { query: { versionId: args.versionId, fileId: args.fileId }, binary: true });
     const file = await writeDownload(output, bytes);
     return { resourceId: args.resourceId, versionId: args.versionId, fileId: args.fileId, bytes: bytes.length, output: file };

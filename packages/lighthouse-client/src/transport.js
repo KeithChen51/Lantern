@@ -15,8 +15,8 @@ export function validateOrigin(value) {
 const ALLOWED_PATH = /^\/api\/(?:auth\/(?:device\/authorize|token)|client\/v1\/(?:me|auth\/revoke|resources(?:\/browse|\/[A-Za-z0-9._~-]+(?:\/(?:outline|read|files(?:\/read)?|download))?)?))$/;
 const OAUTH_ERRORS = new Set(['authorization_pending', 'slow_down', 'access_denied', 'expired_token', 'invalid_grant', 'invalid_client', 'invalid_scope', 'invalid_request']);
 export class Transport {
-  constructor(origin, { fetch: fetcher = globalThis.fetch, timeoutMs = 15000, maxBytes = 2 * 1024 * 1024 } = {}) {
-    this.origin = validateOrigin(origin); this.fetch = fetcher; this.timeoutMs = timeoutMs; this.maxBytes = maxBytes;
+  constructor(origin, { fetch: fetcher = globalThis.fetch, timeoutMs = 15000, maxBytes = 2 * 1024 * 1024, binaryMaxBytes = 16 * 1024 * 1024 } = {}) {
+    this.origin = validateOrigin(origin); this.fetch = fetcher; this.timeoutMs = timeoutMs; this.maxBytes = maxBytes; this.binaryMaxBytes = binaryMaxBytes;
   }
   async request(path, { method = 'GET', query = {}, form, token, binary = false, signal } = {}) {
     validateOrigin(this.origin);
@@ -37,13 +37,14 @@ export class Transport {
     try {
       const response = await Promise.race([this.fetch(url, { method, headers, body: form ? new URLSearchParams(form) : undefined, redirect: 'manual', credentials: 'omit', signal: abort.signal }), aborted]);
       if (response.status >= 300 && response.status < 400 || response.redirected || response.url && new URL(response.url).origin !== this.origin) throw new ClientError('redirect_rejected');
+      const responseLimit = binary && response.ok ? this.binaryMaxBytes : this.maxBytes;
       const length = Number(response.headers.get('content-length'));
-      if (length > this.maxBytes) throw new ClientError('response_too_large');
+      if (length > responseLimit) throw new ClientError('response_too_large');
       const reader = response.body?.getReader();
       let size = 0; const chunks = [];
       if (reader) {
         try {
-          for (;;) { const { done, value } = await Promise.race([reader.read(), aborted]); if (done) break; size += value.length; if (size > this.maxBytes) throw new ClientError('response_too_large'); chunks.push(Buffer.from(value)); }
+          for (;;) { const { done, value } = await Promise.race([reader.read(), aborted]); if (done) break; size += value.length; if (size > responseLimit) throw new ClientError('response_too_large'); chunks.push(Buffer.from(value)); }
         } finally { reader.cancel().catch(() => {}); }
       }
       const bytes = Buffer.concat(chunks);
