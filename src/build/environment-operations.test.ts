@@ -1,0 +1,124 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve, join, sep } from "node:path";
+import { spawnSync } from "node:child_process";
+import { parse } from "yaml";
+
+const bash = process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "bash";
+const roots: string[] = [];
+const unix = (value: string) => process.platform === "win32"
+  ? spawnSync(bash, ["-c", 'cygpath -u "$1"', "sh", value], { encoding: "utf8" }).stdout.trim()
+  : value;
+afterEach(() => {
+  for (const root of roots.splice(0)) {
+    if (!resolve(root).startsWith(`${resolve(tmpdir())}${sep}`)) throw new Error("Refusing unsafe fixture cleanup");
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+function fixture() {
+  const root = mkdtempSync(join(tmpdir(), "lighthouse-ops-")); roots.push(root);
+  const data = join(root, "data"); const app = join(data, "app"); const backups = join(root, "backups");
+  mkdirSync(app, { recursive: true }); mkdirSync(join(data, "mysql"));
+  writeFileSync(join(data, ".lighthouse-owner"), "lighthouse-test|test\n");
+  writeFileSync(join(app, "upload.txt"), "important existing upload");
+  const runtime = join(root, "app.env"); writeFileSync(runtime, "AUTH_ENCRYPTION_KEY=stable-secret\n");
+  const image = (name: string, hash: string) => `registry.example/${name}@sha256:${hash.repeat(64)}`;
+  const appImage = image("app", "a"); const toolsImage = image("tools", "b"); const mysqlImage = image("mysql", "c");
+  const config = join(root, "control.env");
+  writeFileSync(config, ["ENVIRONMENT=test", "COMPOSE_PROJECT_NAME=lighthouse-test", `DATA_ROOT=${unix(data)}`, `BACKUP_ROOT=${unix(backups)}`, `APP_ENV_FILE=${unix(runtime)}`, `LIGHTHOUSE_IMAGE=${appImage}`, `LIGHTHOUSE_TOOLS_IMAGE=${toolsImage}`, `MYSQL_IMAGE=${mysqlImage}`, "MYSQL_DATABASE=lighthouse_test", "MYSQL_USER=lighthouse_test", "MYSQL_PASSWORD='private-db-secret'", "MYSQL_ROOT_PASSWORD='distinct-root-secret'", "DATABASE_URL='mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test'", "HTTP_BIND=0.0.0.0", "HTTP_PORT=18081", "GATEWAY_ENABLED=false", ""].join("\n"));
+  writeFileSync(join(root, "fake-config.json"), JSON.stringify({ dataRoot: unix(data), appImage }));
+  const bin = join(root, "bin"); mkdirSync(bin);
+  writeFileSync(join(bin, "docker"), '#!/usr/bin/env bash\nexec "$FAKE_NODE" "$FAKE_SCRIPT" "$@"\n', { mode: 0o755 });
+  const env = { ...process.env, PATH: `${bin}${process.platform === "win32" ? ";" : ":"}${process.env.PATH}`, FAKE_FIXTURE: root, FAKE_NODE: process.execPath.replaceAll("\\", "/"), FAKE_SCRIPT: resolve("scripts/intranet/environment/fake-docker.mjs").replaceAll("\\", "/") };
+  const run = (mode: string, extra: Record<string, string> = {}, extraArgs: string[] = []) => spawnSync(bash, [resolve("scripts/intranet/environment/environment.sh"), mode, config, ...extraArgs], { env: { ...env, ...extra }, encoding: "utf8" });
+  const calls = () => existsSync(join(root, "docker-calls.jsonl")) ? readFileSync(join(root, "docker-calls.jsonl"), "utf8").trim().split("\n").map(line => JSON.parse(line) as string[]) : [];
+  return { root, data, app, backups, config, appImage, toolsImage, env, run, calls };
+}
+
+describe("guarded deployment orchestration", () => {
+  it("has syntactically valid Bash and isolates MySQL, app secrets and ready checks", () => {
+    for (const script of ["environment.sh", "existing-test.sh"]) expect(spawnSync(bash, ["-n", resolve("scripts/intranet/environment", script)]).status).toBe(0);
+    const config = parse(readFileSync("deploy/intranet/environments/compose.yaml", "utf8"));
+    const gateway = parse(readFileSync("deploy/intranet/environments/gateway.override.yaml", "utf8"));
+    expect(gateway.services.app.networks.gateway.aliases).toHaveLength(1);
+    expect(config.services.mysql.ports).toBeUndefined();
+    expect(config.services.app.environment.MYSQL_ROOT_PASSWORD).toBeUndefined();
+    expect(config.services.app.healthcheck.test.join(" ")).toContain("r.status===200");
+    expect(config.services.app.healthcheck.test.join(" ")).toContain("redirect:'manual'");
+    expect(config.services.app.networks.runtime).toEqual({});
+    expect(config.services.operations.command).toEqual(["verify"]);
+  }, 30_000);
+  it("backs up before migration and never initializes on ordinary upgrade", () => {
+    const f = fixture(); const result = f.run("upgrade", { FAKE_OLD_AUTH: "1" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls();
+    const stop = calls.findIndex(x => x.includes("stop"));
+    const dump = calls.findIndex(x => x.some(y => y.includes("mysqldump")));
+    const migrate = calls.findIndex(x => x.at(-1) === "migrate");
+    const up = calls.findIndex(x => x.includes("up") && x.at(-1) === "app");
+    expect(stop).toBeGreaterThan(-1); expect(dump).toBeGreaterThan(stop); expect(migrate).toBeGreaterThan(dump); expect(up).toBeGreaterThan(migrate);
+    expect(calls.some(x => x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
+    expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
+    expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+  it("restarts the prior app after failed backup and does not migrate", () => {
+    const f = fixture(); const result = f.run("upgrade", { FAKE_FAIL_BACKUP: "1" });
+    expect(result.status).not.toBe(0);
+    expect(f.calls().some(x => x.includes("start") && x.at(-1) === "app")).toBe(true);
+    expect(f.calls().some(x => x.at(-1) === "migrate")).toBe(false);
+    expect(f.calls().some(x => x.includes("up"))).toBe(false);
+  }, 30_000);
+  it("keeps app stopped after failed migration and retains the successful backup", () => {
+    const f = fixture(); const result = f.run("upgrade", { FAKE_FAIL_MIGRATE: "1" });
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain("Completed backup:");
+    expect(f.calls().some(x => x.includes("start") || (x.includes("up") && x.at(-1) === "app"))).toBe(false);
+  }, 30_000);
+  it("rejects mismatched image provenance before stopping or changing data", () => {
+    const f = fixture(); const result = f.run("upgrade", { FAKE_LABEL_MISMATCH: "1" });
+    expect(result.status).not.toBe(0); expect(result.stderr).toContain("does not match");
+    expect(f.calls().some(x => x.includes("stop") || x.at(-1) === "migrate")).toBe(false);
+  }, 30_000);
+  it("refuses initialization on existing files and refuses shell interpolation", () => {
+    const f = fixture(); const result = f.run("initialize");
+    expect(result.status).not.toBe(0); expect(result.stderr).toContain("empty MySQL and app");
+    expect(f.calls().some(x => x.includes("up"))).toBe(false);
+    writeFileSync(f.config, readFileSync(f.config, "utf8").replace("HTTP_PORT=18081", "HTTP_PORT=$(touch injected)"));
+    const injection = f.run("verify"); expect(injection.status).not.toBe(0); expect(existsSync("injected")).toBe(false);
+  }, 30_000);
+  it("refuses data/backup overlap before invoking Docker", () => {
+    const f = fixture(); writeFileSync(f.config, readFileSync(f.config, "utf8").replace(`BACKUP_ROOT=${unix(f.backups)}`, `BACKUP_ROOT=${unix(f.data)}/backup`));
+    const result = f.run("backup"); expect(result.status).not.toBe(0); expect(result.stderr).toContain("must be separate");
+    expect(f.calls()).toEqual([]);
+  }, 30_000);
+  it("restores DB and uploads into a new isolated root without starting an app", () => {
+    const f = fixture(); const backup = f.run("backup"); expect(backup.status, backup.stderr).toBe(0);
+    const backupDir = backup.stdout.match(/Completed backup: (.+)/)?.[1]; expect(backupDir).toBeTruthy();
+    const target = join(f.root, "restored");
+    const control = readFileSync(f.config, "utf8").replace("ENVIRONMENT=test", "ENVIRONMENT=restore").replace("COMPOSE_PROJECT_NAME=lighthouse-test", "COMPOSE_PROJECT_NAME=lighthouse-restore").replace(`DATA_ROOT=${unix(f.data)}`, `DATA_ROOT=${unix(target)}`).replace("MYSQL_DATABASE=lighthouse_test", "MYSQL_DATABASE=lighthouse_restore").replace("@mysql:3306/lighthouse_test", "@mysql:3306/lighthouse_restore");
+    writeFileSync(f.config, control);
+    const before = f.calls().length;
+    const result = f.run("restore-verify", {}, [backupDir!]); expect(result.status, result.stderr).toBe(0);
+    expect(readFileSync(join(target, "app", "upload.txt"), "utf8")).toBe("important existing upload");
+    expect(existsSync(join(target, "recovery", "original-app-container.json"))).toBe(true);
+    expect(f.calls().slice(before).some(x => x.at(-1) === "app" || x.at(-1) === "initialize" || x.at(-1) === "migrate")).toBe(false);
+    const second = f.run("restore-verify", {}, [backupDir!]); expect(second.status).not.toBe(0); expect(second.stderr).toContain("new empty root");
+  }, 30_000);
+  it("upgrades the existing test with no dependency startup, new volume or initialization", () => {
+    const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
+    const archive = spawnSync(bash, ["-c", 'tar -czf "$1" -C "$2" .', "sh", unix(join(f.root, "fixture.tar.gz")), unix(f.app)]);
+    expect(archive.status).toBe(0);
+    const files = spawnSync(bash, ["-c", 'cd "$1"; sha256sum upload.txt', "sh", unix(f.app)], { encoding: "utf8" }).stdout;
+    writeFileSync(join(f.root, "fixture-files.sha256"), files);
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: f.env, encoding: "utf8" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls(); const migrate = calls.findIndex(x => x[0] === "run" && x.at(-1) === "migrate");
+    const up = calls.findIndex(x => x.includes("up")); expect(up).toBeGreaterThan(migrate);
+    expect(calls[up]).toContain("--no-deps"); expect(calls[up].at(-1)).toBe("lighthouse");
+    expect(calls.some(x => x.includes("--renew-anon-volumes") || x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
+    expect(readFileSync(f.config, "utf8")).toContain(`LH_IMAGE=${f.appImage}`);
+    expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+});
