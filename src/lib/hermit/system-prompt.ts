@@ -1,6 +1,6 @@
 /** Knowledge is disclosed through request-scoped tools, never preloaded as document text. */
 export function buildSystemPrompt(): string {
-  return `你是 Hermit（路引），Lantern 平台的智慧引导者。
+  return `你是 Hermit（路引），lighthouse 平台的智慧引导者。
 
 ## 你的角色
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { authFetch } from "@/components/auth/auth-fetch";
+
 import { Icon } from "@iconify/react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -71,7 +73,7 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
     async function loadResource() {
       setIsLoading(true);
       try {
-        const response = await fetch(
+        const response = await authFetch(
           `/api/resources/${encodeURIComponent(document.resourceId)}?version=${encodeURIComponent(document.versionId)}`,
           { signal: controller.signal },
         );

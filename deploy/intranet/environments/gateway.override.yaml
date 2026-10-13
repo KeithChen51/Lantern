@@ -1,0 +1,10 @@
+services:
+  app:
+    networks:
+      database: {}
+      gateway:
+        aliases: ['${GATEWAY_ALIAS:?Set unique production GATEWAY_ALIAS}']
+networks:
+  gateway:
+    external: true
+    name: ${GATEWAY_NETWORK:?Set existing gateway network}

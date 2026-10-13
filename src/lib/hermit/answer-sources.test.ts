@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { createAnswerSources, stripSourceMarkers, type AnswerSourceRead } from "./answer-sources";
+import { createHermitAgentTools, type HermitAgentTool } from "./agent-tools";
+import { KnowledgeHub } from "@/modules/knowledge-hub/service";
+import { MemoryHubStore } from "@/modules/knowledge-hub/test-store";
 
 function resource(overrides: Record<string, unknown> = {}) {
   return {
@@ -50,6 +53,43 @@ function read(overrides: Partial<AnswerSourceRead> = {}): AnswerSourceRead {
 }
 
 describe("answer source evidence", () => {
+  it.each([{ label: "absent", metadata: undefined }, { label: "null", metadata: null }])("cites a real published legacy version with $label metadata and honestly unknown source", async ({ metadata }) => {
+    const store = new MemoryHubStore();
+    const hub = new KnowledgeHub(store, () => "2026-10-13T00:00:00.000Z");
+    const input = { id: "legacy-guide", type: "document", title: "原发布指引", source: "历史来源", markdown: "# 原发布指引\n第一行\n第二行\n结尾" };
+    const legacy = await hub.import(input);
+    await hub.publish(input.id, legacy.versionId);
+    const draft = await hub.import({ ...input, title: "未发布标题", source: "UNPUBLISHED_SOURCE", markdown: "未发布草稿正文" });
+    await store.transaction(async tx => {
+      const stored = (await tx.getResource(input.id))!;
+      stored.versions.find(version => version.id === legacy.versionId)!.metadata = metadata;
+      await tx.saveResource(stored);
+    });
+
+    const sources = createAnswerSources({ hub });
+    const tools: Record<string, HermitAgentTool> = createHermitAgentTools({ hub, attachments: [], signal: new AbortController().signal,
+      onDocument: document => { sources.recordRead(document); }, additionalTools: sources.tools,
+    });
+    await expect(tools.knowledge_read.execute({ resourceId: input.id, versionId: legacy.versionId, startLine: 2, lineCount: 2 })).resolves.toMatchObject({
+      resourceId: input.id, versionId: legacy.versionId, title: input.title, source: "", startLine: 2, endLine: 3, markdown: "第一行\n第二行",
+    });
+    expect(sources.snapshot("failed").reads).toMatchObject([{
+      resourceId: input.id, versionId: legacy.versionId, title: input.title, source: "", startLine: 2, endLine: 3,
+    }]);
+    await expect(tools.knowledge_cite.execute({ resourceId: input.id, versionId: legacy.versionId, startLine: 2, endLine: 3 })).resolves.toEqual({ marker: "[[cite:1]]" });
+    await expect(tools.knowledge_cite.execute({ resourceId: input.id, versionId: legacy.versionId, startLine: 1, endLine: 3 })).rejects.toThrow("可信范围");
+    await tools.knowledge_recommend.execute({ resourceId: input.id, versionId: legacy.versionId, reason: "阅读已发布指引" });
+
+    const finalized = await sources.finalize("依据已读行 [[cite:1]]");
+    expect(finalized.citations).toEqual([{ number: 1, resourceId: input.id, versionId: legacy.versionId, title: input.title, source: "", startLine: 2, endLine: 3 }]);
+    expect(finalized.recommendations).toEqual([{ resourceId: input.id, versionId: legacy.versionId, title: input.title, source: "", reason: "阅读已发布指引" }]);
+    expect(finalized.text).toContain("[1](#hermit-citation-1)");
+    expect(JSON.stringify(finalized)).not.toContain("UNPUBLISHED_SOURCE");
+    await expect(tools.knowledge_read.execute({ resourceId: input.id, versionId: draft.versionId })).rejects.toThrow("No published");
+    await expect(tools.knowledge_cite.execute({ resourceId: input.id, versionId: draft.versionId })).rejects.toThrow("尚未发布");
+    expect(sources.snapshot("complete").reads).toHaveLength(1);
+  });
+
   it("records only nonempty reads and requires an exact published server version", async () => {
     const get = vi.fn(async () => resource());
     const sources = createAnswerSources({ hub: { get } });

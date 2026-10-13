@@ -1,6 +1,7 @@
 import { actionCaseService, type ActionCaseCoverImage, type ActionCaseRecord } from "@/modules/content";
 import { ACTION_CASES, type ActionCase, getActionCaseBySlug, isMarkdownActionCase } from "./action-cases";
 import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import { AccessError } from "@/modules/auth/access-types";
 
 export type PublicActionCaseSummary = {
   source: "managed" | "static";
@@ -76,11 +77,16 @@ export async function getPublicActionCaseSummaries() {
     }
     return all.map((item): PublicActionCaseSummary => ({ source: "managed", slug: item.id, href: `/resources/${item.id}?version=${item.versionId}`, title: item.title, date: item.publishedAt.slice(0, 10), tags: item.tags, status: "published", summary: item.summary || item.excerpt, question: item.title, coverImageUrl: null, highlights: item.citation ? [item.citation.heading] : [] }));
   }
+  if (process.env.NODE_ENV === "production") throw new AccessError("知识服务尚未启用。", 503);
   const managed = await actionCaseService.listPublishedActionCases().catch(() => []);
   return managed.length > 0 ? managed.map(managedSummary) : ACTION_CASES.map(staticSummary);
 }
 
 export async function getPublicActionCaseBySlug(slug: string): Promise<PublicActionCaseDetail | null> {
+  // When the hub owns publication, legacy content must never resurrect an
+  // archived or missing resource. Hub-backed detail is rendered by its page.
+  if (isKnowledgeHubEnabled()) return null;
+  if (process.env.NODE_ENV === "production") throw new AccessError("知识服务尚未启用。", 503);
   const managed = await actionCaseService.getPublishedActionCaseBySlug(slug).catch(() => null);
   if (managed) return { source: "managed", record: managed };
 

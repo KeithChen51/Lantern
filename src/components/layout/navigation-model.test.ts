@@ -9,6 +9,11 @@ afterEach(() => {
 });
 
 describe("navigation model", () => {
+  it("shows knowledge administration only for its capability, never for legacy role labels", () => {
+    expect(getVisibleNavItems(["knowledge:manage"]).some(item => item.href === "/admin/knowledge")).toBe(true);
+    expect(getVisibleNavItems(["content:read", "knowledge:read"]).some(item => item.href === "/admin/knowledge")).toBe(false);
+    expect(getVisibleNavItems("highest_admin").some(item => item.href === "/admin/knowledge")).toBe(false);
+  });
   it("keeps the active module registry available", () => {
     const expectedLabels = ["价值起点", "外部标杆", "内部实践", "文化游戏", "AI问答"];
 

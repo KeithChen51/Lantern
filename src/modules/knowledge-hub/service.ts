@@ -70,23 +70,30 @@ function validity(version: HubVersion, now: string) {
 }
 function defaultVersion(resource: HubResource, now: string, inactive = false) {
   const published = resource.versions.filter(v => v.publishedAt).sort((a, b) => b.number - a.number);
-  if (inactive) return published.find(v => v.id === resource.publishedVersionId) ?? null;
+  if (!resource.publishedVersionId) return null;
+  const current = published.find(v => v.id === resource.publishedVersionId);
+  if (!current) return null;
+  if (inactive) return current;
   // A future publication does not prematurely replace today's policy. An expired
   // latest eligible publication must not silently resurrect an older policy.
-  const eligible = published.find(v => validity(v, now) !== "scheduled");
+  const eligible = published.filter(v => v.number <= current.number).find(v => validity(v, now) !== "scheduled");
   if (!eligible || validity(eligible, now) === "expired") return null;
   return eligible;
+}
+function publishedMetadata(resource: HubResource, version: HubVersion) {
+  return version.metadata ? { ...version.metadata, visibility: resource.visibility } : { title: version.title, summary: "", source: "", tags: [] as string[], businessScope: "", visibility: resource.type === "case" ? "internal" as const : "public" as const };
 }
 async function requireResource(tx: HubTransaction, id: string) {
   const resource = await tx.getResource(id);
   if (!resource) throw new HubError("not_found", `Resource not found: ${id}`);
   return resource;
 }
-async function record(tx: HubTransaction, action: string, targetId: string, detail: string, at: string) {
+async function record(tx: HubTransaction, action: string, targetId: string, detail: string, at: string, actor?: { userId: string; account: string; requestId: string }) {
+  detail = JSON.stringify({ detail, actor: actor ?? { channel: "operations" } });
   await tx.audit({ id: uuid(), action, targetId, detail, createdAt: at });
 }
 export class KnowledgeHub {
-  constructor(private readonly store: HubStore, private readonly clock = () => new Date().toISOString()) {}
+  constructor(private readonly store: HubStore, private readonly clock = () => new Date().toISOString(), private readonly actor?: { userId: string; account: string; requestId: string }) {}
 
   async import(input: unknown) {
     const data = importSchema.parse(input);
@@ -96,28 +103,30 @@ export class KnowledgeHub {
     check(data.files.reduce((n, f) => n + f.contentBase64.length, 0) <= 16_000_000, "Package exceeds 12 MB");
     const markdown = data.markdown.replace(/\r\n/g, "\n");
     const files = data.files.map(f => ({ ...f, checksum: hash(f.contentBase64) })).sort((a, b) => a.path.localeCompare(b.path));
-    const checksum = hash(JSON.stringify({ markdown, files, validity: data.validity, from: data.effectiveFrom, to: data.effectiveTo }));
     return this.store.transaction(async tx => {
       const now = this.clock();
       const existing = await tx.getResource(data.id);
       if (existing && existing.type !== data.type) throw new HubError("conflict", "Resource type cannot be changed by import");
       const latest = existing?.versions.at(-1);
       if (data.baseVersionId && data.baseVersionId !== latest?.id) throw new HubError("conflict", "Resource changed; read the latest version before updating");
-      const visibility = data.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
+      const visibility = data.visibility ?? latest?.metadata?.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
       const resource: HubResource = existing ?? { id: data.id, type: data.type, title: data.title, summary: "", tags: [], source: data.source, businessScope: "", visibility, archived: false, publishedVersionId: null, createdAt: now, updatedAt: now, versions: [] };
       const before = { title: resource.title, summary: resource.summary, tags: resource.tags, source: resource.source, businessScope: resource.businessScope, visibility: resource.visibility };
       const after = { title: data.title, summary: data.summary, tags: data.tags, source: data.source, businessScope: data.businessScope, visibility };
       const metadataChanged = JSON.stringify(before) !== JSON.stringify(after);
+      const checksum = hash(JSON.stringify({ markdown, files, validity: data.validity, from: data.effectiveFrom, to: data.effectiveTo, metadata: after }));
+      const publishedVisibility = resource.visibility;
       Object.assign(resource, after);
+      if (resource.publishedVersionId) resource.visibility = publishedVisibility;
       const duplicate = resource.versions.find(v => v.checksum === checksum);
       if (!duplicate) {
         const id = uuid();
-        resource.versions.push({ id, number: (latest?.number ?? 0) + 1, title: data.title, markdown, checksum, changeNote: data.changeNote, createdAt: now, publishedAt: null, validity: data.validity, effectiveFrom: data.effectiveFrom, effectiveTo: data.effectiveTo, files, citations: buildCitations(id, markdown) });
+        resource.versions.push({ metadata: after, id, number: (latest?.number ?? 0) + 1, title: data.title, markdown, checksum, changeNote: data.changeNote, createdAt: now, publishedAt: null, validity: data.validity, effectiveFrom: data.effectiveFrom, effectiveTo: data.effectiveTo, files, citations: buildCitations(id, markdown) });
       }
       if (!duplicate || metadataChanged) {
         resource.updatedAt = now;
         await tx.saveResource(resource);
-        await record(tx, duplicate ? "metadata_updated" : "imported", resource.id, JSON.stringify({ before, after, changeNote: data.changeNote }), now);
+        await record(tx, duplicate ? "metadata_updated" : "imported", resource.id, JSON.stringify({ before, after, changeNote: data.changeNote }), now, this.actor);
       }
       const version = duplicate ?? resource.versions.at(-1)!;
       return { resourceId: resource.id, versionId: version.id, version: version.number, duplicate: !!duplicate, metadataChanged, processing: "ready" as const, published: !!version.publishedAt };
@@ -134,9 +143,10 @@ export class KnowledgeHub {
       const now = this.clock();
       if (resource.publishedVersionId === versionId && !resource.archived) return { resourceId, versionId, publishedAt: version.publishedAt };
       version.publishedAt ??= now;
+      if (version.metadata) resource.visibility = version.metadata.visibility;
       resource.publishedVersionId = versionId; resource.archived = false; resource.updatedAt = now;
       await tx.saveResource(resource);
-      await record(tx, "published", resourceId, versionId, now);
+      await record(tx, "published", resourceId, versionId, now, this.actor);
       return { resourceId, versionId, publishedAt: version.publishedAt };
     });
   }
@@ -146,7 +156,7 @@ export class KnowledgeHub {
       const resource = await requireResource(tx, resourceId);
       resource.archived = true; resource.updatedAt = this.clock();
       await tx.saveResource(resource);
-      await record(tx, "archived", resourceId, "", resource.updatedAt);
+      await record(tx, "archived", resourceId, "", resource.updatedAt, this.actor);
       return { resourceId, archived: true };
     });
   }
@@ -156,17 +166,24 @@ export class KnowledgeHub {
       const resource = await requireResource(tx, resourceId);
       const now = this.clock();
       const version = versionId ? resource.versions.find(v => v.id === versionId) : defaultVersion(resource, now);
-      if ((!maintenance && resource.archived) || !version || (!maintenance && !version.publishedAt)) throw new HubError("not_found", "No published version available");
+      if ((!maintenance && (resource.archived || !defaultVersion(resource, now))) || !version || (!maintenance && !version.publishedAt)) throw new HubError("not_found", "No published version available");
       const { versions: _versions, ...metadata } = resource;
       void _versions;
       const candidates = await tx.relations(version.id);
-      const visible = maintenance || !candidates.length ? null : new Set((await tx.listResources()).filter(r => !r.archived).flatMap(r => r.versions.filter(v => v.publishedAt).map(v => v.id)));
-      return { ...metadata, version, validity: validity(version, now), relations: candidates.filter(r => !visible || visible.has(r.toVersionId)), ...(maintenance ? { provenance: await tx.provenance(version.id) } : {}) };
+      const visible = maintenance || !candidates.length ? null : new Set((await tx.listResources()).filter(r => !r.archived && defaultVersion(r, now)).flatMap(r => r.versions.filter(v => v.publishedAt).map(v => v.id)));
+      const publicMetadata = publishedMetadata(resource, version);
+      const { metadata: _snapshot, changeNote: _change, ...publicVersion } = version;
+      void _snapshot; void _change;
+      return { ...metadata, ...(maintenance ? {} : publicMetadata), version: maintenance ? version : publicVersion, validity: validity(version, now), relations: candidates.filter(r => !visible || visible.has(r.toVersionId)), ...(maintenance ? { provenance: await tx.provenance(version.id) } : {}) };
     });
   }
 
-  async history(resourceId: string) {
-    return this.store.transaction(async tx => (await requireResource(tx, resourceId)).versions.map(v => ({ id: v.id, number: v.number, createdAt: v.createdAt, publishedAt: v.publishedAt, changeNote: v.changeNote, checksum: v.checksum })));
+  async history(resourceId: string, maintenance = false) {
+    return this.store.transaction(async tx => {
+      const resource = await requireResource(tx, resourceId);
+      if (!maintenance && (resource.archived || !defaultVersion(resource, this.clock()))) throw new HubError("not_found", "No published version available");
+      return resource.versions.filter(v => maintenance || v.publishedAt).map(v => ({ id: v.id, number: v.number, createdAt: v.createdAt, publishedAt: v.publishedAt, ...(maintenance ? { changeNote: v.changeNote, checksum: v.checksum } : {}) }));
+    });
   }
 
   async search(input: unknown = {}) {
@@ -177,12 +194,13 @@ export class KnowledgeHub {
         if (resource.archived || (options.type && options.type !== resource.type)) return [];
         const version = defaultVersion(resource, now, options.includeInactive);
         if (!version) return [];
-        const title = resource.title.toLowerCase(), body = version.markdown.toLowerCase();
-        const metadata = `${resource.summary} ${resource.tags.join(" ")}`.toLowerCase();
+        const snapshot = publishedMetadata(resource, version);
+        const title = snapshot.title.toLowerCase(), body = version.markdown.toLowerCase();
+        const metadata = `${snapshot.summary} ${snapshot.tags.join(" ")}`.toLowerCase();
         const score = terms.reduce((n, term) => n + (title.includes(term) ? 10 : 0) + (metadata.includes(term) ? 4 : 0) + (body.includes(term) ? 1 : 0), 0);
         if (terms.length && score === 0) return [];
         const citation = version.citations.find(c => terms.some(term => c.text.toLowerCase().includes(term))) ?? version.citations[0];
-        return [{ id: resource.id, type: resource.type, title: resource.title, summary: resource.summary, source: resource.source, tags: resource.tags, visibility: resource.visibility, versionId: version.id, version: version.number, publishedAt: version.publishedAt!, updatedAt: resource.updatedAt, validity: validity(version, now), score, excerpt: citation?.text.slice(0, 300) ?? "", citation: citation ? { id: citation.id, heading: citation.heading, startLine: citation.startLine, endLine: citation.endLine } : null }];
+        return [{ id: resource.id, type: resource.type, title: snapshot.title, summary: snapshot.summary, source: snapshot.source, tags: snapshot.tags, visibility: snapshot.visibility, versionId: version.id, version: version.number, publishedAt: version.publishedAt!, updatedAt: resource.updatedAt, validity: validity(version, now), score, excerpt: citation?.text.slice(0, 300) ?? "", citation: citation ? { id: citation.id, heading: citation.heading, startLine: citation.startLine, endLine: citation.endLine } : null }];
       });
       items.sort((a, b) => (options.sort === "relevance" ? b.score - a.score : options.sort === "published" ? b.publishedAt.localeCompare(a.publishedAt) : b.updatedAt.localeCompare(a.updatedAt)) || a.id.localeCompare(b.id));
       return { items: items.slice(options.offset, options.offset + options.limit), total: items.length, offset: options.offset, limit: options.limit };
@@ -219,7 +237,7 @@ export class KnowledgeHub {
       }
       const interaction = { id: uuid(), source: data.source, externalId: data.externalId, checksum, scope: data.scope, consentAt: data.consent.at, purpose: data.consent.purpose, messages: data.messages, resourceVersions: data.resourceVersions, receivedAt: this.clock() };
       await tx.saveInteraction(interaction);
-      await record(tx, "interaction_received", interaction.id, data.source, interaction.receivedAt);
+      await record(tx, "interaction_received", interaction.id, data.source, interaction.receivedAt, this.actor);
       return { id: interaction.id, duplicate: false };
     });
   }
@@ -240,7 +258,7 @@ export class KnowledgeHub {
       const interaction = await tx.getInteraction(interactionId);
       check(interaction && messageIds.length && new Set(messageIds).size === messageIds.length && messageIds.every(id => interaction.messages.some(m => m.id === id)), "Unknown or duplicate source messages");
       await tx.saveProvenance({ versionId, interactionId, messageIds });
-      await record(tx, "provenance_attached", versionId, interactionId, this.clock());
+      await record(tx, "provenance_attached", versionId, interactionId, this.clock(), this.actor);
       return { versionId, interactionId, messageIds };
     });
   }

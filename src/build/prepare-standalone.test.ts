@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyStandaloneAssets } from "./prepare-standalone";
 
 function createTempProject() {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lantern-standalone-"));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lighthouse-standalone-"));
   fs.mkdirSync(path.join(projectRoot, ".next", "standalone"), { recursive: true });
   fs.mkdirSync(path.join(projectRoot, ".next", "static", "chunks"), { recursive: true });
   fs.mkdirSync(path.join(projectRoot, "public"), { recursive: true });
@@ -17,6 +17,13 @@ function createTempProject() {
 
 describe("prepare standalone assets", () => {
   afterEach(() => vi.unstubAllEnvs());
+
+  it.each(["public", ".next/standalone", "runtime/hermit-dsh"])("refuses environment credentials in %s", directory => {
+    const projectRoot = createTempProject();
+    fs.mkdirSync(path.join(projectRoot, directory), { recursive: true });
+    fs.writeFileSync(path.join(projectRoot, directory, ".env.production"), "FIXTURE_SECRET=synthetic");
+    expect(() => copyStandaloneAssets(projectRoot)).toThrow("Environment files");
+  });
 
   it("refuses deployment output without a required DSH carrier", () => {
     vi.stubEnv("HERMIT_BUNDLE_REQUIRED", "true");

@@ -111,7 +111,9 @@ const readSchema = z.object({
   resourceId: identifier,
   versionId: identifier,
   title: z.string().trim().min(1).max(200),
-  source: z.string().trim().min(1).max(1_000),
+  // Legacy published versions may have no source snapshot. Keep that unknown;
+  // evidence remains tied to the exact server version and consumed line range.
+  source: z.string().trim().max(1_000),
   startLine: lineNumber.optional(),
   endLine: lineNumber.optional(),
   path: z.string().trim().min(1).max(240).optional(),
@@ -198,7 +200,7 @@ function metadataOf(resource: KnowledgeResource): ServerResource | null {
   }
   const title = typeof resource.title === "string" ? resource.title.trim() : "";
   const source = typeof resource.source === "string" ? resource.source.trim() : "";
-  if (!title || !source) return null;
+  if (!title) return null;
   return { resource, title, source };
 }
 

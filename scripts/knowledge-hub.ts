@@ -8,7 +8,7 @@ async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: { input: { type: "string" }, markdown: { type: "string" }, help: { type: "boolean" } } });
   const name = positionals[0];
   if (values.help || !name) {
-    console.log("Lantern knowledge CLI\nUsage: npm run hub -- <command> --input request.json [--markdown body.md]\nCommands: " + Object.keys(commands).join(", ") + "\nAll commands print JSON; import creates drafts. publish is explicit. Requires DATABASE_URL (MySQL) or KNOWLEDGE_HUB_DRIVER=sqlite.");
+    console.log("lighthouse knowledge CLI\nUsage: npm run hub -- <command> --input request.json [--markdown body.md]\nCommands: " + Object.keys(commands).join(", ") + "\nAll commands print JSON; import creates drafts. publish is explicit. Requires DATABASE_URL (MySQL) or KNOWLEDGE_HUB_DRIVER=sqlite.");
     return;
   }
   if (!isCommand(name)) throw new Error(`Unknown command: ${name}`);

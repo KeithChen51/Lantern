@@ -24,7 +24,7 @@ export PRISMA_ENGINES_MIRROR=http://127.0.0.1:18766
 export DATABASE_URL='mysql://build:build@127.0.0.1:3306/build_only'
 export HERMIT_BUNDLE_REQUIRED=true
 export HERMIT_DSH_ROOT='' HERMIT_RUNTIME=dsh KNOWLEDGE_HUB_ENABLED=true KNOWLEDGE_HUB_DRIVER=sqlite
-export KNOWLEDGE_HUB_SQLITE_PATH=/tmp/lantern-build-only.sqlite
+export KNOWLEDGE_HUB_SQLITE_PATH=/tmp/lighthouse-build-only.sqlite
 npm run db:generate
 npm run check:hermit-runtime
 npm run test:hermit-runtime
@@ -33,6 +33,7 @@ export NODE_ENV=production
 printf "Next production build: NODE_ENV=%s\n" "$NODE_ENV"
 npm run build
 node scripts/package-knowledge-cli.mjs
+node scripts/package-intranet-operations.mjs
 cp node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node .next/standalone/node_modules/.prisma/client/
 # Empty directory owned by node when copied into the final image/volume.
 mkdir -p deploy/runtime-data/knowledge

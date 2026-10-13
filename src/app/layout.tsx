@@ -2,27 +2,39 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./visual-v3.css";
 import "./input-focus.css";
-import { AppShell } from "@/components/layout/AppShell";
-import { isGamesModuleEnabled } from "@/config/features";
-
-const VISIBLE_MODULE_NAMES = [
-  "本心",
-  "镜鉴",
-  "笃行",
-  ...(isGamesModuleEnabled() ? ["启航"] : []),
-  "路引",
-];
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { requireEmployee } from "@/modules/auth/access";
+import { isPublicAuthPage, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 
 export const metadata: Metadata = {
   title: "灯塔 丨 服务文化数字平台",
-  description: `服务品牌升级内部展示平台：${VISIBLE_MODULE_NAMES.join("、")}。`,
+  description: "内部员工统一登录入口。",
+  robots: { index: false, follow: false },
 };
 
-export default function RootLayout({
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const requestPath = requestHeaders.get(REQUEST_PATH_HEADER) ?? "/";
+  let content = <main>{children}</main>;
+  if (!isPublicAuthPage(requestPath)) {
+    let principal;
+    try {
+      principal = await requireEmployee(requestHeaders);
+    } catch (error) {
+      if (error && typeof error === "object" && "status" in error && error.status === 401) redirect("/login");
+      return <html lang="zh-CN"><body><main role="alert">统一登录服务暂不可用，请稍后重试。</main></body></html>;
+    }
+    // Public login HTML never renders or loads the business shell.
+    const { AppShell } = await import("@/components/layout/AppShell");
+    content = <AppShell session={{ user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
+  }
   return (
     <html
       lang="zh-CN"
@@ -30,7 +42,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased" suppressHydrationWarning>
-        <AppShell>{children}</AppShell>
+        {content}
       </body>
     </html>
   );

@@ -3,7 +3,9 @@ export type ResourceType = (typeof resourceTypes)[number];
 export type Validity = "effective" | "unknown" | "expired";
 export type HubFile = { path: string; mediaType: string; contentBase64: string; checksum: string };
 export type Citation = { id: string; heading: string; startLine: number; endLine: number; text: string };
+export type HubVersionMetadata = Pick<HubResource, "title" | "summary" | "tags" | "source" | "businessScope" | "visibility">;
 export type HubVersion = {
+  metadata?: HubVersionMetadata | null;
   id: string; number: number; title: string; markdown: string; checksum: string;
   changeNote: string; createdAt: string; publishedAt: string | null;
   validity: Validity; effectiveFrom: string | null; effectiveTo: string | null;

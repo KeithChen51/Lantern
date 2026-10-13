@@ -13,7 +13,7 @@ it("verifies every real bundled font declaration and binary", () => {
 });
 
 it("fails when a font is omitted or corrupted in the standalone delivery", () => {
-  const root = mkdtempSync(join(tmpdir(), "lantern-fonts-"));
+  const root = mkdtempSync(join(tmpdir(), "lighthouse-fonts-"));
   temporary.push(root);
   mkdirSync(join(root, "public/fonts"), { recursive: true });
   mkdirSync(join(root, "src/app"), { recursive: true });

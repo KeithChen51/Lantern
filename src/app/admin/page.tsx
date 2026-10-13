@@ -1,13 +1,2 @@
-import { AdminHome } from "./AdminHome";
-import { AdminLoginClient } from "./AdminLoginClient";
-import { isAdminPortalAuthenticated } from "./admin-auth";
-
-export const dynamic = "force-dynamic";
-
-export default async function AdminPage() {
-  if (!(await isAdminPortalAuthenticated())) {
-    return <AdminLoginClient />;
-  }
-
-  return <AdminHome />;
-}
+import { redirect } from "next/navigation";
+export default function AdminPage() { redirect("/admin/knowledge"); }

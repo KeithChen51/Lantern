@@ -16,7 +16,10 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "AI问答", subLabel: "路引", icon: lighthouseIcons.hermit, href: "/hermit" },
 ];
 
-export function getVisibleNavItems(role?: "normal_user" | "highest_admin" | null) {
-  void role;
-  return NAV_ITEMS.filter((item) => item.href !== "/games" || isGamesModuleEnabled());
+export function getVisibleNavItems(capabilities?: readonly string[] | "normal_user" | "highest_admin" | null) {
+  const items = NAV_ITEMS.filter((item) => item.href !== "/games" || isGamesModuleEnabled());
+  if (Array.isArray(capabilities) && capabilities.includes("knowledge:manage")) {
+    return [...items, { label: "资料维护", subLabel: "知识管理", icon: lighthouseIcons.admin, href: "/admin/knowledge" }];
+  }
+  return items;
 }

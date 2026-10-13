@@ -1,6 +1,6 @@
-# Lantern (Lighthouse)
+# lighthouse（灯塔）
 
-Lighthouse（灯塔）是面向汽车品牌售后体系的企业文化数字平台。平台服务于品牌方售后部门员工、管理者，以及汽车经销商下的一线服务人员，核心目标是帮助用户学习新服务理念、查阅标杆与实践案例，并通过领域智能助手辅助理解和决策。
+lighthouse（灯塔）是面向汽车品牌售后体系的企业文化数字平台。平台服务于品牌方售后部门员工、管理者，以及汽车经销商下的一线服务人员，核心目标是帮助用户学习新服务理念、查阅标杆与实践案例，并通过领域智能助手辅助理解和决策。
 
 当前产品主场景是“学习、查阅和实践沉淀”，同时提供领域智能问答与文化游戏入口。
 
@@ -26,7 +26,7 @@ Lighthouse 当前围绕以下板块展开：
 
 ## Hermit / 路引
 
-知识中台的资源模型、CLI/MCP、首次导入和搜索切换说明见 [知识服务使用说明](docs/knowledge-hub.md)。首期不新增账号与权限，默认关闭页面内容切换。
+知识中台的资源模型、运维导入与搜索说明见 [知识服务使用说明](docs/knowledge-hub.md)。员工访问、知识管理员及员工 CLI/MCP 的部署契约见 [统一登录部署说明](docs/deployment/lighthouse-access.md)；旧文档中的直连数据库 CLI/MCP 是受信任运维工具。
 
 Hermit 是汽车品牌售后服务文化领域的智能助手，不是窄 FAQ，也不是当前阶段的自治 Agent。
 
@@ -55,6 +55,16 @@ npm run dev
 ```
 
 默认地址：`http://localhost:3000`
+
+## 员工登录与部署
+
+业务页面、知识查询和路引要求统一门户验证的有效员工身份。门户角色为空的有效员工仍可浏览；只有当前应用配置的知识管理员角色获得知识维护权限。灯塔不提供本地人员或角色分配，也不把该角色映射为全平台最高管理员。
+
+按 [.env.example](.env.example) 配置 `AUTH_MODE=portal`、HTTPS `LIGHTHOUSE_ORIGIN`、门户 API/登录地址、应用标识与密钥、知识管理员角色、32 字节 base64 加密密钥，并在平台确认员工有效性契约后设置 `PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true`。生产必须使用 MySQL、启用知识中台；缺少配置时拒绝业务访问。共享管理员密码、预览身份和演示种子不再是登录入口。
+
+本地 HTTP 调试须使用非 production 运行模式、`LIGHTHOUSE_DEPLOYMENT_ENV=development` 和 `AUTH_ALLOW_LOCAL_HTTP=true`，HTTP URL 仅允许回环地址。保留内网 HTTP IP 的测试部署仍运行 production 构建，须显式设置 `LIGHTHOUSE_DEPLOYMENT_ENV=test`，并令 `AUTH_TEST_HTTP_ORIGIN` 与规范的内网 IPv4 `LIGHTHOUSE_ORIGIN` 完全一致；该例外只用于网页入口，门户和员工 CLI/MCP 仍要求 HTTPS。正式部署仍强制 HTTPS。部署先备份、执行 Prisma 迁移，再手动导入并发布知识；配置契约、待联调项和 SQLite 升级边界见 [部署说明](docs/deployment/lighthouse-access.md)。
+
+员工外部工具独立发布为 `packages/lighthouse-client`，经浏览器设备授权取得仅 `knowledge:read` 的权限；普通员工不接收服务器镜像、数据库连接、运维 CLI 或门户密钥。`/api/health/live` 仅检查进程存活，部署健康检查使用 `/api/health/ready`，不能用业务页跳转后的 200 判断服务就绪。
 
 ## 常用命令
 

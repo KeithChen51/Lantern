@@ -8,7 +8,7 @@ const originalUploadDir = process.env.ACTION_CASE_UPLOAD_DIR;
 let tempDir: string | null = null;
 
 async function useTempUploadDir() {
-  tempDir = await mkdtemp(path.join(os.tmpdir(), "lantern-action-case-images-"));
+  tempDir = await mkdtemp(path.join(os.tmpdir(), "lighthouse-action-case-images-"));
   process.env.ACTION_CASE_UPLOAD_DIR = tempDir;
 }
 

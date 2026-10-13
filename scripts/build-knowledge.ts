@@ -130,7 +130,7 @@ function main() {
 
   const characters = documents.reduce((total, document) => total + document.content.length, 0);
   console.log(
-    `[Lantern Knowledge] Verified ${documents.length} static text source(s) (${characters} characters). ` +
+    `[lighthouse Knowledge] Verified ${documents.length} static text source(s) (${characters} characters). ` +
       "Runtime access uses the indexed knowledge hub; no embedding API or vector cache is required.",
   );
 }

@@ -29,7 +29,7 @@ ID 使用 1–120 位字母、数字、点、下划线、连字符，首位为�
 
 ```dotenv
 KNOWLEDGE_HUB_DRIVER=sqlite
-KNOWLEDGE_HUB_SQLITE_PATH=storage/knowledge/lantern.sqlite
+KNOWLEDGE_HUB_SQLITE_PATH=storage/knowledge/lighthouse.sqlite
 NEXT_PUBLIC_SHOW_GAMES=true
 ```
 
@@ -154,10 +154,10 @@ npm run hub -- publish --input publish.json
 ```json
 {
   "mcpServers": {
-    "lantern": {
+    "lighthouse": {
       "command": "node",
-      "args": ["--import", "tsx", "C:/path/to/lantern-app/scripts/knowledge-mcp.ts"],
-      "cwd": "C:/path/to/lantern-app"
+      "args": ["--import", "tsx", "C:/path/to/lighthouse-app/scripts/knowledge-mcp.ts"],
+      "cwd": "C:/path/to/lighthouse-app"
     }
   }
 }
@@ -165,7 +165,7 @@ npm run hub -- publish --input publish.json
 
 不同客户端的 cwd 配置支持不同；也可用本机启动脚本先切换到项目目录，再运行 `node --import tsx scripts/knowledge-mcp.ts`。数据库配置只放本机环境文件或客户端环境，不写进示例和仓库。
 
-工具名称为 `lantern_<CLI命令>`。精确资源 URI 为 `lantern://resources/{id}/versions/{versionId}`，内容为 Markdown。维护工具只在本地 stdio 暴露，本期没有网络 MCP 服务和账号登录；CLI/MCP 不能被描述为已经支持企业用户访问隔离。
+工具名称为 `lighthouse_<CLI命令>`。精确资源 URI 为 `lighthouse://resources/{id}/versions/{versionId}`，内容为 Markdown。旧的 `lantern_<CLI命令>` 和 `lantern://` URI 作为明确标注 deprecated 的兼容别名调用相同处理器；新配置应使用 lighthouse 名称。维护工具只在本地 stdio 暴露，本期没有网络 MCP 服务和账号登录；CLI/MCP 不能被描述为已经支持企业用户访问隔离。
 
 ## 交互回传与归档
 

@@ -1,5 +1,5 @@
 // Runs only inside the dedicated sdk-minimal profile, never the user's DSH home.
-export const name = 'lantern-hermit-tools';
+export const name = 'lighthouse-hermit-tools';
 export const inject = ['tools', 'llm'];
 
 export async function apply(ctx, config) {
@@ -26,6 +26,9 @@ export async function apply(ctx, config) {
   // The public SDK exposes durable messages, not live deltas. This profile-local
   // observer forwards only visible text, never private model reasoning.
   ctx.on('llm/stream', async function* (options, next) {
+    // The loop may start another model request after a tool result. Ask the
+    // authenticated parent before every continuation, including the first.
+    await call('/access', {});
     for await (const chunk of next()) {
       if (chunk.type === 'text-delta') await call('/text', { text: chunk.text });
       yield chunk;

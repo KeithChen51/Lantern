@@ -1,0 +1,78 @@
+services:
+  mysql:
+    image: ${MYSQL_IMAGE:?Set immutable MYSQL_IMAGE}
+    restart: unless-stopped
+    mem_limit: ${MYSQL_MEMORY:-1g}
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
+    volumes:
+      - type: bind
+        source: ${DATA_ROOT:?Set DATA_ROOT}/mysql
+        target: /var/lib/mysql
+        bind:
+          create_host_path: false
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysqladmin ping -h 127.0.0.1 -u "$${MYSQL_USER}" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  app:
+    image: ${LIGHTHOUSE_IMAGE:?Set immutable LIGHTHOUSE_IMAGE}
+    restart: unless-stopped
+    mem_limit: ${APP_MEMORY:-1536m}
+    env_file: ${APP_ENV_FILE:?Set private APP_ENV_FILE}
+    environment:
+      NODE_ENV: production
+      LIGHTHOUSE_DEPLOYMENT_ENV: ${ENVIRONMENT:?Set ENVIRONMENT}
+      HOSTNAME: 0.0.0.0
+      PORT: '3000'
+      DATABASE_URL: ${DATABASE_URL:?Set encoded application DATABASE_URL}
+      KNOWLEDGE_HUB_ENABLED: 'true'
+      KNOWLEDGE_HUB_DRIVER: mysql
+      ACTION_CASE_UPLOAD_DIR: /data/uploads/action-cases
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - '${HTTP_BIND:?Set HTTP_BIND}:${HTTP_PORT:?Set HTTP_PORT}:3000'
+    volumes:
+      - type: bind
+        source: ${DATA_ROOT:?Set DATA_ROOT}/app
+        target: /data
+        bind:
+          create_host_path: false
+    networks:
+      database: {}
+      runtime: {}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health/ready',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 6
+
+  operations:
+    image: ${LIGHTHOUSE_TOOLS_IMAGE:?Set immutable LIGHTHOUSE_TOOLS_IMAGE}
+    profiles: [operations]
+    restart: 'no'
+    mem_limit: ${OPERATIONS_MEMORY:-1g}
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+      KNOWLEDGE_HUB_ENABLED: 'true'
+      KNOWLEDGE_HUB_DRIVER: mysql
+    networks: [database]
+    # No default migration or initialization. ENTRYPOINT implements these explicit modes.
+    command: [verify]
+
+networks:
+  database:
+    internal: true
+  runtime: {}

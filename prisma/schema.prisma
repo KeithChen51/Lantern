@@ -45,6 +45,7 @@ model HubVersion {
   effectiveTo   DateTime?
   files         Json
   citations     Json
+  metadata      Json?
   resource      HubResource @relation(fields: [resourceId], references: [id])
   outgoing      HubRelation[] @relation("HubRelationFrom")
   incoming      HubRelation[] @relation("HubRelationTo")
@@ -727,4 +728,22 @@ model RetrievalTrace {
 
   @@index([chatMessageId, createdAt])
   @@map("retrieval_traces")
+}
+
+// Opaque authentication domain records. Bearer credentials are stored as hashes;
+// the upstream grant inside payload is encrypted by the application.
+model AccessRecord {
+  id        String   @id @db.VarChar(120)
+  kind      String   @db.VarChar(30)
+  subjectId String   @db.VarChar(200)
+  parentId  String?  @db.VarChar(120)
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime
+  updatedAt DateTime
+
+  @@index([kind, subjectId])
+  @@index([parentId])
+  @@index([expiresAt])
+  @@map("access_records")
 }

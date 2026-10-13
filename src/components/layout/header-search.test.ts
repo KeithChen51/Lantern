@@ -43,15 +43,19 @@ describe("header search", () => {
     expect(appShell).toContain("selection:bg-primary-soft");
   });
 
-  it("keeps feedback beside the notification entry in the shared navigation", () => {
+  it("keeps employee session tools beside notifications in the shared navigation", () => {
     const navigation = readProjectFile("src/components/layout/Navigation.tsx");
 
-    expect(navigation).toContain("data-lh-feedback-link");
-    expect(navigation).toContain("意见反馈");
+    expect(navigation).toContain("useEmployeeSession");
+    expect(navigation).toContain('href="/auth/tools"');
+    expect(navigation).toContain('action="/api/auth/logout"');
+    expect(navigation).toContain('name="csrfToken"');
+    expect(navigation).not.toContain("data-lh-feedback-link");
     expect(navigation).toContain("data-lh-sidebar-utility-group");
     expect(navigation).toContain('className="mt-auto grid gap-2"');
 
     const utilityGroup = navigation.slice(navigation.indexOf("data-lh-sidebar-utility-group"));
-    expect(utilityGroup.indexOf("<SidebarFeedbackLink")).toBeLessThan(utilityGroup.indexOf("<SidebarNotifications"));
+    expect(utilityGroup).toContain("<SessionLinks");
+    expect(utilityGroup).toContain("<SidebarNotifications");
   });
 });
