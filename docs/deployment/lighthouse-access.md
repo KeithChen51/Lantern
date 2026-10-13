@@ -17,7 +17,9 @@
 | 变量 | 要求 |
 | --- | --- |
 | `AUTH_MODE` | 必须为 `portal`，无生产 demo/mock 回退 |
-| `LIGHTHOUSE_ORIGIN` | 对外 HTTPS origin，仅协议/主机/端口，无路径、query、fragment 或内嵌凭证 |
+| `LIGHTHOUSE_DEPLOYMENT_ENV` | `production` / `test` / `development`；production 构建未设置时默认 `production`，其它运行模式默认 `development`。production 构建不接受 `development` |
+| `LIGHTHOUSE_ORIGIN` | 对外 origin，正式部署必须 HTTPS；仅协议/主机/端口，无路径、query、fragment 或内嵌凭证。HTTP 测试须满足下方精确例外 |
+| `AUTH_TEST_HTTP_ORIGIN` | 默认空；只有 `test` 部署可填写，必须是与 `LIGHTHOUSE_ORIGIN` 完全相同的规范 HTTP 内网 IPv4 origin。不能用于放宽门户 API 或登录地址 |
 | `PORTAL_API_BASE_URL` / `PORTAL_LOGIN_URL` | 已确认的 HTTPS API 基础地址与登录入口，不能包含内嵌凭证或 fragment |
 | `PORTAL_APP_CODE` / `PORTAL_APP_SECRET` | 平台分配的当前应用标识和密钥；secret 仅在服务端运行时注入 |
 | `PORTAL_KNOWLEDGE_ADMIN_ROLE` | 当前应用知识管理员的精确角色标识 |
@@ -25,13 +27,36 @@
 | `PORTAL_EMPLOYEE_VALIDATION_CONFIRMED` | 平台确认身份查询成功表示当前有效内部员工后，才显式设置 `true` |
 | `PORTAL_CALLBACK_PARAM` / `PORTAL_STATE_PARAM` / `PORTAL_TOKEN_PARAM` | 默认 `redirectUrl` / `state` / `token`；必须与平台回调契约相符，三者名称不能相同 |
 | `PORTAL_ALLOW_LEGACY_CONFIRMATION` | 默认 `false`；仅在另行批准旧回调方案后开启显式身份确认，不能自动接受未绑定回调 |
-| `AUTH_ALLOW_LOCAL_HTTP` | 生产必须为 `false`；只有非 production 开发环境的 localhost、127.0.0.1 或 [::1] URL 可显式开启 |
+| `AUTH_ALLOW_LOCAL_HTTP` | 部署时为 `false`；只有非 production 运行模式且 deployment=`development` 的 localhost、127.0.0.1 或 [::1] URL 可开启。不能用它实现内网测试 |
 | `DATABASE_URL` | 生产必须配置 MySQL；无 SQLite 或本机空库自动回退 |
 | `KNOWLEDGE_HUB_ENABLED` / `KNOWLEDGE_HUB_DRIVER` | 生产必须为 `true` / `mysql` |
 
 可在安全的运维环境用 `openssl rand -base64 32` 生成加密密钥并直接存入秘密管理。丢失或更换该密钥会使已有加密的上游授权无法读取；换钥需要规划授权失效、重新登录及回滚，不要在每次容器启动时生成新钥。
 
 共享管理员密码、旧 admin cookie 安全开关、预览身份与演示种子不再建立员工或知识管理员会话。生产不要运行演示用户种子来解决登录问题。有效员工与历史演示身份不会自动合并。
+
+## production 构建下的 HTTP 内网测试入口
+
+测试保留部署方现有 HTTP 内网 IP，正式环境使用 HTTPS 域名；两者均运行 `NODE_ENV=production`，使用同一生产构建。认证不依赖把测试服务器改为 development 模式。以下地址是合成示例，部署方填写实际 IP 和端口，不修改现有测试入口：
+
+```dotenv
+NODE_ENV=production
+AUTH_MODE=portal
+LIGHTHOUSE_DEPLOYMENT_ENV=test
+LIGHTHOUSE_ORIGIN=http://10.20.30.40:3080
+AUTH_TEST_HTTP_ORIGIN=http://10.20.30.40:3080
+AUTH_ALLOW_LOCAL_HTTP=false
+```
+
+两个 origin 必须逐字一致，并为规范形式：只接受 RFC1918 IPv4（`10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16`）；不接受域名、通配符、公网 IP、loopback、IPv6、路径、尾斜线、query、fragment、用户信息、空白或非规范 IP 写法。默认 80 端口省略 `:80`，其它端口明确填写。只填测试标记或只填 HTTP 地址均不会开启例外；不匹配地址/端口直接导致配置未就绪。正式部署必须设置 `LIGHTHOUSE_DEPLOYMENT_ENV=production`、HTTPS `LIGHTHOUSE_ORIGIN` 并清空 `AUTH_TEST_HTTP_ORIGIN`；误带 HTTP 测试例外会拒绝启动业务访问，不会放宽正式环境。
+
+HTTP 测试 Cookie 保留 `HttpOnly; SameSite=Lax; Path=/`，不设置 Domain，省略 HTTP 无法使用的 `Secure` 和 `__Host-`；名称为 `lighthouse_test_<origin SHA-256 前16位>_session/login/pending`。不同测试 origin 使用不同名称，正式环境仍使用 `__Host-lighthouse_session/login/pending` 和 `Secure`。Cookie 本身不按端口隔离，独立名称不能替代部署隔离：测试与生产必须使用独立数据库、上传存储、门户应用配置和认证加密密钥，正式域名不能复用测试 HTTP 入口。HTTP 传输没有 TLS 保密性，测试入口只应在部署方控制的内网可达。
+
+部署方另需提供表格中的 MySQL、知识中台、门户 HTTPS API/登录地址、应用编码/密钥、精确管理员角色、员工有效性确认和加密密钥。production 构建下的数据库检查不会因 `test` 标记跳过。同源写入仍精确匹配协议、IP 和端口，CSRF、登录事务/state 及安全回跳校验继续执行，不信任客户端的 Host/转发头来生成回跳地址。HTTPS 测试可省略 HTTP 例外，此时 Cookie 同样有独立测试名称并使用 Secure。
+
+门户是否允许实际 HTTP IP 回调、从 HTTPS 门户返回 HTTP 时的行为、state 原样回传以及内网浏览器策略均待联调，配置例外不代表平台已许可。需在平台登记与配置完全一致的 `/auth/portal/callback`，通过普通员工和管理员完整登录、退出、撤权后才能验收。本次只适配网页登录入口；员工 CLI/MCP 继续只接受 HTTPS 服务 origin，不提供全局关闭 TLS 校验或 HTTP bearer 例外，不能用 HTTP 测试入口完成员工工具联调。
+
+2026-10-13 本地验证：新增配置和 HTTP 登录链路共 38 项测试，使用真实认证服务/路由、合成门户及内存事务库，覆盖错误地址/端口、生产误开例外、Cookie 属性、会话、退出、CSRF、state 和回跳重放；全量 459 项通过，lint、TypeScript、production 构建通过。使用上述合成 HTTP 测试 origin 运行 production standalone，38 项匿名访问/静态文件/健康检查通过，数据库不可用时 ready 仍为 503。独立规格和质量审查通过；以上不替代真实门户、浏览器或 MySQL 验收。运行过程及环境限制见[验证记录](lighthouse-access-verification.md)。
 
 ## 会话与权限变化
 

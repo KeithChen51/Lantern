@@ -62,7 +62,7 @@ npm run dev
 
 按 [.env.example](.env.example) 配置 `AUTH_MODE=portal`、HTTPS `LIGHTHOUSE_ORIGIN`、门户 API/登录地址、应用标识与密钥、知识管理员角色、32 字节 base64 加密密钥，并在平台确认员工有效性契约后设置 `PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true`。生产必须使用 MySQL、启用知识中台；缺少配置时拒绝业务访问。共享管理员密码、预览身份和演示种子不再是登录入口。
 
-本地 HTTP 调试仅在非 production 环境显式开启 `AUTH_ALLOW_LOCAL_HTTP=true`，且所有相关 URL 必须使用 localhost 回环地址。生产部署先备份、执行 Prisma 迁移，再手动导入并发布知识；完整步骤及 SQLite 升级边界见 [部署说明](docs/deployment/lighthouse-access.md)。
+本地 HTTP 调试须使用非 production 运行模式、`LIGHTHOUSE_DEPLOYMENT_ENV=development` 和 `AUTH_ALLOW_LOCAL_HTTP=true`，HTTP URL 仅允许回环地址。保留内网 HTTP IP 的测试部署仍运行 production 构建，须显式设置 `LIGHTHOUSE_DEPLOYMENT_ENV=test`，并令 `AUTH_TEST_HTTP_ORIGIN` 与规范的内网 IPv4 `LIGHTHOUSE_ORIGIN` 完全一致；该例外只用于网页入口，门户和员工 CLI/MCP 仍要求 HTTPS。正式部署仍强制 HTTPS。部署先备份、执行 Prisma 迁移，再手动导入并发布知识；配置契约、待联调项和 SQLite 升级边界见 [部署说明](docs/deployment/lighthouse-access.md)。
 
 员工外部工具独立发布为 `packages/lighthouse-client`，经浏览器设备授权取得仅 `knowledge:read` 的权限；普通员工不接收服务器镜像、数据库连接、运维 CLI 或门户密钥。`/api/health/live` 仅检查进程存活，部署健康检查使用 `/api/health/ready`，不能用业务页跳转后的 200 判断服务就绪。
 

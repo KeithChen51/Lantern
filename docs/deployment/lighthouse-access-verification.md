@@ -14,7 +14,7 @@
 
 | 检查 | 结果 |
 | --- | --- |
-| `npm test` | 65 个文件，421 项通过 |
+| `npm test -- --maxWorkers=4` | 67 个文件，459 项通过（含 HTTP 测试部署新增 38 项） |
 | `npm run test:client` | 19 项通过 |
 | `npm run test:knowledge-standardize` | 标准化 17 项、知识导入兼容 5 项通过 |
 | `npm run lint` | 通过 |
@@ -33,3 +33,11 @@
 3. 真实 HTTPS/代理日志脱敏、完整浏览器登录及工具设备授权、DSH 模型对话，生产平台和网络配置。
 
 发布前按[部署说明](lighthouse-access.md)备份原数据，应用新增迁移并完成上述验收。没有自动 SQLite→MySQL 数据搬迁；不要通过换空卷或切换驱动来代替迁移。当前没有合并到 dev/main，也没有部署。
+
+## HTTP 测试部署补充验证
+
+按用户确认的约束，测试保留 HTTP 内网 IPv4，正式部署仍使用 HTTPS，两者运行 production 构建。新增配置与 Cookie 测试 38 项；独立复审执行认证相关 106 项测试，并额外检查 15 个错误/攻击地址、4 个有效地址，均符合预期。真实路由/认证服务结合合成门户、MemoryStore 验证了登录事务、会话、同源/CSRF、退出及重放拒绝；不等于真实 MySQL 和平台联调。
+
+重新执行 lint、TypeScript、production 构建通过。初次全量测试与构建并行时，一项既有附件动态导入测试超过默认 5 秒；构建结束后以 4 个 worker 重跑全部 459 项通过，未放宽测试超时或跳过用例。production standalone 使用合成的 HTTP 测试 origin、不可达测试数据库，在 loopback 监听；冷启动首轮登录页超过检查超时，服务就绪后重跑 38 项全部通过。未修改真实 IP、网络或服务器。
+
+门户接受 HTTP IP 回调的权限与浏览器行为尚未验证。员工 CLI/MCP 仍然只支持 HTTPS，本次不提供 HTTP 工具授权例外。
