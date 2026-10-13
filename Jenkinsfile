@@ -92,7 +92,10 @@ pipeline {
           for image in "$IMAGE_REPO:$IMAGE_TAG" "$TOOLS_IMAGE_REPO:$IMAGE_TAG"; do
             revision=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')
             version=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.version"}}')
-            [ "$revision" = "$BUILD_REVISION" ] && [ "$version" = "$APP_VERSION" ]
+            if [ "$revision" != "$BUILD_REVISION" ] || [ "$version" != "$APP_VERSION" ]; then
+              echo "Refusing to publish: image revision/version mismatch: $image"
+              exit 1
+            fi
           done
           # Match the builder's thread compatibility, retain non-root USER and no network.
           docker run --rm --network none \

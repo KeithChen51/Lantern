@@ -144,6 +144,40 @@ test('pipeline fails closed for existing or uncertain batch tags and publishes o
   }
 });
 
+test('pipeline image identity loop stops on missing or mismatched labels in either image', () => {
+  const jenkins = readFileSync(path.join(repo, 'Jenkinsfile'), 'utf8');
+  const loop = 'for image in ' + jenkins.split('for image in ')[1].split('# Match the builder')[0];
+  const fakeDocker = `
+    docker() {
+      value=$BUILD_REVISION
+      case "$5" in *image.version*) value=$APP_VERSION ;; esac
+      if [ "$3" = "$BAD_IMAGE" ]; then
+        case "$SCENARIO:$5" in
+          missing_revision:*image.revision*) value= ;;
+          different_revision:*image.revision*) value=wrong-revision ;;
+          missing_version:*image.version*) value= ;;
+          different_version:*image.version*) value=9.9.9 ;;
+        esac
+      fi
+      printf '%s' "$value"
+    }
+  `;
+  const bash = process.platform === 'win32' ? 'C:\\Program Files\\Git\\bin\\bash.exe' : 'bash';
+  const env = { ...process.env, IMAGE_REPO: 'fixture/app', TOOLS_IMAGE_REPO: 'fixture/tools', IMAGE_TAG: 'dev-fixture-25', BUILD_REVISION: revision, APP_VERSION: '1.1.3' };
+  const check = (scenario, badImage) => spawnSync(bash, ['-c', `set -eu\n${fakeDocker}\n${loop}\nprintf REACHED_AFTER_IDENTITY`], { encoding: 'utf8', env: { ...env, SCENARIO: scenario, BAD_IMAGE: badImage } });
+  const good = check('matching', '');
+  assert.equal(good.status, 0, good.stderr);
+  assert.match(good.stdout, /REACHED_AFTER_IDENTITY/);
+  for (const image of ['fixture/app', 'fixture/tools']) {
+    for (const scenario of ['missing_revision', 'different_revision', 'missing_version', 'different_version']) {
+      const failed = check(scenario, `${image}:${env.IMAGE_TAG}`);
+      assert.equal(failed.status, 1, `${scenario} ${image}: ${failed.stderr}`);
+      assert.match(failed.stdout, /revision\/version mismatch/);
+      assert.doesNotMatch(failed.stdout, /REACHED_AFTER_IDENTITY/);
+    }
+  }
+});
+
 test('operations packaging completes with no Git on PATH and requires the host-verified full SHA', async () => {
   const { packageOperations } = await import('../package-intranet-operations.mjs');
   const root = mkdtempSync(path.join(tmpdir(), 'lighthouse-package-'));
