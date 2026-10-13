@@ -1,5 +1,6 @@
 import { hubJson } from "@/modules/knowledge-hub/http";
 import { requireKnowledgeAdmin, assertWebMutation } from "@/modules/auth/access";
+import { recheckKnowledgeAdminWrite } from "@/modules/knowledge-hub/admin-write-access";
 import { assertKnowledgeManagerStorage } from "@/modules/knowledge-hub/manager-storage";
 import { z } from "zod";
 import { adminJsonError } from "../../../_admin";
@@ -59,6 +60,8 @@ export async function POST(request: Request) {
       const unpacked = isZip ? await readSkillZip(entries[0].bytes) : { entries, excluded: [] as string[] };
       const name = isZip ? files[0].name.replace(/\.zip$/i, "") : paths[0].includes("/") ? paths[0].split("/")[0] : "Skill";
       const { request: input, excluded } = skillInput(unpacked.entries, name);
+      // Authorization errors escape per-item error handling and stop the request.
+      await recheckKnowledgeAdminWrite(request, principal);
       try {
         const result = await importManagedResource(input, folderId, name, conflict, actor);
         return hubJson({ results: [result], excluded: [...unpacked.excluded, ...excluded] });
@@ -67,7 +70,11 @@ export async function POST(request: Request) {
     const results = [];
     for (const entry of entries) {
       const name = entry.path.split("/").at(-1)!;
-      try { results.push({ ...await importManagedResource(markdownInput(entry, type), folderId, name, conflict, actor), path: entry.path }); }
+      let input: ReturnType<typeof markdownInput>;
+      try { input = markdownInput(entry, type); }
+      catch (error) { results.push({ name, path: entry.path, ...failure(error) }); continue; }
+      await recheckKnowledgeAdminWrite(request, principal);
+      try { results.push({ ...await importManagedResource(input, folderId, name, conflict, actor), path: entry.path }); }
       catch (error) { results.push({ name, path: entry.path, ...failure(error) }); }
     }
     return hubJson({ results });

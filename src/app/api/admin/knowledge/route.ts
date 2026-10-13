@@ -1,5 +1,6 @@
 import { hubJson, boundedKnowledgeJson } from "@/modules/knowledge-hub/http";
 import { requireKnowledgeAdmin, assertWebMutation } from "@/modules/auth/access";
+import { recheckKnowledgeAdminWrite } from "@/modules/knowledge-hub/admin-write-access";
 import { assertKnowledgeManagerStorage } from "@/modules/knowledge-hub/manager-storage";
 import { assertDatabaseConfigured, adminJsonError } from "../../_admin";
 import { createKnowledgeManager, knowledgeManagerErrorResponse } from "@/modules/knowledge-hub/manager";
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
     assertDatabaseConfigured();
 
     const body = await boundedKnowledgeJson(request);
-    return hubJson(await createKnowledgeManager(undefined, { userId: principal.userId, account: principal.account, requestId: crypto.randomUUID() }).apply(body), { headers: { "Cache-Control": "no-store" } });
+    const current = await recheckKnowledgeAdminWrite(request, principal);
+    return hubJson(await createKnowledgeManager(undefined, { userId: current.userId, account: current.account, requestId: crypto.randomUUID() }).apply(body), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return errorResponse(error);
   }
