@@ -348,14 +348,34 @@ function SidebarNotifications({ isExpanded, className }: { isExpanded: boolean; 
 
 function SessionLinks({ isExpanded, onNavigate }: { isExpanded: boolean; onNavigate?: () => void }) {
   const session = useEmployeeSession();
-  return <div className="grid gap-2 text-[length:var(--type-control)] text-[var(--color-deck-text-soft)]">
-    <Link href="/auth/tools" onClick={onNavigate} title="工具授权" className="flex min-h-11 items-center rounded-[var(--lh-control-radius)] px-3 hover:bg-[var(--lh-deck-panel-hover)] focus-visible:outline-2 focus-visible:outline-primary">{isExpanded ? "工具授权" : "授权"}</Link>
-    {isExpanded && <p className="truncate px-3" title={session?.user.account}>{session?.user.displayName}</p>}
-    <form action="/api/auth/logout" method="post">
-      <input type="hidden" name="csrfToken" value={session?.csrfToken ?? ""} />
-      <button type="submit" className="min-h-11 w-full rounded-[var(--lh-control-radius)] px-3 text-left hover:bg-[var(--lh-deck-panel-hover)] focus-visible:outline-2 focus-visible:outline-primary">退出登录</button>
-    </form>
-  </div>;
+  const pathname = usePathname();
+  const isActive = isItemActive(pathname, "/me");
+  return (
+    <Link
+      data-lh-my-link
+      data-active={isActive ? "true" : "false"}
+      href="/me"
+      onClick={onNavigate}
+      aria-label="我的"
+      aria-current={isActive ? "page" : undefined}
+      title={session ? `我的 · ${session.user.displayName}` : "我的"}
+      className={cn(
+        "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+        isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
+        isActive
+          ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
+          : "border-transparent text-[var(--color-deck-text-soft)] hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
+      )}
+    >
+      {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-action" />}
+      <Icon icon={lighthouseIcons.user} aria-hidden="true" className={cn("h-5 w-5", isActive ? "text-action" : "text-[var(--color-deck-icon)] group-hover:text-action")} />
+      {!isExpanded && <span className="text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]">我的</span>}
+      {isExpanded && <span className="min-w-0">
+        <span className="block truncate text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)]">我的</span>
+        <span className="block truncate text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)] text-[var(--color-deck-muted)]">{session?.user.displayName}</span>
+      </span>}
+    </Link>
+  );
 }
 
 function NavLinks({

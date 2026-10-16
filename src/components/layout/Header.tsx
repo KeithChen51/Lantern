@@ -1,6 +1,8 @@
 "use client";
 
 import { Icon } from "@iconify/react";
+import Link from "next/link";
+import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { cn } from "@/lib/utils";
@@ -11,6 +13,7 @@ interface HeaderProps {
 }
 
 export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
+  const session = useEmployeeSession();
   return (
     <header
       data-lh-header
@@ -31,6 +34,10 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
           onClick={onOpenMobileNav}
           size="sm"
         />
+        <Link href="/me" aria-label="我的" className="ml-auto inline-flex min-h-11 max-w-full items-center gap-2 rounded-[var(--lh-control-radius)] px-3 text-[length:var(--type-control)] font-[var(--weight-bold)] text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          <Icon icon={lighthouseIcons.user} aria-hidden="true" className="h-5 w-5 shrink-0" />
+          <span className="truncate">{session?.user.displayName || "我的"}</span>
+        </Link>
       </div>
     </header>
   );
