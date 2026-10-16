@@ -6,14 +6,17 @@ async function main() {
   // Used refresh generations carry the full family's expiry. Never prune by
   // creation time or used/active state, which would weaken replay detection.
   const cutoff = new Date();
-  const expired = await prisma.accessRecord.count({ where: { expiresAt: { lte: cutoff } } });
+  // IAM directory records and revocation tombstones are authoritative state,
+  // not expiring sessions. Keep them even if a malformed legacy expiry exists.
+  const where = { expiresAt: { lte: cutoff }, kind: { notIn: ["iamAccount", "iamPermission"] } };
+  const expired = await prisma.accessRecord.count({ where });
   if (!args.includes("--apply")) { console.log(JSON.stringify({ mode: "dry-run", expired, cutoff: cutoff.toISOString() })); return; }
   let removed = 0;
   // Bound maintenance to 5,000 expired records; repeat for larger backlogs.
   for (let batch = 0; batch < 10; batch++) {
-    const records = await prisma.accessRecord.findMany({ where: { expiresAt: { lte: cutoff } }, orderBy: { expiresAt: "asc" }, take: 500, select: { id: true } });
+    const records = await prisma.accessRecord.findMany({ where, orderBy: { expiresAt: "asc" }, take: 500, select: { id: true } });
     if (!records.length) break;
-    removed += (await prisma.accessRecord.deleteMany({ where: { id: { in: records.map(record => record.id) }, expiresAt: { lte: cutoff } } })).count;
+    removed += (await prisma.accessRecord.deleteMany({ where: { ...where, id: { in: records.map(record => record.id) } } })).count;
   }
   console.log(JSON.stringify({ mode: "apply", removed, cutoff: cutoff.toISOString() }));
 }
