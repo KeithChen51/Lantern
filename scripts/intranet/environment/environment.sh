@@ -117,6 +117,14 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 lock() { mkdir -- "$LOCK" 2>/dev/null || fail 'Another operation holds this control-file lock'; LOCK_HELD=true; }
+check_authentication() {
+  # Resolve secrets directly into the selected tools validator on stdin, offline.
+  # Refuse missing IAM/portal credentials before stopping app or mutating the DB.
+  compose config --format json | docker run --rm -i --pull never --network none --read-only --entrypoint node \
+    "$LIGHTHOUSE_TOOLS_IMAGE" /app/check-access-config.cjs app "$ENVIRONMENT" \
+    || fail 'Configure the complete selected authentication contract first'
+}
+
 owner_check() {
   [[ -f "$DATA_ROOT/.lighthouse-owner" ]] || fail 'This root is not prepared by this environment; existing test requires its own explicit procedure'
   [[ "$(cat -- "$DATA_ROOT/.lighthouse-owner")" == "$COMPOSE_PROJECT_NAME|$ENVIRONMENT" ]] || fail 'Data root belongs to a different environment'
@@ -293,7 +301,7 @@ case "$MODE" in
   prepare) lock; prepare_root; printf 'Prepared new root: %s\n' "$DATA_ROOT" ;;
   initialize)
     [[ "$ENVIRONMENT" != restore ]] || fail 'Use restore-verify for restores'
-    lock; owner_check
+    lock; owner_check; check_authentication
     empty_directory "$DATA_ROOT/mysql" && empty_directory "$DATA_ROOT/app" || fail 'Initialization requires empty MySQL and app directories'
     start_database
     operations migrate
@@ -309,7 +317,7 @@ case "$MODE" in
     ;;
   upgrade)
     [[ "$ENVIRONMENT" != restore ]] || fail 'Restore verification is not an upgrade'
-    lock; owner_check; quiesce_app; capture_backup
+    lock; owner_check; check_authentication; quiesce_app; capture_backup
     # A failed migration leaves app stopped for investigation, never auto-rolls schema back.
     RESTORE_APP=false
     operations migrate

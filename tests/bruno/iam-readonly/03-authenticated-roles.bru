@@ -1,0 +1,36 @@
+meta {
+  name: Authenticated roles catalogue uses encrypted envelope
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/iam/roles
+  body: none
+  auth: none
+}
+
+headers {
+  appKey: {{syncAppKey}}
+  Authorization: {{syncAuthorization}}
+}
+
+settings {
+  followRedirects: false
+}
+
+tests {
+  test("Authenticated catalogue is returned", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().code).to.equal("000000");
+    expect(res.getBody().data).to.be.a("string");
+    expect(res.getBody().data.length).to.be.greaterThan(0);
+  });
+}
+
+docs {
+  Populate the secret syncAuthorization variable with the exact Authorization
+  header issued by IAM for this registered appKey. Never export that JWT.
+  This checks transport and encrypted envelope only; validate decrypted role/menu
+  structure with IAM. A 200 response alone does not complete permission acceptance.
+}

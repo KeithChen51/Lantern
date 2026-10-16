@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { equalSecret, hashToken, openToken, randomToken, safeReturnTo, sealToken } from "./access-crypto";
 import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
 import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
+import { readIamDirectory } from "./iam-directory";
 
 export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
 export type DeviceView = { userCode: string; clientName: string; scope: "knowledge:read"; expiresAt: number };
@@ -49,18 +50,23 @@ export class AccessService {
   async startLogin(returnTo?: string): Promise<{ state: string; cookie: string; redirectUrl: string }> {
     // Card entry has no child-app callback/state contract. The user returns via
     // the registered portal card and confirms the verified identity locally.
-    if (this.config.portalLoginMode === "card") return { state: "", cookie: "", redirectUrl: this.config.portalLoginUrl };
+    if (this.config.mode !== "iam" && this.config.portalLoginMode === "card") return { state: "", cookie: "", redirectUrl: this.config.portalLoginUrl };
     const state = randomToken(), cookie = randomToken();
-    const url = new URL(this.config.portalLoginUrl);
-    url.searchParams.set(this.config.callbackParam, new URL("/auth/portal/callback", this.config.origin).toString());
-    url.searchParams.set(this.config.stateParam, state);
+    const url = this.config.mode === "iam"
+      ? new URL(this.portal.authorizationUrl!(new URL("/auth/iam/callback", this.config.origin).toString(), state))
+      : new URL(this.config.portalLoginUrl);
+    if (this.config.mode !== "iam") {
+      url.searchParams.set(this.config.callbackParam, new URL("/auth/portal/callback", this.config.origin).toString());
+      url.searchParams.set(this.config.stateParam, state);
+    }
     take(await this.store.transaction(async (tx) => {
       if (!await this.rate(tx, "login-start", "global", 100, 60000)) return new AccessError("Login requests are temporarily limited", 429);
-      await tx.put(this.record("login", key("login", state), "", null, { verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
+      await tx.put(this.record("login", key("login", state), "", null, { authority: this.config.mode ?? "portal", verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
     }));
     return { state, cookie, redirectUrl: url.toString() };
   }
   async callback(input: { token: string; state?: string; cookie?: string }): Promise<LoginResult> {
+    if (this.config.mode === "iam") throw new AccessError("Portal authentication is disabled", 401);
     this.secret(input.token);
     // A present but wrong/empty state must never enter the legacy confirmation path.
     if (input.state !== undefined) {
@@ -70,7 +76,7 @@ export class AccessService {
       const id = key("login", input.state), verifier = hashToken(input.cookie);
       const transaction = await this.store.transaction(async (tx) => {
         const row = await tx.get("login", id);
-        if (!row || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
+        if (!row || row.payload.authority === "iam" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
         return row;
       });
       const identity = await this.verified(input.token), identityAt = this.now(), roles = await this.roles(identity.account);
@@ -94,11 +100,36 @@ export class AccessService {
     });
     return { kind: "pending", pendingToken, returnTo: "/auth/confirm" };
   }
+  async iamCallback(input: { code: string; state: string; cookie?: string }): Promise<{ sessionToken: string; returnTo: string }> {
+    if (this.config.mode !== "iam" || !this.portal.exchange) throw new AccessError("IAM authentication is disabled", 401);
+    this.secret(input.code); this.secret(input.state);
+    if (!input.cookie) throw new AccessError("Login transaction is missing", 401);
+    this.secret(input.cookie);
+    const id = key("login", input.state), verifier = hashToken(input.cookie);
+    // Claim before exchanging a one-use code. A failed exchange requires a new
+    // login; racing callbacks must never redeem the same code twice.
+    const transaction = await this.store.transaction(async tx => {
+      const row = await tx.get("login", id);
+      if (!row || row.payload.authority !== "iam" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
+      row.payload.consumed = true; await this.save(tx, row); return row;
+    });
+    const exchanged = await this.portal.exchange(input.code);
+    const identity = this.identity({ ...await this.verified(exchanged.token), expiresAt: exchanged.expiresAt });
+    const identityAt = this.now(), sessionToken = randomToken(), grantId = `grant:${randomUUID()}`, candidateId = randomUUID(), csrfToken = randomToken();
+    const cipher = sealToken(exchanged.token, this.config.encryptionKey);
+    return this.store.transaction(async tx => {
+      if (expired(transaction, this.now())) throw new AccessError("Login transaction expired", 401);
+      await this.createSession(tx, identity, identityAt, null, cipher, grantId, candidateId, sessionToken, csrfToken);
+      return { sessionToken, returnTo: transaction.payload.returnTo };
+    });
+  }
   async pending(token: string): Promise<{ account: string; displayName: string; csrfToken: string; returnTo: string }> {
+    if (this.config.mode === "iam") throw new AccessError("Portal authentication is disabled", 401);
     this.secret(token);
     return this.store.transaction(async (tx) => { const row = await tx.get("pending", key("pending", token)); if (!row || expired(row, this.now()) || row.payload.consumed || row.payload.upstreamExpiresAt <= this.now()) throw new AccessError("Login confirmation expired", 401); const { account, displayName, csrfToken, returnTo } = row.payload; return { account, displayName, csrfToken, returnTo }; });
   }
   async confirmPending(token: string, csrfToken: string): Promise<{ sessionToken: string; returnTo: string }> {
+    if (this.config.mode === "iam") throw new AccessError("Portal authentication is disabled", 401);
     this.secret(token); this.secret(csrfToken);
     const id = key("pending", token);
     const pending = await this.store.transaction(async (tx) => { const row = await tx.get("pending", id); if (!row || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.csrfToken, csrfToken) || row.payload.upstreamExpiresAt <= this.now()) throw new AccessError("Login confirmation is invalid", 401); return row; });
@@ -115,11 +146,16 @@ export class AccessService {
     });
   }
   private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: { roles: string[]; at: number; organization?: string } | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
+    if (this.config.mode === "iam") {
+      const directory = await readIamDirectory(tx, identity.account, this.now());
+      identity = { ...identity, displayName: directory.displayName, expiresAt: Math.min(identity.expiresAt ?? Infinity, directory.expiresAt) };
+      roles = { roles: directory.roles, at: this.now(), organization: directory.organization };
+    }
     const grants = await tx.find("grant", { subjectId: identity.account, expiresAfter: this.now(), activeOnly: true });
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
     const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
-    const grant = this.record("grant", grantId, identity.account, null, { userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
+    const grant = this.record("grant", grantId, identity.account, null, { authority: this.config.mode ?? "portal", userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
     await tx.put(grant);
     await tx.put(this.record("session", key("session", token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
     await this.audit(tx, "login", identity.account, grantId);
@@ -127,7 +163,15 @@ export class AccessService {
   private sessionValid(session: AccessRecord<"session">) { return session.payload.active && !expired(session, this.now()) && this.now() - session.payload.lastUsedAt < this.duration(this.config.sessionIdleMs, HOUR); }
   private async activeGrant(tx: AccessTransaction, id: string) {
     const grant = await tx.get("grant", id);
-    if (!grant || !grant.payload.active || expired(grant, this.now()) || !await tx.employeeActive(grant.payload.account, grant.payload.userId)) throw new AccessError("Employee authorization expired", 401);
+    if (!grant || (grant.payload.authority ?? "portal") !== (this.config.mode ?? "portal") || !grant.payload.active || expired(grant, this.now()) || !await tx.employeeActive(grant.payload.account, grant.payload.userId)) throw new AccessError("Employee authorization expired", 401);
+    if (this.config.mode === "iam") {
+      const directory = await readIamDirectory(tx, grant.payload.account, this.now());
+      grant.payload.roles = directory.roles;
+      grant.payload.rolesAt = this.now();
+      grant.payload.displayName = directory.displayName;
+      grant.payload.organization = directory.organization;
+      grant.expiresAt = Math.min(grant.expiresAt, directory.expiresAt);
+    }
     return grant;
   }
   private async activeClient(tx: AccessTransaction, id: string) {
@@ -145,7 +189,7 @@ export class AccessService {
       catch (error) { if (permanent(error)) await this.invalidateGrant(grant.id, "identity-invalid"); throw error; }
     }
     let roles: { roles: string[]; at: number; organization?: string } | null = null;
-    if (now - grant.payload.rolesAt >= roleFresh) {
+    if (this.config.mode !== "iam" && now - grant.payload.rolesAt >= roleFresh) {
       try { roles = await this.roles(grant.payload.account); }
       catch (error) { await this.invalidateGrant(grant.id, "roles-invalid"); throw error; }
     }

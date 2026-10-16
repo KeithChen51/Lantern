@@ -68,7 +68,7 @@ if [[ "$MODE" == upgrade ]]; then
   # Validate the complete resolved app environment with the same readAccessConfig
   # used by the selected application. Run offline before app stop/backup/migrate;
   # secrets stay on stdin, and tools defaults cannot fill missing app settings.
-  docker run --rm -i --pull never --network none --read-only --entrypoint node "$TOOLS" /app/check-access-config.cjs "$APP_SERVICE" < "$CONFIG" || fail 'Configure the complete production-build test portal contract first'
+  docker run --rm -i --pull never --network none --read-only --entrypoint node "$TOOLS" /app/check-access-config.cjs "$APP_SERVICE" < "$CONFIG" || fail 'Configure the complete production-build test authentication contract first'
 fi
 CURRENT_DB=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$APP_CONTAINER" | sed -n 's/^DATABASE_URL=//p')
 [[ -n "$CURRENT_DB" && "$(config_value DATABASE_URL)" == "$CURRENT_DB" ]] || fail 'Do not switch existing test database during upgrade'

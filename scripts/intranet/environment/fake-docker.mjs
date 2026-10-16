@@ -20,19 +20,27 @@ if (args[0] === "image") {
 } else if (args[0] === "inspect") {
   const format = args[args.indexOf("--format") + 1];
   const id = args.at(-1);
-  if (!args.includes("--format")) out(JSON.stringify([{ Id: id, Config: { Env: ["AUTH_ENCRYPTION_KEY=stable-secret"] } }]));
+  if (!args.includes("--format")) out(JSON.stringify([{ Id: id, Config: { Env: ["AUTH_ENCRYPTION_KEY=BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="] } }]));
   else if (format.includes(".NetworkSettings.Networks")) out("existing_app\n");
   else if (format.includes(".Mounts")) {
     if (format.includes("/var/lib/mysql")) out(format.includes(".Type") ? `volume|original-mysql|${config.mysqlRoot ?? `${config.dataRoot}/mysql`}` : config.mysqlRoot ?? `${config.dataRoot}/mysql`);
     else if (format.includes(".Type")) out(`volume|original-anonymous|${config.dataRoot}/app`);
     else out(`${config.dataRoot}/app`);
-  } else if (format.includes(".Config.Env")) out(`DATABASE_URL=mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test\n${process.env.FAKE_OLD_AUTH ? "AUTH_ENCRYPTION_KEY=stable-secret\n" : ""}`);
+  } else if (format.includes(".Config.Env")) out(`DATABASE_URL=mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test\n${process.env.FAKE_OLD_AUTH ? "AUTH_ENCRYPTION_KEY=BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=\n" : ""}`);
   else if (format.includes(".State.Running")) out(state.stopped ? "false" : "true");
   else if (format.includes(".State.Health")) out("healthy");
   else if (format === "{{.Image}}") out(imageId(id.includes("mysql") ? "c" : state.upgraded ? "a" : "d"));
 } else if (args[0] === "compose") {
   if (args.includes("config")) {
-    if (args.includes("json")) out(JSON.stringify({ services: { app: { environment: { AUTH_ENCRYPTION_KEY: "stable-secret" } }, lighthouse: { image: config.appImage, environment: {
+    if (args.includes("json")) out(JSON.stringify({ services: { app: { environment: {
+      LIGHTHOUSE_DEPLOYMENT_ENV: "test", NODE_ENV: "production", AUTH_ALLOW_LOCAL_HTTP: "false",
+      AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081",
+      PORTAL_API_BASE_URL: "https://portal.example.invalid/api", PORTAL_LOGIN_URL: "https://portal.example.invalid/login", PORTAL_LOGIN_MODE: "card",
+      PORTAL_APP_CODE: "fixture", PORTAL_APP_SECRET: "synthetic-portal-secret", PORTAL_KNOWLEDGE_ADMIN_ROLE: "knowledge_admin", PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true",
+      KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql",
+      DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+      ...config.authOverrides,
+    } }, lighthouse: { image: config.appImage, environment: {
       LIGHTHOUSE_DEPLOYMENT_ENV: "test", NODE_ENV: "production", AUTH_ALLOW_LOCAL_HTTP: "false",
       AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081",
       PORTAL_API_BASE_URL: "https://portal.example.invalid/api", PORTAL_LOGIN_URL: "https://portal.example.invalid/login", PORTAL_LOGIN_MODE: "card",
@@ -59,7 +67,8 @@ else if (args[0] === "run") {
   if (args.includes("/app/check-access-config.cjs")) {
     let input = "";
     for await (const chunk of process.stdin) input += chunk;
-    const result = spawnSync(process.execPath, [config.authChecker, args.at(-1)], { input, encoding: "utf8" });
+    const checkerArgs = args.slice(args.indexOf("/app/check-access-config.cjs") + 1);
+    const result = spawnSync(process.execPath, [config.authChecker, ...checkerArgs], { input, encoding: "utf8" });
     out(result.stdout ?? ""); process.stderr.write(result.stderr ?? ""); process.exit(result.status ?? 1);
   } else if (args.includes("/compare-mysql-dumps.mjs")) {
     const source = target => {
