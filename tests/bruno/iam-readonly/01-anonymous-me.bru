@@ -1,0 +1,26 @@
+meta {
+  name: Anonymous auth me is denied
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/auth/me
+  body: none
+  auth: none
+}
+
+settings {
+  followRedirects: false
+}
+
+tests {
+  test("Anonymous employee endpoint returns 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
+
+docs {
+  Use a clean Bruno cookie jar with no saved Lighthouse cookies. A 404 means the
+  selected container lacks this route; a redirect or HTML login page is not 401.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Browser session identifies authenticated employee
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/auth/me
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+settings {
+  followRedirects: false
+}
+
+tests {
+  test("A real browser-authenticated session is recognized", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Run manually after real browser IAM login; use the exact cookie name=value as
+  a local secret variable. Do not copy cookies into a report, screenshots or Git.
+  Also verify the account and capabilities match the assigned employee locally.
+}

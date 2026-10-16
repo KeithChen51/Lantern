@@ -1,0 +1,26 @@
+meta {
+  name: Role catalogue rejects invalid signature
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/iam/roles
+  body: none
+  auth: none
+}
+
+headers {
+  appKey: {{syncAppKey}}
+  Authorization: invalid-fixture-signature
+}
+
+settings {
+  followRedirects: false
+}
+
+tests {
+  test("Invalid sync signature is denied", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

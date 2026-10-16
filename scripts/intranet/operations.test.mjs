@@ -219,7 +219,7 @@ test('operations packaging completes with no Git on PATH and requires the host-v
     assert.equal(readFileSync(path.join(output, 'engines/schema-engine'), 'utf8'), 'schema engine fixture');
     const check = spawnSync(process.execPath, [path.join(output, 'check-access-config.cjs'), 'lighthouse'], { input: JSON.stringify({ services: { lighthouse: { environment: { PORTAL_APP_SECRET: 'never-print-this-private-value' } } } }), encoding: 'utf8' });
     assert.equal(check.status, 1);
-    assert.match(check.stderr, /Resolved test authentication configuration refused/);
+    assert.match(check.stderr, /Resolved authentication configuration refused/);
     assert.doesNotMatch(check.stderr, /never-print-this-private-value/);
     assert.throws(() => readFileSync(path.join(output, 'node_modules/.env.private')));
   } finally { rmSync(root, { recursive: true, force: true }); }

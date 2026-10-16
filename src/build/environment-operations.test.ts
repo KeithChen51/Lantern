@@ -24,7 +24,7 @@ function fixture() {
   mkdirSync(app, { recursive: true }); mkdirSync(join(data, "mysql"));
   writeFileSync(join(data, ".lighthouse-owner"), "lighthouse-test|test\n");
   writeFileSync(join(app, "upload.txt"), "important existing upload");
-  const runtime = join(root, "app.env"); writeFileSync(runtime, "AUTH_ENCRYPTION_KEY=stable-secret\n");
+  const runtime = join(root, "app.env"); writeFileSync(runtime, "AUTH_ENCRYPTION_KEY=BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=\n");
   const image = (name: string, hash: string) => `registry.example/${name}@sha256:${hash.repeat(64)}`;
   const appImage = image("app", "a"); const toolsImage = image("tools", "b"); const mysqlImage = image("mysql", "c");
   const config = join(root, "control.env");
@@ -61,10 +61,33 @@ describe("guarded deployment orchestration", () => {
     const dump = calls.findIndex(x => x.some(y => y.includes("mysqldump")));
     const migrate = calls.findIndex(x => x.at(-1) === "migrate");
     const up = calls.findIndex(x => x.includes("up") && x.at(-1) === "app");
-    expect(stop).toBeGreaterThan(-1); expect(dump).toBeGreaterThan(stop); expect(migrate).toBeGreaterThan(dump); expect(up).toBeGreaterThan(migrate);
+    const authCheck = calls.findIndex(x => x.includes("/app/check-access-config.cjs"));
+    expect(authCheck).toBeGreaterThan(-1); expect(stop).toBeGreaterThan(authCheck); expect(dump).toBeGreaterThan(stop); expect(migrate).toBeGreaterThan(dump); expect(up).toBeGreaterThan(migrate);
     expect(calls.some(x => x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
     expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
     expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+  it("validates the selected production deployment and rejects a mismatched target", () => {
+    const f = fixture();
+    const resolved = spawnSync(process.execPath, [f.env.FAKE_SCRIPT, "compose", "config", "--format", "json"], { env: f.env, encoding: "utf8" });
+    expect(resolved.status).toBe(0);
+    const config = JSON.parse(resolved.stdout);
+    Object.assign(config.services.app.environment, { LIGHTHOUSE_DEPLOYMENT_ENV: "production", LIGHTHOUSE_ORIGIN: "https://lighthouse.example.invalid", AUTH_TEST_HTTP_ORIGIN: "" });
+    const check = (deployment: string) => spawnSync(process.execPath, [join(f.root, "check-access-config.cjs"), "app", deployment], { input: JSON.stringify(config), encoding: "utf8" });
+    expect(check("production").status).toBe(0);
+    expect(check("test").status).toBe(1);
+    expect(check("restore").status).toBe(1);
+    expect(check("test").stderr).not.toContain("synthetic-portal-secret");
+  }, 30_000);
+  it("refuses incomplete selected IAM configuration before app stop or database work", () => {
+    const f = fixture();
+    const configFile = join(f.root, "fake-config.json");
+    writeFileSync(configFile, JSON.stringify({ ...JSON.parse(readFileSync(configFile, "utf8")), authOverrides: { AUTH_MODE: "iam", IAM_CLIENT_SECRET: "do-not-print-this-secret" } }));
+    const result = f.run("upgrade");
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Resolved authentication configuration refused");
+    expect(result.stderr).not.toContain("do-not-print-this-secret");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate" || x.some(y => y.includes("mysqldump")))).toBe(false);
   }, 30_000);
   it("restarts the prior app after failed backup and does not migrate", () => {
     const f = fixture(); const result = f.run("upgrade", { FAKE_FAIL_BACKUP: "1" });
@@ -187,7 +210,7 @@ describe("guarded deployment orchestration", () => {
     writeFileSync(configFile, JSON.stringify({ ...JSON.parse(readFileSync(configFile, "utf8")), authOverrides }));
     const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: f.env, encoding: "utf8" });
     expect(result.status).not.toBe(0);
-    expect(result.stderr).toContain("Resolved test authentication configuration refused");
+    expect(result.stderr).toContain("Resolved authentication configuration refused");
     expect(result.stderr).not.toMatch(/private-db-secret|invalid-private-key|synthetic-portal-secret/);
     expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate" || x.some(y => y.includes("mysqldump")))).toBe(false);
     expect(existsSync(`${f.config}.operations-lock`)).toBe(false);
