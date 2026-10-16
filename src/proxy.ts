@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireEmployee } from "@/modules/auth/access";
 import { readAccessConfig } from "@/modules/auth/access-config";
+import { callback } from "@/modules/auth/access-http";
 import { classifyAccessPath, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 
 function noStore<T extends Response>(response: T): T {
@@ -16,6 +17,13 @@ export async function proxy(request: NextRequest) {
   // /_next/data to its page first; that path still passes the employee gate.
   const kind = classifyAccessPath(new URL(request.url).pathname, request.nextUrl.searchParams.get("url"));
   if (kind === "invalid") return noStore(new NextResponse("无效的请求路径。", { status: 400 }));
+  // Consume the portal card's bearer token before the employee gate. No
+  // rendered page, redirect returnTo or client script receives this URL.
+  const tokenParam = process.env.PORTAL_TOKEN_PARAM || "token";
+  if (path === "/" && request.nextUrl.searchParams.has(tokenParam)) {
+    if (request.method !== "GET") return noStore(new NextResponse(null, { status: 405 }));
+    return noStore(await callback(request));
+  }
   const forwarded = new Headers(request.headers);
   // Always overwrite the untrusted client header, including on public routes.
   forwarded.set(REQUEST_PATH_HEADER, path!);
@@ -26,7 +34,10 @@ export async function proxy(request: NextRequest) {
       // Native forms do not need hydration. Do not load anonymous script
       // requests, and never let callback tokens enter the Referer header.
       response.headers.set("Content-Security-Policy", "script-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
-      response.headers.set("Referrer-Policy", "no-referrer");
+      // HTTP native forms need a non-opaque Origin for same-origin/CSRF
+      // checks. Credential URLs are consumed and redirected before rendering;
+      // these pages send only the origin, never a path or query credential.
+      response.headers.set("Referrer-Policy", path === "/auth/portal/callback" ? "no-referrer" : "strict-origin");
     }
     return response;
   }
@@ -40,7 +51,10 @@ export async function proxy(request: NextRequest) {
     // both paths deny access before rendering any business payload.
     if (status === 401 && kind === "page" && !request.headers.has("rsc")) {
       const target = new URL("/login", readAccessConfig().origin);
-      target.searchParams.set("returnTo", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+      const clean = new URL(request.url);
+      clean.searchParams.delete(tokenParam);
+      clean.searchParams.delete("token");
+      target.searchParams.set("returnTo", `${clean.pathname}${clean.search}`);
       return noStore(NextResponse.redirect(target, 303));
     }
     return noStore(new NextResponse(status === 401 ? "请先登录。" : status === 403 ? "没有访问权限。" : "统一登录服务暂不可用，请稍后重试。", {

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { resolve, join, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parse } from "yaml";
+import { buildSync } from "esbuild";
 
 const bash = process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "bash";
 const roots: string[] = [];
@@ -28,10 +29,12 @@ function fixture() {
   const appImage = image("app", "a"); const toolsImage = image("tools", "b"); const mysqlImage = image("mysql", "c");
   const config = join(root, "control.env");
   writeFileSync(config, ["ENVIRONMENT=test", "COMPOSE_PROJECT_NAME=lighthouse-test", `DATA_ROOT=${unix(data)}`, `BACKUP_ROOT=${unix(backups)}`, `APP_ENV_FILE=${unix(runtime)}`, `LIGHTHOUSE_IMAGE=${appImage}`, `LIGHTHOUSE_TOOLS_IMAGE=${toolsImage}`, `MYSQL_IMAGE=${mysqlImage}`, "MYSQL_DATABASE=lighthouse_test", "MYSQL_USER=lighthouse_test", "MYSQL_PASSWORD='private-db-secret'", "MYSQL_ROOT_PASSWORD='distinct-root-secret'", "DATABASE_URL='mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test'", "HTTP_BIND=0.0.0.0", "HTTP_PORT=18081", "GATEWAY_ENABLED=false", ""].join("\n"));
-  writeFileSync(join(root, "fake-config.json"), JSON.stringify({ dataRoot: unix(data), appImage }));
+  const authChecker = join(root, "check-access-config.cjs");
+  buildSync({ entryPoints: [resolve("scripts/check-access-config.ts")], outfile: authChecker, bundle: true, platform: "node", target: "node20", format: "cjs" });
+  writeFileSync(join(root, "fake-config.json"), JSON.stringify({ dataRoot: unix(data), appImage, authChecker }));
   const bin = join(root, "bin"); mkdirSync(bin);
-  writeFileSync(join(bin, "docker"), '#!/usr/bin/env bash\nexec "$FAKE_NODE" "$FAKE_SCRIPT" "$@"\n', { mode: 0o755 });
-  const env = { ...process.env, PATH: `${bin}${process.platform === "win32" ? ";" : ":"}${process.env.PATH}`, FAKE_FIXTURE: root, FAKE_NODE: process.execPath.replaceAll("\\", "/"), FAKE_SCRIPT: resolve("scripts/intranet/environment/fake-docker.mjs").replaceAll("\\", "/") };
+  writeFileSync(join(bin, "docker"), '#!/usr/bin/env bash\nexec "$FAKE_NODE" -- "$FAKE_SCRIPT" "$@"\n', { mode: 0o755 });
+  const env = { ...process.env, MSYS_NO_PATHCONV: "1", PATH: `${bin}${process.platform === "win32" ? ";" : ":"}${process.env.PATH}`, FAKE_FIXTURE: root, FAKE_NODE: process.execPath.replaceAll("\\", "/"), FAKE_SCRIPT: resolve("scripts/intranet/environment/fake-docker.mjs").replaceAll("\\", "/") };
   const run = (mode: string, extra: Record<string, string> = {}, extraArgs: string[] = []) => spawnSync(bash, [resolve("scripts/intranet/environment/environment.sh"), mode, config, ...extraArgs], { env: { ...env, MSYS_NO_PATHCONV: "1", ...extra }, encoding: "utf8" });
   const calls = () => existsSync(join(root, "docker-calls.jsonl")) ? readFileSync(join(root, "docker-calls.jsonl"), "utf8").trim().split("\n").map(line => JSON.parse(line) as string[]) : [];
   return { root, data, app, backups, config, appImage, toolsImage, env, run, calls };
@@ -160,10 +163,34 @@ describe("guarded deployment orchestration", () => {
     const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: f.env, encoding: "utf8" });
     expect(result.status, result.stderr).toBe(0);
     const calls = f.calls(); const migrate = calls.findIndex(x => x[0] === "run" && x.at(-1) === "migrate");
+    const authCheck = calls.findIndex(x => x.includes("/app/check-access-config.cjs"));
+    const stop = calls.findIndex(x => x.includes("stop"));
+    expect(authCheck).toBeGreaterThan(-1); expect(stop).toBeGreaterThan(authCheck);
+    expect(calls[authCheck]).toContain("--network"); expect(calls[authCheck]).toContain("none"); expect(calls[authCheck]).toContain("--read-only");
     const up = calls.findIndex(x => x.includes("up")); expect(up).toBeGreaterThan(migrate);
     expect(calls[up]).toContain("--no-deps"); expect(calls[up].at(-1)).toBe("lighthouse");
     expect(calls.some(x => x.includes("--renew-anon-volumes") || x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
     expect(readFileSync(f.config, "utf8")).toContain(`LH_IMAGE=${f.appImage}`);
     expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+  it.each([
+    { AUTH_MODE: null }, { PORTAL_API_BASE_URL: null }, { PORTAL_LOGIN_URL: null },
+    { PORTAL_APP_CODE: null }, { PORTAL_APP_SECRET: null }, { PORTAL_KNOWLEDGE_ADMIN_ROLE: null },
+    { AUTH_ENCRYPTION_KEY: "invalid-private-key" }, { PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "false" },
+    { DATABASE_URL: null }, { KNOWLEDGE_HUB_DRIVER: "sqlite" }, { KNOWLEDGE_HUB_ENABLED: "false" },
+    { LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18082" }, { AUTH_TEST_HTTP_ORIGIN: null },
+    { PORTAL_LOGIN_URL: "http://10.20.30.40/login" }, { PORTAL_STATE_PARAM: "token" },
+    { NODE_ENV: "development" }, { LIGHTHOUSE_DEPLOYMENT_ENV: "production" }, { AUTH_ALLOW_LOCAL_HTTP: "true" },
+  ])("rejects incomplete or invalid resolved existing-test auth before stopping app: %j", (authOverrides) => {
+    const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
+    const configFile = join(f.root, "fake-config.json");
+    writeFileSync(configFile, JSON.stringify({ ...JSON.parse(readFileSync(configFile, "utf8")), authOverrides }));
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: f.env, encoding: "utf8" });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Resolved test authentication configuration refused");
+    expect(result.stderr).not.toMatch(/private-db-secret|invalid-private-key|synthetic-portal-secret/);
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate" || x.some(y => y.includes("mysqldump")))).toBe(false);
+    expect(existsSync(`${f.config}.operations-lock`)).toBe(false);
+    expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
   }, 30_000);
 });

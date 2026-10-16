@@ -307,7 +307,6 @@ describe("lighthouse design system contract", () => {
       "useLhScrollProgress",
       "data-lh-popover",
       "aria-expanded={isSearchOpen}",
-      "aria-expanded={isOpen}",
     ].forEach((token) => {
       expect(navigation).toContain(token);
     });
@@ -391,7 +390,7 @@ describe("lighthouse design system contract", () => {
       "data-lh-nav-link",
       "data-lh-sidebar-toggle",
       "data-lh-sidebar-nav-group",
-      "data-lh-sidebar-notification-button",
+      "data-lh-my-link",
     ].forEach((token) => {
       expect(navigation).toContain(token);
     });
@@ -733,7 +732,7 @@ describe("lighthouse design system contract", () => {
       "--lh-home-nav-progress-value",
       "color-mix(in srgb, rgba(250, 244, 229, 0.94) var(--lh-home-nav-progress, 0%), rgba(35, 35, 31, 0.34))",
       "[data-lh-sidebar-search-trigger]",
-      "[data-lh-sidebar-notification-button]",
+      "[data-lh-my-link]",
     ].forEach((token) => {
       expect(globals).toContain(token);
     });

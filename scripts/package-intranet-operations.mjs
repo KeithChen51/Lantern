@@ -19,6 +19,9 @@ export async function packageOperations({ root = process.cwd(), env = process.en
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   await build({ entryPoints: [path.join(root, 'scripts/intranet/operations.mjs')], outfile: path.join(output, 'operations.cjs'), bundle: true, platform: 'node', target: 'node24', format: 'cjs' });
+  // Bundle the actual app validator; operations must not drift into a second
+  // implementation or require a runtime TypeScript/npm installation.
+  await build({ entryPoints: [path.join(root, 'scripts/check-access-config.ts')], outfile: path.join(output, 'check-access-config.cjs'), bundle: true, platform: 'node', target: 'node24', format: 'cjs' });
   const allowed = source => !['.git', '.cache', '.npmrc'].includes(path.basename(source)) && !path.basename(source).startsWith('.env') && !path.basename(source).endsWith('.log');
   // Copy installed Linux tools, not the repository/source workspace. No npm at runtime.
   for (const relative of ['node_modules', 'prisma/schema.prisma', 'prisma/migrations', 'release/knowledge-cli', 'deploy/system']) {

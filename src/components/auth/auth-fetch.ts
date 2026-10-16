@@ -1,5 +1,5 @@
 export type WebSession = {
-  user: { id: string; account: string; displayName: string };
+  user: { id: string; account: string; displayName: string; organization?: string; avatarUrl?: string };
   capabilities: readonly string[];
   csrfToken: string;
   expiresAt: number;
