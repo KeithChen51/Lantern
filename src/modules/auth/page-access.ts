@@ -1,6 +1,6 @@
 // Keep the public entry points small: no business JavaScript is public.
 export const REQUEST_PATH_HEADER = "x-lighthouse-request-path";
-const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback", "/admin/login"]);
+const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login"]);
 const PUBLIC_ASSETS = new Set([
   "/nav-lighthouse-transparent.png", "/favicon.ico", "/icon.png", "/apple-icon.png",
   "/fonts/brand/source-han-serif-sc/SourceHanSerifSC-VF.otf.woff2",

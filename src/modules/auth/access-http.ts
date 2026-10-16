@@ -115,6 +115,31 @@ export const callback = async (request: NextRequest): Promise<Response> => {
     catch { return new Response(null, { status: 303, headers: { ...NO_STORE, Location: "/login?error=unavailable" } }); }
   }
 };
+// Navigation entry for OA/middle-platform cards; no bearer credential accepted.
+export const iamStart = route(async request => {
+  const config = readAccessConfig();
+  if (config.mode !== "iam") throw new AccessError("IAM authentication is disabled", 401);
+  const params = new URL(request.url).searchParams;
+  if ([...params.keys()].some(name => name !== "returnTo") || params.getAll("returnTo").length > 1) throw new AccessError("登录参数无效。", 400);
+  const result = await getAccessService().startLogin(params.get("returnTo") ?? "/");
+  const response = redirect(result.redirectUrl);
+  setCookie(response, config.transactionCookie, result.cookie, config.transactionMs / 1000);
+  return response;
+});
+export const iamCallback = async (request: NextRequest): Promise<Response> => {
+  try {
+    const config = readAccessConfig(), params = new URL(request.url).searchParams;
+    if (config.mode !== "iam" || params.has("error") || params.getAll("code").length !== 1 || params.getAll("state").length !== 1) throw new AccessError("登录回调无效。", 400);
+    const result = await getAccessService().iamCallback({ code: params.get("code") || "", state: params.get("state") || "", cookie: readAccessCookie(request.headers, config.transactionCookie) });
+    return sessionResponse(result.sessionToken, result.returnTo, true);
+  } catch {
+    try {
+      const response = redirect("/login?error=callback");
+      setCookie(response, readAccessConfig().transactionCookie, "", 0);
+      return response;
+    } catch { return new Response(null, { status: 303, headers: { ...NO_STORE, Location: "/login?error=unavailable" } }); }
+  }
+};
 export const pending = route(async request => json(await getAccessService().pending(requiredCookie(request, readAccessConfig().pendingCookie))));
 export const confirm = route(async request => {
   assertSameOrigin(request.headers);
@@ -129,8 +154,8 @@ export const me = route(async request => {
 export function logout(all: boolean) { return route(async request => {
   const principal = await mutation(request);
   await getAccessService().logout(principal, all);
-  const response = isForm(request) ? redirect("/login") : empty();
   const config = readAccessConfig();
+  const response = isForm(request) ? redirect(config.mode === "iam" ? "/login?loggedOut=1" : "/login") : empty();
   for (const cookie of [config.sessionCookie, config.transactionCookie, config.pendingCookie]) setCookie(response, cookie, "", 0);
   return response;
 }); }

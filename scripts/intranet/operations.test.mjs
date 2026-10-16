@@ -208,7 +208,7 @@ test('operations packaging completes with no Git on PATH and requires the host-v
     put('release/knowledge-cli/initialize.cjs', 'console.log("preview")');
     put('deploy/system/bin/openssl', 'test fixture');
     put('scripts/intranet/operations.mjs', 'console.log("help")');
-    for (const source of ['scripts/check-access-config.ts', 'src/modules/auth/access-config.ts', 'src/modules/auth/access-types.ts', 'src/shared/errors/index.ts', 'tsconfig.json']) put(source, readFileSync(path.join(repo, source)));
+    for (const source of ['scripts/check-access-config.ts', 'src/modules/auth/access-config.ts', 'src/modules/auth/access-types.ts', 'src/modules/auth/iam-config.ts', 'src/modules/auth/iam-sync-config.ts', 'src/shared/errors/index.ts', 'tsconfig.json']) put(source, readFileSync(path.join(repo, source)));
     put('deploy/offline/manifest.json', JSON.stringify({ prismaEngineCommit: revision }));
     put(`deploy/offline/engines/all_commits/${revision}/debian-openssl-3.0.x/schema-engine.gz`, gzipSync('schema engine fixture'));
     const source = `const {packageOperations}=await import(${JSON.stringify(pathToFileURL(path.join(repo, 'scripts/package-intranet-operations.mjs')).href)});await packageOperations({root:process.argv[1],platform:'linux',arch:'x64'});`;
