@@ -16,6 +16,12 @@ describe("my navigation entry", () => {
     expect(html.match(/aria-current="page"/g)).toHaveLength(2);
     expect(html).toContain("测试员工");
     expect(html).not.toContain('action="/api/auth/logout"');
+    expect(html).not.toContain('href="/updates"');
+    expect(html).not.toContain('href="/feedback"');
+    expect(html).not.toContain("data-lh-sidebar-notification-button");
+    const utilityGroups = [...html.matchAll(/data-lh-sidebar-utility-group[^>]*>([\s\S]*?)<\/div>/g)];
+    expect(utilityGroups).toHaveLength(2);
+    for (const group of utilityGroups) expect(group[1].match(/<a /g)).toHaveLength(1);
   });
 
   it("shows the verified employee name as a mobile header link", () => {

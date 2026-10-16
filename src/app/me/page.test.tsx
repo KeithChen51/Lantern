@@ -18,11 +18,26 @@ describe("my employee page", () => {
     expect(html).toContain("测试员工");
     expect(html).toContain("000123");
     expect(html).toContain("已登录");
+    expect(html).toContain("暂未提供");
+    expect(html).toContain("测试员工的头像");
+    expect(html).toContain('href="/updates"');
+    expect(html).toContain("版本消息");
+    expect(html).toContain('href="/feedback"');
+    expect(html).toContain("建议反馈");
     expect(html).toContain('href="/auth/tools"');
     expect(html).toContain('action="/api/auth/logout"');
     expect(html).toContain('method="post"');
     expect(html).toContain('name="csrfToken" value="csrf-fixture"');
     expect(html).not.toContain("never-render-");
+  });
+
+  it("renders available employee avatar and organization", async () => {
+    employee.mockResolvedValue({ displayName: "测试员工", account: "000123", csrfToken: "csrf-fixture", avatarUrl: "https://images.example.invalid/employee.png", organization: "服务中心 / 售后服务部" });
+    const html = renderToStaticMarkup(await MyPage());
+    expect(html).toContain('src="https://images.example.invalid/employee.png"');
+    expect(html).toContain('referrerPolicy="no-referrer"');
+    expect(html).toContain("服务中心 / 售后服务部");
+    expect(html).not.toContain("暂未提供");
   });
 
   it("does not render profile data without an employee principal", async () => {
