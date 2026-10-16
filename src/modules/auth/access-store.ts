@@ -5,7 +5,7 @@ import { AccessError } from "./access-types";
 export type AccessPayloads = {
   login: { verifierHash: string; returnTo: string; consumed: boolean };
   pending: { tokenCipher: string; account: string; displayName: string; csrfToken: string; returnTo: string; consumed: boolean; upstreamExpiresAt: number };
-  grant: { userId: string; account: string; displayName: string; tokenCipher: string; active: boolean; identityAt: number; rolesAt: number; roles: string[] };
+  grant: { userId: string; account: string; displayName: string; organization?: string; tokenCipher: string; active: boolean; identityAt: number; rolesAt: number; roles: string[] };
   session: { grantId: string; csrfToken: string; active: boolean; lastUsedAt: number };
   device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number };
   userCode: { deviceId: string };

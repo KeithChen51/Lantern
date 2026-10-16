@@ -32,11 +32,82 @@ function fixture(overrides: Partial<AccessConfig> = {}) {
     return request;
   };
   const client = async (principal: Principal) => { const request = await device(principal); const tokens = await service.exchangeDevice(request.device_code, "lighthouse-cli"); const clientPrincipal = await service.clientPrincipal(tokens.access_token); return { request, tokens, principal: clientPrincipal }; };
-  return { store, service, identity, roles, advance, login, device, client, now: () => time };
+  return { store, service, portal, identity, roles, advance, login, device, client, now: () => time };
 }
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((done) => { resolve = done; }); return { promise, resolve }; }
 
 describe("employee login and identity shadows", () => {
+  it("keeps fresh concurrent page checks read-only, coalesces activity, and still observes logout", async () => {
+    const f = fixture(), login = await f.login();
+    const before = f.store.snapshot().filter(row => row.kind === "grant" || row.kind === "session");
+    f.advance(1000);
+    await Promise.all(Array.from({ length: 16 }, () => f.service.webPrincipal(login.sessionToken)));
+    expect(f.store.snapshot().filter(row => row.kind === "grant" || row.kind === "session")).toEqual(before);
+    f.advance(60000);
+    await Promise.all(Array.from({ length: 16 }, () => f.service.webPrincipal(login.sessionToken)));
+    const session = f.store.snapshot().find(row => row.kind === "session");
+    expect(session?.updatedAt).toBe(f.now());
+    expect(f.store.snapshot().find(row => row.kind === "grant")).toEqual(before.find(row => row.kind === "grant"));
+    await f.service.logout(login.principal);
+    await expect(f.service.webPrincipal(login.sessionToken)).rejects.toMatchObject({ status: 401 });
+  });
+  it("reuses a concurrent refresh winner instead of rewriting the same authorization generation", async () => {
+    const f = fixture(), login = await f.login();
+    const started = deferred<void>(), slow = deferred<PortalIdentity>();
+    f.advance(300001);
+    f.identity.mockImplementationOnce(() => { started.resolve(); return slow.promise; });
+    const first = f.service.webPrincipal(login.sessionToken);
+    await started.promise;
+    f.advance(1);
+    f.identity.mockResolvedValue({ account: "000042", displayName: "Fresh employee" });
+    await f.service.webPrincipal(login.sessionToken);
+    const winner = f.store.snapshot().find(row => row.kind === "grant");
+    f.advance(1);
+    slow.resolve({ account: "000042", displayName: "Slow employee" });
+    expect((await first).displayName).toBe("Fresh employee");
+    expect(f.store.snapshot().find(row => row.kind === "grant")).toEqual(winner);
+  });
+  it("carries organization into the web session without granting roles and clears it when upstream removes it", async () => {
+    const f = fixture();
+    const authorization = vi.fn().mockResolvedValue({ roles: [], organization: "/测试事业部/测试部门" });
+    f.portal.authorization = authorization;
+    const login = await f.login();
+    expect(login.principal.organization).toBe("/测试事业部/测试部门");
+    expect(login.principal.capabilities).toEqual(EMPLOYEE_CAPABILITIES);
+    expect(f.roles).not.toHaveBeenCalled();
+    authorization.mockResolvedValue({ roles: [] });
+    f.advance(300001);
+    expect((await f.service.webPrincipal(login.sessionToken)).organization).toBeUndefined();
+  });
+  it("starts card login at the portal without inventing callback parameters or a transaction", async () => {
+    const f = fixture({ portalLoginMode: "card" });
+    expect(await f.service.startLogin("/heart")).toEqual({ state: "", cookie: "", redirectUrl: config.portalLoginUrl });
+    expect(f.store.snapshot()).toHaveLength(0);
+  });
+  it("requires explicit card confirmation and never accepts a supplied bad state", async () => {
+    const f = fixture({ portalLoginMode: "card", allowLegacyConfirmation: false });
+    await expect(f.service.callback({ token: "synthetic", state: "bad" })).rejects.toMatchObject({ status: 401 });
+    expect(f.identity).not.toHaveBeenCalled();
+    const result = await f.service.callback({ token: "synthetic-card" });
+    if (result.kind !== "pending") throw new Error("Expected pending");
+    expect(f.store.snapshot().some(row => row.kind === "session")).toBe(false);
+    const pending = await f.service.pending(result.pendingToken);
+    await expect(f.service.confirmPending(result.pendingToken, "wrong")).rejects.toMatchObject({ status: 401 });
+    const session = await f.service.confirmPending(result.pendingToken, pending.csrfToken);
+    expect((await f.service.webPrincipal(session.sessionToken)).account).toBe("000042");
+    await expect(f.service.confirmPending(result.pendingToken, pending.csrfToken)).rejects.toMatchObject({ status: 401 });
+  });
+  it("maps only the explicitly configured platform admin role to existing knowledge management", async () => {
+    const f = fixture({ platformAdminRole: "lighthouse_admin" });
+    f.roles.mockResolvedValue(["lighthouse_admin"]);
+    const login = await f.login();
+    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage"]);
+    f.roles.mockResolvedValue(["lighthouse_admin_other", "LIGHTHOUSE_ADMIN"]);
+    f.advance(300001);
+    expect((await f.service.webPrincipal(login.sessionToken)).capabilities).toEqual(EMPLOYEE_CAPABILITIES);
+    const unmapped = fixture(); unmapped.roles.mockResolvedValue(["lighthouse_admin"]);
+    expect((await unmapped.login()).principal.capabilities).toEqual(EMPLOYEE_CAPABILITIES);
+  });
   it("grants ordinary employee capabilities with empty roles and preserves account leading zeros", async () => {
     const f = fixture(), login = await f.login();
     expect(login.principal.account).toBe("000042");

@@ -37,15 +37,19 @@ export class AccessService {
     try { return this.identity(await this.portal.identity(token)); }
     catch (error) { if (permanent(error)) throw new AccessError("Employee authorization is invalid", 401); throw new AccessError("Employee verification is unavailable", 503); }
   }
-  private async roles(account: string): Promise<{ roles: string[]; at: number } | null> {
+  private async roles(account: string): Promise<{ roles: string[]; at: number; organization?: string } | null> {
     try {
-      const roles = await this.portal.roles(account);
+      const authorization = this.portal.authorization ? await this.portal.authorization(account) : { roles: await this.portal.roles(account) };
+      const { roles, organization } = authorization;
       if (!Array.isArray(roles) || roles.length > 1000 || roles.some((role) => typeof role !== "string" || role.length > 200)) throw new AccessError("Invalid application roles", 503);
-      return { roles: [...roles], at: this.now() };
+      return { roles: [...roles], at: this.now(), ...(typeof organization === "string" && organization.length <= 1000 ? { organization } : {}) };
     } catch (error) { if (permanent(error)) throw new AccessError("Employee role authorization is invalid", 401); return null; }
   }
   private grantExpiry(identity: PortalIdentity) { return Math.min(this.now() + this.duration(this.config.sessionAbsoluteMs, 8 * HOUR), identity.expiresAt ?? Infinity); }
   async startLogin(returnTo?: string): Promise<{ state: string; cookie: string; redirectUrl: string }> {
+    // Card entry has no child-app callback/state contract. The user returns via
+    // the registered portal card and confirms the verified identity locally.
+    if (this.config.portalLoginMode === "card") return { state: "", cookie: "", redirectUrl: this.config.portalLoginUrl };
     const state = randomToken(), cookie = randomToken();
     const url = new URL(this.config.portalLoginUrl);
     url.searchParams.set(this.config.callbackParam, new URL("/auth/portal/callback", this.config.origin).toString());
@@ -79,7 +83,7 @@ export class AccessService {
         return { kind: "session" as const, sessionToken, returnTo: transaction.payload.returnTo };
       });
     }
-    if (!this.config.allowLegacyConfirmation) throw new AccessError("Login transaction is required", 401);
+    if (this.config.portalLoginMode !== "card" && !this.config.allowLegacyConfirmation) throw new AccessError("Login transaction is required", 401);
     take(await this.store.transaction(async (tx) => await this.rate(tx, "login-pending", "global", 100, 60000) ? undefined : new AccessError("Login requests are temporarily limited", 429)));
     const identity = await this.verified(input.token), pendingToken = randomToken(), csrfToken = randomToken();
     const cipher = sealToken(input.token, this.config.encryptionKey);
@@ -110,12 +114,12 @@ export class AccessService {
       return { sessionToken, returnTo: row.payload.returnTo };
     });
   }
-  private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: { roles: string[]; at: number } | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
+  private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: { roles: string[]; at: number; organization?: string } | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
     const grants = await tx.find("grant", { subjectId: identity.account, expiresAfter: this.now(), activeOnly: true });
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
     const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
-    const grant = this.record("grant", grantId, identity.account, null, { userId: user.id, account: identity.account, displayName: identity.displayName, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
+    const grant = this.record("grant", grantId, identity.account, null, { userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
     await tx.put(grant);
     await tx.put(this.record("session", key("session", token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
     await this.audit(tx, "login", identity.account, grantId);
@@ -140,16 +144,20 @@ export class AccessService {
       try { identity = await this.verified(openToken(grant.payload.tokenCipher, this.config.encryptionKey)); identityAt = this.now(); if (identity.account !== grant.payload.account) throw new AccessError("Employee identity changed", 401); }
       catch (error) { if (permanent(error)) await this.invalidateGrant(grant.id, "identity-invalid"); throw error; }
     }
-    let roles: { roles: string[]; at: number } | null = null;
+    let roles: { roles: string[]; at: number; organization?: string } | null = null;
     if (now - grant.payload.rolesAt >= roleFresh) {
       try { roles = await this.roles(grant.payload.account); }
       catch (error) { await this.invalidateGrant(grant.id, "roles-invalid"); throw error; }
     }
+    if (!identity && !roles) return;
     await this.store.transaction(async (tx) => {
       const current = await this.activeGrant(tx, grant.id);
-      if (identity && identityAt !== undefined && identityAt >= current.payload.identityAt) { current.payload.identityAt = identityAt; current.payload.displayName = identity.displayName; current.expiresAt = Math.min(current.expiresAt, identity.expiresAt ?? Infinity); }
-      if (roles && roles.at >= current.payload.rolesAt) { current.payload.roles = roles.roles; current.payload.rolesAt = roles.at; }
-      await this.save(tx, current);
+      let changed = false;
+      // Commit one refresh for the observed generation. Concurrent callers
+      // reuse the winner, then recheck freshness and revocation below.
+      if (identity && identityAt !== undefined && current.payload.identityAt === grant.payload.identityAt && identityAt > current.payload.identityAt) { current.payload.identityAt = identityAt; current.payload.displayName = identity.displayName; current.expiresAt = Math.min(current.expiresAt, identity.expiresAt ?? Infinity); changed = true; }
+      if (roles && current.payload.rolesAt === grant.payload.rolesAt && roles.at > current.payload.rolesAt) { current.payload.roles = roles.roles; current.payload.rolesAt = roles.at; current.payload.organization = roles.organization; changed = true; }
+      if (changed) await this.save(tx, current);
     });
   }
   private async invalidateGrant(id: string, action: string) {
@@ -164,13 +172,21 @@ export class AccessService {
       const current = await this.activeGrant(tx, session.payload.grantId);
       if (this.now() - current.payload.identityAt >= this.duration(options?.adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, options?.adminWrite ? 60000 : 300000)) throw new AccessError("Employee verification is unavailable", 503);
       const roleFresh = this.duration(options?.adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, options?.adminWrite ? 60000 : 300000);
-      const admin = this.now() - current.payload.rolesAt < roleFresh && current.payload.roles.includes(this.config.adminRole);
-      session.payload.lastUsedAt = this.now(); await this.save(tx, session);
+      const adminRoles = [this.config.adminRole, this.config.platformAdminRole].filter((role): role is string => Boolean(role));
+      const admin = this.now() - current.payload.rolesAt < roleFresh && adminRoles.some(role => current.payload.roles.includes(role));
+      // A page loads many authenticated chunks concurrently. Keep fresh checks
+      // read-only; a retry after a competing touch sees the committed timestamp.
+      // Rounding activity down can expire idle sessions up to one minute early,
+      // but never extends their idle or absolute authorization window.
+      const touchInterval = Math.min(60000, this.duration(this.config.sessionIdleMs, HOUR) / 2);
+      if (this.now() - session.payload.lastUsedAt >= touchInterval) {
+        session.payload.lastUsedAt = this.now(); await this.save(tx, session);
+      }
       return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, admin);
     });
   }
   private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, admin = false): Principal {
-    return { userId: grant.payload.userId, account: grant.payload.account, displayName: grant.payload.displayName, grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...(admin ? ["knowledge:manage" as const] : [])] : [SCOPE], csrfToken, expiresAt };
+    return { userId: grant.payload.userId, account: grant.payload.account, displayName: grant.payload.displayName, ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...(admin ? ["knowledge:manage" as const] : [])] : [SCOPE], csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);

@@ -35,6 +35,17 @@ describe("portal integration contract", () => {
     });
   });
   it.each([
+    [{ name: "测试部门", path: "/测试事业部/测试部门" }, "/测试事业部/测试部门"],
+    [{ name: "测试部门" }, "测试部门"],
+    [null, undefined],
+    [{ name: "\ninvalid", path: { unsafe: true } }, undefined],
+  ])("reads optional organization only from the account-bound authorization response", async (org, organization) => {
+    const fetcher = vi.fn<typeof fetch>(async () => reply({ code: "000000", data: { account: "0007", appCode: "lighthouse", roles: [], org } }));
+    const result = await new HttpPortalAdapter(config, fetcher).authorization("0007");
+    expect(result.roles).toEqual([]); expect(result.organization).toBe(organization);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it.each([
     { code: "000000", data: { account: "0008", appCode: "lighthouse", roles: [] } },
     { code: "000000", data: { account: "0007", appCode: "other-app", roles: [] } },
     { code: "failed", data: { account: "0007", appCode: "lighthouse", roles: [] } },

@@ -3,11 +3,27 @@ import { NextRequest } from "next/server";
 import { proxy } from "./proxy";
 import { REQUEST_PATH_HEADER } from "./modules/auth/page-access";
 
-const { employee } = vi.hoisted(() => ({ employee: vi.fn() }));
+const { employee, portalCallback } = vi.hoisted(() => ({ employee: vi.fn(), portalCallback: vi.fn() }));
+vi.mock("@/modules/auth/access-http", () => ({ callback: portalCallback }));
 vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee }));
 vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: () => ({ origin: "https://lighthouse.invalid" }) }));
-beforeEach(() => { employee.mockReset(); });
+beforeEach(() => { employee.mockReset(); portalCallback.mockReset(); });
 describe("employee request gate", () => {
+  it("consumes root card tokens before authentication and never redirects with a bearer returnTo", async () => {
+    portalCallback.mockResolvedValue(new Response(null, { status: 303, headers: { Location: "/auth/confirm", "Referrer-Policy": "no-referrer" } }));
+    const request = new NextRequest("https://lighthouse.invalid/?token=synthetic");
+    const response = await proxy(request);
+    expect(portalCallback).toHaveBeenCalledWith(request);
+    expect(employee).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toBe("/auth/confirm");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+  });
+  it("removes stray portal tokens from anonymous deep-link returnTo", async () => {
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/heart?token=synthetic&view=values"));
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2Fheart%3Fview%3Dvalues");
+  });
   it("redirects anonymous deep links with a safe internal return and no caching", async () => {
     employee.mockRejectedValue({ status: 401 });
     const response = await proxy(new NextRequest("https://lighthouse.invalid/auth/device?user_code=ABCD-EFGH"));
@@ -42,6 +58,10 @@ describe("employee request gate", () => {
       const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`)); expect(response.status).toBe(200);
     }
     expect(employee).not.toHaveBeenCalled();
+  });
+  it("preserves native HTTP form Origin on clean auth pages but never shares credential referrers", async () => {
+    for (const path of ["/login", "/auth/confirm", "/login?token=synthetic", "/auth/confirm?token=synthetic"]) expect((await proxy(new NextRequest(`https://lighthouse.invalid${path}`))).headers.get("referrer-policy")).toBe("strict-origin");
+    expect((await proxy(new NextRequest("https://lighthouse.invalid/auth/portal/callback"))).headers.get("referrer-policy")).toBe("no-referrer");
   });
   it("returns safe service outage response before protected work", async () => {
     employee.mockRejectedValue(new Error("private adapter detail"));
