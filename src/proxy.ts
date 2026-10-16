@@ -22,6 +22,11 @@ export async function proxy(request: NextRequest) {
   const tokenParam = process.env.PORTAL_TOKEN_PARAM || "token";
   if (path === "/" && request.nextUrl.searchParams.has(tokenParam)) {
     if (request.method !== "GET") return noStore(new NextResponse(null, { status: 405 }));
+    if (process.env.AUTH_MODE === "iam") {
+      // Portal tokens are not IAM authorization codes and cannot establish an
+      // IAM session. Remove the credential before displaying any page.
+      return noStore(NextResponse.redirect(new URL("/login?error=callback", request.url), 303));
+    }
     return noStore(await callback(request));
   }
   const forwarded = new Headers(request.headers);
@@ -37,7 +42,7 @@ export async function proxy(request: NextRequest) {
       // HTTP native forms need a non-opaque Origin for same-origin/CSRF
       // checks. Credential URLs are consumed and redirected before rendering;
       // these pages send only the origin, never a path or query credential.
-      response.headers.set("Referrer-Policy", path === "/auth/portal/callback" ? "no-referrer" : "strict-origin");
+      response.headers.set("Referrer-Policy", path?.endsWith("/callback") ? "no-referrer" : "strict-origin");
     }
     return response;
   }

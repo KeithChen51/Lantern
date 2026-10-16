@@ -3,9 +3,12 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import { AccessError } from "./access-types";
 
 export type AccessPayloads = {
-  login: { verifierHash: string; returnTo: string; consumed: boolean };
+  login: { verifierHash: string; returnTo: string; consumed: boolean; authority?: "portal" | "iam" };
   pending: { tokenCipher: string; account: string; displayName: string; csrfToken: string; returnTo: string; consumed: boolean; upstreamExpiresAt: number };
-  grant: { userId: string; account: string; displayName: string; organization?: string; tokenCipher: string; active: boolean; identityAt: number; rolesAt: number; roles: string[] };
+  grant: { userId: string; account: string; displayName: string; organization?: string; tokenCipher: string; active: boolean; identityAt: number; rolesAt: number; roles: string[]; authority?: "portal" | "iam" };
+  iamAccount: { account: string; displayName: string; organization?: string; active: boolean; deleted: boolean };
+  iamPermission: { account: string; role: string; postCode: string; active: boolean; validUntil: number };
+  iamDelivery: { endpoint: "account" | "permission" };
   session: { grantId: string; csrfToken: string; active: boolean; lastUsedAt: number };
   device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number };
   userCode: { deviceId: string };
@@ -32,6 +35,9 @@ export interface AccessTransaction {
 export interface AccessStore {
   transaction<T>(callback: (tx: AccessTransaction) => Promise<T>): Promise<T>;
 }
+// Stable historical provider+account identity mapping. IAM reuses the same
+// trusted account shadow to preserve user IDs/content ownership; this name does
+// not select a runtime identity provider or authorize a portal session in IAM.
 const PROVIDER = "lighthouse-portal";
 const ENUMERATION_LIMIT = 1000;
 function eligible(user: EmployeeShadow) {

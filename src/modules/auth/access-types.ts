@@ -1,4 +1,5 @@
 import { AppError } from "@/shared/errors";
+import type { IamLoginConfig } from "./iam-config";
 
 export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage";
 export type Principal = {
@@ -19,11 +20,14 @@ export class OAuthError extends Error {
 export type PortalIdentity = { account: string; displayName: string; expiresAt?: number };
 export type PortalAuthorization = { roles: readonly string[]; organization?: string };
 export interface PortalAdapter {
+  exchange?(code: string): Promise<{ token: string; expiresAt: number }>;
+  authorizationUrl?(redirectUri: string, state: string): string;
   identity(token: string): Promise<PortalIdentity>;
   roles(account: string): Promise<readonly string[]>;
   authorization?(account: string): Promise<PortalAuthorization>;
 }
 export type AccessConfig = {
+  mode?: "portal" | "iam"; iam?: IamLoginConfig;
   origin: string; portalBaseUrl: string; portalLoginUrl: string;
   appCode: string; appSecret: string; adminRole: string; encryptionKey: string;
   portalLoginMode?: "card" | "callback"; platformAdminRole?: string;

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { AccessError, OAuthError } from "./access-types";
-const service = vi.hoisted(() => ({ authorizeDevice: vi.fn(), exchangeDevice: vi.fn(), refresh: vi.fn(), startLogin: vi.fn(), callback: vi.fn(), confirmPending: vi.fn(), revokeClient: vi.fn(), logout: vi.fn() }));
+import { generateKeyPairSync } from "node:crypto";
+const service = vi.hoisted(() => ({ authorizeDevice: vi.fn(), exchangeDevice: vi.fn(), refresh: vi.fn(), startLogin: vi.fn(), callback: vi.fn(), iamCallback: vi.fn(), confirmPending: vi.fn(), revokeClient: vi.fn(), logout: vi.fn() }));
 vi.mock("./access", () => ({
   getAccessService: () => service,
   requireEmployee: vi.fn(async () => ({ userId: "fixture", credentialId: "web", channel: "web", csrfToken: "fixture-csrf" })),
@@ -11,7 +12,7 @@ vi.mock("./access", () => ({
   assertWebMutation: (request: Request) => { if (request.headers.get("x-csrf-token") !== "fixture-csrf") throw new AccessError("csrf", 403); },
   authErrorResponse: (error: { status?: number }) => Response.json({ error: "access" }, { status: error.status ?? 503, headers: { "cache-control": "no-store" } }),
 }));
-import { body, callback, confirm, deviceAuthorize, logout, start, token } from "./access-http";
+import { body, callback, confirm, deviceAuthorize, iamCallback, iamStart, logout, start, token } from "./access-http";
 const env = {
   AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "https://app.example.invalid", PORTAL_API_BASE_URL: "https://portal.example.invalid", PORTAL_LOGIN_URL: "https://portal.example.invalid/login",
   PORTAL_APP_CODE: "lighthouse", PORTAL_APP_SECRET: "synthetic", PORTAL_KNOWLEDGE_ADMIN_ROLE: "knowledge_admin", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 3).toString("base64"), PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true",
@@ -78,5 +79,40 @@ describe("device HTTP protocol and native forms stay distinct", () => {
     const response = await logout(true)(form("/api/auth/logout-all", { csrfToken: "fixture-csrf" }));
     expect(response.status).toBe(303); expect(service.logout).toHaveBeenCalledWith(expect.objectContaining({ userId: "fixture" }), true);
     expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+  });
+});
+
+describe("IAM callback HTTP boundary", () => {
+  const key = generateKeyPairSync("rsa", { modulusLength: 2048 }).publicKey.export({ format: "der", type: "spki" }).toString("base64");
+  beforeEach(() => {
+    for (const [name, value] of Object.entries({ AUTH_MODE: "iam", IAM_BASE_URL: "https://iam.example.invalid", IAM_CLIENT_ID: "fixture", IAM_CLIENT_SECRET: "synthetic", IAM_SYNC_APP_KEY: "fixture", IAM_SYNC_PUBLIC_KEY: key, IAM_SYNC_AES_KEY: Buffer.alloc(32, 2).toString("base64"), IAM_SYNC_AES_IV: Buffer.alloc(16, 3).toString("base64") })) vi.stubEnv(name, value);
+  });
+  it("creates a bound login from the navigation card entry and rejects bearer injection", async () => {
+    service.startLogin.mockResolvedValue({ cookie: "transaction", redirectUrl: "https://iam.example.invalid/idp/authCenter/authenticate?state=fixture" });
+    const response = await iamStart(new NextRequest("https://app.example.invalid/auth/iam/start?returnTo=%2Fheart"));
+    expect(response.status).toBe(303); expect(service.startLogin).toHaveBeenCalledWith("/heart");
+    expect(response.headers.get("set-cookie")).toContain("__Host-lighthouse_iam_login=transaction");
+    const rejected = await iamStart(new NextRequest("https://app.example.invalid/auth/iam/start?token=injected"));
+    expect(rejected.status).toBe(400);
+  });
+  it("consumes code/state only at IAM callback and issues an opaque cookie", async () => {
+    service.iamCallback.mockResolvedValue({ sessionToken: "opaque-session", returnTo: "/heart" });
+    const response = await iamCallback(new NextRequest("https://app.example.invalid/auth/iam/callback?code=synthetic-code&state=state&lang=zh_CN", { headers: { cookie: "__Host-lighthouse_iam_login=browser" } }));
+    expect(service.iamCallback).toHaveBeenCalledWith({ code: "synthetic-code", state: "state", cookie: "browser" });
+    expect(response.status).toBe(303); expect(response.headers.get("location")).toBe("https://app.example.invalid/heart");
+    expect(response.headers.get("set-cookie")).toContain("__Host-lighthouse_iam_session=opaque-session");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(await response.text()).not.toContain("synthetic-code");
+  });
+  it.each(["code=one&code=two&state=a", "code=a", "code=a&state=a&state=b", "error=denied&code=a&state=b"])("rejects ambiguous callback %s", async query => {
+    const response = await iamCallback(new NextRequest(`https://app.example.invalid/auth/iam/callback?${query}`));
+    expect(service.iamCallback).not.toHaveBeenCalled(); expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("https://app.example.invalid/login?error=callback");
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+  });
+  it("ends only the Lighthouse session and shows its own login page", async () => {
+    const response = await logout(false)(form("/api/auth/logout", { csrfToken: "fixture-csrf" }));
+    expect(response.headers.get("location")).toBe("https://app.example.invalid/login?loggedOut=1");
+    expect(response.headers.get("set-cookie")).toContain("__Host-lighthouse_iam_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
   });
 });

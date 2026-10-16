@@ -6,11 +6,21 @@ import { AccessService } from "./access-service";
 import { PrismaAccessStore } from "./access-store";
 import { AccessError, type Principal } from "./access-types";
 import { HttpPortalAdapter } from "./portal";
+import { IamIdentityClient } from "./iam";
 
 export type { Capability, Principal } from "./access-types";
 export { AccessError } from "./access-types";
 export function getAccessService(): AccessService {
   const config = readAccessConfig();
+  if (config.mode === "iam" && config.iam) {
+    const iam = new IamIdentityClient(config.iam);
+    return new AccessService(config, {
+      identity: token => iam.identity(token), exchange: code => iam.exchange(code),
+      authorizationUrl: (uri, state) => iam.authorizationUrl(uri, state),
+      // IAM authorization is read transactionally from the synchronized directory.
+      roles: async () => { throw new AccessError("IAM directory authorization is required", 503); },
+    }, new PrismaAccessStore(prisma));
+  }
   return new AccessService(config, new HttpPortalAdapter(config), new PrismaAccessStore(prisma));
 }
 export async function getPendingLogin(headers: Headers) {

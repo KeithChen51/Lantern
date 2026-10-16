@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { proxy } from "./proxy";
 import { REQUEST_PATH_HEADER } from "./modules/auth/page-access";
@@ -8,7 +8,14 @@ vi.mock("@/modules/auth/access-http", () => ({ callback: portalCallback }));
 vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee }));
 vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: () => ({ origin: "https://lighthouse.invalid" }) }));
 beforeEach(() => { employee.mockReset(); portalCallback.mockReset(); });
+afterEach(() => vi.unstubAllEnvs());
 describe("employee request gate", () => {
+  it("does not accept middle-platform card tokens as IAM credentials", async () => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/?token=synthetic"));
+    expect(response.status).toBe(303); expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?error=callback");
+    expect(portalCallback).not.toHaveBeenCalled(); expect(employee).not.toHaveBeenCalled();
+  });
   it("consumes root card tokens before authentication and never redirects with a bearer returnTo", async () => {
     portalCallback.mockResolvedValue(new Response(null, { status: 303, headers: { Location: "/auth/confirm", "Referrer-Policy": "no-referrer" } }));
     const request = new NextRequest("https://lighthouse.invalid/?token=synthetic");
