@@ -32,7 +32,15 @@ if (args[0] === "image") {
   else if (format === "{{.Image}}") out(imageId(id.includes("mysql") ? "c" : state.upgraded ? "a" : "d"));
 } else if (args[0] === "compose") {
   if (args.includes("config")) {
-    if (args.includes("json")) out(JSON.stringify({ services: { app: { environment: { AUTH_ENCRYPTION_KEY: "stable-secret" } }, lighthouse: { image: config.appImage, environment: { LIGHTHOUSE_DEPLOYMENT_ENV: "test", NODE_ENV: "production", AUTH_ALLOW_LOCAL_HTTP: "false", DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", AUTH_ENCRYPTION_KEY: "stable-secret" } } } }));
+    if (args.includes("json")) out(JSON.stringify({ services: { app: { environment: { AUTH_ENCRYPTION_KEY: "stable-secret" } }, lighthouse: { image: config.appImage, environment: {
+      LIGHTHOUSE_DEPLOYMENT_ENV: "test", NODE_ENV: "production", AUTH_ALLOW_LOCAL_HTTP: "false",
+      AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081",
+      PORTAL_API_BASE_URL: "https://portal.example.invalid/api", PORTAL_LOGIN_URL: "https://portal.example.invalid/login", PORTAL_LOGIN_MODE: "card",
+      PORTAL_APP_CODE: "fixture", PORTAL_APP_SECRET: "synthetic-portal-secret", PORTAL_KNOWLEDGE_ADMIN_ROLE: "knowledge_admin", PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true",
+      KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql",
+      DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+      ...config.authOverrides,
+    } } } }));
   } else if (args.includes("ps")) {
     if (args.at(-1) === "app" || args.at(-1) === "lighthouse") out(state.upgraded ? "app-new" : "app-existing");
     else if (args.at(-1) === "mysql") out("mysql-existing");
@@ -48,7 +56,12 @@ if (args[0] === "image") {
   } else if (args.includes("exec") && args.some(x => x.includes("printf %s"))) out("lighthouse_test");
 } else if (args[0] === "start") { state.stopped = false; save(); }
 else if (args[0] === "run") {
-  if (args.includes("/compare-mysql-dumps.mjs")) {
+  if (args.includes("/app/check-access-config.cjs")) {
+    let input = "";
+    for await (const chunk of process.stdin) input += chunk;
+    const result = spawnSync(process.execPath, [config.authChecker, args.at(-1)], { input, encoding: "utf8" });
+    out(result.stdout ?? ""); process.stderr.write(result.stderr ?? ""); process.exit(result.status ?? 1);
+  } else if (args.includes("/compare-mysql-dumps.mjs")) {
     const source = target => {
       const mount = args.find(value => value.startsWith("type=bind,") && value.includes(`target=${target},`));
       const value = mount.match(/source=(.*?),target=/)[1];

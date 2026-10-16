@@ -1,6 +1,6 @@
 # 独立生产与测试环境的执行流程
 
-关联 [Issue #50](https://github.com/KeithChen51/Lantern/issues/50)；认证契约来自账号 PR #49 的 [员工访问部署](https://github.com/KeithChen51/Lantern/blob/fdbe98f66c78a3d3af16c39376e7f4b823cc67a2/docs/deployment/lighthouse-access.md)。两项改动完成集成后才能正式交付。本文是可执行的部署约定，实际内网数据库、门户回调、网关与恢复验收仍需回传证据。示例地址、目录和镜像均为占位或合成值。
+关联 [Issue #50](https://github.com/KeithChen51/Lantern/issues/50) 与 [Issue #48 门户卡片适配](https://github.com/KeithChen51/Lantern/issues/48#issuecomment-6206030752)；当前认证契约见[员工访问部署](lighthouse-access.md)。本文是可执行的部署约定，实际内网数据库、门户卡片、网关与恢复验收仍需回传证据。示例地址、目录和镜像均为占位或合成值。
 
 ## 交付、测试与生产的顺序
 
@@ -38,7 +38,7 @@ CI 形成镜像，不自动部署、初始化、备份或恢复。每个实际�
 | 对外入口 | 正式 HTTPS 域名，经既有 TLS 网关 | 现有 HTTP 内网 IPv4 与端口 |
 | 持久化 | 独立 MySQL 和 app bind 目录 | 现有卷继续保留；新隔离栈才使用独立 bind 目录 |
 | 数据库 | 独立库、用户、应用密码、root 密码 | 与生产不同的库、用户和密码 |
-| 门户 | 独立应用编码/密钥与加密密钥 | 独立测试配置 |
+| 门户 | 可共用已确认的应用编码/角色；独立本地会话与加密密钥 | 可共用门户配置；数据库/会话/加密密钥与生产隔离 |
 | 网络 | 独立 database/runtime 网络，按需接网关 | 独立网络；MySQL 不发布宿主端口 |
 
 `production.env.example` / `test.env.example` 是**控制文件**，包含数据库 root 密码等运维信息。`app.env.example` / `test-app.env.example` 是仅供应用的运行文件，不能包含 root 密码。compose 只给 MySQL 注入 root 密码，operations 只收到应用数据库连接。所有真实文件在内网创建，不提交、不随源码打包、不在日志输出。使用独立私密配置目录（0700）和文件（0600）。应用需要访问内网模型，因此 runtime 网络允许出站，database 网络仅供数据库通信。
@@ -62,9 +62,13 @@ AUTH_TEST_HTTP_ORIGIN=http://10.20.30.40:18081
 AUTH_ALLOW_LOCAL_HTTP=false
 ```
 
-两个 origin 必须逐字一致、无尾斜线/路径；只允许规范 RFC1918 IPv4。这里的 IP/端口是合成示例，填写当前测试入口。门户 API/登录仍须 HTTPS，回调地址按该测试 origin 的 `/auth/portal/callback` 登记。门户是否接受真实 HTTP 回调、state 回传与内网浏览器行为必须实际验证。HTTP 例外仅用于网页登录与业务联调，员工 CLI/MCP 继续只允许 HTTPS。
+两个 origin 必须逐字一致、无尾斜线/路径；只允许规范 RFC1918 IPv4。这里的 IP/端口是合成示例，填写当前测试入口。门户浏览器登录地址仍为 HTTPS，生产灯塔入口仍为 HTTPS。测试 HTTP 例外仅用于网页登录与业务联调，员工 CLI/MCP 继续只允许 HTTPS。
 
-生产与测试使用不同门户应用及 32 字节 base64 的 `AUTH_ENCRYPTION_KEY`。普通升级禁止悄悄换钥；脚本比较旧容器与新配置里的密钥，不一致就拒绝。备份额外保存旧容器实际环境，避免运维修改文件后丢掉旧钥。`PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true` 只能在平台明确有效员工语义后配置。不要通过旧共享密码、`ADMIN_COOKIE_SECURE` 或 development 构建绕过新登录方案。
+模板显式使用 `PORTAL_LOGIN_MODE=card`：当前只证实门户应用卡片携 token 进入灯塔，未证实 `redirectUrl` / `state` 契约。登录引导仅跳固定 HTTPS `PORTAL_LOGIN_URL`；卡片可登记灯塔根路径 `/?token=…` 或 `/auth/portal/callback?token=…`。服务端验证身份后先建立待确认 Cookie、清除地址 token；员工核对身份并提交同源/CSRF POST 后才建立会话。不要自动点击确认或通过日志回传 token。若门户另行确认事务回调协议，才改用 `callback`；代码缺省保留旧 `callback` 兼容行为，所以现有栈必须显式补上 `card`。
+
+已确认的服务端门户 API 可以使用精确内网 HTTP 例外。例如 `PORTAL_API_BASE_URL=http://10.20.30.40:20002/api` 必须同时配置 `PORTAL_API_HTTP_ORIGIN=http://10.20.30.40:20002`；后者只接受逐字标准 RFC1918 IPv4 HTTP origin，不能有尾斜线、路径、凭证、query 或 fragment，且必须等于 API 基础地址的 origin。该例外在生产/测试均可显式配置，不允许任意 HTTP、API 重定向或全局 TLS 降级，也不放宽门户浏览器登录地址。
+
+门户确认的 appKey（`PORTAL_APP_CODE`）、配套 `PORTAL_APP_SECRET` 和精确角色可由生产测试共用，门户仍须分别确认两个环境的卡片落点；灯塔本地数据库、上传存储、会话 Cookie 及 32 字节 base64 `AUTH_ENCRYPTION_KEY` 必须隔离。`PORTAL_KNOWLEDGE_ADMIN_ROLE` 保留；可选 `PORTAL_PLATFORM_ADMIN_ROLE` 只把精确上游角色映射到现有知识管理能力，不推断角色名称、不新增管理权限。普通升级禁止悄悄换加密密钥；脚本比较旧容器与新配置里的密钥，不一致就拒绝。备份额外保存旧容器实际环境，避免运维修改文件后丢掉旧钥。`PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true` 只能在平台明确有效员工语义后配置。不要通过旧共享密码、`ADMIN_COOKIE_SECURE` 或 development 构建绕过新登录方案。
 
 ## 新生产：准备、预览、首次初始化
 
@@ -94,7 +98,7 @@ production 模板只发布 loopback HTTP 端口；网关 override 挂接已有�
 
 使用 [existing-test.sh](../../scripts/intranet/environment/existing-test.sh)，不能对旧测试运行新环境的 `prepare` 或 `initialize`。它要求 Bash、Docker Compose 与 GNU coreutils（readlink、tar、gzip、sha256sum、find、sort、xargs）；无需宿主 Node/jq。compose 中应用服务继续使用 `${LH_IMAGE}` 作为镜像变量。
 
-1. 在原私密配置里补齐 accepted HTTP 门户字段，保留现有 `DATABASE_URL`、MySQL 库/账号/密码、project、端口和所有挂载。建议将应用运行变量移到单独私密 env_file，避免旧 app env_file 向应用注入控制文件的 root 密码；这只是配置隔离，不搬迁卷。旧加密密钥已经存在时必须保持原值。
+1. 在原私密配置里补齐完整门户字段，显式 `PORTAL_LOGIN_MODE=card`；若 API 为 HTTP，补齐精确 `PORTAL_API_HTTP_ORIGIN`。保留现有 `DATABASE_URL`、MySQL 库/账号/密码、project、端口和所有挂载。建议将应用运行变量移到单独私密 env_file，避免旧 app env_file 向应用注入控制文件的 root 密码；这只是配置隔离，不搬迁卷。旧加密密钥已经存在时必须保持原值。
 2. 记录实际 app/MySQL service 名和现有 network，拉取 dev 构建的固定 app/tools digest。确认 MySQL 不做本次升级。运行：
 
 ```bash
@@ -112,7 +116,9 @@ bash "$SOURCE/scripts/intranet/environment/existing-test.sh" upgrade \
   "$COMPOSE" "$CONTROL" "$PROJECT" "$BACKUPS" "$APP" "$TOOLS" "$NETWORK"
 ```
 
-脚本保存实际容器 inspect、原 compose、私密配置与挂载标识；停 app 写入，dump MySQL，并通过 `--volumes-from 原app:ro` 保存原 `/data`（含匿名卷、上传与旧 SQLite 文件）。已确认备份和校验后，同版本 tools 镜像接入**现有 network**只执行 migrate，然后更新原控制文件的 `LH_IMAGE`，执行 `compose up -d --no-deps --pull never lighthouse`。没有 `--renew-anon-volumes`、`down -v` 或旧 migrate 服务；不会运行 db:setup/seed/import。
+升级在停 app、备份或迁移之前，将最终 `compose config --format json` 中该应用服务的完整运行环境送入同提交 tools 镜像的 `check-access-config.cjs`，直接调用应用 `readAccessConfig`，不会由 tools 镜像默认环境补齐缺失字段。校验包含门户地址/HTTP 精确例外、模式、角色、员工有效性声明、加密密钥、MySQL/知识驱动，以及 production 构建、test 部署和禁用 development HTTP 的显式要求；缺项或不匹配立即拒绝，原 app 保持运行。该步骤断网、只读，不连接门户或数据库；只输出固定脱敏结果，不代表真实凭据已可用。
+
+随后脚本保存实际容器 inspect、原 compose、私密配置与挂载标识；停 app 写入，dump MySQL，并通过 `--volumes-from 原app:ro` 保存原 `/data`（含匿名卷、上传与旧 SQLite 文件）。已确认备份和校验后，同版本 tools 镜像接入**现有 network**只执行 migrate，然后更新原控制文件的 `LH_IMAGE`，执行 `compose up -d --no-deps --pull never lighthouse`。没有 `--renew-anon-volumes`、`down -v` 或旧 migrate 服务；不会运行 db:setup/seed/import。
 
 新 app 实际 image ID、`/data` mount type/name/source、MySQL 容器 ID 必须符合记录；出现差异则停新 app 供调查。继续验证直接 ready 200、HTTP 入口和业务内容。失败备份会恢复原 app 的运行状态；迁移失败则 app 保持停止，保留备份等待诊断，不做自动回滚。不要启用 `set -x`；原容器 inspect/环境/数据库含秘密，仅保存在私密备份目录。
 
@@ -157,7 +163,7 @@ SQL 比较仅允许一种已验证的等价写法：MySQL 恢复后在字符字�
 ## 必须回传的验收结果
 
 - dev 与 master 各自提交、版本、app/tools digest 和 OCI labels；原/新测试挂载与 MySQL 容器 ID。
-- 普通员工（空角色也可）、知识管理员登录退出、撤权和管理员降权；实际 HTTP 回调与生产 HTTPS 网关。
+- 普通员工（空角色也可）、知识管理员、已配置的平台管理员：门户卡片进入 → 核对身份并确认 → 业务页 → 我的身份 → 直接访问保持会话 → 退出 → 匿名拒绝；撤权、管理员降权及错误 token/CSRF/重放拒绝。回传 HTTP 测试入口及生产 HTTPS 网关的真实结果；callback/state 仅在确认契约并启用该模式时验收。
 - 初次生产 22 资源/四文件夹；没有演示身份；已有知识新增/编辑/移动/删除后升级，历史版本/文件/状态仍一致。
 - 路引模型、上传、流式响应及直接 ready 200；生产重建产物的业务 smoke。
 - completed 备份与隔离恢复的 SQL/文件比对、私密恢复配置/密钥保存情况；仅回传脱敏结果，不能把配置、dump 或员工样本放进公共报告。

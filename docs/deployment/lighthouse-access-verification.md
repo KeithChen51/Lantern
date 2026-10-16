@@ -41,3 +41,19 @@
 重新执行 lint、TypeScript、production 构建通过。初次全量测试与构建并行时，一项既有附件动态导入测试超过默认 5 秒；构建结束后以 4 个 worker 重跑全部 459 项通过，未放宽测试超时或跳过用例。production standalone 使用合成的 HTTP 测试 origin、不可达测试数据库，在 loopback 监听；冷启动首轮登录页超过检查超时，服务就绪后重跑 38 项全部通过。未修改真实 IP、网络或服务器。
 
 门户接受 HTTP IP 回调的权限与浏览器行为尚未验证。员工 CLI/MCP 仍然只支持 HTTPS，本次不提供 HTTP 工具授权例外。
+
+## 2026-10-16 部署配置与升级预检补充
+
+部署示例显式选 `PORTAL_LOGIN_MODE=card`，补充精确服务端 `PORTAL_API_HTTP_ORIGIN` 和可选平台管理员角色；卡片身份确认与 callback/state 协议分别说明。生产和测试可共用已确认的门户 appKey、配套凭据和角色，本地数据库、上传、会话 Cookie 与 `AUTH_ENCRYPTION_KEY` 仍隔离。当前门户只证实卡片携 token 进入，未证实 `redirectUrl` / `state` 契约。
+
+`existing-test.sh upgrade` 在停应用、备份和迁移前，将最终 Compose 应用环境送入同提交 tools 镜像打包的真实 `readAccessConfig`。预检断网、只读、只输出固定脱敏结果，不继承工具镜像默认环境来补齐配置。fake Docker 回归实际执行该打包入口，验证 18 类缺失/错误配置被提前拒绝，并保留原卷与普通升级禁止初始化、seed/import 的检查。
+
+| 本次部署部分检查 | 结果 |
+| --- | --- |
+| `npm test -- --run src/build/environment-operations.test.ts --maxWorkers=1` | 34 项通过，含 Bash 语法、备份/恢复/升级及认证预检拒绝 |
+| `node --test scripts/intranet/operations.test.mjs scripts/intranet/environment/compare-mysql-dumps.test.mjs` | 16 项通过，含可信工具打包与错误输出脱敏 |
+| 修改的 TypeScript / JavaScript 文件 ESLint | 通过 |
+| `npx tsc --noEmit` | 生成本地 Prisma Client 后通过，未连接或修改数据库 |
+| `git diff --check` | 通过 |
+
+另将预检入口与本次新认证配置实现组合，使用合成地址/凭据执行 11 个 CLI 场景：card + 精确内网 HTTP API、callback + HTTPS API 通过；缺 HTTP 例外、错误端口、非规范/公网 origin、HTTP 浏览器登录、错误模式、缺 secret、错误加密密钥和缺应用服务均拒绝，未输出测试秘密。以上是本地配置与脚本证据；真实门户卡片落点、浏览器确认、员工/角色语义、MySQL 与 Linux 镜像联合部署仍需内网验收。没有对现有测试知识库执行初始化、seed 或导入。
