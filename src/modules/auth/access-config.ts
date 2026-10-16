@@ -15,14 +15,24 @@ export function readAccessConfig(env: NodeJS.ProcessEnv = process.env): AccessCo
   const localHttp = env.AUTH_ALLOW_LOCAL_HTTP === "true" && !production && deployment === "development";
   if (env.AUTH_ALLOW_LOCAL_HTTP === "true" && !localHttp) fail();
   if (required("AUTH_MODE") !== "portal") fail();
+  const privateIpv4 = (hostname: string) => {
+    const octets = hostname.split(".").map(Number);
+    return isIP(hostname) === 4 && (octets[0] === 10 || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) || (octets[0] === 192 && octets[1] === 168));
+  };
+  const apiHttpOrigin = env.PORTAL_API_HTTP_ORIGIN;
+  if (apiHttpOrigin) {
+    try {
+      const allowed = new URL(apiHttpOrigin);
+      if (allowed.protocol !== "http:" || !privateIpv4(allowed.hostname) || apiHttpOrigin !== allowed.origin) fail();
+    } catch { fail(); }
+  }
   const url = (name: string, allowTestHttp = false) => {
     try {
       const value = new URL(required(name));
-      const octets = value.hostname.split(".").map(Number);
-      const privateIpv4 = isIP(value.hostname) === 4 && (octets[0] === 10 || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) || (octets[0] === 192 && octets[1] === 168));
-      const testException = allowTestHttp && deployment === "test" && value.protocol === "http:" && privateIpv4 && testHttpOrigin === value.origin && env[name] === value.origin;
+      const testException = allowTestHttp && deployment === "test" && value.protocol === "http:" && privateIpv4(value.hostname) && testHttpOrigin === value.origin && env[name] === value.origin;
+      const apiException = name === "PORTAL_API_BASE_URL" && value.protocol === "http:" && apiHttpOrigin === value.origin && (env[name] === value.origin || env[name]?.startsWith(`${value.origin}/`));
       const localException = localHttp && value.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(value.hostname);
-      if (value.username || value.password || value.hash || (value.protocol !== "https:" && !testException && !localException)) fail();
+      if (value.username || value.password || value.hash || (value.protocol !== "https:" && !testException && !localException && !apiException)) fail();
       return value;
     } catch { return fail(); }
   };
@@ -32,7 +42,10 @@ export function readAccessConfig(env: NodeJS.ProcessEnv = process.env): AccessCo
   if (testHttpOrigin && (origin.protocol !== "http:" || testHttpOrigin !== origin.origin)) fail();
   const api = url("PORTAL_API_BASE_URL");
   if (api.search) fail();
+  if (apiHttpOrigin && (api.protocol !== "http:" || apiHttpOrigin !== api.origin)) fail();
   const login = url("PORTAL_LOGIN_URL");
+  const portalLoginMode = env.PORTAL_LOGIN_MODE || "callback";
+  if (portalLoginMode !== "card" && portalLoginMode !== "callback") return fail();
   const encryptionKey = required("AUTH_ENCRYPTION_KEY");
   if (Buffer.from(encryptionKey, "base64").length !== 32) fail();
   // This assertion can only be enabled after the platform confirms that a
@@ -56,7 +69,8 @@ export function readAccessConfig(env: NodeJS.ProcessEnv = process.env): AccessCo
   return {
     origin: origin.origin, portalBaseUrl: api.toString().replace(/\/$/, ""), portalLoginUrl: login.toString(),
     appCode: required("PORTAL_APP_CODE"), appSecret: required("PORTAL_APP_SECRET"),
-    adminRole: required("PORTAL_KNOWLEDGE_ADMIN_ROLE"), encryptionKey,
+    adminRole: required("PORTAL_KNOWLEDGE_ADMIN_ROLE"), platformAdminRole: env.PORTAL_PLATFORM_ADMIN_ROLE?.trim() || undefined, encryptionKey,
+    portalLoginMode,
     callbackParam, stateParam, tokenParam,
     allowLegacyConfirmation: env.PORTAL_ALLOW_LEGACY_CONFIRMATION === "true",
     secureCookies, sessionCookie: `${prefix}session`, transactionCookie: `${prefix}login`, pendingCookie: `${prefix}pending`,

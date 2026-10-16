@@ -33,7 +33,7 @@ export default async function RootLayout({
     }
     // Public login HTML never renders or loads the business shell.
     const { AppShell } = await import("@/components/layout/AppShell");
-    content = <AppShell session={{ user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
+    content = <AppShell session={{ user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
   }
   return (
     <html

@@ -44,7 +44,7 @@ describe("explicit HTTP intranet test deployment", () => {
   it.each(["http://10.0.0.1", "http://172.16.0.1:8080", "http://172.31.255.254", "http://192.168.1.2"])("allows an explicitly matched RFC1918 IPv4 origin %s", origin => {
     expect(readAccessConfig({ ...testDeployment, LIGHTHOUSE_ORIGIN: origin, AUTH_TEST_HTTP_ORIGIN: origin }).origin).toBe(origin);
   });
-  it("never opens HTTP portal endpoints or weakens the production HTTPS configuration", () => {
+  it("keeps HTTP portal endpoints closed by default and preserves production HTTPS", () => {
     for (const key of ["PORTAL_API_BASE_URL", "PORTAL_LOGIN_URL"]) expect(() => readAccessConfig({ ...testDeployment, [key]: testOrigin })).toThrow();
     const config = readAccessConfig(production);
     expect(config.sessionCookie).toBe("__Host-lighthouse_session"); expect(config.secureCookies).toBe(true);
@@ -64,5 +64,29 @@ describe("explicit HTTP intranet test deployment", () => {
     expect(readAccessConfig(dev).sessionCookie).toBe("lighthouse_dev_session");
     expect(() => readAccessConfig({ ...dev, LIGHTHOUSE_ORIGIN: testOrigin })).toThrow();
     expect(() => readAccessConfig({ ...dev, LIGHTHOUSE_DEPLOYMENT_ENV: "production" })).toThrow();
+  });
+});
+
+describe("explicit intranet portal API and card contract", () => {
+  const apiOrigin = "http://10.20.30.41:20002";
+  it.each([production, testDeployment])("allows the exact private API origin in either deployed environment", env => {
+    const config = readAccessConfig({ ...env, PORTAL_API_BASE_URL: apiOrigin + "/gateway", PORTAL_API_HTTP_ORIGIN: apiOrigin, PORTAL_LOGIN_MODE: "card", PORTAL_PLATFORM_ADMIN_ROLE: "lighthouse_admin" });
+    expect(config.portalBaseUrl).toBe(apiOrigin + "/gateway");
+    expect(config.portalLoginMode).toBe("card");
+    expect(config.platformAdminRole).toBe("lighthouse_admin");
+    expect(config.allowLegacyConfirmation).toBe(false);
+  });
+  it.each(["http://8.8.8.8", "http://127.0.0.1", "http://localhost", "http://169.254.1.1", "http://0x0a141e29:20002", apiOrigin + "/", apiOrigin + "/gateway", apiOrigin + "?x=1", "http://u:p@10.20.30.41:20002", " http://10.20.30.41:20002"])("rejects a noncanonical or nonprivate allowlist %s", allowed => {
+    expect(() => readAccessConfig({ ...production, PORTAL_API_BASE_URL: allowed, PORTAL_API_HTTP_ORIGIN: allowed })).toThrow();
+  });
+  it.each([apiOrigin.replace("20002", "20003"), "http://10.20.30.42:20002", "http://0x0a141e29:20002", "https://portal.example.invalid", apiOrigin + "?q=1"])("rejects mismatched or malformed API URL %s", api => {
+    expect(() => readAccessConfig({ ...production, PORTAL_API_BASE_URL: api, PORTAL_API_HTTP_ORIGIN: apiOrigin })).toThrow();
+  });
+  it("does not allow the API exception for the login page or production app", () => {
+    const env = { ...production, PORTAL_API_BASE_URL: apiOrigin, PORTAL_API_HTTP_ORIGIN: apiOrigin };
+    expect(() => readAccessConfig({ ...env, PORTAL_LOGIN_URL: apiOrigin })).toThrow();
+    expect(() => readAccessConfig({ ...env, LIGHTHOUSE_ORIGIN: apiOrigin })).toThrow();
+    expect(() => readAccessConfig({ ...env, PORTAL_LOGIN_MODE: "automatic" })).toThrow();
+    expect(readAccessConfig(production).portalLoginMode).toBe("callback");
   });
 });

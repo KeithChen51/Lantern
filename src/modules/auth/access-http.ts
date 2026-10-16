@@ -96,7 +96,7 @@ export const start = route(async request => {
   const input = await body(request);
   const result = await getAccessService().startLogin(typeof input.returnTo === "string" ? input.returnTo : "/");
   const response = isForm(request) ? redirect(result.redirectUrl) : json({ redirectUrl: result.redirectUrl });
-  setCookie(response, readAccessConfig().transactionCookie, result.cookie, readAccessConfig().transactionMs / 1000);
+  setCookie(response, readAccessConfig().transactionCookie, result.cookie, result.cookie ? readAccessConfig().transactionMs / 1000 : 0);
   return response;
 });
 export const callback = async (request: NextRequest): Promise<Response> => {
@@ -124,7 +124,7 @@ export const confirm = route(async request => {
 });
 export const me = route(async request => {
   const principal = await requireEmployee(request);
-  return json({ user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, capabilities: principal.capabilities, csrfToken: principal.csrfToken, expiresAt: principal.expiresAt });
+  return json({ user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken, expiresAt: principal.expiresAt });
 });
 export function logout(all: boolean) { return route(async request => {
   const principal = await mutation(request);

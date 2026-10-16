@@ -13,7 +13,7 @@ vi.mock("./portal", () => ({ HttpPortalAdapter: class {
   async roles() { return []; }
 } }));
 import { readAccessConfig } from "./access-config";
-import { callback, logout, me, start } from "./access-http";
+import { callback, confirm, logout, me, pending, start } from "./access-http";
 
 const origin = "http://10.20.30.40:3080";
 const env = {
@@ -41,6 +41,28 @@ async function begin(returnTo = "/heart") {
 const callbackRequest = (state: string, cookie: string) => new NextRequest(origin + "/auth/portal/callback?" + new URLSearchParams({ state, token: "synthetic-upstream" }), { headers: { cookie } });
 
 describe("HTTP test login preserves the authentication protocol", () => {
+  it("runs card entry through pending identity confirmation before issuing a session", async () => {
+    vi.stubEnv("PORTAL_LOGIN_MODE", "card");
+    const config = readAccessConfig();
+    const started = await start(post("/api/auth/start", { returnTo: "/heart" }));
+    expect(started.headers.get("location")).toBe(env.PORTAL_LOGIN_URL);
+    expect(cookie(started, config.transactionCookie)).toContain("Max-Age=0");
+    const response = await callback(new NextRequest(origin + "/?token=synthetic-card"));
+    expect(response.headers.get("location")).toBe(origin + "/auth/confirm");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.getSetCookie().some(c => c.startsWith(config.sessionCookie + "="))).toBe(false);
+    const pendingHeader = cookie(response, config.pendingCookie).split(";")[0];
+    expect((await me(new NextRequest(origin + "/api/auth/me", { headers: { cookie: pendingHeader } }))).status).toBe(401);
+    const identity = await (await pending(new NextRequest(origin + "/api/auth/pending", { headers: { cookie: pendingHeader } }))).json();
+    expect(identity.account).toBe("000123");
+    expect((await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }))).status).toBe(401);
+    expect((await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }, { cookie: pendingHeader, origin: "https://foreign.invalid" }))).status).toBe(403);
+    const confirmed = await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }, { cookie: pendingHeader }));
+    expect(confirmed.status).toBe(303);
+    const sessionHeader = cookie(confirmed, config.sessionCookie).split(";")[0];
+    expect((await me(new NextRequest(origin + "/api/auth/me", { headers: { cookie: sessionHeader } }))).status).toBe(200);
+    expect((await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }, { cookie: pendingHeader }))).status).toBe(401);
+  });
   it("sets HTTP-compatible isolated cookies, authenticates, and requires CSRF to logout", async () => {
     const flow = await begin();
     const response = await callback(callbackRequest(flow.state, flow.transactionCookie.split(";")[0]));

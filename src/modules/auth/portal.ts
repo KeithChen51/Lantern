@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { AccessError, type AccessConfig, type PortalAdapter, type PortalIdentity } from "./access-types";
+import { AccessError, type AccessConfig, type PortalAdapter, type PortalIdentity, type PortalAuthorization } from "./access-types";
 
 const MAX_RESPONSE_BYTES = 64 * 1024;
 function object(value: unknown): Record<string, unknown> {
@@ -65,6 +65,9 @@ export class HttpPortalAdapter implements PortalAdapter {
     return { account: employeeAccount, displayName };
   }
   async roles(employeeAccount: string): Promise<readonly string[]> {
+    return (await this.authorization(employeeAccount)).roles;
+  }
+  async authorization(employeeAccount: string): Promise<PortalAuthorization> {
     const timestamp = String(this.now());
     const sign = createHmac("sha256", this.config.appSecret).update(`${employeeAccount}.${timestamp}`).digest("hex");
     const body = await this.request("/sso/admin/subapp/role-query", {
@@ -73,10 +76,16 @@ export class HttpPortalAdapter implements PortalAdapter {
     if (body.code !== "000000") throw new AccessError("门户授权查询暂时不可用。", 503);
     const data = object(body.data);
     if (data.account !== employeeAccount || data.appCode !== this.config.appCode || !Array.isArray(data.roles) || data.roles.length > 100) throw new AccessError("门户授权响应不匹配。", 503);
-    return data.roles.map(role => {
+    const roles = data.roles.map(role => {
       const code = object(role).code;
       if (typeof code !== "string" || !code || code.length > 120) throw new AccessError("门户授权响应无效。", 503);
       return code;
     });
+    // Organization is display-only metadata from the same account-bound
+    // authorization response; it never grants a permission or local role.
+    const org = data.org && typeof data.org === "object" && !Array.isArray(data.org) ? data.org as Record<string, unknown> : {};
+    const label = (value: unknown, limit: number) => typeof value === "string" && value.trim() && value.length <= limit && !/[\u0000-\u001f\u007f]/.test(value) ? value.trim() : undefined;
+    const organization = label(org.path, 1000) || label(org.name, 200);
+    return { roles, ...(organization ? { organization } : {}) };
   }
 }
