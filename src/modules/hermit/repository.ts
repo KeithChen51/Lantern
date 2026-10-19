@@ -3,6 +3,7 @@ import { prisma } from "@/infrastructure/db";
 import { AppError } from "@/shared/errors";
 import type {
   HermitChatRepository,
+  HermitChatOwner,
   HermitChatSessionInput,
   HermitMessageInput,
   HermitMessageRole,
@@ -19,23 +20,35 @@ function jsonValue(value: unknown): Prisma.InputJsonValue | typeof Prisma.JsonNu
   return value === null ? Prisma.JsonNull : (value as Prisma.InputJsonValue);
 }
 
+function ownerColumns(owner: HermitChatOwner): { userId: string | null; guestId: string | null } {
+  const userId = owner.userId ?? null;
+  const guestId = owner.guestId ?? null;
+  if ((userId !== null && (typeof userId !== "string" || !userId.trim())) ||
+      (guestId !== null && (typeof guestId !== "string" || !guestId.trim())) ||
+      (userId === null) === (guestId === null)) {
+    throw new AppError("forbidden", "需要有效访问身份。", 403);
+  }
+  return { userId, guestId };
+}
+
 export class PrismaHermitChatRepository implements HermitChatRepository {
   async upsertSession(input: HermitChatSessionInput) {
-    if (!input.userId) throw new AppError("forbidden", "需要有效员工身份。", 403);
+    const owner = ownerColumns(input);
     // A single INSERT lets the primary key arbitrate simultaneous claimants.
     // Never update an existing row's owner or adopt an anonymous legacy session.
     try {
-      await prisma.chatSession.create({ data: input });
+      await prisma.chatSession.create({ data: { ...input, ...owner } });
     } catch (error) {
       if (!(error && typeof error === "object" && "code" in error && error.code === "P2002")) throw error;
-      const session = await prisma.chatSession.findUnique({ where: { id: input.id }, select: { userId: true } });
-      if (!session || session.userId !== input.userId) throw new AppError("forbidden", "无法访问该对话。", 403);
+      const session = await prisma.chatSession.findUnique({ where: { id: input.id }, select: { userId: true, guestId: true } });
+      if (!session || session.userId !== owner.userId || session.guestId !== owner.guestId) throw new AppError("forbidden", "无法访问该对话。", 403);
     }
   }
 
   async upsertMessage(input: HermitMessageInput) {
-    const session = await prisma.chatSession.findFirst({ where: { id: input.sessionId, userId: input.userId }, select: { id: true } });
-    if (!input.userId || !session) throw new AppError("forbidden", "无法访问该对话。", 403);
+    const owner = ownerColumns(input);
+    const session = await prisma.chatSession.findFirst({ where: { id: input.sessionId, ...owner }, select: { id: true } });
+    if (!session) throw new AppError("forbidden", "无法访问该对话。", 403);
     const data = {
       sessionId: input.sessionId,
       externalMessageId: input.externalMessageId,
@@ -66,8 +79,9 @@ export class PrismaHermitChatRepository implements HermitChatRepository {
   }
 
   async addRetrievalTrace(input: HermitRetrievalTraceInput) {
-    const message = await prisma.chatMessage.findFirst({ where: { id: input.chatMessageId, session: { userId: input.userId } }, select: { id: true } });
-    if (!input.userId || !message) throw new AppError("forbidden", "无法访问该对话。", 403);
+    const owner = ownerColumns(input);
+    const message = await prisma.chatMessage.findFirst({ where: { id: input.chatMessageId, session: owner }, select: { id: true } });
+    if (!message) throw new AppError("forbidden", "无法访问该对话。", 403);
     await prisma.retrievalTrace.create({
       data: {
         chatMessageId: input.chatMessageId,

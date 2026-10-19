@@ -36,6 +36,7 @@ export type ResolvedHermitAttachment = {
 };
 
 type StoredHermitAttachment = ResolvedHermitAttachment & {
+  kind: "employee" | "guest";
   userId: string;
   grantId: string;
   credentialId: string;
@@ -54,7 +55,7 @@ globalStore[HERMIT_ATTACHMENT_STORE_KEY] = attachments;
 globalStore[LEGACY_HERMIT_ATTACHMENT_STORE_KEY] = attachments;
 
 function ownsAttachment(attachment: StoredHermitAttachment, principal: Principal) {
-  return attachment.userId === principal.userId && attachment.grantId === principal.grantId && attachment.credentialId === principal.credentialId;
+  return (attachment.kind ?? "employee") === (principal.kind ?? "employee") && attachment.userId === principal.userId && attachment.grantId === principal.grantId && attachment.credentialId === principal.credentialId;
 }
 
 function purgeExpiredAttachments(now = Date.now()) {
@@ -239,7 +240,7 @@ export async function saveHermitAttachment(request: Request, file: File, princip
   purgeExpiredAttachments();
 
   if (countOwnerAttachments(principal) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
-    throw new AppError("validation_error", "每个登录会话最多保留 5 个附件，请先移除旧附件。", 422);
+    throw new AppError("validation_error", "每个访问会话最多保留 5 个附件，请先移除旧附件。", 422);
   }
   if (attachments.size >= HERMIT_ATTACHMENT_MAX_STORE_ENTRIES) {
     throw new AppError("bad_request", "附件暂存空间已满，请稍后重试。", 503);
@@ -250,7 +251,7 @@ export async function saveHermitAttachment(request: Request, file: File, princip
   assertHermitPrincipal(principal, "hermit:attachment:self");
   purgeExpiredAttachments();
   if (countOwnerAttachments(principal) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
-    throw new AppError("validation_error", "每个登录会话最多保留 5 个附件，请先移除旧附件。", 422);
+    throw new AppError("validation_error", "每个访问会话最多保留 5 个附件，请先移除旧附件。", 422);
   }
   if (attachments.size >= HERMIT_ATTACHMENT_MAX_STORE_ENTRIES) {
     throw new AppError("bad_request", "附件暂存空间已满，请稍后重试。", 503);
@@ -267,6 +268,7 @@ export async function saveHermitAttachment(request: Request, file: File, princip
     id: summary.id,
     name: summary.name,
     size: summary.size,
+    kind: principal.kind ?? "employee",
     userId: principal.userId,
     grantId: principal.grantId,
     credentialId: principal.credentialId,

@@ -9,8 +9,8 @@ import {
   resetHermitAttachmentStoreForTests,
 } from "./attachments";
 
-const auth = vi.hoisted(() => ({ employee: vi.fn(), mutation: vi.fn() }));
-vi.mock("@/modules/auth/access", () => ({ requireEmployee: auth.employee, assertWebMutation: auth.mutation,
+const auth = vi.hoisted(() => ({ employee: vi.fn(), limit: vi.fn(), mutation: vi.fn() }));
+vi.mock("@/modules/auth/access", () => ({ requireSiteVisitor: auth.employee, enforceGuestRequestLimit: auth.limit, assertWebMutation: auth.mutation,
   authErrorResponse: (error: {status?: number}) => Response.json({ error: "access rejected" }, { status: error.status ?? 503 }) }));
 import { AppError } from "@/shared/errors";
 import type { Principal } from "@/modules/auth/access";
@@ -186,5 +186,49 @@ describe("Hermit attachment API", () => {
     const response = await POST(new Request("http://localhost/api/hermit/attachments", { method: "POST", body: new FormData() }));
     expect(response.status).toBe(422);
     await expect(response.json()).resolves.toMatchObject({ error: { code: "validation_error" } });
+  });
+});
+
+const guest = (id = "a"): Principal => ({ ...employee(id), kind: "guest", userId: "guest:" + id });
+describe("guest attachment isolation", () => {
+  it("isolates guests, employees, rotated credentials and principal kind", async () => {
+    auth.employee.mockResolvedValue(guest());
+    const ready = await upload("guest.txt", "private guest text");
+    expect(ready.response.status).toBe(201);
+    expect(auth.limit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ kind: "guest", userId: "guest:a" }), "attachment");
+    expect((await resolveHermitAttachments(guest(), [ready.body.id]))[0].text).toBe("private guest text");
+    for (const intruder of [guest("b"), employee(), { ...guest(), kind: "employee" as const }, { ...guest(), credentialId: "rotated" }]) {
+      await expect(resolveHermitAttachments(intruder, [ready.body.id])).rejects.toMatchObject({ status: 404 });
+      auth.employee.mockResolvedValue(intruder);
+      expect((await DELETE(new Request("http://localhost/api/hermit/attachments", { method: "DELETE", body: JSON.stringify({ id: ready.body.id }) }))).status).toBe(404);
+    }
+    auth.employee.mockResolvedValue(employee());
+    const employeeUpload = await upload("employee.txt", "private employee text");
+    await expect(resolveHermitAttachments(guest(), [employeeUpload.body.id])).rejects.toMatchObject({ status: 404 });
+  });
+  it("rejects guest rate and CSRF failures before parsing a body", async () => {
+    auth.employee.mockResolvedValue(guest());
+    auth.limit.mockRejectedValueOnce(new AppError("forbidden", "rate limit", 429));
+    const req = new Request("http://localhost/api/hermit/attachments", { method: "POST", body: "invalid" });
+    const reader = vi.spyOn(req.body!, "getReader");
+    expect((await POST(req)).status).toBe(429); expect(reader).not.toHaveBeenCalled();
+    auth.mutation.mockImplementation(() => { throw new AppError("forbidden", "CSRF", 403); });
+    expect((await upload("blocked.txt", "private")).response.status).toBe(403);
+  });
+  it("removes upload on identity change during parsing and bounds its life to guest expiry", async () => {
+    const original = guest();
+    auth.employee.mockResolvedValueOnce(original).mockResolvedValueOnce(original).mockResolvedValueOnce(guest("b"));
+    expect((await upload("changed.txt", "private")).response.status).toBe(401);
+    auth.employee.mockResolvedValue(original);
+    for (let i = 0; i < 5; i++) expect((await upload(i + ".txt", "private")).response.status).toBe(201);
+    resetHermitAttachmentStoreForTests();
+    const expiring = { ...guest(), expiresAt: Date.now() + 1000 };
+    auth.employee.mockResolvedValue(expiring);
+    const ready = await upload("expiring.txt", "private");
+    const now = vi.spyOn(Date, "now").mockReturnValue(expiring.expiresAt + 1);
+    try {
+      await expect(resolveHermitAttachments(expiring, [ready.body.id])).rejects.toMatchObject({ status: 401 });
+      await expect(resolveHermitAttachments(guest(), [ready.body.id])).rejects.toMatchObject({ status: 404 });
+    } finally { now.mockRestore(); }
   });
 });

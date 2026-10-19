@@ -10,6 +10,7 @@ vi.mock("@prisma/client", () => ({ ChatMessageRole: { USER: "USER", ASSISTANT: "
 vi.mock("@/infrastructure/db", () => ({ prisma: database }));
 import { PrismaHermitChatRepository } from "./repository";
 import { createHermitChatService } from "./service";
+import type { HermitChatOwner } from "./types";
 
 // Exercise the real service and Prisma repository. This database double applies
 // the repository's actual create/update payloads, including unsafe role changes.
@@ -25,10 +26,10 @@ beforeEach(() => {
     sessions.set(data.id as string, { ...data }); return data;
   });
   database.chatSession.findUnique.mockImplementation(async ({where}: {where:{id:string}}) => sessions.get(where.id) ?? null);
-  database.chatSession.findFirst.mockImplementation(async ({where}: {where:{id:string;userId:string}}) => {
-    const session = sessions.get(where.id); return session?.userId === where.userId ? session : null;
+  database.chatSession.findFirst.mockImplementation(async ({where}: {where:{id:string;userId:string|null;guestId:string|null}}) => {
+    const session = sessions.get(where.id); return session?.userId === where.userId && session?.guestId === where.guestId ? session : null;
   });
-  database.chatMessage.findFirst.mockImplementation(async ({where}: {where:{id:string;session:{userId:string}}}) => [...rows.values()].find(row => row.id === where.id && sessions.get(row.sessionId as string)?.userId === where.session.userId) ?? null);
+  database.chatMessage.findFirst.mockImplementation(async ({where}: {where:{id:string;session:{userId:string|null;guestId:string|null}}}) => [...rows.values()].find(row => row.id === where.id && sessions.get(row.sessionId as string)?.userId === where.session.userId && sessions.get(row.sessionId as string)?.guestId === where.session.guestId) ?? null);
   database.chatMessage.upsert.mockImplementation(async (args: Prisma.ChatMessageUpsertArgs) => {
     const identity = args.where.sessionId_externalMessageId!;
     const rowKey = key(identity.sessionId, identity.externalMessageId);
@@ -91,5 +92,43 @@ describe("Hermit persisted message immutability", () => {
     const separate = await repository.upsertMessage({ ...input, sessionId: "two", content: "another session" });
     expect(separate.id).not.toBe(first.id);
     expect(rows.get(key("two", "id"))).toMatchObject({ content: "another session" });
+  });
+});
+
+const guestA = { userId: null, guestId: "guest:a" } as const;
+const guestB = { userId: null, guestId: "guest:b" } as const;
+const employeeA = { userId: "employee-a", guestId: null } as const;
+const asParticipant = (owner: HermitChatOwner) => ({ ...participant, ...owner });
+describe("guest chat owner persistence", () => {
+  it.each([[guestA, guestB], [guestA, employeeA], [employeeA, guestA]])("isolates competing claims, messages, assistant evidence and traces for %j versus %j", async (owner, intruder) => {
+    const repository = new PrismaHermitChatRepository();
+    const service = createHermitChatService(repository);
+    const race = await Promise.allSettled([owner, intruder].map(who => repository.upsertSession({ ...asParticipant(who), id: "race", title: null })));
+    expect(race.map(result => result.status)).toEqual(["fulfilled", "rejected"]);
+    expect(sessions.get("race")).toMatchObject(owner);
+    await service.persistIncomingMessages({ sessionId: "race", participant: asParticipant(owner), messages: [{ id: "question", role: "user", parts: [{ type: "text", text: "private question" }] }], modelName: "model" });
+    await service.persistAssistantResponse({ sessionId: "race", participant: asParticipant(owner), responseMessage: { id: "answer", role: "assistant", parts: [{ type: "text", text: "private answer" }] }, modelName: "model", retrieval: { query: "private question", contextText: "source", topK: 1 } });
+    const answer = rows.get(key("race", "answer"))!;
+    expect(database.retrievalTrace.create).toHaveBeenCalledExactlyOnceWith({ data: expect.objectContaining({ chatMessageId: answer.id }) });
+    await expect(repository.upsertMessage({ ...intruder, sessionId: "race", externalMessageId: "forged", role: "user", content: "forged", modelName: null, metadata: null })).rejects.toMatchObject({ status: 403 });
+    await expect(repository.addRetrievalTrace({ ...intruder, chatMessageId: answer.id as string, query: "forged", contextText: "forged", topK: 1, sourceSnapshot: null })).rejects.toMatchObject({ status: 403 });
+    await expect(service.persistAssistantResponse({ sessionId: "race", participant: asParticipant(intruder), responseMessage: { id: "answer", role: "assistant", parts: [{ type: "text", text: "forged" }] }, modelName: "forged", retrieval: { query: "forged", contextText: "forged", topK: 1 } })).rejects.toMatchObject({ status: 403 });
+    expect(rows.get(key("race", "answer"))).toEqual(answer);
+    expect(database.retrievalTrace.create).toHaveBeenCalledTimes(1);
+  });
+  it("rejects stale null owners and rows with both owners populated", async () => {
+    const repository = new PrismaHermitChatRepository();
+    for (const stored of [{ userId: null, guestId: null }, { userId: "employee-a", guestId: "guest:a" }]) {
+      sessions.set("stale", { id: "stale", ...stored });
+      for (const owner of [guestA, employeeA]) {
+        await expect(repository.upsertSession({ ...asParticipant(owner), id: "stale", title: null })).rejects.toMatchObject({ status: 403 });
+        await expect(repository.upsertMessage({ ...owner, sessionId: "stale", externalMessageId: "forged", role: "user", content: "forged", modelName: null, metadata: null })).rejects.toMatchObject({ status: 403 });
+      }
+    }
+    for (const invalid of [{ userId: null, guestId: null }, { userId: "employee-a", guestId: "guest:a" }, { userId: "", guestId: null }]) {
+      await expect(repository.upsertSession({ ...asParticipant(invalid as unknown as HermitChatOwner), id: "invalid", title: null })).rejects.toMatchObject({ status: 403 });
+    }
+    expect(database.chatSession.create).toHaveBeenCalledTimes(4);
+    expect(database.chatMessage.upsert).not.toHaveBeenCalled();
   });
 });

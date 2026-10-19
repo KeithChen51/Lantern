@@ -4,6 +4,7 @@ export { createHermitChatService, HermitChatService } from "./service";
 export { hermitChatRepository, PrismaHermitChatRepository } from "./repository";
 export type {
   HermitChatParticipant,
+  HermitChatOwner,
   HermitChatRepository,
   HermitChatSessionInput,
   HermitMessageInput,
