@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getPublicActionCaseBySlug, getPublicActionCaseSummaries } from "./public-action-cases";
 
 const { enabled, managedGet, managedList, search } = vi.hoisted(() => ({ enabled: vi.fn(), managedGet: vi.fn(), managedList: vi.fn(), search: vi.fn() }));
-vi.mock("@/modules/knowledge-hub/runtime", () => ({ isKnowledgeHubEnabled: enabled, getKnowledgeHub: () => ({ search }) }));
+vi.mock("@/modules/knowledge-hub/runtime", () => ({ isKnowledgeHubEnabled: enabled, getSiteKnowledgeHub: () => ({ search }) }));
 vi.mock("@/modules/content", () => ({ actionCaseService: { getPublishedActionCaseBySlug: managedGet, listPublishedActionCases: managedList } }));
 beforeEach(() => { enabled.mockReset(); managedGet.mockReset(); managedList.mockReset(); search.mockReset(); });
 afterEach(() => vi.unstubAllEnvs());

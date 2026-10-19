@@ -3,9 +3,9 @@ import { AppError } from "@/shared/errors";
 import { KnowledgeHub } from "./service";
 import { MemoryHubStore } from "./test-store";
 const mocks = vi.hoisted(() => ({ guard: vi.fn(), employee: vi.fn(), enabled: true, hub: null as KnowledgeHub | null, storage: vi.fn() }));
-vi.mock("@/modules/auth/access", () => ({ requireKnowledgeClient: mocks.guard, requireEmployee: mocks.employee,
+vi.mock("@/modules/auth/access", () => ({ requireKnowledgeClient: mocks.guard, requireEmployee: mocks.employee, requireSiteVisitor: mocks.employee,
   authErrorResponse: (error: { status?: number }) => Response.json({ error: "auth" }, { status: error.status ?? 503, headers: { "Cache-Control": "no-store" } }) }));
-vi.mock("./runtime", () => ({ isKnowledgeHubEnabled: () => mocks.enabled, getKnowledgeHub: () => { mocks.storage(); return mocks.hub!; } }));
+vi.mock("./runtime", () => ({ isKnowledgeHubEnabled: () => mocks.enabled, getKnowledgeHub: () => { mocks.storage(); return mocks.hub!; }, getSiteKnowledgeHub: () => { mocks.storage(); return mocks.hub!; } }));
 import { clientResourceGet, type ClientResourceOperation } from "./client-http";
 import { GET as webGet } from "@/app/api/resources/[id]/route";
 const context = { params: Promise.resolve({ id: "policy" }) };

@@ -1,6 +1,6 @@
 import { actionCaseService, type ActionCaseCoverImage, type ActionCaseRecord } from "@/modules/content";
 import { ACTION_CASES, type ActionCase, getActionCaseBySlug, isMarkdownActionCase } from "./action-cases";
-import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import { getSiteKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
 import { AccessError } from "@/modules/auth/access-types";
 
 export type PublicActionCaseSummary = {
@@ -68,7 +68,7 @@ function managedSummary(actionCase: ActionCaseRecord): PublicActionCaseSummary {
 
 export async function getPublicActionCaseSummaries() {
   if (isKnowledgeHubEnabled()) {
-    const hub = getKnowledgeHub();
+    const hub = getSiteKnowledgeHub();
     const all: Awaited<ReturnType<typeof hub.search>>["items"] = [];
     for (let offset = 0; ; offset += 100) {
       const result = await hub.search({ type: "case", sort: "published", offset, limit: 100 });
