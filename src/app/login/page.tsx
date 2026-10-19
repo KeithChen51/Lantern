@@ -1,10 +1,15 @@
 import { AuthNotice, AuthSurface } from "@/components/auth/AuthSurface";
 import { safeReturnTo } from "@/modules/auth/page-access";
 import { readAccessConfig } from "@/modules/auth/access-config";
+import { readSiteAccessConfig } from "@/modules/auth/site-access-config";
+import { redirect } from "next/navigation";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ returnTo?: string; error?: string; loggedOut?: string }> }) {
   const params = await searchParams;
   let configured = true;
+  let siteMode;
+  try { siteMode = readSiteAccessConfig().mode; } catch { configured = false; }
+  if (siteMode === "guest") redirect("/");
   let cardMode = false;
   let iamMode = process.env.AUTH_MODE === "iam";
   try { const config = readAccessConfig(); cardMode = config.portalLoginMode === "card"; iamMode = config.mode === "iam"; } catch { configured = false; }

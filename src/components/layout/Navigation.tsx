@@ -326,7 +326,7 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   const session = useEmployeeSession();
-  return getVisibleNavItems(session?.capabilities).map((item) => {
+  return getVisibleNavItems(session?.kind === "guest" ? [] : session?.capabilities).map((item) => {
     const isActive = isItemActive(pathname, item.href);
 
     return (
