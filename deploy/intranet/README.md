@@ -2,6 +2,12 @@
 
 关联 Issue #50。应用和运维镜像从同一个提交构建，生产与测试分别保留自己的数据库、上传目录和配置。初始化与升级是独立操作。
 
+## 生产访客与测试 IAM
+
+关联 [Issue #60](https://github.com/KeithChen51/Lantern/issues/60)。同一个 production 应用镜像可在运行时显式选择 `AUTH_MODE=guest` 或 `iam`；生产访客使用新增 `environments/guest-app.env.example`，IAM 测试继续使用 `environments/test-app.env.example`。保留现有 `app.env.example` 的 IAM 默认值。完整的密钥、数据库隔离、迁移、容器重建、切回 IAM 与回滚步骤见[访客部署说明](../../docs/deployment/lighthouse-guest-mode.md)。IAM 配置错误或服务故障不会自动开放访客访问。
+
+验证“同一镜像”时，两套控制文件填写完全相同的应用 digest，并填写与其提交/版本匹配的同一个 tools digest；应用与 tools 属于两个仓库，各有自己的 digest。两套环境的数据库、上传挂载、本地密钥和 origin 必须独立。下文既有 dev/master 任务仍会分别构建，不保证重建后的 digest 相同；不得将“同一源码”写成已经证明“同一镜像”。本次模式支持不修改 Jenkins 分支或发布流程。
+
 ## IAM 直连接入
 
 新部署模板使用 `AUTH_MODE=iam`，按 [IAM 配置与联调说明](../../docs/deployment/lighthouse-iam-direct.md)填写独立 IAM OAuth 和同步参数。中台卡片改为导航 `/auth/iam/start`；员工账号及岗位角色先同步，才允许登录。旧运行环境不会自动切换认证：先完成 IAM 注册和网络、备份，再按原测试升级路径切换，测试通过后再初始化正式环境。保留显式 `portal` 兼容模式供受控回退，不自动降级。
