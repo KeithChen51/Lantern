@@ -7,15 +7,16 @@ import {
   selectHermitLanguageModel,
 } from "@/lib/hermit/model-provider";
 import { buildSystemPrompt } from "@/lib/hermit/system-prompt";
-import { requireEmployee, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
+import { requireSiteVisitor, enforceGuestRequestLimit, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
 import { assertHermitPrincipal } from "@/modules/hermit/access";
 import { AppError, toErrorResponse } from "@/shared/errors";
 import {
   createHermitChatService,
   hermitChatRepository,
   type HermitChatParticipant,
+  type HermitChatOwner,
 } from "@/modules/hermit";
-import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import { getSiteKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
 import { createHermitAgentTools, documentContextSchema, type HermitDocument, type HermitAgentTool } from "@/lib/hermit/agent-tools";
 import { runDshTurn, verifyDshInstallation } from "@/lib/hermit/dsh-runtime";
 import { createAnswerSources, stripSourceMarkers } from "@/lib/hermit/answer-sources";
@@ -69,7 +70,8 @@ function readSessionId(value: unknown): string {
 }
 
 function chatParticipant(principal: Principal): HermitChatParticipant {
-  return { userId: principal.userId, brandId: null, regionId: null, dealerId: null, storeId: null };
+  const owner: HermitChatOwner = principal.kind === "guest" ? { userId: null, guestId: principal.userId } : { userId: principal.userId, guestId: null };
+  return { ...owner, brandId: null, regionId: null, dealerId: null, storeId: null };
 }
 
 function errorResponse(error: unknown) {
@@ -89,14 +91,16 @@ async function persistChat(phase: string, action: () => Promise<void>) {
 export async function POST(req: Request) {
   let principal: Principal;
   try {
-    principal = await requireEmployee(req);
+    principal = await requireSiteVisitor(req);
     assertHermitPrincipal(principal, "hermit:chat");
     assertWebMutation(req, principal);
+    await enforceGuestRequestLimit(principal, "chat");
   } catch (error) { return errorResponse(error); }
   const recheckAccess = async () => {
-    const current = await requireEmployee(req);
+    const current = await requireSiteVisitor(req);
     assertHermitPrincipal(current, "hermit:chat");
-    if (current.userId !== principal.userId || current.grantId !== principal.grantId || current.credentialId !== principal.credentialId) {
+    assertWebMutation(req, current);
+    if ((current.kind ?? "employee") !== (principal.kind ?? "employee") || current.userId !== principal.userId || current.grantId !== principal.grantId || current.credentialId !== principal.credentialId) {
       throw new AppError("unauthorized", "请重新登录。", 401);
     }
   };
@@ -114,11 +118,11 @@ export async function POST(req: Request) {
   if (!query.trim()) return Response.json({ error: "请输入问题。" }, { status: 400 });
   const participant = chatParticipant(principal);
   // This must fail closed before attachments, hub reads or model setup. A
-  // client-selected ID cannot adopt another employee's or a legacy session.
+  // client-selected ID cannot adopt another visitor's or a legacy session.
   try { await hermitChatRepository.upsertSession({ id: sessionId, ...participant, title: null }); }
   catch (error) { return errorResponse(error); }
   const useDsh = process.env.HERMIT_RUNTIME === "dsh";
-  const hub = isKnowledgeHubEnabled() ? getKnowledgeHub() : null;
+  const hub = isKnowledgeHubEnabled() ? getSiteKnowledgeHub() : null;
   if (!hub && (useDsh || body.documentContext || body.attachmentIds.length)) return Response.json({ error: "请先启用并初始化知识中台。" }, { status: 503 });
   if (useDsh) {
     try { await verifyDshInstallation(); }

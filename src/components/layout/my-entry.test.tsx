@@ -30,4 +30,15 @@ describe("my navigation entry", () => {
     expect(html).toContain("测试员工");
     expect(html).toContain('aria-label="我的"');
   });
+
+  it("shows a guest entry with browsing and AI navigation but no admin or authorization links", () => {
+    const guest = { ...session, kind: "guest" as const, user: { id: "opaque-guest", account: "", displayName: "访客" }, capabilities: ["content:read", "knowledge:read", "hermit:chat", "hermit:attachment:self", "knowledge:manage"] };
+    const html = renderToStaticMarkup(<SessionProvider session={guest}><Navigation isPinned onTogglePin={() => {}} isMobileOpen onMobileClose={() => {}} /><Header isSidebarPinned={false} onOpenMobileNav={() => {}} /></SessionProvider>);
+    expect(html).toContain("访客");
+    expect(html).toContain('href="/hermit"');
+    expect(html).toContain('href="/me"');
+    expect(html).not.toContain("测试员工");
+    expect(html).not.toContain('href="/admin/');
+    expect(html).not.toContain('href="/auth/tools"');
+  });
 });

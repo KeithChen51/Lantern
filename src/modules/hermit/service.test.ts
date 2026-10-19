@@ -17,7 +17,7 @@ class MemoryHermitChatRepository implements HermitChatRepository {
 
   async upsertSession(input: HermitChatSessionInput) {
     const existing = this.sessions.get(input.id);
-    if (existing && existing.userId !== input.userId) throw new Error("foreign session");
+    if (existing && (existing.userId !== input.userId || existing.guestId !== input.guestId)) throw new Error("foreign session");
     if (!existing) this.sessions.set(input.id, input);
   }
 

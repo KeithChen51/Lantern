@@ -68,7 +68,7 @@ function validity(version: HubVersion, now: string) {
   if (version.effectiveFrom && version.effectiveFrom > now) return "scheduled";
   return version.validity;
 }
-function defaultVersion(resource: HubResource, now: string, inactive = false) {
+export function defaultVersion(resource: HubResource, now: string, inactive = false) {
   const published = resource.versions.filter(v => v.publishedAt).sort((a, b) => b.number - a.number);
   if (!resource.publishedVersionId) return null;
   const current = published.find(v => v.id === resource.publishedVersionId);

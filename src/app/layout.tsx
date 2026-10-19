@@ -4,12 +4,12 @@ import "./visual-v3.css";
 import "./input-focus.css";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { requireEmployee } from "@/modules/auth/access";
+import { requireSiteVisitor } from "@/modules/auth/access";
 import { isPublicAuthPage, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 
 export const metadata: Metadata = {
   title: "灯塔 丨 服务文化数字平台",
-  description: "内部员工统一登录入口。",
+  description: "服务文化数字平台。",
   robots: { index: false, follow: false },
 };
 
@@ -26,14 +26,14 @@ export default async function RootLayout({
   if (!isPublicAuthPage(requestPath)) {
     let principal;
     try {
-      principal = await requireEmployee(requestHeaders);
+      principal = await requireSiteVisitor(requestHeaders);
     } catch (error) {
       if (error && typeof error === "object" && "status" in error && error.status === 401) redirect("/login");
       return <html lang="zh-CN"><body><main role="alert">统一登录服务暂不可用，请稍后重试。</main></body></html>;
     }
     // Public login HTML never renders or loads the business shell.
     const { AppShell } = await import("@/components/layout/AppShell");
-    content = <AppShell session={{ user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
+    content = <AppShell session={{ kind: principal.kind, user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
   }
   return (
     <html

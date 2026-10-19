@@ -4,6 +4,7 @@ import { KnowledgeHub } from "./service";
 import { PrismaHubStore } from "./prisma-store";
 import { SqliteHubStore } from "./sqlite-store";
 import type { HubStore } from "./types";
+import { GuestHubStore } from "./guest-store";
 
 type SqliteRuntime = { path: string; store: SqliteHubStore };
 const local = globalThis as typeof globalThis & { lighthouseSqliteHub?: SqliteRuntime; lanternSqliteHub?: SqliteRuntime };
@@ -32,6 +33,11 @@ export async function closeKnowledgeHub() {
 
 export function getKnowledgeHub() {
   return new KnowledgeHub(getKnowledgeHubStore());
+}
+/** Business pages and AI share the same guest visibility boundary. Admin/CLI stay employee-only. */
+export function getSiteKnowledgeHub() {
+  const store = getKnowledgeHubStore();
+  return new KnowledgeHub(process.env.AUTH_MODE === "guest" ? new GuestHubStore(store) : store);
 }
 export function isKnowledgeHubEnabled() {
   return process.env.KNOWLEDGE_HUB_ENABLED === "true";

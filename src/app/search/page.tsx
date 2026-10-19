@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@iconify/react";
-import { getKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import { getSiteKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
 import { resourceLabels } from "@/components/knowledge/ResourceView";
 import { getHeaderSearchMatches } from "@/components/layout/header-search";
 import { searchSchema } from "@/modules/knowledge-hub/service";
@@ -16,9 +16,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const parsed = searchSchema.safeParse({ query, type: params.type || undefined, sort: params.sort || "relevance", offset: Number(params.offset || 0) });
   const options = parsed.success ? parsed.data : searchSchema.parse({});
   let error = !parsed.success ? "查询参数不正确，请调整后重试。" : "";
-  let result: Awaited<ReturnType<ReturnType<typeof getKnowledgeHub>["search"]>> | null = null;
+  let result: Awaited<ReturnType<ReturnType<typeof getSiteKnowledgeHub>["search"]>> | null = null;
   if (parsed.success && isKnowledgeHubEnabled()) {
-    try { result = await getKnowledgeHub().search(options); } catch { error = "知识服务暂时不可用，请稍后重试。"; }
+    try { result = await getSiteKnowledgeHub().search(options); } catch { error = "知识服务暂时不可用，请稍后重试。"; }
   }
   const pageLink = (offset: number) => `/search?${new URLSearchParams({ q: options.query, sort: options.sort, ...(options.type ? { type: options.type } : {}), offset: String(offset) })}`;
   const navigationMatches = getHeaderSearchMatches(query);

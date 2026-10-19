@@ -1,6 +1,8 @@
 import { prisma } from "@/infrastructure/db";
 import { AppError } from "@/shared/errors";
 import { readAccessConfig } from "./access-config";
+import { readSiteAccessConfig } from "./site-access-config";
+import { GuestAccessService } from "./guest-access-service";
 import { equalSecret, hashToken } from "./access-crypto";
 import { AccessService } from "./access-service";
 import { PrismaAccessStore } from "./access-store";
@@ -10,7 +12,26 @@ import { IamIdentityClient } from "./iam";
 
 export type { Capability, Principal } from "./access-types";
 export { AccessError } from "./access-types";
+function denyGuestEmployeeAccess(): void {
+  if (process.env.AUTH_MODE === "guest") throw new AccessError("访客模式不提供员工权限。", 403);
+}
+export function getGuestAccessService(): GuestAccessService {
+  const config = readSiteAccessConfig();
+  if (config.mode !== "guest") throw new AccessError("访客访问未启用。", 403);
+  return new GuestAccessService(config, new PrismaAccessStore(prisma));
+}
+export async function requireSiteVisitor(request: Request | Headers): Promise<Principal> {
+  const config = readSiteAccessConfig();
+  if (config.mode !== "guest") return requireEmployee(request);
+  const token = readAccessCookie(requestHeaders(request), config.sessionCookie);
+  if (!token) throw new AccessError("访客会话已失效，请刷新页面。", 401);
+  return getGuestAccessService().webPrincipal(token);
+}
+export async function enforceGuestRequestLimit(principal: Principal, action: "chat" | "attachment"): Promise<void> {
+  if (principal.kind === "guest") await getGuestAccessService().enforceRequestLimit(principal, action);
+}
 export function getAccessService(): AccessService {
+  denyGuestEmployeeAccess();
   const config = readAccessConfig();
   if (config.mode === "iam" && config.iam) {
     const iam = new IamIdentityClient(config.iam);
@@ -40,12 +61,14 @@ export function readAccessCookie(headers: Headers, name: string): string | undef
 }
 function requestHeaders(request: Request | Headers): Headers { return request instanceof Headers ? request : request.headers; }
 export async function requireEmployee(request: Request | Headers): Promise<Principal> {
+  denyGuestEmployeeAccess();
   const config = readAccessConfig();
   const token = readAccessCookie(requestHeaders(request), config.sessionCookie);
   if (!token) throw new AccessError("请先使用员工账号登录。", 401);
   return getAccessService().webPrincipal(token);
 }
 export async function requireKnowledgeAdmin(request: Request | Headers, options?: { write?: boolean }): Promise<Principal> {
+  denyGuestEmployeeAccess();
   const token = readAccessCookie(requestHeaders(request), readAccessConfig().sessionCookie);
   if (!token) throw new AccessError("请先使用员工账号登录。", 401);
   const principal = await getAccessService().webPrincipal(token, { adminWrite: options?.write });
@@ -54,12 +77,13 @@ export async function requireKnowledgeAdmin(request: Request | Headers, options?
   return principal;
 }
 export async function requireKnowledgeClient(request: Request): Promise<Principal> {
+  denyGuestEmployeeAccess();
   const authorization = request.headers.get("authorization");
   if (!authorization || !/^Bearer [A-Za-z0-9_-]{32,160}$/.test(authorization)) throw new AccessError("请先通过 lighthouse auth login 授权。", 401);
   return getAccessService().clientPrincipal(authorization.slice(7));
 }
 export function assertSameOrigin(headers: Headers): void {
-  const config = readAccessConfig();
+  const config = readSiteAccessConfig();
   if (headers.get("origin") !== config.origin || headers.get("sec-fetch-site") === "cross-site") throw new AccessError("请求来源不受信任。", 403);
 }
 function assertMutationHeaders(headers: Headers, principal: Principal): void {

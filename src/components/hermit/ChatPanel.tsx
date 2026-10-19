@@ -3,7 +3,7 @@
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { Icon } from "@iconify/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { LhButton, LhStatusBadge, LhSuggestionList } from "@/components/ui/lighthouse-primitives";
 import { useLhReducedMotion } from "@/hooks/use-lighthouse-motion";
@@ -12,6 +12,8 @@ import { DocumentReader } from "./DocumentReader";
 import { MessageBubble, TypingIndicator } from "./MessageBubble";
 import styles from "./hermit-v3.module.css";
 import { authFetch } from "@/components/auth/auth-fetch";
+import { useEmployeeSession } from "@/components/auth/SessionContext";
+import { HermitUploadScope, hermitUploadOwner } from "./upload-scope";
 import {
   getDocumentRecommendations,
   getHermitApiError,
@@ -62,6 +64,15 @@ function createLocalAttachmentId(file: File) {
 }
 
 export function ChatPanel() {
+  const uploadOwner = hermitUploadOwner(useEmployeeSession());
+  const uploadOwnerRef = useRef(uploadOwner);
+  const uploadScopeRef = useRef<HermitUploadScope | null>(null);
+  useLayoutEffect(() => {
+    uploadOwnerRef.current = uploadOwner;
+    const scope = new HermitUploadScope(uploadOwner, () => uploadOwnerRef.current);
+    uploadScopeRef.current = scope;
+    return () => { scope.dispose(); };
+  }, [uploadOwner]);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat", fetch: authFetch }), []);
   const pendingTextRef = useRef<string | null>(null);
   const pendingBodyRef = useRef<{ attachmentIds: string[]; documentContext?: HermitDocumentContext }>({ attachmentIds: [] });
@@ -114,13 +125,16 @@ export function ChatPanel() {
     }
   }, [hasMessages, isLoading, messages, status]);
 
-  async function uploadAttachment(file: File, localId: string) {
+  async function uploadAttachment(file: File, localId: string, scope: HermitUploadScope) {
+    scope.assertActive();
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const response = await authFetch("/api/hermit/attachments", { method: "POST", body: formData });
+      const response = await authFetch("/api/hermit/attachments", { method: "POST", body: formData, signal: scope.signal });
+      scope.assertActive();
       const responseText = await response.text();
+      scope.assertActive();
       let payload: unknown = responseText;
       try {
         payload = responseText ? JSON.parse(responseText) : null;
@@ -134,7 +148,7 @@ export function ChatPanel() {
       const data = payload as { id: string; name?: unknown; size?: unknown; status?: unknown };
       if (data.status !== "ready") throw new Error(getHermitApiError(payload, "文件暂时无法读取，请重试。"));
       if (canceledUploadIdsRef.current.delete(localId)) {
-        await deleteServerAttachment(data.id);
+        await deleteServerAttachment(data.id, scope);
         return;
       }
       setAttachments((current) => current.map((attachment) => (
@@ -151,6 +165,7 @@ export function ChatPanel() {
           : attachment
       )));
     } catch (error) {
+      if (!scope.active) return;
       const message = getHermitApiError(error, "有文件未能上传，请重试或移除后继续。");
       setAttachments((current) => current.map((attachment) => (
         attachment.localId === localId ? { ...attachment, status: "error", error: message } : attachment
@@ -159,29 +174,32 @@ export function ChatPanel() {
     }
   }
 
-  async function uploadSelectedFiles(files: File[], availableSlots: number) {
-    for (const file of files.slice(0, availableSlots)) {
+  async function uploadSelectedFiles(files: File[], availableSlots: number, scope: HermitUploadScope) {
+    await scope.forEach(files.slice(0, availableSlots), async file => {
       if (!isSupportedHermitFile(file)) {
         setUploadError(`${file.name} 暂不支持。请选择 PDF、Word、TXT 或 Markdown 文件。`);
-        continue;
+        return;
       }
 
       const localId = createLocalAttachmentId(file);
       setAttachments((current) => [...current, { localId, name: file.name, size: file.size, status: "uploading", file }]);
-      await uploadAttachment(file, localId);
-    }
+      await uploadAttachment(file, localId, scope);
+    });
   }
 
-  function enqueueUpload(task: () => Promise<void>) {
+  function enqueueUpload(task: (scope: HermitUploadScope) => Promise<void>) {
+    const scope = uploadScopeRef.current;
+    if (!scope?.active) return;
     uploadQueueLengthRef.current += 1;
     setIsUploadingAttachments(true);
 
     const run = async () => {
       try {
-        await task();
+        scope.assertActive();
+        await task(scope);
       } finally {
         uploadQueueLengthRef.current -= 1;
-        if (uploadQueueLengthRef.current === 0) setIsUploadingAttachments(false);
+        if (scope.active && uploadQueueLengthRef.current === 0) setIsUploadingAttachments(false);
       }
     };
 
@@ -202,7 +220,7 @@ export function ChatPanel() {
 
     if (files.length > availableSlots) setUploadError("本次对话最多保留 5 个附件，其他文件未加入。");
     const selectedFiles = Array.from(files);
-    enqueueUpload(() => uploadSelectedFiles(selectedFiles, availableSlots));
+    enqueueUpload(scope => uploadSelectedFiles(selectedFiles, availableSlots, scope));
   }
 
   async function handleRemoveAttachment(attachment: HermitAttachment) {
@@ -210,13 +228,16 @@ export function ChatPanel() {
     setAttachments((current) => current.filter((item) => item.localId !== attachment.localId));
     if (!attachment.id) return;
 
-    await deleteServerAttachment(attachment.id);
+    const scope = uploadScopeRef.current;
+    if (scope?.active) await deleteServerAttachment(attachment.id, scope);
   }
 
-  async function deleteServerAttachment(id: string) {
+  async function deleteServerAttachment(id: string, scope: HermitUploadScope) {
     try {
+      scope.assertActive();
       await authFetch("/api/hermit/attachments", {
         method: "DELETE",
+        signal: scope.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id }),
       });
@@ -231,7 +252,7 @@ export function ChatPanel() {
     setAttachments((current) => current.map((item) => (
       item.localId === attachment.localId ? { ...item, status: "uploading", error: undefined } : item
     )));
-    enqueueUpload(() => uploadAttachment(attachment.file as File, attachment.localId));
+    enqueueUpload(scope => uploadAttachment(attachment.file as File, attachment.localId, scope));
   }
 
   async function submitText(rawText: string) {

@@ -2,16 +2,16 @@ import { createServer } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  employee: vi.fn(), mutation: vi.fn(), upsertSession: vi.fn(), upsertMessage: vi.fn(), addRetrievalTrace: vi.fn(), run: vi.fn(), verify: vi.fn(), resolve: vi.fn(), get: vi.fn(), search: vi.fn(),
+  employee: vi.fn(), limit: vi.fn(), mutation: vi.fn(), upsertSession: vi.fn(), upsertMessage: vi.fn(), addRetrievalTrace: vi.fn(), run: vi.fn(), verify: vi.fn(), resolve: vi.fn(), get: vi.fn(), search: vi.fn(),
 }));
 vi.mock("@/lib/hermit/dsh-runtime", () => ({ runDshTurn: mocks.run, verifyDshInstallation: mocks.verify }));
 vi.mock("@/lib/hermit/attachments", () => ({ resolveHermitAttachments: mocks.resolve }));
-vi.mock("@/modules/knowledge-hub/runtime", () => ({ isKnowledgeHubEnabled: () => true, getKnowledgeHub: () => ({ get: mocks.get, search: mocks.search }) }));
+vi.mock("@/modules/knowledge-hub/runtime", () => ({ isKnowledgeHubEnabled: () => true, getSiteKnowledgeHub: () => ({ get: mocks.get, search: mocks.search }) }));
 vi.mock("@/modules/hermit", async () => {
   const { createHermitChatService } = await import("@/modules/hermit/service");
   return { createHermitChatService, hermitChatRepository: { upsertSession: mocks.upsertSession, upsertMessage: mocks.upsertMessage, addRetrievalTrace: mocks.addRetrievalTrace } };
 });
-vi.mock("@/modules/auth/access", () => ({ requireEmployee: mocks.employee, assertWebMutation: mocks.mutation,
+vi.mock("@/modules/auth/access", () => ({ requireSiteVisitor: mocks.employee, enforceGuestRequestLimit: mocks.limit, assertWebMutation: mocks.mutation,
   authErrorResponse: (error: {status?: number}) => Response.json({ error: "access rejected" }, { status: error.status ?? 503 }) }));
 import { AppError } from "@/shared/errors";
 const principal = { userId: "employee-a", account: "a", displayName: "Employee A", grantId: "grant-a", credentialId: "web-a", channel: "web", capabilities: ["hermit:chat", "hermit:attachment:self"], expiresAt: Date.now() + 3600000 };
@@ -51,6 +51,42 @@ describe("DSH chat transport boundary", () => {
       expect([401, 403]).toContain((await POST(request({ messages: [question] }))).status);
     }
     expect(mocks.upsertSession).not.toHaveBeenCalled(); expect(mocks.run).not.toHaveBeenCalled();
+  });
+  it("persists guest owner through the real service and counts one chat request across all rechecks", async () => {
+    const guest = { ...principal, kind: "guest", userId: "guest:a" };
+    mocks.employee.mockResolvedValue(guest);
+    const response = await POST(request({ id: "guest-session", messages: [question] }));
+    expect(response.status).toBe(200);
+    expect(await response.text()).not.toContain('"type":"error"');
+    expect(mocks.limit).toHaveBeenCalledExactlyOnceWith(guest, "chat");
+    expect(mocks.employee.mock.calls.length).toBeGreaterThan(3);
+    for (const call of mocks.upsertSession.mock.calls) expect(call[0]).toMatchObject({ userId: null, guestId: "guest:a" });
+    for (const call of mocks.upsertMessage.mock.calls) expect(call[0]).toMatchObject({ userId: null, guestId: "guest:a" });
+    expect(mocks.addRetrievalTrace).toHaveBeenCalledWith(expect.objectContaining({ userId: null, guestId: "guest:a" }));
+  });
+  it("rechecks guest CSRF and revocation before every model continuation", async () => {
+    mocks.employee.mockResolvedValue({ ...principal, kind: "guest", userId: "guest:a" });
+    mocks.run.mockImplementation(async ({ assertAccess, onText }) => {
+      await assertAccess(); onText("Allowed");
+      mocks.mutation.mockImplementation(() => { throw new AppError("forbidden", "CSRF changed", 403); });
+      await assertAccess(); onText("Must not appear");
+    });
+    const stream = await (await POST(request({ messages: [question] }))).text();
+    expect(stream).toContain("Allowed"); expect(stream).not.toContain("Must not appear");
+    expect(stream).toContain('"type":"error"'); expect(mocks.limit).toHaveBeenCalledTimes(1);
+  });
+  it("rejects guest rate limit before reading body or doing AI work", async () => {
+    mocks.limit.mockRejectedValueOnce(new AppError("forbidden", "rate limit", 429));
+    const req = request({ messages: [question] });
+    const reader = vi.spyOn(req.body!, "getReader");
+    expect((await POST(req)).status).toBe(429);
+    expect(reader).not.toHaveBeenCalled(); expect(mocks.run).not.toHaveBeenCalled();
+  });
+  it.each(["guest-b", "employee"])("stops a guest request when identity changes to %s before model start", async kind => {
+    const guest = { ...principal, kind: "guest", userId: "guest:a" };
+    mocks.employee.mockResolvedValueOnce(guest).mockResolvedValue({ ...guest, kind: kind === "employee" ? "employee" : "guest", userId: kind === "employee" ? guest.userId : "guest:b" });
+    expect((await POST(request({ messages: [question] }))).status).toBe(401);
+    expect(mocks.run).not.toHaveBeenCalled(); expect(mocks.upsertMessage).not.toHaveBeenCalled();
   });
   it("rejects a foreign session before attachment, knowledge or runtime work", async () => {
     mocks.upsertSession.mockRejectedValue(new AppError("forbidden", "foreign session", 403));

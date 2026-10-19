@@ -4,13 +4,28 @@ import LoginPage from "@/app/login/page";
 import ConfirmLoginPage from "@/app/auth/confirm/page";
 import DeviceApprovalPage from "@/app/auth/device/page";
 
-const { config, pending, device, employee } = vi.hoisted(() => ({ config: vi.fn(), pending: vi.fn(), device: vi.fn(), employee: vi.fn() }));
+const { config, siteConfig, redirect, pending, device, employee } = vi.hoisted(() => ({ config: vi.fn(), siteConfig: vi.fn(), redirect: vi.fn(), pending: vi.fn(), device: vi.fn(), employee: vi.fn() }));
 vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: config }));
+vi.mock("@/modules/auth/site-access-config", () => ({ readSiteAccessConfig: siteConfig }));
+vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/modules/auth/access", () => ({ getPendingLogin: pending, getDeviceRequest: device, requireEmployee: employee }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-beforeEach(() => { config.mockReset(); pending.mockReset(); device.mockReset(); employee.mockReset(); });
+beforeEach(() => { config.mockReset(); siteConfig.mockReset().mockReturnValue({ mode: "iam" }); redirect.mockReset().mockImplementation(() => { throw new Error("NEXT_REDIRECT"); }); pending.mockReset(); device.mockReset(); employee.mockReset(); });
 afterEach(() => vi.clearAllMocks());
 describe("native employee entry and approval pages", () => {
+  it("takes guests home without loading employee configuration or showing OA login", async () => {
+    siteConfig.mockReturnValue({ mode: "guest" });
+    await expect(LoginPage({ searchParams: Promise.resolve({ error: "unavailable" }) })).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirect).toHaveBeenCalledWith("/");
+    expect(config).not.toHaveBeenCalled();
+  });
+  it("keeps the OA employee login entry in IAM mode", async () => {
+    config.mockReturnValue({ mode: "iam" });
+    const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({}) }));
+    expect(html).toContain("OA 登录");
+    expect(html).toContain('action="/api/auth/start"');
+    expect(redirect).not.toHaveBeenCalled();
+  });
   it("renders a native login POST and preserves a direct device link without business shell", async () => {
     const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ returnTo: "/auth/device?user_code=ABCD-EFGH" }) }));
     expect(html).toContain('action="/api/auth/start"'); expect(html).toContain('method="post"');
