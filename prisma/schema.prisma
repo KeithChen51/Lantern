@@ -676,6 +676,7 @@ model KnowledgeChunk {
 model ChatSession {
   id        String   @id
   userId    String?  @map("user_id")
+  guestId   String?  @map("guest_id") @db.VarChar(191)
   brandId   String?  @map("brand_id")
   regionId  String?  @map("region_id")
   dealerId  String?  @map("dealer_id")
@@ -692,6 +693,7 @@ model ChatSession {
   messages ChatMessage[]
 
   @@index([userId, createdAt])
+  @@index([guestId, createdAt])
   @@index([brandId, regionId, dealerId, storeId])
   @@map("chat_sessions")
 }

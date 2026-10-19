@@ -5,6 +5,7 @@ import { resolve, join, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parse } from "yaml";
 import { buildSync } from "esbuild";
+import { checkResolvedAccessConfig } from "../../scripts/check-access-config";
 
 const bash = process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "bash";
 const roots: string[] = [];
@@ -41,6 +42,39 @@ function fixture() {
 }
 
 describe("guarded deployment orchestration", () => {
+  const guestEnvironment = () => ({
+    NODE_ENV: "production", LIGHTHOUSE_DEPLOYMENT_ENV: "production", AUTH_MODE: "guest",
+    LIGHTHOUSE_ORIGIN: "https://lighthouse.example.invalid", AUTH_TEST_HTTP_ORIGIN: "", AUTH_ALLOW_LOCAL_HTTP: "false",
+    AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+    DATABASE_URL: "mysql://app:synthetic@mysql:3306/lighthouse_production", KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql",
+  });
+  it("preflights a deployed guest without employee credentials and retains the exact test HTTP exception", () => {
+    const environment = guestEnvironment();
+    expect(() => checkResolvedAccessConfig({ services: { app: { environment } } }, "app", "production")).not.toThrow();
+    Object.assign(environment, { LIGHTHOUSE_DEPLOYMENT_ENV: "test", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081" });
+    expect(() => checkResolvedAccessConfig({ services: { app: { environment } } }, "app", "test")).not.toThrow();
+    expect(() => checkResolvedAccessConfig({ services: { app: { environment } } }, "app", "production")).toThrow();
+  });
+  it.each([
+    { AUTH_MODE: undefined }, { AUTH_MODE: "unknown" }, { AUTH_MODE: "iam" }, { AUTH_MODE: "portal" },
+    { AUTH_ENCRYPTION_KEY: undefined }, { AUTH_ENCRYPTION_KEY: "invalid" },
+    { LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081" }, { AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081" },
+    { LIGHTHOUSE_ORIGIN: "https://lighthouse.example.invalid/path" }, { AUTH_ALLOW_LOCAL_HTTP: "true" },
+    { DATABASE_URL: undefined }, { KNOWLEDGE_HUB_DRIVER: "sqlite" }, { KNOWLEDGE_HUB_ENABLED: "false" }, { NODE_ENV: "development" },
+  ])("refuses invalid guest/deployment configuration rather than falling back: %j", (overrides) => {
+    const environment = { ...guestEnvironment(), ...overrides };
+    expect(() => checkResolvedAccessConfig({ services: { app: { environment } } }, "app", "production")).toThrow();
+  });
+  it("retains the private stable-key template and explicit IAM/guest separation", () => {
+    const guest = readFileSync("deploy/intranet/environments/guest-app.env.example", "utf8");
+    expect(guest).toMatch(/^AUTH_MODE=guest$/m);
+    expect(guest).toMatch(/^NODE_ENV=production$/m);
+    expect(guest).toMatch(/^AUTH_ENCRYPTION_KEY=/m);
+    expect(guest).not.toMatch(/^(?:IAM_|PORTAL_|MYSQL_ROOT_PASSWORD=)/m);
+    for (const template of ["app.env.example", "test-app.env.example"]) {
+      expect(readFileSync(`deploy/intranet/environments/${template}`, "utf8")).toMatch(/^AUTH_MODE=iam$/m);
+    }
+  });
   it("has syntactically valid Bash and isolates MySQL, app secrets and ready checks", () => {
     for (const script of ["environment.sh", "existing-test.sh"]) expect(spawnSync(bash, ["-n", resolve("scripts/intranet/environment", script)]).status).toBe(0);
     const config = parse(readFileSync("deploy/intranet/environments/compose.yaml", "utf8"));
@@ -66,6 +100,38 @@ describe("guarded deployment orchestration", () => {
     expect(calls.some(x => x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
     expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
     expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+  it("upgrades explicit guest without employee credentials through the same backup and migration guards", () => {
+    const f = fixture();
+    const configFile = join(f.root, "fake-config.json");
+    const authOverrides = {
+      AUTH_MODE: "guest", PORTAL_API_BASE_URL: null, PORTAL_LOGIN_URL: null, PORTAL_APP_CODE: null,
+      PORTAL_APP_SECRET: null, PORTAL_KNOWLEDGE_ADMIN_ROLE: null, PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: null,
+    };
+    writeFileSync(configFile, JSON.stringify({ ...JSON.parse(readFileSync(configFile, "utf8")), authOverrides }));
+    const result = f.run("upgrade", { FAKE_OLD_AUTH: "1" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls();
+    const preflight = calls.findIndex(x => x.includes("/app/check-access-config.cjs"));
+    const stop = calls.findIndex(x => x.includes("stop"));
+    const dump = calls.findIndex(x => x.some(y => y.includes("mysqldump")));
+    const migrate = calls.findIndex(x => x.at(-1) === "migrate");
+    const up = calls.findIndex(x => x.includes("up") && x.at(-1) === "app");
+    expect(preflight).toBeGreaterThan(-1); expect(stop).toBeGreaterThan(preflight);
+    expect(dump).toBeGreaterThan(stop); expect(migrate).toBeGreaterThan(dump); expect(up).toBeGreaterThan(migrate);
+    expect(calls.some(x => x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed|hub:bootstrap|hub:import-existing/.test(y)))).toBe(false);
+    expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
+  }, 30_000);
+  it("refuses a valid guest key rotation before app stop, backup or migration", () => {
+    const f = fixture();
+    const configFile = join(f.root, "fake-config.json");
+    writeFileSync(configFile, JSON.stringify({ ...JSON.parse(readFileSync(configFile, "utf8")), authOverrides: {
+      AUTH_MODE: "guest", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 8).toString("base64"),
+    } }));
+    const result = f.run("upgrade", { FAKE_OLD_AUTH: "1" });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("credential-encryption key changed");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate" || x.some(y => y.includes("mysqldump")))).toBe(false);
   }, 30_000);
   it("validates the selected production deployment and rejects a mismatched target", () => {
     const f = fixture();

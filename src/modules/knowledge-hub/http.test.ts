@@ -5,10 +5,10 @@ import { GET as search } from "@/app/api/resources/route";
 import { GET as get } from "@/app/api/resources/[id]/route";
 import { GET as file } from "@/app/api/resources/[id]/files/route";
 
-vi.mock("@/modules/auth/access", () => ({ requireEmployee: vi.fn(async () => ({ userId: "employee" })), authErrorResponse: () => Response.json({ error: "auth" }, { status: 401 }) }));
+vi.mock("@/modules/auth/access", () => ({ requireSiteVisitor: vi.fn(async () => ({ userId: "employee" })), authErrorResponse: () => Response.json({ error: "auth" }, { status: 401 }) }));
 
 const runtime = vi.hoisted(() => ({ enabled: true, hub: null as KnowledgeHub | null }));
-vi.mock("./runtime", () => ({ isKnowledgeHubEnabled: () => runtime.enabled, getKnowledgeHub: () => runtime.hub! }));
+vi.mock("./runtime", () => ({ isKnowledgeHubEnabled: () => runtime.enabled, getSiteKnowledgeHub: () => runtime.hub! }));
 const context = { params: Promise.resolve({ id: "whitepaper" }) };
 const request = (suffix = "") => new Request(`http://localhost/api/resources/whitepaper${suffix}`);
 

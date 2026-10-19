@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { readAccessConfig } from "../src/modules/auth/access-config";
+import { readSiteAccessConfig } from "../src/modules/auth/site-access-config";
 
 /** Check the exact resolved app environment, without inheriting tools-image defaults. */
 export function checkResolvedAccessConfig(input: unknown, service: string, expectedDeployment: "test" | "production" = "test"): void {
@@ -14,7 +14,7 @@ export function checkResolvedAccessConfig(input: unknown, service: string, expec
   // Both deployed environments use production builds; HTTP is only an exact
   // test-origin exception. Never inherit tools-image defaults.
   if (env.NODE_ENV !== "production" || env.LIGHTHOUSE_DEPLOYMENT_ENV !== expectedDeployment || env.AUTH_ALLOW_LOCAL_HTTP !== "false") throw new Error("Unexpected deployment");
-  readAccessConfig(env);
+  readSiteAccessConfig(env);
 }
 
 if (/(?:^|[\\/])check-access-config\.(?:ts|cjs)$/.test(process.argv[1] ?? "")) {

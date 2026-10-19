@@ -3,7 +3,7 @@ import {
   HERMIT_ATTACHMENT_MAX_REQUEST_BYTES,
   saveHermitAttachment,
 } from "@/lib/hermit/attachments";
-import { requireEmployee, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
+import { requireSiteVisitor, enforceGuestRequestLimit, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
 import { assertHermitPrincipal } from "@/modules/hermit/access";
 import { AppError, toErrorResponse } from "@/shared/errors";
 
@@ -44,16 +44,19 @@ function jsonNoStore(body: unknown, init?: ResponseInit) {
   return response;
 }
 
-async function authenticate(request: Request): Promise<Principal> {
-  const principal = await requireEmployee(request);
+async function authenticate(request: Request, original?: Principal): Promise<Principal> {
+  const principal = await requireSiteVisitor(request);
   assertHermitPrincipal(principal, "hermit:attachment:self");
   assertWebMutation(request, principal);
+  if (original && ((principal.kind ?? "employee") !== (original.kind ?? "employee") || principal.userId !== original.userId || principal.grantId !== original.grantId || principal.credentialId !== original.credentialId)) {
+    throw new AppError("unauthorized", "访问身份已变化，请刷新后重试。", 401);
+  }
   return principal;
 }
 
 export async function POST(request: Request) {
   let principal: Principal;
-  try { principal = await authenticate(request); }
+  try { principal = await authenticate(request); await enforceGuestRequestLimit(principal, "attachment"); }
   catch (error) { return error instanceof AppError ? jsonError(error) : authErrorResponse(error); }
   try {
     const contentLength = request.headers.get("content-length");
@@ -75,9 +78,9 @@ export async function POST(request: Request) {
     }
 
     // Parsing may be slow: recheck revocation before storing parsed content.
-    await authenticate(request);
+    await authenticate(request, principal);
     const result = await saveHermitAttachment(request, files[0], principal);
-    try { await authenticate(request); }
+    try { await authenticate(request, principal); }
     catch (error) { await deleteHermitAttachment(principal, result.summary.id); throw error; }
     return jsonNoStore(result.summary, { status: 201 });
   } catch (error) {
@@ -98,6 +101,7 @@ export async function DELETE(request: Request) {
       if (error instanceof AppError) throw error;
       throw new AppError("bad_request", "删除请求格式无效。", 400);
     }
+    await authenticate(request, principal);
     const result = await deleteHermitAttachment(principal, typeof body.id === "string" ? body.id : "");
     return jsonNoStore(result);
   } catch (error) {

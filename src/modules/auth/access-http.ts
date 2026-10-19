@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireKnowledgeClient } from "./access";
+import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireSiteVisitor, requireKnowledgeClient } from "./access";
 import { readAccessConfig } from "./access-config";
 import { hashToken } from "./access-crypto";
 import { AccessError, OAuthError } from "./access-types";
@@ -148,8 +148,8 @@ export const confirm = route(async request => {
   return sessionResponse(result.sessionToken, result.returnTo, isForm(request));
 });
 export const me = route(async request => {
-  const principal = await requireEmployee(request);
-  return json({ user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken, expiresAt: principal.expiresAt });
+  const principal = await requireSiteVisitor(request);
+  return json({ ...(principal.kind ? { kind: principal.kind } : {}), user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken, expiresAt: principal.expiresAt });
 });
 export function logout(all: boolean) { return route(async request => {
   const principal = await mutation(request);

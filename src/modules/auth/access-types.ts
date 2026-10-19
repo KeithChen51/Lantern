@@ -3,6 +3,7 @@ import type { IamLoginConfig } from "./iam-config";
 
 export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage";
 export type Principal = {
+  kind?: "employee" | "guest";
   userId: string; account: string; displayName: string;
   organization?: string; avatarUrl?: string;
   grantId: string; credentialId: string; channel: "web" | "cli" | "mcp";

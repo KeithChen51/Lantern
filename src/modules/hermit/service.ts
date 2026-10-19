@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 import type {
   HermitChatParticipant,
+  HermitChatOwner,
   HermitChatRepository,
   HermitChatSessionInput,
   HermitMessageInput,
@@ -48,14 +49,14 @@ function buildSessionInput(
   };
 }
 
-function toMessageInput(message: UIMessage, sessionId: string, userId: string, modelName: string, allowEmpty = false): HermitMessageInput | null {
+function toMessageInput(message: UIMessage, sessionId: string, owner: HermitChatOwner, modelName: string, allowEmpty = false): HermitMessageInput | null {
   if (!isPersistableRole(message.role)) return null;
 
   const content = extractTextContent(message);
   if (!message.id || (!content && !allowEmpty)) return null;
 
   return {
-    userId,
+    ...owner,
     sessionId,
     externalMessageId: message.id,
     role: message.role,
@@ -77,7 +78,7 @@ export class HermitChatService {
       // Assistant content and completion status are owned by the server. A client
       // history replay must not overwrite the finalized answer or its audit.
       if (message.role !== "user") continue;
-      const messageInput = toMessageInput(message, input.sessionId, input.participant.userId, input.modelName);
+      const messageInput = toMessageInput(message, input.sessionId, input.participant, input.modelName);
       if (!messageInput) continue;
 
       await this.repository.upsertMessage(messageInput);
@@ -89,7 +90,7 @@ export class HermitChatService {
 
     const snapshot = input.retrieval.sourceSnapshot;
     const hasEvidence = !!snapshot && typeof snapshot === "object" && "mode" in snapshot && snapshot.mode === "progressive-index" && "reads" in snapshot && Array.isArray(snapshot.reads) && snapshot.reads.length > 0;
-    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.participant.userId, input.modelName, hasEvidence);
+    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.participant, input.modelName, hasEvidence);
     if (!messageInput) return;
 
     const storedMessage = await this.repository.upsertMessage(messageInput);
@@ -97,7 +98,7 @@ export class HermitChatService {
     if (!contextText && !hasEvidence) return;
 
     await this.repository.addRetrievalTrace({
-      userId: input.participant.userId,
+      ...input.participant,
       chatMessageId: storedMessage.id,
       query: input.retrieval.query,
       contextText,
