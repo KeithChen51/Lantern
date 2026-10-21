@@ -1,5 +1,7 @@
 # 灯塔直连 IAM：配置、切换与联调
 
+**适用模式：** `AUTH_MODE=iam` 且 `IAM_AUTHORIZATION_SOURCE=sync`（省略 source 也保持此模式）。本文的账号/权限同步、同步密钥和目录验收只适用于该模式。Issue #57 后续新增的 **IAM 登录 + 统一中台角色授权** 使用 `IAM_AUTHORIZATION_SOURCE=portal`，无需同步前置条件，见[组合模式配置与验收](lighthouse-iam-portal.md)。本轮 HTTP 测试模板已选择组合模式；本文同步方案使用 `app.env.example` 并填写本环境 origin。
+
 关联 [Issue #57](https://github.com/KeithChen51/Lantern/issues/57)。本说明基于[内网 IAM 接入指南](https://sefd-aftersales.bydauto.com.cn/r/workspace-mu7uz523/iam/)的国内内部员工单点登录、账号同步及集团权限平台 RBAC 协议。是否完成真实接入，以目标环境验收记录为准；本地模拟测试不代表 IAM 已登记或网络已放行。
 
 ## 最终访问方式
@@ -29,11 +31,12 @@
 
 ## 运行时变量
 
-新部署从 `deploy/intranet/environments/app.env.example` 或 `test-app.env.example` 填写私有运行文件；模板不是现有环境的自动迁移脚本。所有凭据只在内网私有运行文件或受控密钥系统注入。
+原同步模式从 `deploy/intranet/environments/app.env.example` 填写私有运行文件，测试部署另填写其 `test` 标记及精确测试 origin；当前 `test-app.env.example` 是组合模式模板，不能直接用于本文同步验收。模板不是现有环境的自动迁移脚本。所有凭据只在内网私有运行文件或受控密钥系统注入。
 
 | 变量 | 内容 |
 | --- | --- |
 | `AUTH_MODE` | `iam`；显式 `portal` 仅为保留完整原配置的兼容回退模式，不是 IAM 失败后的自动降级 |
+| `IAM_AUTHORIZATION_SOURCE` | 本文为 `sync`，省略时相同；`portal` 见独立组合模式指引，不使用本文同步配置 |
 | `NODE_ENV` | 测试、正式均为 `production`，使用同一生产构建约定 |
 | `LIGHTHOUSE_DEPLOYMENT_ENV` | 测试 `test`，正式 `production` |
 | `LIGHTHOUSE_ORIGIN` | 测试 `http://10.0.147.68:16888`；正式实际 HTTPS origin |
@@ -47,7 +50,7 @@
 | `IAM_SYNC_AES_IV` | 与 IAM 约定的 Base64 16 字节 CBC IV |
 | `AUTH_ENCRYPTION_KEY` | 灯塔本地加密上游凭据的独立 Base64 32 字节密钥，升级保留原值；不是同步 AES key |
 
-MySQL、知识库与模型等原有变量保持各自配置。IAM 模式不需要 `PORTAL_*`，不得为了通过校验填写假的门户 URL、员工确认值或密钥。完整配置由应用自身 `readAccessConfig` 检查；配置通过不代表账号已同步、接口可达或 OAuth 已验收。
+MySQL、知识库与模型等原有变量保持各自配置。IAM **sync** 模式不需要 `PORTAL_*`，不得为了通过校验填写假的门户 URL、员工确认值或密钥。完整配置由应用自身 `readAccessConfig` 检查；配置通过不代表账号已同步、接口可达或 OAuth 已验收。组合模式需要独立中台 API/appKey/secret，不使用本文的同步账号作为权限依据。
 
 IAM OAuth 使用浏览器 `/idp/authCenter/authenticate`，服务端通过表单 POST `/gateway/bam-protocol-service/oauth2/getToken` 交换一次性 code，再 GET `/gateway/bam-protocol-service/oauth2/getUserInfo` 查询身份。token 和 client secret 只在服务端处理。文档未定义可直接使用的完整刷新协议，本实现不猜测 refresh 端点，登录有效期受上游 `expires_in` 约束。
 

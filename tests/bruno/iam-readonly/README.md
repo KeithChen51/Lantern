@@ -1,5 +1,7 @@
 # IAM 只读 API 验证
 
+**模式范围：** 本集合 02–04 的签名与目录只适用于原 `AUTH_MODE=iam`、`IAM_AUTHORIZATION_SOURCE=sync`（source 省略也相同）。新 `IAM_AUTHORIZATION_SOURCE=portal` 只复用 01、05，按[组合模式验收说明](../iam-portal/README.md)配合真实浏览器登录与中台角色查询，不填写同步密钥或整集合运行。
+
 用 Bruno 打开此目录，选择 `Test` 环境。真实 IAM / 权限平台联网前，可指向只使用模拟密钥的隔离灯塔实例。集合不调用账号或权限写入接口。
 
 - `01`：清空 Bruno cookie jar 后执行，未登录应为 401，不能是旧容器的 404 或代理登录页。

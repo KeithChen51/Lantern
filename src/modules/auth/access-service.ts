@@ -2,7 +2,8 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { equalSecret, hashToken, openToken, randomToken, safeReturnTo, sealToken } from "./access-crypto";
 import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
 import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
-import { readIamDirectory } from "./iam-directory";
+import { IAM_ROLES, readIamDirectory } from "./iam-directory";
+import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
 
 export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
 export type DeviceView = { userCode: string; clientName: string; scope: "knowledge:read"; expiresAt: number };
@@ -12,6 +13,7 @@ type LoginResult = { kind: "session"; sessionToken: string; returnTo: string } |
 const HOUR = 3600000;
 const CLIENT_ID = "lighthouse-cli";
 const SCOPE = "knowledge:read";
+const APPLICATION_ROLES = new Set<string>(IAM_ROLES.map(role => role.code));
 const key = (kind: AccessKind, value: string) => `${kind}:${hashToken(value)}`;
 const take = <T>(result: T): Exclude<T, Error> => { if (result instanceof Error) throw result; return result as Exclude<T, Error>; };
 const expired = (record: AccessRecord, now: number) => record.expiresAt <= now;
@@ -43,8 +45,25 @@ export class AccessService {
       const authorization = this.portal.authorization ? await this.portal.authorization(account) : { roles: await this.portal.roles(account) };
       const { roles, organization } = authorization;
       if (!Array.isArray(roles) || roles.length > 1000 || roles.some((role) => typeof role !== "string" || role.length > 200)) throw new AccessError("Invalid application roles", 503);
-      return { roles: [...roles], at: this.now(), ...(typeof organization === "string" && organization.length <= 1000 ? { organization } : {}) };
-    } catch (error) { if (permanent(error)) throw new AccessError("Employee role authorization is invalid", 401); return null; }
+      const granted = usesIamPortalAuthorization(this.config) ? [...new Set(roles.filter(role => APPLICATION_ROLES.has(role)))] : [...roles];
+      if (usesIamPortalAuthorization(this.config) && !granted.length) throw new AccessError("Lighthouse access has not been granted", 403);
+      return { roles: granted, at: this.now(), ...(typeof organization === "string" && organization.length <= 1000 ? { organization } : {}) };
+    } catch (error) {
+      // In the combined mode IAM proves identity only. A missing or failed
+      // role lookup must never become the legacy portal's employee fallback.
+      if (usesIamPortalAuthorization(this.config)) {
+        if (permanent(error)) throw new AccessError("Lighthouse access has not been granted", 403);
+        throw new AccessError("Application authorization is unavailable", 503);
+      }
+      if (permanent(error)) throw new AccessError("Employee role authorization is invalid", 401);
+      return null;
+    }
+  }
+  private portalRolesFresh(grant: AccessRecord<"grant">, adminWrite = false) {
+    return !usesIamPortalAuthorization(this.config) || this.now() - grant.payload.rolesAt < this.duration(adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, adminWrite ? 60000 : 300000);
+  }
+  private requirePortalRolesFresh(grant: AccessRecord<"grant">, adminWrite = false) {
+    if (!this.portalRolesFresh(grant, adminWrite)) throw new AccessError("Application authorization is unavailable", 503);
   }
   private grantExpiry(identity: PortalIdentity) { return Math.min(this.now() + this.duration(this.config.sessionAbsoluteMs, 8 * HOUR), identity.expiresAt ?? Infinity); }
   async startLogin(returnTo?: string): Promise<{ state: string; cookie: string; redirectUrl: string }> {
@@ -61,7 +80,7 @@ export class AccessService {
     }
     take(await this.store.transaction(async (tx) => {
       if (!await this.rate(tx, "login-start", "global", 100, 60000)) return new AccessError("Login requests are temporarily limited", 429);
-      await tx.put(this.record("login", key("login", state), "", null, { authority: this.config.mode ?? "portal", verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
+      await tx.put(this.record("login", key("login", state), "", null, { authority: accessAuthority(this.config), verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
     }));
     return { state, cookie, redirectUrl: url.toString() };
   }
@@ -76,7 +95,7 @@ export class AccessService {
       const id = key("login", input.state), verifier = hashToken(input.cookie);
       const transaction = await this.store.transaction(async (tx) => {
         const row = await tx.get("login", id);
-        if (!row || row.payload.authority === "iam" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
+        if (!row || (row.payload.authority ?? "portal") !== "portal" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
         return row;
       });
       const identity = await this.verified(input.token), identityAt = this.now(), roles = await this.roles(identity.account);
@@ -110,16 +129,17 @@ export class AccessService {
     // login; racing callbacks must never redeem the same code twice.
     const transaction = await this.store.transaction(async tx => {
       const row = await tx.get("login", id);
-      if (!row || row.payload.authority !== "iam" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
+      if (!row || row.payload.authority !== accessAuthority(this.config) || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
       row.payload.consumed = true; await this.save(tx, row); return row;
     });
     const exchanged = await this.portal.exchange(input.code);
     const identity = this.identity({ ...await this.verified(exchanged.token), expiresAt: exchanged.expiresAt });
     const identityAt = this.now(), sessionToken = randomToken(), grantId = `grant:${randomUUID()}`, candidateId = randomUUID(), csrfToken = randomToken();
+    const roles = usesIamPortalAuthorization(this.config) ? await this.roles(identity.account) : null;
     const cipher = sealToken(exchanged.token, this.config.encryptionKey);
     return this.store.transaction(async tx => {
       if (expired(transaction, this.now())) throw new AccessError("Login transaction expired", 401);
-      await this.createSession(tx, identity, identityAt, null, cipher, grantId, candidateId, sessionToken, csrfToken);
+      await this.createSession(tx, identity, identityAt, roles, cipher, grantId, candidateId, sessionToken, csrfToken);
       return { sessionToken, returnTo: transaction.payload.returnTo };
     });
   }
@@ -146,7 +166,7 @@ export class AccessService {
     });
   }
   private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: { roles: string[]; at: number; organization?: string } | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
-    if (this.config.mode === "iam") {
+    if (usesIamSyncAuthorization(this.config)) {
       const directory = await readIamDirectory(tx, identity.account, this.now());
       identity = { ...identity, displayName: directory.displayName, expiresAt: Math.min(identity.expiresAt ?? Infinity, directory.expiresAt) };
       roles = { roles: directory.roles, at: this.now(), organization: directory.organization };
@@ -155,7 +175,7 @@ export class AccessService {
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
     const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
-    const grant = this.record("grant", grantId, identity.account, null, { authority: this.config.mode ?? "portal", userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
+    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
     await tx.put(grant);
     await tx.put(this.record("session", key("session", token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
     await this.audit(tx, "login", identity.account, grantId);
@@ -163,8 +183,9 @@ export class AccessService {
   private sessionValid(session: AccessRecord<"session">) { return session.payload.active && !expired(session, this.now()) && this.now() - session.payload.lastUsedAt < this.duration(this.config.sessionIdleMs, HOUR); }
   private async activeGrant(tx: AccessTransaction, id: string) {
     const grant = await tx.get("grant", id);
-    if (!grant || (grant.payload.authority ?? "portal") !== (this.config.mode ?? "portal") || !grant.payload.active || expired(grant, this.now()) || !await tx.employeeActive(grant.payload.account, grant.payload.userId)) throw new AccessError("Employee authorization expired", 401);
-    if (this.config.mode === "iam") {
+    if (!grant || (grant.payload.authority ?? "portal") !== accessAuthority(this.config) || !grant.payload.active || expired(grant, this.now()) || !await tx.employeeActive(grant.payload.account, grant.payload.userId)) throw new AccessError("Employee authorization expired", 401);
+    if (usesIamPortalAuthorization(this.config) && !grant.payload.roles.some(role => APPLICATION_ROLES.has(role))) throw new AccessError("Lighthouse access has not been granted", 403);
+    if (usesIamSyncAuthorization(this.config)) {
       const directory = await readIamDirectory(tx, grant.payload.account, this.now());
       grant.payload.roles = directory.roles;
       grant.payload.rolesAt = this.now();
@@ -189,9 +210,9 @@ export class AccessService {
       catch (error) { if (permanent(error)) await this.invalidateGrant(grant.id, "identity-invalid"); throw error; }
     }
     let roles: { roles: string[]; at: number; organization?: string } | null = null;
-    if (this.config.mode !== "iam" && now - grant.payload.rolesAt >= roleFresh) {
+    if (!usesIamSyncAuthorization(this.config) && now - grant.payload.rolesAt >= roleFresh) {
       try { roles = await this.roles(grant.payload.account); }
-      catch (error) { await this.invalidateGrant(grant.id, "roles-invalid"); throw error; }
+      catch (error) { if (permanent(error)) await this.invalidateGrant(grant.id, "roles-invalid"); throw error; }
     }
     if (!identity && !roles) return;
     await this.store.transaction(async (tx) => {
@@ -214,6 +235,7 @@ export class AccessService {
     return this.store.transaction(async (tx) => {
       const session = await tx.get("session", id); if (!session || !this.sessionValid(session)) throw new AccessError("Web session expired", 401);
       const current = await this.activeGrant(tx, session.payload.grantId);
+      this.requirePortalRolesFresh(current, options?.adminWrite);
       if (this.now() - current.payload.identityAt >= this.duration(options?.adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, options?.adminWrite ? 60000 : 300000)) throw new AccessError("Employee verification is unavailable", 503);
       const roleFresh = this.duration(options?.adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, options?.adminWrite ? 60000 : 300000);
       const adminRoles = [this.config.adminRole, this.config.platformAdminRole].filter((role): role is string => Boolean(role));
@@ -240,6 +262,7 @@ export class AccessService {
       const access = await tx.get("access", id); if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401);
       const client = await this.activeClient(tx, access.payload.clientId);
       const current = await this.activeGrant(tx, client.payload.grantId);
+      this.requirePortalRolesFresh(current);
       if (this.now() - current.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) throw new AccessError("Employee verification is unavailable", 503);
       client.payload.lastUsedAt = this.now(); await this.save(tx, client);
       return this.principal(current, client.id, channel, Math.min(access.expiresAt, client.expiresAt, current.expiresAt));
@@ -251,6 +274,7 @@ export class AccessService {
     if (!session || !this.sessionValid(session) || session.payload.grantId !== principal.grantId || session.subjectId !== principal.account) throw new AccessError("Web session expired", 401);
     const grant = await this.activeGrant(tx, principal.grantId);
     if (grant.payload.userId !== principal.userId || grant.payload.account !== principal.account) throw new AccessError("Employee authorization mismatch", 401);
+    this.requirePortalRolesFresh(grant);
     return session;
   }
   async logout(principal: Principal, all = false): Promise<void> {
@@ -332,6 +356,7 @@ export class AccessService {
       device.payload.lastPollAt = now;
       if (device.payload.status === "pending") { await this.save(tx, device); return new OAuthError("authorization_pending"); }
       const grant = await this.deviceParent(tx, device), expiresAt = Math.min(now + this.duration(this.config.clientMs, 8 * HOUR), grant.expiresAt);
+      if (!this.portalRolesFresh(grant)) return new OAuthError("temporarily_unavailable", 503);
       if (now - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
       const clients = await tx.find("client", { subjectId: grant.payload.account, expiresAfter: this.now(), activeOnly: true });
       if (clients.filter((client) => client.payload.active && !expired(client, now)).length >= 50) return new OAuthError("access_denied");
@@ -364,6 +389,7 @@ export class AccessService {
       let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }
       if (refresh.payload.used || client.payload.currentRefreshHash !== hashToken(refreshToken)) { client.payload.active = false; await this.save(tx, client); await this.audit(tx, "refresh-replay", client.subjectId, client.id); return new OAuthError("invalid_grant"); }
       let grant: AccessRecord<"grant">; try { grant = await this.activeGrant(tx, client.payload.grantId); } catch { return new OAuthError("invalid_grant"); }
+      if (!this.portalRolesFresh(grant)) return new OAuthError("temporarily_unavailable", 503);
       if (this.now() - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
       client.expiresAt = Math.min(client.expiresAt, grant.expiresAt); client.payload.currentRefreshHash = hashToken(nextRefresh); client.payload.lastUsedAt = this.now(); refresh.payload.used = true;
       await this.save(tx, refresh); await this.save(tx, client); return this.issueTokens(tx, client, accessToken, nextRefresh);

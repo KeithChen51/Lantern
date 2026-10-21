@@ -37,7 +37,7 @@ export function createIamSyncHandlers(dependencies: Dependencies = {}) {
   async function handle(request: Request, endpoint: "account" | "permission" | "roles" | "menus"): Promise<Response> {
     try {
       const env = dependencies.env?.() ?? process.env;
-      if (env.AUTH_MODE !== "iam") throw new AccessError("IAM synchronization is unavailable", 503);
+      if (env.AUTH_MODE !== "iam" || (env.IAM_AUTHORIZATION_SOURCE !== undefined && env.IAM_AUTHORIZATION_SOURCE !== "sync")) throw new AccessError("IAM synchronization is unavailable", 503);
       const config = dependencies.config?.() ?? readIamSyncConfig(env);
       const push = endpoint === "account" || endpoint === "permission";
       if (request.method !== (push ? "POST" : "GET")) throw new AccessError("Invalid method", 400);
