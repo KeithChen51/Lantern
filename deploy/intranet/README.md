@@ -10,7 +10,7 @@
 
 ## IAM 直连接入
 
-新部署模板使用 `AUTH_MODE=iam`，按 [IAM 配置与联调说明](../../docs/deployment/lighthouse-iam-direct.md)填写独立 IAM OAuth 和同步参数。中台卡片改为导航 `/auth/iam/start`；员工账号及岗位角色先同步，才允许登录。旧运行环境不会自动切换认证：先完成 IAM 注册和网络、备份，再按原测试升级路径切换，测试通过后再初始化正式环境。保留显式 `portal` 兼容模式供受控回退，不自动降级。
+测试模板使用 `AUTH_MODE=iam`、`IAM_AUTHORIZATION_SOURCE=portal`，按 [IAM 登录 + 中台角色配置说明](../../docs/deployment/lighthouse-iam-portal.md)填写两套独立凭据，无需灯塔接收 IAM 账号/权限同步。原 `app.env.example` 保留 `source=sync`，该模式才要求 [IAM 同步配置](../../docs/deployment/lighthouse-iam-direct.md)及本地账号角色投影。中台卡片可导航 `/auth/iam/start`。旧运行环境不会自动切换认证：先完成 IAM 注册和网络、备份，再按原测试升级路径切换，测试通过后再评估正式环境。保留显式 `portal` 兼容模式供受控回退，不自动降级。
 
 ## 部署顺序
 

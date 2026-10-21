@@ -43,7 +43,7 @@ async function boundedJson(response: Response, signal: AbortSignal): Promise<Rec
 }
 
 /** Domestic IAM OAuth contract. IAM bearer credentials stay on the server;
- * role grants are deliberately obtained from the separate sync projection. */
+ * role grants come from the separately configured authorization source. */
 export class IamIdentityClient {
   private readonly config: IamLoginConfig;
   constructor(config: IamLoginConfig, private readonly fetcher: typeof fetch = fetch, private readonly now: () => number = Date.now) {

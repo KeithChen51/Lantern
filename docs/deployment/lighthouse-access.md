@@ -1,10 +1,12 @@
 # lighthouse 员工访问部署
 
+**模式范围：** 本文门户身份、空角色可浏览、卡片确认及 `PORTAL_EMPLOYEE_VALIDATION_CONFIRMED` 的要求仅适用于原 `AUTH_MODE=portal`。新 **IAM 登录 + 中台角色** 使用 `AUTH_MODE=iam` 与 `IAM_AUTHORIZATION_SOURCE=portal`，必须有已知灯塔角色，配置和验收见[组合模式说明](lighthouse-iam-portal.md)。原 IAM 同步模式见[直连 IAM 同步指引](lighthouse-iam-direct.md)；生产访客见[访客部署](lighthouse-guest-mode.md)。公共数据库、备份、客户端 HTTPS 与秘密管理约束仍适用。
+
 关联 [GitHub Issue #48](https://github.com/KeithChen51/Lantern/issues/48)。本文描述应用部署契约，不代表门户平台、真实 MySQL、迁移或生产环境已经验收。
 
 ## 权限与客户端
 
-所有业务浏览、知识读取、路引对话和附件访问要求门户验证的有效员工身份。有效员工即使角色列表为空仍可浏览；当前应用的指定知识管理员角色，或显式配置的精确平台管理员角色，提供已有 `knowledge:manage`，仅用于知识中台管理。灯塔仅保存必要的身份映射和授权状态，不在本地分配人员或角色，不新增平台管理、Action、Workshop 或反馈提交权限。角色名称不能推导权限语义，须由门户确认对应的精确标识。
+原 portal 模式的业务浏览、知识读取、路引对话和附件访问要求门户验证的有效员工身份。该模式有效员工即使角色列表为空仍可浏览；当前应用的指定知识管理员角色，或显式配置的精确平台管理员角色，提供已有 `knowledge:manage`，仅用于知识中台管理。灯塔仅保存必要的身份映射和授权状态，不在本地分配人员或角色，不新增平台管理、Action、Workshop 或反馈提交权限。角色名称不能推导权限语义，须由门户确认对应的精确标识。组合模式采用固定三角色且空/未知角色拒绝，不能套用该空角色规则。
 
 员工 CLI/MCP 是独立的 `packages/lighthouse-client` 包。员工在已登录浏览器中确认设备授权，客户端只取得 `knowledge:read`，由员工自己的 Agent 完成推理；无对话、知识写入或交互沉淀工具。员工包不能包含门户应用密钥、数据库地址、服务器环境文件或直连数据库的运维工具。
 

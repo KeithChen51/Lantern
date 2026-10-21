@@ -29,6 +29,7 @@ export interface PortalAdapter {
 }
 export type AccessConfig = {
   mode?: "portal" | "iam"; iam?: IamLoginConfig;
+  iamAuthorizationSource?: "sync" | "portal";
   origin: string; portalBaseUrl: string; portalLoginUrl: string;
   appCode: string; appSecret: string; adminRole: string; encryptionKey: string;
   portalLoginMode?: "card" | "callback"; platformAdminRole?: string;
