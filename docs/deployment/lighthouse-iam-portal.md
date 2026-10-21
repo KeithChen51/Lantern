@@ -80,7 +80,7 @@ HTTP 测试 Cookie 使用 origin 散列的独立测试命名空间，并带 `iam
 3. 在中台现有应用中为受控测试工号授予三种已知角色，准备空角色、未知角色、降权与撤权测试。应用 secret 不与 IAM secret 共用；不要求中台提供新接口或改账号状态逻辑。
 4. 保存旧模式配置、compose/project、固定 app/tools 配对 digest、数据库/挂载位置和本地密钥。将组合模式字段合并到私有应用文件，保留原数据库、上传和知识数据。此功能没有数据库结构或知识内容变更，不因切换认证初始化或导入知识。
 5. 按[原部署流程](production-environments.md)执行既有测试 `existing-test.sh upgrade`。新环境仍用 `environment.sh` 的原路径。它们把最终 compose JSON 中应用的完整环境交给同提交 tools 镜像预检，在停应用、备份和迁移前拒绝错误配置。compose 的 `env_file` 必须包含 source 和两套凭据；工具镜像默认环境不能补齐应用缺项。修改 env 后须重建应用容器，不能只 restart。
-6. 执行下表真实验收，记录本地模拟与内网结果各自的版本、revision、app/tools digest、位置、状态码与脱敏结论。生产继续 `AUTH_MODE=guest`；本轮不发布、不升版本、不更新 main、不部署生产。
+6. 执行下表真实验收，记录本地模拟与内网结果各自的版本、revision、app/tools digest、位置、状态码与脱敏结论。1.3.0 先交付内网测试，生产继续 `AUTH_MODE=guest`；main 交付与内网部署分别记录，测试验收通过后再评估正式环境。
 
 回退时显式恢复已确认兼容的 app/tools 镜像及完整旧模式私有配置，保持本环境密钥和数据位置，评估迁移兼容性后按既有恢复流程执行。切回 `sync` 需完整同步凭据与账号角色投影；切回 `portal` 需完整门户配置。失败不会自动切模式、回滚数据库或开放访客。
 
