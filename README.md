@@ -1,137 +1,172 @@
+<img src="public/nav-lighthouse-transparent.png" alt="灯塔标志" width="32" align="right">
+
 # lighthouse（灯塔）
 
-lighthouse（灯塔）是面向汽车品牌售后体系的企业文化数字平台。平台服务于品牌方售后部门员工、管理者，以及汽车经销商下的一线服务人员，核心目标是帮助用户学习新服务理念、查阅标杆与实践案例，并通过领域智能助手辅助理解和决策。
+**让服务理念有据可查，让一线实践成为共同的经验。**
 
-当前产品主场景是“学习、查阅和实践沉淀”，同时提供领域智能问答与文化游戏入口。
+灯塔是面向汽车品牌售后体系的服务文化数字平台，服务于品牌方员工、管理者和经销商一线服务人员。它把服务理念、外部标杆与内部案例放在一起，帮助使用者理解原则、查阅依据，并通过路引 AI 问答讨论具体的服务问题。
 
-## 产品结构
+[了解产品](#产品与场景) · [访问与使用](#访问与使用) · [本地开发](#本地开发) · [维护与部署](#维护与部署) · [文档导航](#文档导航)
 
-Lighthouse 当前围绕以下板块展开：
+## 产品与场景
 
-- `Heart / 本心`：新服务理念官网与学习入口，承载“我们相信什么”。
-- `Mirror / 镜鉴`：外部标杆案例与行业观察，承载“别人有哪些值得参考的实践”。
-- `Action / 笃行`：内部服务实践案例库，承载“我们已经做出了什么”。
-- `Games / 文化游戏`：可选的文化学习与互动入口。
-- `Hermit / 路引`：领域智能助手，基于理念、案例、规范与实践内容辅助理解、查询和判断。
+| 入口 | 用途与当前状态 |
+| --- | --- |
+| **本心 / Heart**（首页） | 阅读品牌价值框架与服务理念，理解服务中的价值原则。 |
+| **镜鉴 / Mirror** | 查阅外部标杆、观察与案例，理解做法及其适用条件。 |
+| **笃行 / Action** | 回看内部服务中的选择与权衡；可见案例取决于发布状态和访问权限。 |
+| **路引 / Hermit** | 围绕具体问题查资料、讨论做法，推荐文档并在页内阅读；支持临时参考附件。 |
+| **启航 / Games** | 当前为两款文化游戏的预告，尚未开放游玩；可通过功能开关隐藏入口。 |
+| **资料维护** | 有知识管理权限的员工在 `/admin/knowledge` 维护目录、资料与版本；访客不可使用。 |
 
-`Workshop / 共创` 板块已下线，历史方案与数据模型保留在仓库中作为迁移和审计参考；对应页面、导航、搜索和 API 均不再提供服务。
+例如，面对“是否应该为取送车司机设立休息区”，可以先读本心中的理念依据，再查阅笃行中的同题案例，最后把本店的场地、人员和服务条件交给路引继续讨论。案例提供判断参考，具体做法仍需结合现场条件确认。
 
-## 当前产品定位
+### 路引与知识如何配合
 
-- 目标用户：汽车品牌方售后部门员工、管理者，以及汽车经销商下的服务人员。
-- 核心场景：学习文化、查案例、沉淀实践、辅助决策。
-- 产品边界：既是新服务理念官网，也是服务实践知识库，并通过 Hermit 提供领域问答和推荐。
-- 阶段定位：企业文化数字平台。
-- 当前优先级：先确定框架、页面内容定义、后台管理方式和后续维护模式。
+路引面向汽车售后服务文化领域，回答直接呈现在对话中。它按需查看知识中台的目录、资料信息与正文，推荐相关文档，并支持围绕正在阅读的文档追问。当前检索链路不依赖向量化模型或 embedding 配置。
 
-## Hermit / 路引
+知识中台为页面、搜索和路引提供已发布资料、版本及引用位置。临时上传的 PDF、DOCX、TXT、Markdown 用于当前对话参考，不会自动发布到知识库。扫描 PDF 的 OCR 与旧版 DOC 不在当前支持范围内。
 
-知识中台的资源模型、运维导入与搜索说明见 [知识服务使用说明](docs/knowledge-hub.md)。员工访问、知识管理员及员工 CLI/MCP 的部署契约见 [统一登录部署说明](docs/deployment/lighthouse-access.md)；旧文档中的直连数据库 CLI/MCP 是受信任运维工具。
+仓库已保留并接入 **18 个最终参悟案例**的源文件、生成数据和页面映射。部署后的笃行从知识中台读取内容，不能用仓库文件数量推断线上已发布或访客可见的数量；首次初始化的这批案例默认为内部可见。
 
-Hermit 是汽车品牌售后服务文化领域的智能助手，不是窄 FAQ，也不是当前阶段的自治 Agent。
+`Workshop / 共创` 已下线，历史方案和数据模型仅供追溯。功能变化见 [CHANGELOG](CHANGELOG.md)；本 README 描述当前分支的代码与使用约定，实际环境的部署和验收状态需另行确认。
 
-如果用户问题属于平台领域，Hermit 应尽量回答。领域范围包括新服务理念、Heart 原则、行为规范、汽车售后服务场景、经销商和一线实践、案例查找与比较、规范文件查询、话术或清单推荐、服务沟通场景、理念推进和实践沉淀。
+## 访问与使用
 
-回答形态应支持：
+业务使用者从所在组织提供的灯塔地址进入。访问方式由部署配置决定；员工登录失败或配置不完整时，不会自动开放访客访问。
 
-- 直接回答
-- 理念依据
-- 相关案例或规范文件推荐
-- 下一步行动建议
+| 访问方式 | 配置选择 | 使用范围与指南 |
+| --- | --- | --- |
+| 访客访问 | `AUTH_MODE=guest` | 无需员工账号，浏览公开发布资料、使用路引和临时附件；不开放知识管理、员工 CLI/MCP。[访客部署说明](docs/deployment/lighthouse-guest-mode.md) |
+| IAM 登录 + 中台角色 | `AUTH_MODE=iam`、`IAM_AUTHORIZATION_SOURCE=portal` | IAM 验证身份，中台提供灯塔角色；未分配已知角色的账号不开放员工访问。[组合模式说明](docs/deployment/lighthouse-iam-portal.md) |
+| IAM 登录 + 账号权限同步 | `AUTH_MODE=iam`、`IAM_AUTHORIZATION_SOURCE=sync` | 使用 IAM 同步的账号与权限；这是 `.env.example` 的默认配置。[同步模式说明](docs/deployment/lighthouse-iam-direct.md) |
+| 旧门户登录 | `AUTH_MODE=portal` | 保留既有环境兼容与回滚路径，使用完整门户契约。[旧门户说明](docs/deployment/lighthouse-access.md) |
 
-## 技术栈
+当前[部署约定](docs/deployment/production-environments.md)为生产使用访客模式、测试联调 IAM 登录与中台角色；这不代表真实环境已完成配置或验收。访客只能读取公开且符合发布、有效期规则的内容，内部资料不会因启用访客模式自动公开。
 
-- Next.js 16 (App Router)
-- React 19
-- TypeScript 5
-- Tailwind CSS 4
-- ESLint 9
+员工如需在自己的 AI 工具中查阅灯塔知识，可使用独立的 [lighthouse CLI / MCP 客户端](packages/lighthouse-client/README.md)，经浏览器授权获得知识只读能力。仓库中的 `hub`、`hub:mcp` 是直连数据库的可信运维工具，不作为员工客户端分发。
 
 ## 本地开发
 
-```bash
-npm install
+### 环境前提
+
+- **Node.js 24 与 npm**：应用声明的最低版本为 20.9.0；完整路引载体按 Node.js 24 构建和使用，统一使用 24 可覆盖两者。
+- **独立的 MySQL 开发库**：准备数据库连接和迁移权限，不复用测试或生产业务库。SQLite 仅用于独立知识维护，不替代当前站点的 MySQL 前提。
+- **访问模式与私密配置**：员工模式需要相应 IAM / 中台接入条件；下面以不依赖员工账号的本地访客模式说明启动路径。
+- **路引依赖**：完整对话还需要匹配的 DSH 运行载体、可用模型网关，以及已发布且当前身份可见的知识。
+
+### 1. 安装依赖并准备配置
+
+在仓库根目录执行：
+
+```sh
+npm ci
+cp .env.example .env
+```
+
+Windows PowerShell 可用 `Copy-Item .env.example .env`。已有配置时保留原文件；不要直接覆盖。Prisma 默认读取 `.env`，知识维护脚本会优先读取 `.env.local`，再读取 `.env`；避免两个文件中的数据库地址互相冲突。
+
+编辑 `.env`，将以下字段替换为本地配置，其余字段按需要保留：
+
+```dotenv
+AUTH_MODE=guest
+LIGHTHOUSE_DEPLOYMENT_ENV=development
+LIGHTHOUSE_ORIGIN=http://localhost:3000
+AUTH_ALLOW_LOCAL_HTTP=true
+AUTH_TEST_HTTP_ORIGIN=
+AUTH_ENCRYPTION_KEY=填写本开发环境独立且固定的32字节Base64密钥
+DATABASE_URL=mysql://USER:PASSWORD@127.0.0.1:3306/lighthouse_dev
+KNOWLEDGE_HUB_ENABLED=true
+KNOWLEDGE_HUB_DRIVER=mysql
+```
+
+密钥占位文字必须替换为随机生成的有效值，并保存在本机私密配置中。此 HTTP 配置仅供 `npm run dev` 的回环地址调试；部署环境请使用对应的部署模板。
+
+### 2. 准备数据库与知识
+
+```sh
+npm run db:generate
+npm run db:deploy
+npm run hub:initialize -- --dry-run
+```
+
+确认目标是**全新空开发库**并核对预览清单后，在首次访问站点前执行初始化：
+
+```sh
+npm run hub:initialize -- --apply
+```
+
+初始化提供白皮书、标杆材料、18 个参悟案例及两个 Skill，共 22 项资源和 4 个目录。它保留各项资料的可见性，访客看不到内部案例。已有库升级只执行所需迁移，保留内容和版本，不重复初始化，不使用 Demo seed 或 `hub:bootstrap` 代替升级步骤。
+
+### 3. 启动与验证
+
+```sh
 npm run dev
 ```
 
-默认地址：`http://localhost:3000`
+打开 `http://localhost:3000`，确认本心和当前身份可见的资料能够读取。检查 `/api/health/ready` 应直接返回 200；`/api/health/live` 只表示进程存活。就绪检查通过仍需单独验证路引回答和附件读取。
 
-## 员工登录与部署
+要使用完整路引，按[运行载体说明](docs/deployment/hermit-runtime-package.md)准备与当前平台匹配的 DSH `0.2.0-rc.2` 载体，放在 `runtime/hermit-dsh`；本地开发也可用 `HERMIT_DSH_ROOT` 指向已构建目录。保持 `HERMIT_RUNTIME=dsh`，配置 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL` 及所需 API mode，重启服务后验证。仅克隆应用仓库不会得到 DSH 载体或模型凭据。
 
-业务页面、知识查询和路引要求统一门户验证的有效员工身份。门户角色为空的有效员工仍可浏览；只有当前应用配置的知识管理员角色获得知识维护权限。灯塔不提供本地人员或角色分配，也不把该角色映射为全平台最高管理员。
+### 常用命令
 
-按 [.env.example](.env.example) 配置 `AUTH_MODE=portal`、HTTPS `LIGHTHOUSE_ORIGIN`、门户 API/登录地址、应用标识与密钥、知识管理员角色、32 字节 base64 加密密钥，并在平台确认员工有效性契约后设置 `PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true`。生产必须使用 MySQL、启用知识中台；缺少配置时拒绝业务访问。共享管理员密码、预览身份和演示种子不再是登录入口。
+| 命令 | 用途 |
+| --- | --- |
+| `npm run dev` | 启动开发服务。 |
+| `npm test` / `npm run lint` / `npx tsc --noEmit` | 测试、代码规范和类型检查。 |
+| `npm run db:generate` | 生成 Prisma Client。 |
+| `npm run db:migrate` | 在开发库创建和应用迁移；部署使用 `db:deploy`。 |
+| `npm run db:deploy` | 向指定数据库应用已有迁移。 |
+| `npm run hub:initialize -- --dry-run` | 只读预览首次知识初始化清单。 |
+| `npm run build:knowledge` | 校验静态知识文本，不生成向量。 |
+| `npm run build` / `npm run start` | 完成构建、知识与字体检查及 standalone 准备，再启动生产服务。 |
+| `npm run check:hermit-runtime` | 检查 DSH 载体文件、版本和平台；自定义 `HERMIT_DSH_ROOT` 须显式设到终端环境，此检查命令不读取 `.env` 文件。 |
+| `npm run releases:check` | 检查版本源、包版本和 CHANGELOG 一致性。 |
 
-本地 HTTP 调试须使用非 production 运行模式、`LIGHTHOUSE_DEPLOYMENT_ENV=development` 和 `AUTH_ALLOW_LOCAL_HTTP=true`，HTTP URL 仅允许回环地址。保留内网 HTTP IP 的测试部署仍运行 production 构建，须显式设置 `LIGHTHOUSE_DEPLOYMENT_ENV=test`，并令 `AUTH_TEST_HTTP_ORIGIN` 与规范的内网 IPv4 `LIGHTHOUSE_ORIGIN` 完全一致；该例外只用于网页入口，门户和员工 CLI/MCP 仍要求 HTTPS。正式部署仍强制 HTTPS。部署先备份、执行 Prisma 迁移，再手动导入并发布知识；配置契约、待联调项和 SQLite 升级边界见 [部署说明](docs/deployment/lighthouse-access.md)。
+## 维护与部署
 
-员工外部工具独立发布为 `packages/lighthouse-client`，经浏览器设备授权取得仅 `knowledge:read` 的权限；普通员工不接收服务器镜像、数据库连接、运维 CLI 或门户密钥。`/api/health/live` 仅检查进程存活，部署健康检查使用 `/api/health/ready`，不能用业务页跳转后的 200 判断服务就绪。
+**维护知识**：准备资料 → 标准化与校验 → 导入草稿 → 预览核对 → 显式发布。知识管理员通过资料维护入口操作，上传不会自动发布。参见[资料标准化](docs/knowledge-standardization.md)与[文件管理器](docs/knowledge-file-manager.md)。
 
-## 常用命令
+**部署应用**：按[生产与测试部署流程](docs/deployment/production-environments.md)选择模板、准备匹配版本的应用与运维镜像，完成备份、迁移、升级和就绪验证。新建空环境与已有环境升级使用不同步骤；已有环境保留原数据库、卷、知识版本和密钥。完整路引还需检查载体、模型网关和可见知识，不能把构建成功当作业务验收通过。
 
-```bash
-npm run dev    # 启动开发环境
-npm run lint   # 代码检查
-npm run test   # 运行 Vitest 服务层测试
-npm run db:generate # 生成 Prisma Client
-npm run db:migrate  # 执行 MySQL 迁移（需要 DATABASE_URL）
-npm run db:seed     # 写入 Demo Brand / 用户 / 管理员种子数据
-npm run build  # 生产构建
-npm run start  # 启动生产服务
-```
+**维护版本**：功能与修复记录在 [CHANGELOG](CHANGELOG.md)，由 [releases.json](src/content/releases.json) 生成。交付版本、提交与内网测试/生产部署分别记录，规则见[版本与内网交付规范](docs/release-notes.md)。
 
-## 目录结构
+## 文档导航
+
+| 工作内容 | 阅读入口 |
+| --- | --- |
+| 品牌理念与知识文本 | [品牌知识源](docs/brand/README.md)、[价值观白皮书](docs/brand/精诚服务品牌价值观纲领白皮书.md) |
+| 产品视觉与交互 | [设计规范索引](docs/design/README.md)、[路引产品定义](docs/design/hermit-authoritative-definition.md)；设计定义与已实现状态分开核对 |
+| 内容来源与案例映射 | [内容目录](docs/content/README.md)、[案例 manifest](docs/content/action-canwu-cases/2026-06-final/manifest.json)、[Action 实现](src/app/action) |
+| 知识模型与维护工具 | [知识服务](docs/knowledge-hub.md)、[资料标准化](docs/knowledge-standardization.md)、[文件管理器](docs/knowledge-file-manager.md) |
+| 员工外部工具 | [CLI / MCP 客户端](packages/lighthouse-client/README.md) |
+| 路引构建与验收 | [运行载体](docs/deployment/hermit-runtime-package.md)、[业务验收](docs/deployment/hermit-business-acceptance.md) |
+| 环境部署与交付 | [部署流程](docs/deployment/production-environments.md)、[版本规范](docs/release-notes.md)、[内网 AI 更新指南模板](docs/deployment/ai-source-update-guide.md) |
+| 开发协作 | [AGENTS.md](AGENTS.md)、[GitHub Issues](https://github.com/KeithChen51/Lantern/issues) |
+
+部分知识维护与路引文档保留了首期实现和历史验证记录。涉及登录、权限、存储与部署时，以当前[访问模式](#访问与使用)及其对应部署指南为准，不沿用旧的共享管理密码、无账号假设或 SQLite 站点部署说明。
+
+### 代码导航
+
+技术栈：Next.js 16 App Router、React 19、TypeScript 5、Tailwind CSS 4、Prisma 6 / MySQL；测试使用 Vitest，路引通过独立 DSH 载体调用模型与知识工具。
 
 ```text
-docs/
-  content/
-    action-canwu-cases/      # 已确认、待进入 Action / 笃行的参悟案例内容源
-  lighthouse-workshop-co-creation-report.md  # 已下线 Workshop 历史方案（归档）
-  plans/
-    2026-05-14-lighthouse-production-architecture-v0.1.md
-    2026-05-14-lighthouse-code-architecture-phase1-roadmap.md
-    2026-05-15-lighthouse-data-model-v0.1.md
-    2026-05-16-lighthouse-phase1-implementation-plan.md
-src/
-  app/
-    page.tsx                  # Mirror 首页
-    heart/page.tsx            # Heart
-    action/page.tsx           # Action
-    games/page.tsx            # 文化游戏入口（按功能开关显示）
-    hermit/page.tsx           # Hermit
-    mirror/pang-dong-lai/     # 胖东来案例页
-    api/chat/route.ts         # Hermit 对话 API
-  components/
-    layout/                   # AppShell / Navigation / Header
-    hermit/                   # ChatPanel / ChatInput / MessageBubble
-    ui/                       # FeatureCard 等 UI 组件
-  lib/
-    hermit/                   # 路引提示词与静态知识源
-scripts/
-  build-knowledge.ts          # 校验 Hermit 静态文本知识源
+src/app/                   页面与 API；根页面为本心
+src/components/            共享布局、界面组件和路引交互
+src/modules/               认证、内容、知识中台、会话等业务模块
+src/infrastructure/        数据库等基础设施
+src/lib/hermit/             路引提示词、知识源和工具支持
+src/config/                功能开关
+src/content/releases.json   唯一版本来源
+prisma/                    数据模型与迁移
+scripts/                   知识维护、载体打包、构建及部署工具
+packages/lighthouse-client/ 员工 CLI / MCP 客户端
+skills/                    随项目维护的知识标准化与案例参悟 Skill
+docs/                      品牌、产品设计、内容与部署文档
 ```
 
-## 当前实现状态
+## 参与维护
 
-- 已有 `Heart / 本心`、`Mirror / 镜鉴`、`Action / 笃行`、`Hermit / 路引` 页面，以及按功能开关显示的 `Games / 文化游戏` 入口。
-- 已归档 `一般参悟案例-格式统一版` 最终稿，位置见 `docs/content/action-canwu-cases/2026-06-final/`；当前是待进入 `Action / 笃行` 的内容源，尚未作为结构化页面或管理端发布内容上线。
-- `Hermit` 通过知识中台的文件索引按需读取资料，逐步展开目录、元数据与正文，不需要向量化模型。
-- Workshop 页面和 API 已下线，直接访问 `/workshop`、`/admin/workshop` 或旧 API 会返回 404；历史 Prisma 数据模型暂时保留以兼容已有迁移和数据。
-- 数据持久化基于 Prisma + MySQL；本地执行迁移、种子和运行时 API 需要 `DATABASE_URL`。
-- Phase 1 运行环境假设见：[Lighthouse Phase 1 Runtime Assumptions](docs/deployment/lighthouse-phase1-runtime-assumptions.md)。
+需求使用 GitHub Issues 或项目指定的内网 CODING 事项记录，开发前先查重。日常变更从最新 `dev` 创建工作分支，经验证后提交 PR 到 `dev`；纯文档修订按实际范围检查内容、链接和差异。完整协作约定见 [AGENTS.md](AGENTS.md)。
 
-## 近期技术优化（2026-03-02）
-
-- 修复全部 ESLint errors（含 JSX 未转义字符）。
-- 清理未使用导入/变量，消除对应 warnings。
-- 将 `heart / action / hermit` 预览图从 `<img>` 升级到 `next/image`。
-- 移除 `AppShell` 中 `style jsx`，改为 Tailwind 响应式写法。
-- 新增移动端导航抽屉、可用搜索和通知面板交互。
-- 更新 `html lang` 为 `zh-CN`，统一品牌标题为 `Lantern | Lighthouse`。
-
-## 下一步建议
-
-- 将首页调整为 `Heart / 本心`，使平台第一入口回到服务理念。
-- 将 `docs/content/action-canwu-cases/2026-06-final/` 中的 20 个最终参悟案例转换为 `Action / 笃行` 结构化内容。
-- 继续完善 `Action / 笃行` 的结构化案例与内容维护流程。
-- 根据真实使用反馈完善 Hermit 推荐、检索和知识源维护。
-- 将 `public/` 大尺寸图片继续按展示尺寸重采样，降低首屏图片负载。
+`dev` 集成、`main` 交付和实际部署是不同状态。进入 `main` 前需要完成交付评估；内网测试与生产部署另行验收。README 不维护重复的待办清单，后续工作以 Issue 和评审记录为准。
