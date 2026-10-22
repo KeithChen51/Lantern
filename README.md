@@ -142,6 +142,7 @@ npm run dev
 | 员工外部工具 | [CLI / MCP 客户端](packages/lighthouse-client/README.md) |
 | 路引构建与验收 | [运行载体](docs/deployment/hermit-runtime-package.md)、[业务验收](docs/deployment/hermit-business-acceptance.md) |
 | 环境部署与交付 | [部署流程](docs/deployment/production-environments.md)、[版本规范](docs/release-notes.md)、[内网 AI 更新指南模板](docs/deployment/ai-source-update-guide.md) |
+| 网页隐形水印 | [公共服务接入、环境配置与验收](docs/deployment/lighthouse-web-watermark.md) |
 | 开发协作 | [AGENTS.md](AGENTS.md)、[GitHub Issues](https://github.com/KeithChen51/Lantern/issues) |
 
 部分知识维护与路引文档保留了首期实现和历史验证记录。涉及登录、权限、存储与部署时，以当前[访问模式](#访问与使用)及其对应部署指南为准，不沿用旧的共享管理密码、无账号假设或 SQLite 站点部署说明。

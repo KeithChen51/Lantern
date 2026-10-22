@@ -7,15 +7,17 @@ import { Navigation } from "@/components/layout/Navigation";
 import { cn } from "@/lib/utils";
 import { SessionProvider } from "@/components/auth/SessionContext";
 import type { WebSession } from "@/components/auth/auth-fetch";
+import { EmployeeWatermark } from "@/components/watermark/EmployeeWatermark";
 
 const SIDEBAR_STORAGE_KEY = "lighthouse-sidebar-pinned";
 
 interface AppShellProps {
   children: React.ReactNode;
   session: WebSession;
+  watermarkSdkUrl?: string | null;
 }
 
-export function AppShell({ children, session }: AppShellProps) {
+export function AppShell({ children, session, watermarkSdkUrl }: AppShellProps) {
   const pathname = usePathname();
   const isHomeSurface = pathname === "/" || pathname === "/heart";
   const [isSidebarPinned, setIsSidebarPinned] = React.useState(false);
@@ -39,7 +41,7 @@ export function AppShell({ children, session }: AppShellProps) {
   };
 
   return (
-    <SessionProvider session={session}><div
+    <SessionProvider session={session}><EmployeeWatermark sdkUrl={watermarkSdkUrl} /><div
       data-lh-shell
       data-lh-home-shell={isHomeSurface ? "true" : undefined}
       className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink"

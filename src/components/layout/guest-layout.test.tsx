@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import RootLayout from "@/app/layout";
 
@@ -14,8 +14,22 @@ beforeEach(() => {
   shell.mockImplementation(({ children }) => <div data-test-shell>{children}</div>);
   redirect.mockImplementation(() => { throw new Error("NEXT_REDIRECT"); });
 });
+afterEach(() => vi.unstubAllEnvs());
 
 describe("site visitor root layout", () => {
+  it.each(["guest", "employee"])("only exposes the official SDK URL to an enabled employee shell: %s", async kind => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    vi.stubEnv("LIGHTHOUSE_DEPLOYMENT_ENV", "test");
+    vi.stubEnv("WATERMARK_ENABLE", "true");
+    vi.stubEnv("WATERMARK_SDK_URL", "");
+    vi.stubEnv("WATERMARK_API_KEY", "private-tenant-key-fixture");
+    visitor.mockResolvedValue({ kind, userId: "fixture", account: kind === "guest" ? "" : "000123", capabilities: [], expiresAt: 2100000000000 });
+    renderToStaticMarkup(await RootLayout({ children: <p>内容</p> }));
+    const props = shell.mock.calls[0][0];
+    expect(props.watermarkSdkUrl).toBe(kind === "guest" ? null : "https://watermarktest.byd.com:8443/sdk/js-sdk.js");
+    expect(JSON.stringify(props)).not.toContain("private-tenant-key-fixture");
+  });
+
   it.each(["guest", "employee"])("passes the %s identity and credentials to the shell", async kind => {
     visitor.mockResolvedValue({ kind, userId: `${kind}-fixture`, account: kind === "guest" ? "" : "000123", displayName: kind === "guest" ? "访客" : "测试员工", capabilities: ["hermit:chat"], csrfToken: "csrf-fixture", expiresAt: 1900000000000 });
     const html = renderToStaticMarkup(await RootLayout({ children: <p>内容</p> }));
