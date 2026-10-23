@@ -8,7 +8,7 @@
 
 1. [01 anonymous me](../iam-readonly/01-anonymous-me.bru)：清空 Bruno Cookie jar，无 Cookie 执行，应为 401，不能是 404、重定向或 HTML 登录页。
 2. 在真实浏览器打开灯塔 `/auth/iam/start`，由 IAM 完成登录和回调。组合模式 Cookie 名含 `iam_portal_`，HTTP 测试名还含 origin 散列；必须从同一实际环境取值。将灯塔 `cookie-name=value` 仅保存为 Bruno 本机 secret `sessionCookie`。
-3. [05 authenticated me](../iam-readonly/05-authenticated-me.bru)：手动执行，200 后在本机核对工号、组织与当前能力。姓名可能使用工号；不能把 IAM 没有返回姓名判成登录失败。再用不带 Cookie 的 01 确认匿名仍为 401。
+3. [05 authenticated me](../iam-readonly/05-authenticated-me.bru)：手动执行，200 后在本机核对真实姓名、工号、组织与当前能力。姓名来自中台可选 `data.name`，缺失显示“姓名暂未获取”，不能把工号当姓名，也不能把缺少姓名判成登录失败。缺少姓名时真实姓名验收尚未通过。再用不带 Cookie 的 01 确认匿名仍为 401。
 
 **跳过 02–04 的同步目录请求**：它们只适用于 `IAM_AUTHORIZATION_SOURCE=sync`。组合模式不需要 `syncAppKey` / `syncAuthorization`；不能为跑绿目录测试补上假的同步密钥。
 
@@ -35,11 +35,15 @@ sign = hex(HMAC-SHA256(本机私有 portalAppSecret, account + "." + timestamp))
 
 在本机核对成功业务码 `000000`、同工号 `data.account`、同应用 `data.appCode` 和 `data.roles[].code`。组织只取 `org.path` / `org.name`。仅凭 HTTP 200 不能判定授权成功；不保存响应正文或真实员工资料到公开报告。
 
+姓名核验还需确认 `data.name` 是该工号的个人姓名。它是 Issue #69 新增的灯塔消费端约定，现有中台角色查询文档未保证该字段，必须核对真实响应或由中台补齐；门户 `infoByToken` 有姓名并不意味着 `role-query` 已返回姓名。字段缺失、空值、控制字符、错误类型、超过 120 个 UTF-16 代码单元或等于工号均按姓名缺失处理，不改变授权结果。
+
 ## 浏览器与权限变更回归
 
 | 条件 | 期望 |
 | --- | --- |
 | 三种固定角色分别测试 | `lighthouse_user` 为普通员工；`lighthouse_knowledge_admin`、`lighthouse_admin` 具有现有知识管理能力 |
+| 姓名字段可用 | `/me` 姓名为真实姓名、工号独立显示，导航与 `/api/auth/me` 一致 |
+| IAM 周期复验、姓名更新/清空、升级前旧会话 | IAM 验证不覆盖姓名；成功的中台资料刷新更新或清除姓名，旧会话无需重登即可在刷新后补齐 |
 | 空角色或只有未知角色 | 拒绝登录/访问，不自动作为普通用户或访客 |
 | 受控测试工号撤权、管理员降普通 | Web 与 HTTPS CLI/MCP 在缓存期限内失去对应能力；角色最多 5 分钟，管理员写入最多 1 分钟 |
 | 中台查询失败、错误签名/业务码/账号/应用 | 不授予权限，失败不能延长缓存新鲜度，超过期限不能用过期权限 |

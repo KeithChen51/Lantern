@@ -40,6 +40,14 @@ describe("my employee page", () => {
     expect(html).not.toContain("暂未提供");
   });
 
+  it("keeps an account-only legacy profile out of the name field and heading", async () => {
+    employee.mockResolvedValue({ displayName: "000123", account: "000123", csrfToken: "csrf-fixture" });
+    const html = renderToStaticMarkup(await MyPage());
+    expect(html).toContain("姓名暂未获取");
+    expect(html.match(/000123/g)).toHaveLength(1);
+    expect(html).toMatch(/工号<\/dt><dd[^>]*>000123<\/dd>/);
+  });
+
   it("shows guest mode without employee identity or privileged account actions", async () => {
     employee.mockResolvedValue({ kind: "guest", userId: "opaque-guest-id", displayName: "must-not-render-name", account: "must-not-render-account", organization: "must-not-render-organization", csrfToken: "must-not-render-csrf" });
     const html = renderToStaticMarkup(await MyPage());
