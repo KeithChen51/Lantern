@@ -44,10 +44,18 @@ describe("employee request gate", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2Fheart%3Fview%3Dvalues");
   });
-  it.each(["/_next/static/chunks/heart.js", "/_next/data/build/heart.json", "/files/internal.pdf", "/files/internal.html", "/_next/image?url=%2Fimages%2Fgames%2Fservice-store.webp&w=640&q=75"])("rejects anonymous business asset %s without login redirects", async path => {
+  it.each(["/_next/static/chunks/heart.js", "/_next/data/build/heart.json", "/files/internal.pdf", "/files/internal.html", "/images/games/service-store.webp", "/images/games/service-voyage.webp", "/_next/image?url=%2Fimages%2Fgames%2Fservice-store.webp&w=640&q=75"])("rejects anonymous business asset %s without login redirects", async path => {
     employee.mockRejectedValue({ status: 401 });
     const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`));
     expect(response.status).toBe(401); expect(response.headers.has("location")).toBe(false);
+  });
+  it.each(["/images/games/service-store.webp", "/images/games/service-voyage.webp"])("allows authenticated employees to request cover %s directly", async path => {
+    employee.mockResolvedValue({ userId: "employee" });
+    const request = new NextRequest(`https://lighthouse.invalid${path}`);
+    const response = await proxy(request);
+    expect(employee).toHaveBeenCalledWith(request);
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("cache-control")).toContain("private, no-store");
   });
   it("rejects anonymous RSC and spoofed public-layout header", async () => {
     employee.mockRejectedValue({ status: 401 });

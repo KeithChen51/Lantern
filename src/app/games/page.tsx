@@ -36,6 +36,9 @@ export default function GamesPage() {
                       src={game.cover.src}
                       alt={game.cover.alt}
                       fill
+                      // Protected local covers need the browser's session cookie;
+                      // the image optimizer does not forward it to the original.
+                      unoptimized
                       sizes="(max-width: 820px) 100vw, 560px"
                       className="object-cover"
                     />
