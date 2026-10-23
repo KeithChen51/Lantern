@@ -49,7 +49,7 @@ describe("IAM identity with middle-platform roles", () => {
     const f = fixture();
     f.store.seedEmployee({ id: "existing-user", account: "000042", displayName: "old profile", active: true, employee: true });
     const login = await f.login();
-    expect(login.principal).toMatchObject({ userId: "existing-user", account: "000042", displayName: "000042", organization: "售后/服务", expiresAt: f.now() + 1500000 });
+    expect(login.principal).toMatchObject({ userId: "existing-user", account: "000042", displayName: "姓名暂未获取", organization: "售后/服务", expiresAt: f.now() + 1500000 });
     expect(login.returnTo).toBe("/me");
     expect(new URL(login.start.redirectUrl).hostname).toBe("iam.example.invalid");
     expect(f.identity).toHaveBeenCalledWith("synthetic-iam-token");
@@ -129,6 +129,58 @@ describe("IAM identity with middle-platform roles", () => {
 });
 
 describe("middle-platform role refresh and revocation", () => {
+  it("keeps the portal name across IAM-only revalidation and refreshes it with portal data", async () => {
+    const f = fixture();
+    f.config.identityFreshMs = 60000;
+    f.authorization.mockResolvedValue({ roles: ["lighthouse_user"], displayName: "测试员工" });
+    const login = await f.login();
+    expect(login.principal.displayName).toBe("测试员工");
+    const tokens = await f.client(login.sessionToken);
+    expect((await f.service.clientPrincipal(tokens.access_token)).displayName).toBe("测试员工");
+    f.advance(60000);
+    expect((await f.service.webPrincipal(login.sessionToken)).displayName).toBe("测试员工");
+    expect(f.identity).toHaveBeenCalledTimes(2);
+    expect(f.authorization).toHaveBeenCalledTimes(1);
+    f.authorization.mockResolvedValue({ roles: ["lighthouse_user"], displayName: "更新姓名" });
+    f.advance(240000);
+    const updated = await f.service.webPrincipal(login.sessionToken);
+    expect(updated).toMatchObject({ userId: login.principal.userId, account: "000042", displayName: "更新姓名" });
+    expect(updated.capabilities).toEqual(login.principal.capabilities);
+    f.authorization.mockResolvedValue({ roles: ["lighthouse_user"] });
+    f.advance(300000);
+    expect((await f.service.webPrincipal(login.sessionToken)).displayName).toBe("姓名暂未获取");
+  });
+
+  it("fills existing account-only sessions on the next portal refresh and applies admin-write freshness", async () => {
+    const f = fixture();
+    f.authorization.mockResolvedValue({ roles: ["lighthouse_admin"] });
+    const login = await f.login();
+    f.authorization.mockResolvedValue({ roles: ["lighthouse_admin"], displayName: "补齐姓名" });
+    f.advance(60000);
+    const updated = await f.service.webPrincipal(login.sessionToken, { adminWrite: true });
+    expect(updated).toMatchObject({ userId: login.principal.userId, account: "000042", displayName: "补齐姓名" });
+    expect(updated.capabilities).toContain("knowledge:manage");
+  });
+
+  it("does not let a late concurrent refresh overwrite the winning portal name", async () => {
+    const f = fixture();
+    f.authorization.mockResolvedValue({ roles: ["lighthouse_user"], displayName: "初始姓名" });
+    const login = await f.login();
+    let release!: (value: { account: string; displayName: string }) => void;
+    let started!: () => void;
+    const waiting = new Promise<void>(resolve => { started = resolve; });
+    f.identity.mockImplementationOnce(() => { started(); return new Promise(resolve => { release = resolve; }); });
+    f.advance(300000);
+    const slow = f.service.webPrincipal(login.sessionToken);
+    await waiting;
+    f.advance(1);
+    f.authorization.mockResolvedValueOnce({ roles: ["lighthouse_user"], displayName: "新姓名" });
+    expect((await f.service.webPrincipal(login.sessionToken)).displayName).toBe("新姓名");
+    f.authorization.mockResolvedValueOnce({ roles: ["lighthouse_user"], displayName: "较旧姓名" });
+    release({ account: "000042", displayName: "000042" });
+    expect((await slow).displayName).toBe("新姓名");
+  });
+
   it("refreshes general authorization at five minutes and admin writes at one minute", async () => {
     const f = fixture(); f.authorization.mockResolvedValue({ roles: ["lighthouse_admin"] });
     const login = await f.login(); f.advance(59999);
