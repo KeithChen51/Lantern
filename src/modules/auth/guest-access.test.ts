@@ -95,6 +95,17 @@ describe("anonymous credentials and quotas", () => {
 });
 
 describe("guest HTTP boundary", () => {
+  it.each(["/images/games/service-store.webp", "/images/games/service-voyage.webp"])("requires a valid guest session for cover %s", async path => {
+    const issued = await getGuestAccessService().issue();
+    const cookie = `${config().sessionCookie}=${issued.token}`;
+    const response = await proxy(request(cookie, path));
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("cache-control")).toContain("private, no-store");
+    expect(response.headers.has("set-cookie")).toBe(false);
+    const anonymous = await proxy(request(undefined, path));
+    expect(anonymous.status).toBe(401);
+    expect(anonymous.headers.has("set-cookie")).toBe(false);
+  });
   it("bootstraps page navigation and forwards exactly the issued secure cookie to rendering", async () => {
     const response = await proxy(request());
     expect(response.status).toBe(200);
