@@ -4,12 +4,14 @@ import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type
 import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
 import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
+import { employeeDisplayName, readPortalEmployeeName } from "./employee-name";
 
 export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
 export type DeviceView = { userCode: string; clientName: string; scope: "knowledge:read"; expiresAt: number };
 export type DeviceReply = { device_code: string; user_code: string; verification_uri: string; verification_uri_complete: string; expires_in: number; interval: number };
 export type TokenReply = { access_token: string; token_type: "Bearer"; expires_in: number; refresh_token: string; scope: "knowledge:read" };
 type LoginResult = { kind: "session"; sessionToken: string; returnTo: string } | { kind: "pending"; pendingToken: string; returnTo: string };
+type AuthorizationSnapshot = { roles: string[]; at: number; organization?: string; displayName?: string };
 const HOUR = 3600000;
 const CLIENT_ID = "lighthouse-cli";
 const SCOPE = "knowledge:read";
@@ -40,14 +42,15 @@ export class AccessService {
     try { return this.identity(await this.portal.identity(token)); }
     catch (error) { if (permanent(error)) throw new AccessError("Employee authorization is invalid", 401); throw new AccessError("Employee verification is unavailable", 503); }
   }
-  private async roles(account: string): Promise<{ roles: string[]; at: number; organization?: string } | null> {
+  private async roles(account: string): Promise<AuthorizationSnapshot | null> {
     try {
       const authorization = this.portal.authorization ? await this.portal.authorization(account) : { roles: await this.portal.roles(account) };
       const { roles, organization } = authorization;
       if (!Array.isArray(roles) || roles.length > 1000 || roles.some((role) => typeof role !== "string" || role.length > 200)) throw new AccessError("Invalid application roles", 503);
       const granted = usesIamPortalAuthorization(this.config) ? [...new Set(roles.filter(role => APPLICATION_ROLES.has(role)))] : [...roles];
       if (usesIamPortalAuthorization(this.config) && !granted.length) throw new AccessError("Lighthouse access has not been granted", 403);
-      return { roles: granted, at: this.now(), ...(typeof organization === "string" && organization.length <= 1000 ? { organization } : {}) };
+      const displayName = readPortalEmployeeName(authorization.displayName, account);
+      return { roles: granted, at: this.now(), ...(typeof organization === "string" && organization.length <= 1000 ? { organization } : {}), ...(displayName ? { displayName } : {}) };
     } catch (error) {
       // In the combined mode IAM proves identity only. A missing or failed
       // role lookup must never become the legacy portal's employee fallback.
@@ -165,11 +168,14 @@ export class AccessService {
       return { sessionToken, returnTo: row.payload.returnTo };
     });
   }
-  private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: { roles: string[]; at: number; organization?: string } | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
+  private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: AuthorizationSnapshot | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
     if (usesIamSyncAuthorization(this.config)) {
       const directory = await readIamDirectory(tx, identity.account, this.now());
       identity = { ...identity, displayName: directory.displayName, expiresAt: Math.min(identity.expiresAt ?? Infinity, directory.expiresAt) };
       roles = { roles: directory.roles, at: this.now(), organization: directory.organization };
+    }
+    if (usesIamPortalAuthorization(this.config)) {
+      identity = { ...identity, displayName: roles?.displayName ?? identity.account };
     }
     const grants = await tx.find("grant", { subjectId: identity.account, expiresAfter: this.now(), activeOnly: true });
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
@@ -209,7 +215,7 @@ export class AccessService {
       try { identity = await this.verified(openToken(grant.payload.tokenCipher, this.config.encryptionKey)); identityAt = this.now(); if (identity.account !== grant.payload.account) throw new AccessError("Employee identity changed", 401); }
       catch (error) { if (permanent(error)) await this.invalidateGrant(grant.id, "identity-invalid"); throw error; }
     }
-    let roles: { roles: string[]; at: number; organization?: string } | null = null;
+    let roles: AuthorizationSnapshot | null = null;
     if (!usesIamSyncAuthorization(this.config) && now - grant.payload.rolesAt >= roleFresh) {
       try { roles = await this.roles(grant.payload.account); }
       catch (error) { if (permanent(error)) await this.invalidateGrant(grant.id, "roles-invalid"); throw error; }
@@ -220,8 +226,18 @@ export class AccessService {
       let changed = false;
       // Commit one refresh for the observed generation. Concurrent callers
       // reuse the winner, then recheck freshness and revocation below.
-      if (identity && identityAt !== undefined && current.payload.identityAt === grant.payload.identityAt && identityAt > current.payload.identityAt) { current.payload.identityAt = identityAt; current.payload.displayName = identity.displayName; current.expiresAt = Math.min(current.expiresAt, identity.expiresAt ?? Infinity); changed = true; }
-      if (roles && current.payload.rolesAt === grant.payload.rolesAt && roles.at > current.payload.rolesAt) { current.payload.roles = roles.roles; current.payload.rolesAt = roles.at; current.payload.organization = roles.organization; changed = true; }
+      if (identity && identityAt !== undefined && current.payload.identityAt === grant.payload.identityAt && identityAt > current.payload.identityAt) {
+        current.payload.identityAt = identityAt;
+        // IAM verifies the account. The combined mode's profile belongs to
+        // the independently refreshed portal response, even in refresh races.
+        if (!usesIamPortalAuthorization(this.config)) current.payload.displayName = identity.displayName;
+        current.expiresAt = Math.min(current.expiresAt, identity.expiresAt ?? Infinity); changed = true;
+      }
+      if (roles && current.payload.rolesAt === grant.payload.rolesAt && roles.at > current.payload.rolesAt) {
+        current.payload.roles = roles.roles; current.payload.rolesAt = roles.at; current.payload.organization = roles.organization;
+        if (usesIamPortalAuthorization(this.config)) current.payload.displayName = roles.displayName ?? current.payload.account;
+        changed = true;
+      }
       if (changed) await this.save(tx, current);
     });
   }
@@ -252,7 +268,7 @@ export class AccessService {
     });
   }
   private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, admin = false): Principal {
-    return { userId: grant.payload.userId, account: grant.payload.account, displayName: grant.payload.displayName, ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...(admin ? ["knowledge:manage" as const] : [])] : [SCOPE], csrfToken, expiresAt };
+    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account), ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...(admin ? ["knowledge:manage" as const] : [])] : [SCOPE], csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);

@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { readAccessConfig } from "./access-config";
 import { createAccessProvider } from "./access-provider";
 import type { AccessConfig } from "./access-types";
+import { AccessService } from "./access-service";
+import { MemoryAccessStore } from "./access-store";
 
 const now = () => 1800000000000;
 const env: NodeJS.ProcessEnv = {
@@ -58,7 +60,20 @@ describe("IAM and portal provider composition", () => {
     expect(f.fetcher).toHaveBeenCalledTimes(4);
     expect(f.fetcher.mock.calls.some(([url]) => String(url).includes("infoByToken"))).toBe(false);
   });
-  it.each([{ account: "42" }, { appCode: "different-app" }])("rejects mismatched portal authorization response %j", async override => {
+  it("merges the portal's optional employee name into an IAM session without sending it IAM credentials", async () => {
+    const f = fixture({ name: "  测试员工  " });
+    const service = new AccessService(f.config, f.provider, new MemoryAccessStore(), now);
+    const start = await service.startLogin("/me");
+    const login = await service.iamCallback({ code: "synthetic-code", state: start.state, cookie: start.cookie });
+    expect(await service.webPrincipal(login.sessionToken)).toMatchObject({ account: "000042", displayName: "测试员工", organization: "售后/文化" });
+    expect(f.fetcher).toHaveBeenCalledTimes(3);
+    expect(f.fetcher.mock.calls.some(([url]) => String(url).includes("infoByToken"))).toBe(false);
+  });
+  it.each([undefined, null, "", "   ", "000042", " 000042 ", 42, { name: "测试员工" }, "张\n三", "x".repeat(121)])("ignores unusable employee names without borrowing organization or role names: %j", async name => {
+    const f = fixture({ name });
+    expect(await f.provider.authorization!("000042")).toEqual({ roles: ["lighthouse_user", "lighthouse_knowledge_admin"], organization: "售后/文化" });
+  });
+  it.each([{ account: "42", name: "其他员工" }, { appCode: "different-app", name: "测试员工" }])("rejects mismatched portal authorization response %j", async override => {
     const f = fixture(override);
     await expect(f.provider.authorization!("000042")).rejects.toMatchObject({ status: 503 });
     expect(f.fetcher).toHaveBeenCalledTimes(1);
