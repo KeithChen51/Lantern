@@ -75,7 +75,7 @@ node --env-file=/run/private/lighthouse-wecom-probe.env wecom-ticket-probe.cjs -
 node scripts/package-wecom-probe.mjs
 ```
 
-输出位于 `output/wecom-pilot/`，包含单文件 Node 诊断脚本、空配置模板、本说明和逐文件 SHA-256 manifest。打包不读取实际 env 文件，不注入运行凭据；实际参数只在内网执行时读取。输出目录若有其他文件，打包会拒绝继续并保留原文件。交付仅包含 manifest 列出的文件及 manifest 本身，私有配置始终放在目录外。
+输出位于 `output/wecom-pilot/`，包含单文件 Node 诊断脚本、空配置模板、本说明、`AI更新指南.md`、源文件校验清单、逐文件 manifest 和 `SHA256SUMS`。构建输入必须先提交，manifest 记录实际工具来源提交。打包不读取实际 env 文件，不注入运行凭据；实际参数只在内网执行时读取。输出目录若有其他文件，打包会拒绝继续并保留原文件。交付仅包含这七个文件，私有配置始终放在目录外。
 
 ## 本地验证记录（2026-10-26）
 
