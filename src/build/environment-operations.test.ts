@@ -42,6 +42,22 @@ function fixture() {
 }
 
 describe("guarded deployment orchestration", () => {
+  it("verifies matching prerelease images without changing deployment state", () => {
+    const f = fixture();
+    const result = f.run("verify", { FAKE_VERSION: "1.3.3-beta.1" });
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("version=1.3.3-beta.1");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate")).toBe(false);
+  }, 30_000);
+  it.each(["1.3.3-beta.01", "1.3.3-beta..1", "1.3.3-beta_1"])("rejects invalid prerelease image labels: %s", (version) => {
+    const f = fixture();
+    expect(f.run("verify", { FAKE_VERSION: version }).status).not.toBe(0);
+    const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: { ...f.env, FAKE_VERSION: version }, encoding: "utf8" });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("App/operations labels must match");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up") || x.at(-1) === "migrate")).toBe(false);
+  }, 30_000);
   const guestEnvironment = () => ({
     NODE_ENV: "production", LIGHTHOUSE_DEPLOYMENT_ENV: "production", AUTH_MODE: "guest",
     LIGHTHOUSE_ORIGIN: "https://lighthouse.example.invalid", AUTH_TEST_HTTP_ORIGIN: "", AUTH_ALLOW_LOCAL_HTTP: "false",
@@ -243,13 +259,13 @@ describe("guarded deployment orchestration", () => {
     if (before) expect(readdirSync(target).sort()).toEqual(before);
     else expect(existsSync(target)).toBe(false);
   }, 30_000);
-  it("upgrades the existing test with no dependency startup, new volume or initialization", () => {
+  it.each(["1.1.3", "1.3.3-beta.1"])("upgrades the existing test at %s with no dependency startup, new volume or initialization", (version) => {
     const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
     const archive = spawnSync(bash, ["-c", 'tar -czf "$1" -C "$2" .', "sh", unix(join(f.root, "fixture.tar.gz")), unix(f.app)]);
     expect(archive.status).toBe(0);
     const files = spawnSync(bash, ["-c", 'cd "$1"; sha256sum upload.txt', "sh", unix(f.app)], { encoding: "utf8" }).stdout;
     writeFileSync(join(f.root, "fixture-files.sha256"), files);
-    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: f.env, encoding: "utf8" });
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: { ...f.env, FAKE_VERSION: version }, encoding: "utf8" });
     expect(result.status, result.stderr).toBe(0);
     const calls = f.calls(); const migrate = calls.findIndex(x => x[0] === "run" && x.at(-1) === "migrate");
     const authCheck = calls.findIndex(x => x.includes("/app/check-access-config.cjs"));

@@ -1,21 +1,15 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { parseVersion, compare } from "./release-version.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (name) => readFileSync(resolve(root, name), "utf8");
 const releases = JSON.parse(read("src/content/releases.json"));
 const check = process.argv.includes("--check");
-const compare = (a, b) => {
-  const right = b.split(".").map(Number);
-  for (const [i, part] of a.split(".").map(Number).entries()) {
-    if (part !== right[i]) return part - right[i];
-  }
-  return 0;
-};
 if (!Array.isArray(releases) || !releases.length) throw new Error("At least one release is required.");
 for (const [i, release] of releases.entries()) {
-  if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(release.version)) throw new Error("Version must have three numeric parts.");
+  parseVersion(release.version);
   if (i && compare(releases[i - 1].version, release.version) <= 0) throw new Error("Releases must be unique and newest first.");
   if (release.date !== null && (!/^\d{4}-\d{2}-\d{2}$/.test(release.date) || new Date(release.date).toISOString().slice(0, 10) !== release.date)) throw new Error("Invalid release date.");
   if (!release.title?.trim() || !release.summary?.trim() || !release.changes?.length) throw new Error("Release content is required.");
