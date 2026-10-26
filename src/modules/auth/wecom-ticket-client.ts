@@ -103,7 +103,7 @@ export class WecomTicketClient {
     const token = input?.token;
     if (!account(userId) || !text(token, 8192)) throw invalidTicket();
     const body = await this.request(userId, token);
-    if (body.code !== "0") throw invalidTicket();
+    if (body.code !== "0" || (body.detailCode !== undefined && body.detailCode !== "0")) throw invalidTicket();
     const employee = body.msg;
     if (!object(employee) || !account(employee.EMPID) || employee.EMPID !== userId
       || !text(employee.USERID, 256)
@@ -135,6 +135,12 @@ export class WecomTicketClient {
             cache: "no-store", redirect: "error", signal: controller.signal,
           });
           if (controller.signal.aborted || !response.ok || response.redirected) {
+            if (!controller.signal.aborted && !response.redirected && response.status === 404) {
+              // The documented invalid-ticket example is JSON code "1" with
+              // HTTP 404. A generic HTML/route 404 remains a service failure.
+              const failure = await boundedJson(response, controller.signal);
+              if (failure.code === "1") throw rejectedTicket;
+            }
             void response.body?.cancel().catch(() => undefined);
             if (!controller.signal.aborted && [401, 403].includes(response.status)) throw rejectedTicket;
             throw unavailableService;

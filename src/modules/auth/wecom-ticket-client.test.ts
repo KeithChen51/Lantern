@@ -89,6 +89,7 @@ describe("single-use WeCom ticket verification", () => {
   it.each([
     { code: "1", msg: "Synthetic upstream failure" }, { code: 0, msg: employee }, { msg: employee },
     { code: "0", msg: null }, { code: "0", msg: [] }, { code: "0", msg: "invalid" },
+    { ...success, detailCode: "1" }, { ...success, detailCode: 0 },
   ])("rejects business failure and malformed success envelopes %#", async body => {
     const fetcher = vi.fn<typeof fetch>(async () => reply(body));
     await expect(new WecomTicketClient(config, fetcher).verify(input)).rejects.toMatchObject({ status: 401 });
@@ -127,6 +128,14 @@ describe("single-use WeCom ticket verification", () => {
     const response = reply(success);
     Object.defineProperty(response, "redirected", { value: true });
     await expect(new WecomTicketClient(config, async () => response).verify(input)).rejects.toMatchObject({ status: 503 });
+  });
+
+  it("recognizes the documented JSON invalid-ticket response with HTTP 404", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ code: "1", msg: "Synthetic-Private-Ticket", detailCode: "0" }, { status: 404 }));
+    const error = await new WecomTicketClient(config, fetcher).verify(input).catch(error => error);
+    expect(error).toMatchObject({ status: 401 });
+    expect(error.message).not.toContain("Synthetic");
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it.each([Error, AccessError])("sanitizes even credential-bearing transport errors of type %s", async ErrorClass => {
