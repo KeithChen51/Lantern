@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { readPortalEmployeeName } from "./employee-name";
 import { AccessError, type AccessConfig, type PortalAdapter, type PortalIdentity, type PortalAuthorization } from "./access-types";
 
 const MAX_RESPONSE_BYTES = 64 * 1024;
@@ -86,6 +87,9 @@ export class HttpPortalAdapter implements PortalAdapter {
     const org = data.org && typeof data.org === "object" && !Array.isArray(data.org) ? data.org as Record<string, unknown> : {};
     const label = (value: unknown, limit: number) => typeof value === "string" && value.trim() && value.length <= limit && !/[\u0000-\u001f\u007f]/.test(value) ? value.trim() : undefined;
     const organization = label(org.path, 1000) || label(org.name, 200);
-    return { roles, ...(organization ? { organization } : {}) };
+    // Optional consumer contract for role-query: data.name is the employee's
+    // name, not org.name or a role label. Upstream support must be verified.
+    const displayName = readPortalEmployeeName(data.name, employeeAccount);
+    return { roles, ...(organization ? { organization } : {}), ...(displayName ? { displayName } : {}) };
   }
 }

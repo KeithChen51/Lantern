@@ -19,7 +19,7 @@ export class OAuthError extends Error {
   constructor(public readonly error: string, public readonly status = 400) { super(error); }
 }
 export type PortalIdentity = { account: string; displayName: string; expiresAt?: number };
-export type PortalAuthorization = { roles: readonly string[]; organization?: string };
+export type PortalAuthorization = { roles: readonly string[]; organization?: string; displayName?: string };
 export interface PortalAdapter {
   exchange?(code: string): Promise<{ token: string; expiresAt: number }>;
   authorizationUrl?(redirectUri: string, state: string): string;
