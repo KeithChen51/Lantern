@@ -1,8 +1,8 @@
 # 网页隐形水印接入与验收
 
-关联需求：[Issue #68](https://github.com/KeithChen51/Lantern/issues/68)。本文描述代码接入和部署步骤，不代表测试或生产已经启用、解码验收通过。生产 IAM 正在接入，水印启用以该环境员工登录验收通过为前提。
+关联需求：[Issue #68](https://github.com/KeithChen51/Lantern/issues/68)。本文描述代码接入和部署步骤，不代表各环境已经启用、解码验收通过。水印启用以该环境员工登录验收通过为前提；1.3.3 的代码发布与内网生产部署分别记录。
 
-接入依据：[集团水印接入资料](https://sefd-aftersales.bydauto.com.cn/r/workspace-mu7uz523/byd-watermark-sdk-overview/)中的《接入指南-水印公共服务.md》及 `watermark-integration/SKILL.md`，核对日期 2026-10-22。
+接入依据：[集团水印接入资料](https://sefd-aftersales.bydauto.com.cn/r/workspace-mu7uz523/byd-watermark-sdk-overview/)中的《接入指南-水印公共服务.md》及 `watermark-integration/SKILL.md`，资料核对日期 2026-10-26。
 
 ## 调用与身份
 
@@ -10,7 +10,7 @@
 
 - 灯塔后端复用现有员工会话、同源及 CSRF 校验，从已验证会话取得 `account`，以 `{objectId: account, objectType: 1}` 请求公共服务。工号按字符串保留前导零；本次不接入外部手机号或邮箱对象。
 - 浏览器不能指定工号、模板、租户或目标地址。响应只含隐形水印参数、所属员工和会话到期时间，并禁止缓存。
-- 公共服务负责租户配置、模板注入及对象获取/自动注册。灯塔不保存供应商 username/secret/模板 ID，不实现 i迪桥签名。现有两套供应商凭据应由公共服务负责人分别配置到测试、生产租户，换取对应的租户 API Key。
+- 公共服务统一维护供应商凭据、模板及 i迪桥路由，负责租户配置、模板注入及对象获取/自动注册。灯塔新接入只需申请自己的租户及 API Key，不直接申请或调用 i迪桥，不保存供应商 username/secret/模板 ID，不实现 i迪桥签名。
 - 前端在员工业务页统一挂载官方 SDK，登录页和访客模式不加载。初始化保留 `conflictDetectionSwitch: true`；SDP 客户端已接管时，`skipped_client_watermark` 视为成功，不要求浏览器再出现 canvas。
 - 正常运行每 30 分钟刷新，失败退避重试；退出、身份变化、会话到期或离开页面时取消请求并清理水印。浏览器恢复可见时检查状态。SDK 异步初始化按顺序执行，避免旧账号的迟到结果覆盖新账号。
 
@@ -25,9 +25,11 @@ SDK 的 `init` 没有取消接口。超过初始化时限会清理并标记 `ret
 | 变量 | 内容 |
 | --- | --- |
 | `WATERMARK_ENABLE` | 默认 `false`；配置并完成验收后设为 `true`。 |
-| `WATERMARK_BASE_URL` | 公共服务 origin，不带路径、查询参数、账号密码或末尾业务接口。允许 HTTPS；HTTP 仅允许 RFC1918 私网 IPv4。由服务负责人确认地址。 |
-| `WATERMARK_API_KEY` | 当前环境灯塔租户的 Bearer API Key；测试、生产独立，不能使用供应商 secret 或 IAM secret。 |
+| `WATERMARK_BASE_URL` | 公共服务 origin，不带路径、查询参数、账号密码或末尾业务接口。资料当前提供 `http://10.138.97.82:16010`，部署时由负责人确认适用环境。允许 HTTPS；HTTP 仅允许 RFC1918 私网 IPv4。不要填写 i迪桥地址。 |
+| `WATERMARK_API_KEY` | 当前环境灯塔租户的 Bearer API Key；测试、生产独立，不能使用 `WM_ADMIN_TOKEN`、供应商 secret 或 IAM secret。 |
 | `WATERMARK_SDK_URL` | 可留空，由 `LIGHTHOUSE_DEPLOYMENT_ENV` 选择官方 SDK。显式配置时必须与该环境官方地址完全一致。 |
+
+`WM_ADMIN_TOKEN` 由中台管理员持有，通过 `X-Admin-Token` 调用 `/admin/**` 创建租户、签发或吊销 Key。灯塔使用签发后的 API Key，通过 `Authorization: Bearer <API Key>` 调用水印业务接口；灯塔不需要配置管理员 Token。租户由 API Key 识别，不另设租户 ID 环境变量。
 
 | 部署环境 | SDK 地址 |
 | --- | --- |
@@ -42,7 +44,7 @@ SDK 的 `init` 没有取消接口。超过初始化时限会清理并标记 `ret
 
 ## 联调与验收
 
-1. 公共服务负责人确认两个独立租户、各自供应商凭据、隐形模板及 API Key。API Key 通过私密渠道交付，验收记录只写配置状态。i迪桥的申请或授权归属由公共服务负责人确认，不以本代码替代集团流程要求。
+1. 向公共服务负责人提供灯塔系统名称、租户标识、测试/生产环境、网页隐形水印用途及员工工号对象类型（`objectType=1`），由其配置对应租户并签发 API Key。供应商凭据、隐形模板和 i迪桥接入由公共服务统一维护。API Key 通过私密渠道交付，验收记录只写配置状态。
 2. 先在测试环境启用。用 IAM 员工 A 登录，确认水印接口返回 200、`owner.account` 等于已登录工号、响应 `Cache-Control` 含 `no-store`。浏览器请求和打包脚本中不得出现公共服务 API Key 或供应商 secret。
 3. 在无 SDP 接管的终端截图、拍照，并通过集团水印平台解码，确认绑定员工 A。覆盖本心、镜鉴、笃行、路引及员工有权限的管理页；不能用“看不到水印”判定失败或成功。
 4. 在有 SDP 的终端确认 SDK 返回 `skipped_client_watermark`；按集团要求验证实际截图追溯。该状态不要求网页再绘制一层水印。
@@ -58,9 +60,9 @@ SDK 的 `init` 没有取消接口。超过初始化时限会清理并标记 `ret
 
 | 记录项 | 测试 | 生产 |
 | --- | --- | --- |
-| IAM 员工登录验收 | 待验证 | 接入中，待验证 |
+| IAM 员工登录验收 | 按实际结果填写 | 按实际结果填写 |
 | 公共服务租户标识 | 待负责人提供 | 待负责人提供 |
-| username / secret / 隐形模板配置 | 凭据已取得，待租户配置确认 | 凭据已取得，待租户配置确认 |
+| 供应商凭据 / 隐形模板配置 | 公共服务统一维护 | 公共服务统一维护 |
 | 租户 API Key 状态 | 待私密配置 | 待私密配置 |
 | 环境变量及网络连通 | 待验证 | 待验证 |
 | 员工账号绑定、刷新与退出 | 待实测 | 待实测 |
