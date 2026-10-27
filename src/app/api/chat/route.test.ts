@@ -206,6 +206,27 @@ describe("DSH chat transport boundary", () => {
     expect(stream).toContain('"type":"error"');
     expect(stream).not.toContain("secret gateway diagnostics");
   });
+  it("emits progress only for actual tool execution and visible answer text", async () => {
+    mocks.run.mockImplementation(async ({ onText, tools }) => {
+      await tools.knowledge_search.execute({ query: "沟通" });
+      await tools.knowledge_read.execute({ resourceId: "guide", versionId: "v1" });
+      onText("真实回答\n");
+    });
+    const stream = await (await POST(request({ id: "progress", messages: [question] }))).text();
+    const progress = stream.split("\n").filter(line => line.includes('"type":"data-hermit-progress"')).map(line => JSON.parse(line.slice(6)));
+    expect(progress.map(part => part.data.stage)).toEqual(["connecting", "searching", "reading", "answering"]);
+    expect(progress.every(part => part.id === "hermit-progress")).toBe(true);
+    expect(stream).toContain('"messageMetadata":{"hermitStatus":"complete"}');
+    const assistant = mocks.upsertMessage.mock.calls.at(-1)?.[0];
+    expect(assistant.metadata).toMatchObject({ hermitStatus: "complete", hermit: { version: 1, answerSources: { text: "真实回答" }, attachments: [], documentContext: null } });
+  });
+  it("does not fabricate search/read progress and persists a failed empty turn", async () => {
+    mocks.run.mockRejectedValue(new Error("no first token"));
+    const stream = await (await POST(request({ messages: [question] }))).text();
+    expect(stream).toContain('"stage":"connecting"');
+    expect(stream).not.toContain('"stage":"searching"'); expect(stream).not.toContain('"stage":"reading"'); expect(stream).not.toContain('"stage":"answering"');
+    expect(mocks.upsertMessage.mock.calls.at(-1)?.[0]).toMatchObject({ role: "assistant", content: "", metadata: { hermitStatus: "failed" } });
+  });
 });
 
 
