@@ -8,14 +8,19 @@ const read = (name) => readFileSync(resolve(root, name), "utf8");
 const releases = JSON.parse(read("src/content/releases.json"));
 const check = process.argv.includes("--check");
 if (!Array.isArray(releases) || !releases.length) throw new Error("At least one release is required.");
+function validateNotes(notes) {
+  if (typeof notes?.title !== "string" || !notes.title.trim() || typeof notes.summary !== "string" || !notes.summary.trim() || !Array.isArray(notes.changes) || !notes.changes.length) throw new Error("Release content is required.");
+  for (const group of notes.changes) {
+    if (typeof group?.type !== "string" || !group.type.trim() || !Array.isArray(group.items) || !group.items.length || group.items.some((item) => typeof item !== "string" || !item.trim())) throw new Error("Change groups cannot be empty.");
+  }
+}
 for (const [i, release] of releases.entries()) {
   parseVersion(release.version);
   if (i && compare(releases[i - 1].version, release.version) <= 0) throw new Error("Releases must be unique and newest first.");
   if (release.date !== null && (!/^\d{4}-\d{2}-\d{2}$/.test(release.date) || new Date(release.date).toISOString().slice(0, 10) !== release.date)) throw new Error("Invalid release date.");
-  if (!release.title?.trim() || !release.summary?.trim() || !release.changes?.length) throw new Error("Release content is required.");
-  for (const group of release.changes) {
-    if (!group.type?.trim() || !group.items?.length || group.items.some((item) => typeof item !== "string" || !item.trim())) throw new Error("Change groups cannot be empty.");
-  }
+  validateNotes(release);
+  if (!Object.hasOwn(release, "userFacing")) throw new Error("Every release must explicitly define userFacing notes or null for maintenance-only changes.");
+  if (release.userFacing !== null) validateNotes(release.userFacing);
 }
 const version = releases[0].version;
 const changelog = "# 灯塔更新记录\n\n<!-- 由 src/content/releases.json 生成，请勿直接编辑。 -->\n\n" + releases.map((release) =>
