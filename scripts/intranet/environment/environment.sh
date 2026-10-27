@@ -97,7 +97,10 @@ APP_RECORD=$(image_record "$LIGHTHOUSE_IMAGE") || fail 'App digest is not presen
 TOOLS_RECORD=$(image_record "$LIGHTHOUSE_TOOLS_IMAGE") || fail 'Operations digest is not present locally; explicitly pull the selected artifact first'
 IFS='|' read -r APP_ID REVISION VERSION <<< "$APP_RECORD"
 IFS='|' read -r TOOLS_ID TOOLS_REVISION TOOLS_VERSION <<< "$TOOLS_RECORD"
-[[ "$REVISION" =~ ^[a-f0-9]{40}$ && "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail 'App must expose full OCI revision and three-part version labels'
+VERSION_CORE='(0|[1-9][0-9]*)'
+VERSION_PART='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+VERSION_PATTERN="^$VERSION_CORE\.$VERSION_CORE\.$VERSION_CORE(-$VERSION_PART(\.$VERSION_PART)*)?$"
+[[ "$REVISION" =~ ^[a-f0-9]{40}$ && "$VERSION" =~ $VERSION_PATTERN ]] || fail 'App must expose full OCI revision and valid release version labels'
 [[ "$TOOLS_REVISION" == "$REVISION" && "$TOOLS_VERSION" == "$VERSION" ]] || fail 'App/operations revision or version does not match'
 MYSQL_ID=$(docker image inspect --format '{{.Id}}' "$MYSQL_IMAGE") || fail 'Selected MySQL digest is not present locally'
 docker run --rm --pull never --network none "$LIGHTHOUSE_TOOLS_IMAGE" verify

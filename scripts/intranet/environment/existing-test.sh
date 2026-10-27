@@ -16,7 +16,10 @@ for image in "$NEW_APP" "$TOOLS"; do [[ "$image" =~ ^[^[:space:]]+@sha256:[a-f0-
 record() { docker image inspect --format '{{.Id}}|{{index .Config.Labels "org.opencontainers.image.revision"}}|{{index .Config.Labels "org.opencontainers.image.version"}}' "$1"; }
 IFS='|' read -r APP_ID REVISION VERSION <<< "$(record "$NEW_APP")"
 IFS='|' read -r TOOLS_ID TOOLS_REVISION TOOLS_VERSION <<< "$(record "$TOOLS")"
-[[ "$REVISION" =~ ^[a-f0-9]{40}$ && "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$REVISION" == "$TOOLS_REVISION" && "$VERSION" == "$TOOLS_VERSION" ]] || fail 'App/operations labels must match'
+VERSION_CORE='(0|[1-9][0-9]*)'
+VERSION_PART='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+VERSION_PATTERN="^$VERSION_CORE\.$VERSION_CORE\.$VERSION_CORE(-$VERSION_PART(\.$VERSION_PART)*)?$"
+[[ "$REVISION" =~ ^[a-f0-9]{40}$ && "$VERSION" =~ $VERSION_PATTERN && "$REVISION" == "$TOOLS_REVISION" && "$VERSION" == "$TOOLS_VERSION" ]] || fail 'App/operations labels must match'
 docker run --rm --pull never --network none "$TOOLS" verify
 # This contract intentionally targets the existing compose's LH_IMAGE interpolation.
 # Inspect resolved config below and refuse instead of guessing a different image key.

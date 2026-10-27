@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { isReleaseVersion } from '../release-version.mjs';
 
 const commands = ['verify', 'migrate', 'inventory', 'initialize'];
 const usage = 'Usage: operations <verify|migrate|inventory|initialize>\nInventory is read-only; initialize imports only into an empty migrated database.\n';
@@ -33,7 +34,7 @@ export function runOperations(args, options = {}) {
   const json = name => JSON.parse(readFileSync(path.join(root, name), 'utf8'));
   const manifest = json('build-manifest.json');
   if (platform !== 'linux' || arch !== 'x64' || manifest.platform !== platform || manifest.arch !== arch) throw new Error('Operations require Linux x64.');
-  if (!/^[a-f0-9]{40}$/.test(manifest.revision) || !/^\d+\.\d+\.\d+$/.test(manifest.version)) throw new Error('Invalid image source/version manifest.');
+  if (!/^[a-f0-9]{40}$/.test(manifest.revision) || !isReleaseVersion(manifest.version)) throw new Error('Invalid image source/version manifest.');
   if (json('package.json').version !== manifest.version) throw new Error('Application version mismatch.');
   const prisma = json('node_modules/prisma/package.json');
   if (prisma.version !== '6.19.3' || json('node_modules/@prisma/client/package.json').version !== prisma.version || manifest.prismaVersion !== prisma.version) throw new Error('Prisma version mismatch.');
