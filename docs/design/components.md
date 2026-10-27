@@ -398,6 +398,7 @@ Rules:
 
 - Product logo links to the primary landing page.
 - Primary nav remains stable across modules.
+- The bottom “我的” entry uses the same `SidebarLink` and `data-lh-nav-*` anatomy as module links: a 24px icon, shared copy/active/hover/focus styles, and an icon-only collapsed state. Expanded mode keeps the employee name as truncated secondary text with the full value in the title. The unread dot remains attached to the personal entry and has an accessible description.
 - Deep pages show a back link or breadcrumb.
 - Actions state their scope before the user commits.
 

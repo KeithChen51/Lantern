@@ -51,7 +51,7 @@ describe("header search", () => {
     expect(navigation).toContain("data-lh-my-link");
     expect(navigation).not.toContain("data-lh-feedback-link");
     expect(navigation).toContain("data-lh-sidebar-utility-group");
-    expect(navigation).toContain('className="mt-auto grid gap-2"');
+    expect(navigation).toMatch(/data-lh-sidebar-utility-group className="[^"]*\bmt-auto\b/);
 
     const utilityGroup = navigation.slice(navigation.indexOf("data-lh-sidebar-utility-group"));
     expect(utilityGroup).toContain("<SessionLinks");
