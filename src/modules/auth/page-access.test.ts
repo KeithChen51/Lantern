@@ -5,6 +5,7 @@ describe("employee page and asset access", () => {
   it("opens only employee entry pages and explicit brand assets", () => {
     for (const path of ["/login", "/auth/confirm", "/auth/portal/callback", "/admin/login", "/nav-lighthouse-transparent.png", "/fonts/brand/smiley-sans/SmileySans-Oblique.woff2", "/_next/static/chunks/a.css"]) expect(classifyAccessPath(path)).toBe("public");
     expect(classifyAccessPath("/_next/image", "/nav-lighthouse-transparent.png")).toBe("public");
+    expect(classifyAccessPath("/lighthouse-home-hero-bg-v2-realistic-shore.png")).toBe("public");
   });
   it("protects business pages, HTML/PDF/image originals, RSC and all JS", () => {
     for (const path of ["/", "/heart", "/mirror", "/action/driver-partner-rest-area", "/resources/id", "/admin/knowledge", "/auth/device", "/auth/tools"]) expect(classifyAccessPath(path)).toBe("page");

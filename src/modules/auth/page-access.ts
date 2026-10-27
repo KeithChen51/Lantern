@@ -3,6 +3,7 @@ export const REQUEST_PATH_HEADER = "x-lighthouse-request-path";
 const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login"]);
 const PUBLIC_ASSETS = new Set([
   "/nav-lighthouse-transparent.png", "/favicon.ico", "/icon.png", "/apple-icon.png",
+  "/lighthouse-home-hero-bg-v2-realistic-shore.png",
   "/fonts/brand/source-han-serif-sc/SourceHanSerifSC-VF.otf.woff2",
   "/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf",
   "/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf",
