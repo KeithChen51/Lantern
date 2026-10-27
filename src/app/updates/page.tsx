@@ -11,7 +11,7 @@ export default function UpdatesPage() {
   return (
     <div className={styles.page}>
       <MarkReleaseRead />
-      <PageHeading title="版本更新" description="了解灯塔的最新变化，回看每一次更新。" titleAdornment={<LhChip>当前版本 {currentVersion}</LhChip>} />
+      <PageHeading title="版本更新" description="了解新增功能，回看每一次体验改进。" titleAdornment={<LhChip>当前版本 {currentVersion}</LhChip>} />
       <div className={styles.timeline}>
         {releases.map((release, index) => (
           <LhPanel key={release.version} className={styles.release} id={`v${release.version}`}>
