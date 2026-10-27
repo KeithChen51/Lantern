@@ -11,8 +11,9 @@ describe("Hermit accessible composer components", () => {
     expect(html).toContain("下一句草稿");
     expect(html.match(/<textarea[^>]*>/)?.[0]).not.toContain("disabled");
     expect(html).toContain('aria-label="停止生成"');
-    expect(html).toContain("<details");
-    expect(html).toContain('aria-label="查看文件格式与上传限制"');
+    expect(html).toContain('aria-label="添加文件和更多内容"');
+    expect(html).toContain('popover="auto"');
+    expect(html).toContain("本地文件每个最多 10 MB");
   });
   it("scenario selection only provides an editable draft to its caller", () => {
     const onSelect = vi.fn();

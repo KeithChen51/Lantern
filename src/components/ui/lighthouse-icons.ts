@@ -43,6 +43,7 @@ export const lighthouseIcons = {
   user: solarIcon("user-rounded-bold"),
   cupStar: solarIcon("cup-star-bold"),
   arrowRightUp: solarIcon("arrow-right-up-bold"),
+  arrowUp: solarIcon("arrow-up-linear"),
   clock: solarIcon("clock-circle-bold"),
 } as const;
 

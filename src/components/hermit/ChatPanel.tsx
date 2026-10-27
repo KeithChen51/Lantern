@@ -80,6 +80,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   const [wasCancelled, setWasCancelled] = useState(false);
   const [readerDocument, setReaderDocument] = useState<HermitDocumentRecommendation | null>(null);
   const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(() => restoredContext(initial));
+  const [skillContext, setSkillContext] = useState<HermitDocumentRecommendation | null>(() => initial?.skillContext ? { id: `skill:${initial.skillContext.resourceId}`, ...initial.skillContext } : null);
   const pendingBodyRef = useRef<{ attachmentIds: string[]; documentContext?: HermitDocumentContext }>({ attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}) });
   const followLatestRef = useRef(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
@@ -120,7 +121,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   async function submitText() {
     const text = input.trim();
     if (!text || isLoading || attachments.some(item => item.status !== "ready")) return;
-    const body = { attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}) };
+    const body = { attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}), ...(skillContext ? { skillContext: { resourceId: skillContext.resourceId, versionId: skillContext.versionId } } : {}) };
     const scope = uploadScopeRef.current;
     pendingBodyRef.current = body;
     followLatestRef.current = true; setHasUnreadMessages(false);
@@ -136,13 +137,14 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
     // Removed or expired attachments must never re-enter a request through retry.
     const readyIds = new Set(attachments.flatMap(item => item.status === "ready" && item.id ? [item.id] : []));
-    const body = { ...pendingBodyRef.current, attachmentIds: pendingBodyRef.current.attachmentIds.filter(id => readyIds.has(id)), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : { documentContext: undefined }) };
+    const body = { ...pendingBodyRef.current, attachmentIds: pendingBodyRef.current.attachmentIds.filter(id => readyIds.has(id)), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : { documentContext: undefined }), ...(skillContext ? { skillContext: { resourceId: skillContext.resourceId, versionId: skillContext.versionId } } : { skillContext: undefined }) };
     void regenerate({ body }).catch(error => { if (scope?.active) { setRequestError(getErrorMessage(error)); setMessages(current => markTerminalState(current, "failed")); } });
   }
   function handleStop() { if (isLoading) { setWasCancelled(true); void stop(); } }
   const inputProps = { value: input, focusKey: focusKey + focusRequest, onChange: setInput, onSubmit: () => { void submitText(); }, onStop: handleStop, isLoading, isUploading: isUploadingAttachments,
     attachments, uploadError, onFilesSelected: handleFilesSelected, onRemoveAttachment: handleRemoveAttachment, onRetryAttachment: handleRetryAttachment,
-    documentContext, onClearDocumentContext: () => setDocumentContext(null) };
+    documentContext, onSelectDocument: setDocumentContext, onClearDocumentContext: () => setDocumentContext(null),
+    skillContext, onSelectSkill: setSkillContext, onClearSkillContext: () => setSkillContext(null) };
 
   return <div className={styles.workspace}>
     <ConversationHeader title={hasMessages ? title : undefined} onNew={onNew} onHistory={onHistory} />
@@ -166,6 +168,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
           else if (isLoading) setHasUnreadMessages(true);
         }}><div data-lh-chat-scroll-content>
           {initial?.unavailableAttachments.length ? <p className={styles.expiredAttachments} role="status">部分历史附件已过期或不可用：{initial.unavailableAttachments.map(item => item.name).join("、")}。请重新上传后继续引用。</p> : null}
+          {initial?.unavailableSkillContext && <p className={styles.expiredAttachments} role="status">{initial.unavailableSkillContext.message}</p>}
           {messages.map(message => {
             const last = message.id === lastMessage?.id;
             const state = messageRunState(message);

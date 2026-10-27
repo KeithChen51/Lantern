@@ -6,6 +6,7 @@ import { LhChatInputShell, LhChatSubmitButton, LhChatTextarea } from "@/componen
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import styles from "./hermit-v3.module.css";
 import { AttachmentContext } from "./AttachmentContext";
+import { AddContentMenu } from "./AddContentMenu";
 import { type HermitAttachment, type HermitDocumentRecommendation } from "./types";
 
 interface ChatInputProps {
@@ -23,6 +24,10 @@ interface ChatInputProps {
   uploadError?: string | null;
   documentContext?: HermitDocumentRecommendation | null;
   onClearDocumentContext: () => void;
+  onSelectDocument?: (document: HermitDocumentRecommendation) => void;
+  skillContext?: HermitDocumentRecommendation | null;
+  onSelectSkill?: (skill: HermitDocumentRecommendation) => void;
+  onClearSkillContext?: () => void;
 }
 
 type ChatInputFocusOrigin = "none" | "pointer" | "keyboard";
@@ -42,6 +47,10 @@ export function ChatInput({
   uploadError,
   documentContext,
   onClearDocumentContext,
+  onSelectDocument,
+  skillContext,
+  onSelectSkill,
+  onClearSkillContext,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,7 +111,7 @@ export function ChatInput({
     if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) setFocusOrigin("none");
   }
 
-  const contextProps = { attachments, documentContext, isUploading, onRemove: onRemoveAttachment, onRetry: onRetryAttachment, onClearDocument: onClearDocumentContext };
+  const contextProps = { attachments, documentContext, skillContext, isUploading, onRemove: onRemoveAttachment, onRetry: onRetryAttachment, onClearDocument: onClearDocumentContext, onClearSkill: onClearSkillContext };
   return (<>
     <AttachmentContext {...contextProps} variant="pending" />
     <LhChatInputShell
@@ -148,15 +157,10 @@ export function ChatInput({
             disabled={isLoading || isUploading}
             tabIndex={-1}
           />
-          <button type="button" className={styles.uploadButton} onClick={() => fileInputRef.current?.click()} disabled={isLoading || isUploading}>
-            <span aria-hidden="true">＋</span>
-            上传文件
-          </button>
-          <span className={styles.inputHint}>灯塔知识</span>
-          <details className={styles.fileHelp}>
-            <summary aria-label="查看文件格式与上传限制"><Icon icon={lighthouseIcons.info} aria-hidden="true" /></summary>
-            <p>支持 PDF、DOCX、TXT、Markdown；每个文件最多 10 MB，每次对话最多 5 个。可拖入文件。扫描 PDF 请先完成文字识别。</p>
-          </details>
+          <AddContentMenu disabled={isLoading || isUploading} onLocalFile={() => fileInputRef.current?.click()}
+            documentId={documentContext?.resourceId} skillId={skillContext?.resourceId}
+            onDocument={onSelectDocument ? document => { onSelectDocument(document); textareaRef.current?.focus(); } : undefined}
+            onSkill={onSelectSkill ? skill => { onSelectSkill(skill); textareaRef.current?.focus(); } : undefined} />
         </div>
         <div className={styles.inputToolsRight}>
 
@@ -171,7 +175,7 @@ export function ChatInput({
               <span data-lh-chat-submit-icon className={styles.stopGlyph} aria-hidden="true">■</span>
             ) : (
               <>
-                <span className={styles.sendArrow} aria-hidden="true">↑</span>
+                <Icon icon={lighthouseIcons.arrowUp} className={styles.sendArrow} aria-hidden="true" />
               </>
             )}
           </LhChatSubmitButton>

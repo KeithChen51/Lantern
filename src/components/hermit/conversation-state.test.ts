@@ -16,7 +16,7 @@ describe("Hermit conversation boundaries", () => {
     expect(next.signal.aborted).toBe(true);
   });
   it("excludes expired attachment IDs from restored context without losing document version", () => {
-    const detail: ConversationDetail = { id: "saved", title: "test", messages: [], attachments: [{ id: "expired", name: "old.txt", size: 10 }, { id: "ready", name: "new.txt", size: 20 }], unavailableAttachments: [{ id: "expired", name: "old.txt" }], documentContext: { resourceId: "resource", versionId: "version", title: "知识", source: "本心" } };
+    const detail: ConversationDetail = { id: "saved", title: "test", messages: [], attachments: [{ id: "expired", name: "old.txt", size: 10 }, { id: "ready", name: "new.txt", size: 20 }], unavailableAttachments: [{ id: "expired", name: "old.txt" }], documentContext: { resourceId: "resource", versionId: "version", title: "知识", source: "本心" }, skillContext: null, unavailableSkillContext: null };
     expect(restoredAttachments(detail)).toEqual([{ id: "ready", localId: "restored:ready", name: "new.txt", size: 20, status: "ready", sent: true }]);
     expect(restoredContext(detail)).toMatchObject({ resourceId: "resource", versionId: "version", title: "知识" });
   });

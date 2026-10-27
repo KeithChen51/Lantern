@@ -5,16 +5,23 @@ import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { formatHermitFileSize, type HermitAttachment, type HermitDocumentRecommendation } from "./types";
 import styles from "./hermit-v3.module.css";
 
-export function AttachmentContext({ attachments, documentContext, isUploading, onRemove, onRetry, onClearDocument, variant = "context" }: {
+export function AttachmentContext({ attachments, documentContext, skillContext, isUploading, onRemove, onRetry, onClearDocument, onClearSkill, variant = "context" }: {
   attachments: HermitAttachment[]; documentContext?: HermitDocumentRecommendation | null; isUploading: boolean;
   onRemove: (attachment: HermitAttachment) => void; onRetry: (attachment: HermitAttachment) => void; onClearDocument: () => void;
   variant?: "pending" | "context";
+  skillContext?: HermitDocumentRecommendation | null; onClearSkill?: () => void;
 }) {
   const visibleAttachments = attachments.filter(attachment => variant === "pending" ? !attachment.sent : attachment.sent);
   return <>
-    {variant === "context" && documentContext && <div className={styles.selectedDocument} aria-label={`当前引用文档：${documentContext.title}`}>
-      <Icon icon={lighthouseIcons.document} aria-hidden="true" /><span>引用：{documentContext.title}</span>
+    {variant === "context" && (documentContext || skillContext) && <div className={styles.contextSelections}>
+    {documentContext && <div className={styles.selectedDocument} aria-label={`当前引用文档：${documentContext.title}`}>
+      <Icon icon={lighthouseIcons.document} aria-hidden="true" /><span title={documentContext.title}>引用：{documentContext.title}</span>
       <button type="button" onClick={onClearDocument} aria-label="取消引用当前文档"><Icon icon={lighthouseIcons.close} aria-hidden="true" /></button>
+    </div>}
+    {skillContext && <div className={styles.selectedDocument} aria-label={`当前技能：${skillContext.title}`}>
+      <Icon icon={lighthouseIcons.hermit} aria-hidden="true" /><span title={skillContext.title}>技能：{skillContext.title}</span>
+      <button type="button" onClick={onClearSkill} aria-label="移除当前技能"><Icon icon={lighthouseIcons.close} aria-hidden="true" /></button>
+    </div>}
     </div>}
     {visibleAttachments.length > 0 && <ul className={variant === "pending" ? styles.attachmentTiles : styles.attachmentList} aria-label={variant === "pending" ? "待发送附件" : "当前附件上下文"}>
       {visibleAttachments.map(attachment => <li key={attachment.localId} className={variant === "pending" ? styles.attachmentTile : styles.attachmentChip} data-status={attachment.status} data-sent={attachment.sent ? "true" : undefined}>

@@ -1,14 +1,10 @@
 import type { UIMessage } from "ai";
+import type { HermitConversationDetail, HermitConversationSummary, HermitTurnStatus } from "@/lib/hermit/conversation-contract";
 import { getTextContent, type HermitAttachment, type HermitDocumentRecommendation } from "./types";
 
-export interface ConversationSummary { id: string; title: string; preview: string; updatedAt: string }
-export interface ConversationDetail {
-  id: string; title: string; messages: UIMessage[];
-  attachments: Array<{ id: string; name: string; size: number }>;
-  unavailableAttachments: Array<{ id: string; name: string }>;
-  documentContext: { resourceId: string; versionId: string; title: string; source: string } | null;
-}
-export type RunState = "complete" | "failed" | "cancelled";
+export type ConversationSummary = HermitConversationSummary;
+export type ConversationDetail = HermitConversationDetail;
+export type RunState = HermitTurnStatus;
 
 export function markTerminalState(messages: UIMessage[], state: RunState): UIMessage[] {
   const last = messages[messages.length - 1];
