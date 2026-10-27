@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, writeFile, chmod, rm } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isReleaseVersion } from './release-version.mjs';
 
 export async function packageOperations({ root = process.cwd(), env = process.env, platform = process.platform, arch = process.arch } = {}) {
   if (platform !== 'linux' || arch !== 'x64') throw new Error('Package operations only from the Linux x64 CI install.');
@@ -14,7 +15,7 @@ export async function packageOperations({ root = process.cwd(), env = process.en
   const prisma = JSON.parse(await read('node_modules/prisma/package.json'));
   const client = JSON.parse(await read('node_modules/@prisma/client/package.json'));
   if (prisma.version !== '6.19.3' || client.version !== prisma.version) throw new Error('Operations require the installed Prisma 6.19.3 pair.');
-  if (!/^\d+\.\d+\.\d+$/.test(appPackage.version)) throw new Error('Invalid application version.');
+  if (!isReleaseVersion(appPackage.version)) throw new Error('Invalid application version.');
   const output = path.join(root, 'release/intranet-operations');
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
