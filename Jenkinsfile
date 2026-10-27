@@ -1,4 +1,4 @@
-// Separate CODING jobs configure dev (HTTP test) or master (production build).
+// One CODING job follows dev/master pushes; separate jobs may pin either branch.
 // Issue #50: builds paired images; never deploys, migrates, seeds or initializes.
 pipeline {
   agent any
@@ -8,10 +8,61 @@ pipeline {
       steps {
         script {
           env.IMAGES_PUBLISHED = 'false'
-          env.LIGHTHOUSE_BUILD_BRANCH = (env.LIGHTHOUSE_BUILD_BRANCH ?: 'dev').trim()
-          if (!(env.LIGHTHOUSE_BUILD_BRANCH in ['dev', 'master'])) { error('LIGHTHOUSE_BUILD_BRANCH must be dev or master') }
+          env.LIGHTHOUSE_BUILD_BRANCH = (env.LIGHTHOUSE_BUILD_BRANCH ?: 'auto').trim()
+          // Read trigger metadata before checkout can replace Git environment variables.
+          env.LIGHTHOUSE_BUILD_BRANCH = sh(script: '''
+            set -eu
+            # BEGIN BUILD BRANCH SELECTION (tested directly without Jenkins)
+            fail_branch() { printf '%s\n' "$1" >&2; exit 1; }
+            normalize_branch() {
+              case "$1" in
+                dev|origin/dev|refs/heads/dev|refs/remotes/origin/dev) printf dev ;;
+                master|origin/master|refs/heads/master|refs/remotes/origin/master) printf master ;;
+                *) return 1 ;;
+              esac
+            }
+            requested_branch=${LIGHTHOUSE_BUILD_BRANCH:-auto}
+            case "$requested_branch" in
+              auto|dev|master) ;;
+              *) fail_branch 'LIGHTHOUSE_BUILD_BRANCH must be auto, dev or master' ;;
+            esac
+            # This publishing pipeline is for branch builds, never a pre-merge or tag build.
+            if [ "${CCI_TRIGGER_METHOD:-}" = MR ] || [ -n "${MR_RESOURCE_ID:-}${MR_SOURCE_BRANCH:-}${MR_TARGET_BRANCH:-}${CHANGE_ID:-}" ]; then
+              fail_branch 'Merge-request builds cannot publish branch images; use the dev/master push trigger after merging'
+            fi
+            if [ -n "${GIT_TAG:-}${TAG_NAME:-}" ]; then
+              fail_branch 'Tag builds cannot publish branch images; use a dev/master branch build'
+            fi
+            for trigger_ref in "${GIT_BRANCH:-}" "${BRANCH_NAME:-}" "${GIT_LOCAL_BRANCH:-}" "${GIT_BUILD_REF:-}"; do
+              case "$trigger_ref" in
+                refs/merge-requests/*|refs/pull/*|refs/tags/*)
+                  fail_branch 'Merge-request and tag refs cannot publish branch images' ;;
+              esac
+            done
+            if [ "$requested_branch" != auto ]; then
+              printf '%s\n' "$requested_branch"
+            else
+              selected_branch=
+              # CODING documents GIT_BRANCH as the trigger branch. Local aliases are fallbacks
+              # and must agree when present. GIT_BUILD_REF may be a SHA, so it is not a fallback.
+              for trigger_branch in "${GIT_BRANCH:-}" "${BRANCH_NAME:-}" "${GIT_LOCAL_BRANCH:-}"; do
+                [ -n "$trigger_branch" ] || continue
+                if ! candidate_branch=$(normalize_branch "$trigger_branch"); then
+                  fail_branch 'Automatic build requires a dev/master branch in GIT_BRANCH (or BRANCH_NAME/GIT_LOCAL_BRANCH)'
+                fi
+                if [ -n "$selected_branch" ] && [ "$selected_branch" != "$candidate_branch" ]; then
+                  fail_branch 'Conflicting trigger branch metadata; refusing to choose a publish branch'
+                fi
+                selected_branch=$candidate_branch
+              done
+              [ -n "$selected_branch" ] || fail_branch 'Missing trigger branch; configure a dev/master branch build or explicitly set LIGHTHOUSE_BUILD_BRANCH'
+              printf '%s\n' "$selected_branch"
+            fi
+            # END BUILD BRANCH SELECTION
+          ''', returnStdout: true).trim()
+          echo "Selected build branch: ${env.LIGHTHOUSE_BUILD_BRANCH}"
           if (!(env.BUILD_NUMBER ==~ /[1-9][0-9]*/)) { error('BUILD_NUMBER must be a positive integer') }
-          // Trigger SHAs/MR refs describe the event, not the selected source branch.
+          // Fetch the selected branch; the guard below verifies the actual checkout.
           if (env.GIT_REPO_URL && env.CREDENTIALS_ID) {
             checkout([$class: 'GitSCM', branches: [[name: '*/' + env.LIGHTHOUSE_BUILD_BRANCH]], userRemoteConfigs: [[url: env.GIT_REPO_URL, credentialsId: env.CREDENTIALS_ID]]])
           } else {
