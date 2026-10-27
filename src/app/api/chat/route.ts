@@ -6,7 +6,7 @@ import {
   resolveHermitProviderSettings,
   selectHermitLanguageModel,
 } from "@/lib/hermit/model-provider";
-import { buildSystemPrompt } from "@/lib/hermit/system-prompt";
+import { buildSystemPrompt, buildSelectedSkillPrompt } from "@/lib/hermit/system-prompt";
 import { requireSiteVisitor, enforceGuestRequestLimit, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
 import { assertHermitPrincipal } from "@/modules/hermit/access";
 import { AppError, toErrorResponse } from "@/shared/errors";
@@ -21,7 +21,8 @@ import { createHermitAgentTools, documentContextSchema, type HermitDocument, typ
 import { runDshTurn, verifyDshInstallation } from "@/lib/hermit/dsh-runtime";
 import { createAnswerSources, stripSourceMarkers, type FinalizedAnswerSources } from "@/lib/hermit/answer-sources";
 import { resolveHermitAttachments } from "@/lib/hermit/attachments";
-import type { HermitProgressStage } from "@/lib/hermit/conversation-contract";
+import type { HermitProgressStage, HermitConversationDocument } from "@/lib/hermit/conversation-contract";
+import { resolveHermitSkillContext } from "@/modules/hermit/skill-context";
 
 export const runtime = "nodejs";
 
@@ -48,6 +49,7 @@ const chatBodySchema = z.object({
   }).passthrough()).min(1).max(200),
   attachmentIds: z.array(z.string().min(1).max(120)).max(5).default([]),
   documentContext: documentContextSchema.optional(),
+  skillContext: documentContextSchema.optional(),
 }).passthrough();
 
 async function readChatBody(request: Request) {
@@ -124,7 +126,7 @@ export async function POST(req: Request) {
   catch (error) { return errorResponse(error); }
   const useDsh = process.env.HERMIT_RUNTIME === "dsh";
   const hub = isKnowledgeHubEnabled() ? getSiteKnowledgeHub() : null;
-  if (!hub && (useDsh || body.documentContext || body.attachmentIds.length)) return Response.json({ error: "请先启用并初始化知识中台。" }, { status: 503 });
+  if (!hub && (useDsh || body.documentContext || body.skillContext || body.attachmentIds.length)) return Response.json({ error: "请先启用并初始化知识中台。" }, { status: 503 });
   if (useDsh) {
     try { await verifyDshInstallation(); }
     catch { return Response.json({ error: "路引 Agent 运行环境尚未准备好，请联系维护人员。" }, { status: 503 }); }
@@ -139,13 +141,21 @@ export async function POST(req: Request) {
       selectedDocument = { resourceId: resource.id, versionId: resource.version.id, title: resource.title, source: resource.source };
     } catch { return Response.json({ error: "该文档已不可访问，请关闭文档后继续对话。" }, { status: 404 }); }
   }
+  let selectedSkill: HermitConversationDocument | null = null;
+  if (body.skillContext && hub) {
+    try { selectedSkill = await resolveHermitSkillContext(hub, body.skillContext); }
+    catch (error) {
+      if (error instanceof AppError) return errorResponse(error);
+      return Response.json({ error: "所选平台 Skill 已不可访问，请重新选择后继续对话。" }, { status: 404 });
+    }
+  }
   const history = messages.map(message => ({ role: message.role, text: message.parts.filter(p => p.type === "text").map(p => p.text).join("\n") }));
   if (history.reduce((length, message) => length + message.text.length, 0) > 24000) return Response.json({ error: "当前对话较长，请开启新对话后继续。" }, { status: 413 });
   const providerSettings = resolveHermitProviderSettings();
   const model = readHermitModelName();
   const context = `当前选中文档索引（参考数据，正文须按需读取）：${JSON.stringify(selectedDocument)}\n当前用户附件索引：${JSON.stringify(attachments.map(({ id, name, size }) => ({ id, name, size })))}`;
-  const system = `${buildSystemPrompt()}\n${hub ? "知识中台已启用，请通过工具逐层读取。" : "知识中台未启用，不能查阅或引用平台文件。明确说明此限制，不要声称已查阅资料。"}\n${context}`;
-  const turnContext = { attachments: attachments.map(({ id, name, size }) => ({ id, name, size })), documentContext: selectedDocument };
+  const system = `${buildSystemPrompt()}\n${hub ? "知识中台已启用，请通过工具逐层读取。" : "知识中台未启用，不能查阅或引用平台文件。明确说明此限制，不要声称已查阅资料。"}\n${context}${selectedSkill ? buildSelectedSkillPrompt(selectedSkill) : ""}`;
+  const turnContext = { attachments: attachments.map(({ id, name, size }) => ({ id, name, size })), documentContext: selectedDocument, skillContext: selectedSkill };
   try {
     await recheckAccess();
     await hermitChatService.persistIncomingMessages({ sessionId, participant, messages, modelName: model, turnContext });

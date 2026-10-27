@@ -5,6 +5,7 @@ export type HermitProgressStage = "connecting" | "searching" | "reading" | "answ
 export type HermitProgress = { stage: HermitProgressStage; label: string };
 export type HermitConversationAttachment = { id: string; name: string; size: number };
 export type HermitConversationDocument = { resourceId: string; versionId: string; title: string; source: string };
+export type HermitUnavailableSkillContext = HermitConversationDocument & { message: string };
 export type HermitConversationSummary = { id: string; title: string; preview: string; updatedAt: string };
 export type HermitConversationList = { items: HermitConversationSummary[]; nextCursor: string | null };
 export type HermitConversationDetail = {
@@ -14,4 +15,6 @@ export type HermitConversationDetail = {
   attachments: HermitConversationAttachment[];
   unavailableAttachments: Array<{ id: string; name: string }>;
   documentContext: HermitConversationDocument | null;
+  skillContext: HermitConversationDocument | null;
+  unavailableSkillContext: HermitUnavailableSkillContext | null;
 };

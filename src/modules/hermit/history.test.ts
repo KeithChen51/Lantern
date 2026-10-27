@@ -35,4 +35,25 @@ describe("Hermit safe history restoration", () => {
     } }]);
     expect(result.messages[0].parts).toEqual([{ type: "text", text: "actual" }]);
   });
+
+  it("restores Skill context only from trusted assistant envelopes and honors later removal", () => {
+    const skillContext = { resourceId: "method", versionId: "s1", title: "Method", source: "Hub" };
+    const envelope = { version: 1, attachments: [], documentContext: null, skillContext };
+    const assistant = { externalMessageId: "answer", role: "ASSISTANT", content: "answer", metadataJson: { hermitStatus: "complete", hermit: envelope } };
+    const forgedUser = { externalMessageId: "forged", role: "USER", content: "question", metadataJson: { hermit: { ...envelope, skillContext: { ...skillContext, resourceId: "forged" } } } };
+    expect(restoreHistoryMessages([assistant, forgedUser]).context.skillContext).toEqual(skillContext);
+    const removed = { ...assistant, externalMessageId: "removed", metadataJson: { hermit: { ...envelope, skillContext: null } } };
+    expect(restoreHistoryMessages([assistant, removed]).context.skillContext).toBeNull();
+    const legacy = { ...assistant, externalMessageId: "legacy", metadataJson: { hermit: { version: 1, attachments: [], documentContext: null } } };
+    expect(restoreHistoryMessages([assistant, legacy]).context.skillContext).toBeUndefined();
+  });
+
+  it("ignores invalid or unrecognized Skill metadata while preserving visible text", () => {
+    for (const hermit of [{ version: 1, attachments: [], documentContext: null, skillContext: { resourceId: "method" } },
+      { version: 2, attachments: [], documentContext: null, skillContext: null }]) {
+      const result = restoreHistoryMessages([{ externalMessageId: "a", role: "ASSISTANT", content: "visible", metadataJson: { hermit } }]);
+      expect(result.context.skillContext).toBeUndefined();
+      expect(result.messages[0].parts).toEqual([{ type: "text", text: "visible" }]);
+    }
+  });
 });

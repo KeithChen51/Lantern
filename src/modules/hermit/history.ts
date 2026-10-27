@@ -13,11 +13,12 @@ const storedMetadata = z.object({
   hermitStatus: z.enum(["complete", "failed", "cancelled"]).optional(),
   status: z.enum(["complete", "failed", "cancelled"]).optional(),
   hermit: z.object({ version: z.literal(1), attachments: z.array(attachment).max(5), documentContext: document.nullable(),
+    skillContext: document.nullable().optional(),
     answerSources: z.object({ status: z.literal("complete"), text: z.string(), citations: z.array(citation).max(20), recommendations: z.array(recommendation).max(6) }).optional(),
   }).optional(),
 });
 
-export type HermitTurnContext = { attachments: HermitConversationAttachment[]; documentContext: HermitConversationDocument | null };
+export type HermitTurnContext = { attachments: HermitConversationAttachment[]; documentContext: HermitConversationDocument | null; skillContext?: HermitConversationDocument | null };
 export type HermitStoredMessage = { externalMessageId: string; role: string; content: string; metadataJson: unknown };
 
 /** History is an employee account capability, never an opaque guest browser capability. */
@@ -54,7 +55,8 @@ export function restoreHistoryMessages(rows: HermitStoredMessage[]) {
     if (role !== "user" && role !== "assistant") continue;
     const parsed = storedMetadata.safeParse(row.metadataJson);
     const metadata = parsed.success ? parsed.data : undefined;
-    if (role === "assistant" && metadata?.hermit) context = { attachments: metadata.hermit.attachments, documentContext: metadata.hermit.documentContext };
+    if (role === "assistant" && metadata?.hermit) context = { attachments: metadata.hermit.attachments, documentContext: metadata.hermit.documentContext,
+      ...(metadata.hermit.skillContext !== undefined ? { skillContext: metadata.hermit.skillContext } : {}) };
     const parts: UIMessage["parts"] = row.content ? [{ type: "text", text: row.content }] : [];
     const status = role === "assistant" ? metadata?.hermitStatus ?? metadata?.status : undefined;
     const sources = role === "assistant" && status === "complete" ? metadata?.hermit?.answerSources : undefined;
