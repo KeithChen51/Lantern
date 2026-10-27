@@ -25,7 +25,7 @@ export function LoginSurface({ children }: { children: ReactNode }) {
             <p className={styles.eyebrow}>员工登录</p>
             <h1 id="auth-title" className={styles.title}>欢迎来到灯塔</h1>
             {children}
-            <p className={styles.help}>登录遇到问题，请联系平台维护人员。</p>
+            <p className={styles.help}>登录遇到问题，请联系平台维护人员（林子轩）。</p>
           </div>
           <p className={styles.footer}>从理念到实践，让服务有据可循。</p>
         </section>
