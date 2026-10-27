@@ -24,7 +24,23 @@ describe("native employee entry and approval pages", () => {
     const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({}) }));
     expect(html).toContain("OA 登录");
     expect(html).toContain('action="/api/auth/start"');
+    expect(html).toContain("欢迎来到灯塔");
+    expect(html).toContain('src="/lighthouse-home-hero-bg-v2-realistic-shore.png"');
     expect(redirect).not.toHaveBeenCalled();
+  });
+  it.each([
+    [{ mode: "portal", portalLoginMode: "card" }, { error: "unavailable" }, "前往统一门户", "统一登录服务暂不可用"],
+    [{ mode: "portal", portalLoginMode: "callback" }, { error: "invalid" }, "前往统一登录", "登录未完成"],
+    [{ mode: "iam" }, { loggedOut: "1" }, "OA 登录", "你已退出灯塔"],
+  ])("preserves the entry action and recovery message for %j", async (settings, params, button, notice) => {
+    config.mockReturnValue(settings);
+    const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ ...params, returnTo: "https://outside.invalid" }) }));
+    expect(html).toContain(button);
+    expect(html).toContain(notice);
+    expect(html).toContain('name="returnTo" value="/"');
+    expect(html).toContain('method="post"');
+    expect(html).not.toContain("disabled");
+    expect(html).not.toContain("data-lh-sidebar");
   });
   it("renders a native login POST and preserves a direct device link without business shell", async () => {
     const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ returnTo: "/auth/device?user_code=ABCD-EFGH" }) }));

@@ -6,7 +6,7 @@ This document defines the active page and workflow patterns for the Lighthouse p
 
 ## V3 Shared Frame
 
-All pages except the unchanged Heart / 本心 homepage use the shared frame:
+Business pages except the unchanged Heart / 本心 homepage use the shared frame. Public authentication pages have their own frame:
 
 - `main[data-lh-v3]` owns the non-home V3 scope. The existing navigation and shell remain outside that scope.
 - Desktop content starts at `x=128px`, keeps `32px` on the right, begins below the `64px` page header, and is constrained to `1280px`.
@@ -17,6 +17,16 @@ All pages except the unchanged Heart / 本心 homepage use the shared frame:
 The frame is a layout contract, not a new theme. Mirror, Action, Search, Feedback, Admin, and Hermit share the frame while retaining their task-specific density and content order.
 
 ## Product Map
+
+### Employee login entry
+
+- `/login` uses `LoginSurface`: the existing lighthouse/coast image and concise platform introduction sit beside one clearly labeled native login action. Warm paper, amber actions and bundled fonts follow V3; the login frame does not inherit the business sidebar offset.
+- At widths below 768px, the image becomes a compact header above the login area. Content can grow vertically for errors, text zoom and short screens; the login action must remain unobstructed.
+- IAM, portal callback and portal card modes keep their existing labels and instructions. Configuration failures disable the action; service errors and logout feedback stay beside it. The form remains a server-rendered POST with the validated return target, including when JavaScript is unavailable.
+- Only the exact shared decorative image is added to the public brand-asset allowlist. Business images and scripts stay protected. No external fonts, imagery, QR login or new authentication flow is introduced.
+- Identity confirmation, access-denied and device approval retain `AuthSurface`; the image-led entry is specific to `/login`.
+
+### Business areas
 
 | Area | Primary user task | UI character |
 | --- | --- | --- |
