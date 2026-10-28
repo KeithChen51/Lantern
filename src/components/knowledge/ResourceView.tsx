@@ -40,7 +40,7 @@ export function ResourceView({ resource, embedded = false, returnTo, returnAncho
     },
     table: ({ children }) => <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="文章表格"><table>{children}</table></div>,
   };
-  return <div id="resource-top" className={styles.reader} data-lh-resource data-lh-page-archetype={resource.type === "case" ? "case-workflow" : "cultural-reading"}>
+  return <div id="resource-top" className={styles.reader} data-lh-resource data-lh-reader-embedded={embedded || undefined} data-lh-page-archetype={resource.type === "case" ? "case-workflow" : "cultural-reading"}>
     <nav className={styles.breadcrumb} aria-label="阅读位置"><Link href={returnHref}>↩ 返回{returnLabel}</Link></nav>
     <div className={styles.readingLayout}>
       <article className={styles.paper}>
