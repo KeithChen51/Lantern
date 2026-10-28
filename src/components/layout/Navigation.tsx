@@ -218,10 +218,13 @@ function SidebarSearchPanel({
   isOpen?: boolean;
   setIsOpen?: (value: boolean) => void;
 }) {
+  const isComposing = React.useRef(false);
+
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        if (isComposing.current) return;
         onSubmit(query);
       }}
       className="relative min-w-0"
@@ -237,9 +240,12 @@ function SidebarSearchPanel({
             setIsOpen?.(true);
           }}
           onFocus={() => setIsOpen?.(true)}
+          onCompositionStart={() => { isComposing.current = true; }}
+          onCompositionEnd={() => { isComposing.current = false; }}
           onKeyDown={(event) => {
             if (event.key !== "Enter") return;
             event.preventDefault();
+            if (isComposing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
             onSubmit(event.currentTarget.value);
           }}
           type="text"
@@ -357,6 +363,8 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
   const pathname = usePathname();
   const isExpanded = isPinned;
   const desktopSidebarRef = React.useRef<HTMLElement | null>(null);
+  const mobileDialogRef = React.useRef<HTMLDialogElement | null>(null);
+  const mobileCloseRef = React.useRef<HTMLButtonElement | null>(null);
   const desktopSidebarStyle = {
     width: isExpanded ? "var(--lh-classic-sidebar-width)" : "var(--lh-classic-sidebar-collapsed-width)",
     ...(isHomeSurface
@@ -386,6 +394,32 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
     node.style.removeProperty("--lh-home-nav-progress-value");
   }, [isHomeSurface]);
 
+  React.useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!isMobileOpen || !dialog) return;
+    const desktop = window.matchMedia("(min-width: 768px)");
+    if (desktop.matches) {
+      onMobileClose();
+      return;
+    }
+
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    mobileCloseRef.current?.focus({ preventScroll: true });
+    document.body.style.overflow = "hidden";
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) onMobileClose();
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [isMobileOpen, onMobileClose]);
+
   return (
     <>
       <nav
@@ -409,25 +443,36 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         </div>
       </nav>
 
-      <div
-        className={cn(
-          "fixed inset-0 z-50 bg-ink/30 transition-opacity duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-standard)] md:hidden",
-          isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-        )}
+      <dialog
+        ref={mobileDialogRef}
+        id="lighthouse-mobile-navigation"
+        data-lh-mobile-navigation
+        aria-label="导航菜单"
+        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-ink/30 p-0 text-ink md:hidden"
+        onCancel={(event) => { event.preventDefault(); onMobileClose(); }}
+        onClick={(event) => { if (event.target === event.currentTarget) onMobileClose(); }}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), [tabindex="0"]'))
+            .filter(control => control.getClientRects().length > 0);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            (event.shiftKey ? last : first)?.focus();
+          }
+        }}
       >
-        <button type="button" onClick={onMobileClose} aria-label="关闭导航菜单" className="absolute inset-0" />
         <nav
           data-lh-sidebar
           data-mobile="true"
-          className={cn(
-            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] transition-transform duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] [backdrop-filter:var(--lh-shell-blur)]",
-            isMobileOpen ? "translate-x-0" : "-translate-x-full",
-          )}
+          className="absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col overflow-y-auto overscroll-contain border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]"
           aria-label="移动端主导航"
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <Logo isExpanded onTogglePin={onTogglePin} showToggle={false} />
             <LhIconButton
+              ref={mobileCloseRef}
               type="button"
               label="关闭导航菜单"
               icon={<Icon icon={lighthouseIcons.close} className="h-5 w-5" />}
@@ -436,17 +481,17 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
               className="border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] text-[var(--color-deck-text)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
             />
           </div>
-          <SidebarSearch isExpanded onNavigate={onMobileClose} className="mt-5" />
+          <SidebarSearch isExpanded onNavigate={onMobileClose} className="mt-5 shrink-0" />
 
-          <div data-lh-sidebar-nav-group className="mt-6 flex flex-1 flex-col gap-2">
+          <div data-lh-sidebar-nav-group className="mt-6 flex shrink-0 flex-col gap-2">
             <NavLinks isExpanded pathname={pathname} onNavigate={onMobileClose} />
           </div>
 
-          <div data-lh-sidebar-utility-group className="mt-auto grid min-w-0 gap-2">
+          <div data-lh-sidebar-utility-group className="mt-auto grid min-w-0 shrink-0 gap-2 pt-2">
             <SessionLinks isExpanded onNavigate={onMobileClose} />
           </div>
         </nav>
-      </div>
+      </dialog>
     </>
   );
 }

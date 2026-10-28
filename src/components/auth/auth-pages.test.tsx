@@ -61,6 +61,13 @@ describe("native employee entry and approval pages", () => {
     pending.mockRejectedValue(new Error("expired"));
     const html = renderToStaticMarkup(await ConfirmLoginPage()); expect(html).toContain("已过期"); expect(html).toContain('href="/login"');
   });
+  it("keeps the verified pending destination when choosing another account", async () => {
+    pending.mockResolvedValue({ account: "employee", displayName: "测试员工", csrfToken: "nonce", returnTo: "/auth/device?user_code=ABCD-EFGH" });
+    const html = renderToStaticMarkup(await ConfirmLoginPage());
+    expect(html).toContain('href="/login?returnTo=%2Fauth%2Fdevice%3Fuser_code%3DABCD-EFGH"');
+    pending.mockResolvedValue({ account: "employee", displayName: "测试员工", csrfToken: "nonce", returnTo: "//evil.invalid" });
+    expect(renderToStaticMarkup(await ConfirmLoginPage())).toContain('href="/login"');
+  });
   it("shows employee, client and knowledge-only scope with separate approve/refuse native controls", async () => {
     employee.mockResolvedValue({ displayName: "测试员工", account: "employee-fixture", csrfToken: "csrf-fixture" });
     device.mockResolvedValue({ userCode: "ABCD-EFGH", clientName: "测试工具", scope: "knowledge:read", expiresAt: 1800000000000, deviceCode: "never-render-device-token" });

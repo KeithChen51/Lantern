@@ -17,6 +17,8 @@ interface ChatInputProps {
   onStop: () => void;
   isLoading: boolean;
   isUploading: boolean;
+  isResolvingContext?: boolean;
+  submitBlockedReason?: string;
   attachments: HermitAttachment[];
   onFilesSelected: (files: FileList | null) => void;
   onRemoveAttachment: (attachment: HermitAttachment) => void;
@@ -40,6 +42,8 @@ export function ChatInput({
   onStop,
   isLoading,
   isUploading,
+  isResolvingContext = false,
+  submitBlockedReason,
   attachments,
   onFilesSelected,
   onRemoveAttachment,
@@ -57,7 +61,8 @@ export function ChatInput({
   const focusIntentRef = useRef<Exclude<ChatInputFocusOrigin, "none">>("keyboard");
   const [focusOrigin, setFocusOrigin] = useState<ChatInputFocusOrigin>("none");
   const hasPendingAttachment = attachments.some((attachment) => attachment.status !== "ready");
-  const canSubmit = Boolean(value.trim()) && !isLoading && !hasPendingAttachment;
+  const canSubmit = Boolean(value.trim()) && !isLoading && !hasPendingAttachment && !isResolvingContext && !submitBlockedReason;
+  const submitLabel = isLoading ? "停止生成" : isResolvingContext ? "正在恢复案例引用" : submitBlockedReason || (hasPendingAttachment ? "等待附件读取完成" : "发送");
 
   useEffect(() => { if (focusKey) textareaRef.current?.focus(); }, [focusKey]);
 
@@ -173,8 +178,8 @@ export function ChatInput({
               onStop();
             } : undefined}
             disabled={isLoading ? false : !canSubmit}
-            aria-label={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
-            title={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
+            aria-label={submitLabel}
+            title={submitLabel}
           >
             {isLoading ? (
               <span data-lh-chat-submit-icon className={styles.stopGlyph} aria-hidden="true">■</span>

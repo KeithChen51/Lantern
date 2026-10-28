@@ -1,6 +1,7 @@
 "use client";
 
 import { authFetch } from "@/components/auth/auth-fetch";
+import { useRouter } from "next/navigation";
 
 import * as React from "react";
 import ReactMarkdown from "react-markdown";
@@ -11,6 +12,7 @@ import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { PageHeading } from "@/components/ui/PageHeading";
 import { resourceLabels } from "@/components/knowledge/ResourceView";
 import styles from "./knowledge-manager.module.css";
+import { mergeUploadSelection, settleUploadBatch } from "./upload-queue";
 
 type ResourceType = keyof typeof resourceLabels;
 type CaseVisibility = "public" | "internal";
@@ -70,7 +72,7 @@ type PreviewResource = {
   };
 };
 
-type UploadItem = { file: File; path: string };
+type UploadItem = { id: string; file: File; path: string };
 type UploadResult = { name: string; path?: string; resourceId?: string; versionId?: string; error?: string; code?: string; skipped?: boolean };
 type UploadBatch = { folderId: string | null; type: ResourceType };
 
@@ -84,6 +86,8 @@ type DialogState =
   | { kind: "move" };
 
 const INTERNAL_DRAG_TYPE = "application/x-lighthouse-knowledge-item";
+let uploadSelectionId = 0;
+const nextUploadId = () => `upload-${++uploadSelectionId}`;
 
 const typeOptions: Array<{ value: ResourceType; label: string }> = [
   { value: "document", label: resourceLabels.document },
@@ -216,7 +220,7 @@ async function readDroppedEntries(items: DataTransferItemList) {
     if (entry.isFile && entry.file) {
       return new Promise((resolve, reject) => {
         try {
-          entry.file?.((file) => resolve([{ file, path: `${prefix}${file.name}` }]), (error) => reject(error instanceof Error ? error : new Error(`无法读取文件：${entry.name}`)));
+          entry.file?.((file) => resolve([{ id: nextUploadId(), file, path: `${prefix}${file.name}` }]), (error) => reject(error instanceof Error ? error : new Error(`无法读取文件：${entry.name}`)));
         } catch (error) {
           reject(error);
         }
@@ -230,6 +234,7 @@ async function readDroppedEntries(items: DataTransferItemList) {
 }
 
 export function AdminKnowledgeManager() {
+  const router = useRouter();
   const [data, setData] = React.useState<KnowledgeIndex | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -253,9 +258,47 @@ export function AdminKnowledgeManager() {
   const [conflictResults, setConflictResults] = React.useState<UploadResult[]>([]);
   const [failedResults, setFailedResults] = React.useState<UploadResult[]>([]);
   const [retryContext, setRetryContext] = React.useState<UploadBatch | null>(null);
+  const [retryItems, setRetryItems] = React.useState<UploadItem[]>([]);
   const [dropActive, setDropActive] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const directoryInputRef = React.useRef<HTMLInputElement>(null);
+  const previewRequestRef = React.useRef({ generation: 0, controller: null as AbortController | null });
+  const uploadInFlightRef = React.useRef(false);
+  const leaveConfirmedRef = React.useRef(false);
+  const hasPendingUploads = uploadBusy || uploadItems.length > 0;
+  const closePreview = React.useCallback(() => {
+    previewRequestRef.current.generation += 1;
+    previewRequestRef.current.controller?.abort();
+    setPreview({ loading: false, resource: null, error: "" });
+  }, []);
+  React.useEffect(() => () => {
+    previewRequestRef.current.generation += 1;
+    previewRequestRef.current.controller?.abort();
+  }, []);
+  React.useEffect(() => {
+    if (!hasPendingUploads) return;
+    const confirmLeave = () => window.confirm("还有未完成的上传，离开后待导入文件不会保留。确定离开吗？");
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (leaveConfirmedRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const onLinkClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
+      if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
+      const destination = new URL(link.href, window.location.href);
+      if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+      if (!confirmLeave()) { event.preventDefault(); event.stopPropagation(); }
+      else leaveConfirmedRef.current = destination.origin !== window.location.origin;
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    document.addEventListener("click", onLinkClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+      document.removeEventListener("click", onLinkClick, true);
+    };
+  }, [hasPendingUploads]);
   const modalOpen = Boolean(dialog || preview.loading || preview.resource || preview.error);
   React.useEffect(() => {
     if (!modalOpen) return;
@@ -266,7 +309,7 @@ export function AdminKnowledgeManager() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setDialog(null);
-        setPreview({ loading: false, resource: null, error: "" });
+        closePreview();
       }
       if (event.key !== "Tab") return;
       const items = focusable();
@@ -276,7 +319,7 @@ export function AdminKnowledgeManager() {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => { document.removeEventListener("keydown", onKeyDown); previousFocus?.focus(); };
-  }, [modalOpen]);
+  }, [closePreview, modalOpen]);
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
@@ -477,27 +520,33 @@ export function AdminKnowledgeManager() {
   }
 
   async function openPreview(id: string) {
+    previewRequestRef.current.controller?.abort();
+    const generation = ++previewRequestRef.current.generation;
+    const controller = new AbortController();
+    previewRequestRef.current.controller = controller;
     setError("");
     const resource = resources.find((item) => item.id === id);
     setPreview({ loading: true, resource: null, error: "" });
     try {
       const suffix = resource?.latestVersionId ? `?version=${encodeURIComponent(resource.latestVersionId)}` : "";
-      const payload = await requestJson<PreviewResource | { data: PreviewResource }>(`/api/admin/knowledge/${encodeURIComponent(id)}${suffix}`);
-      setPreview({ loading: false, resource: unwrap(payload), error: "" });
+      const payload = await requestJson<PreviewResource | { data: PreviewResource }>(`/api/admin/knowledge/${encodeURIComponent(id)}${suffix}`, { signal: controller.signal });
+      if (previewRequestRef.current.generation === generation) setPreview({ loading: false, resource: unwrap(payload), error: "" });
     } catch (nextError) {
-      setPreview({ loading: false, resource: null, error: nextError instanceof Error ? nextError.message : "预览加载失败。" });
+      if (previewRequestRef.current.generation === generation && !controller.signal.aborted) setPreview({ loading: false, resource: null, error: nextError instanceof Error ? nextError.message : "预览加载失败。" });
     }
   }
 
   async function publishPreview() {
     if (!preview.resource) return;
+    const generation = previewRequestRef.current.generation;
+    const resource = preview.resource;
     setBusy("publish");
     setError("");
     try {
-      await postAction({ action: "publish", id: preview.resource.id, versionId: preview.resource.version.id });
+      await postAction({ action: "publish", id: resource.id, versionId: resource.version.id });
       setMessage("草稿已发布。");
       await loadData();
-      await openPreview(preview.resource.id);
+      if (previewRequestRef.current.generation === generation) await openPreview(resource.id);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "发布失败，请稍后重试。");
     } finally {
@@ -508,11 +557,12 @@ export function AdminKnowledgeManager() {
   async function setCaseVisibility(visibility: CaseVisibility) {
     if (!preview.resource || preview.resource.type !== "case") return;
     const resourceId = preview.resource.id;
+    const generation = previewRequestRef.current.generation;
     setBusy("visibility");
     setError("");
     try {
       await postAction({ action: "setVisibility", id: resourceId, visibility });
-      setPreview((current) => current.resource && current.resource.id === resourceId
+      setPreview((current) => previewRequestRef.current.generation === generation && current.resource && current.resource.id === resourceId
         ? { ...current, resource: { ...current.resource, visibility } }
         : current);
       setMessage(`案例可见范围已设为“${visibilityLabels[visibility]}”。`);
@@ -529,12 +579,8 @@ export function AdminKnowledgeManager() {
       setUploadError("请先处理当前批次的失败项，再开始新的上传。");
       return;
     }
-    const items = files.map((file) => ({ file, path: includeRelativePath ? ((file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name) : file.name }));
-    setUploadItems((previous) => {
-      const byPath = new Map(previous.map((item) => [item.path, item]));
-      items.forEach((item) => byPath.set(item.path, item));
-      return [...byPath.values()];
-    });
+    const items = files.map((file) => ({ id: nextUploadId(), file, path: includeRelativePath ? ((file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name) : file.name }));
+    setUploadItems((previous) => mergeUploadSelection(previous, items));
     setUploadMessage("");
     setUploadError("");
     setUploadExcluded([]);
@@ -554,16 +600,12 @@ export function AdminKnowledgeManager() {
     }
     try {
       const droppedEntries = event.dataTransfer.items.length ? await readDroppedEntries(event.dataTransfer.items) : [];
-      const dropped = droppedEntries.length ? droppedEntries : Array.from(event.dataTransfer.files).map((file) => ({ file, path: file.name }));
+      const dropped = droppedEntries.length ? droppedEntries : Array.from(event.dataTransfer.files).map((file) => ({ id: nextUploadId(), file, path: file.name }));
       if (!dropped.length) {
         setUploadError("没有读取到文件，请重新拖入 Markdown 或 Skill 文件夹。");
         return;
       }
-      setUploadItems((previous) => {
-        const byPath = new Map(previous.map((item) => [item.path, item]));
-        dropped.forEach((item) => byPath.set(item.path, item));
-        return [...byPath.values()];
-      });
+      setUploadItems((previous) => mergeUploadSelection(previous, dropped));
       setUploadMessage("");
       setUploadError("");
       setUploadExcluded([]);
@@ -589,13 +631,16 @@ export function AdminKnowledgeManager() {
     return matched.length || candidates.length === 1 ? (matched.length ? matched : candidates) : [];
   }
 
-  async function uploadFiles(items = uploadItems, conflict: "ask" | "overwrite" | "rename" | "skip" = "ask", boundContext?: UploadBatch) {
-    if (!items.length) return;
+  async function uploadFiles(items = retryContext ? retryItems : uploadItems, conflict: "ask" | "overwrite" | "rename" | "skip" = "ask", boundContext?: UploadBatch) {
+    if (!items.length || uploadInFlightRef.current) return;
+    uploadInFlightRef.current = true;
+    const batch = boundContext ?? retryContext ?? { folderId: view.kind === "folder" ? view.folderId : null, type: uploadType };
+    const submittedIds = new Set(items.map(item => item.id));
+    const otherRetryItems = retryItems.filter(item => !submittedIds.has(item.id));
     setUploadBusy(true);
     setUploadError("");
     setUploadMessage("");
     try {
-      const batch = boundContext ?? retryContext ?? { folderId: view.kind === "folder" ? view.folderId : null, type: uploadType };
       const formData = new FormData();
       items.forEach((item) => formData.append("files", item.file, fileNameFromPath(item.path)));
       formData.append("paths", JSON.stringify(items.map((item) => item.path)));
@@ -609,65 +654,64 @@ export function AdminKnowledgeManager() {
       const failed = results.filter((result) => result.error || result.code === "conflict");
       if (!response.ok && !results.length) throw new Error(errorMessage(payload, `上传失败：${response.status}`));
       if (!results.length) throw new Error("上传接口没有返回逐项处理结果，未清理待上传文件。");
-      const currentPaths = new Set(items.map((item) => item.path));
       const previousFailed = failedResults;
       const otherFailed = batch.type === "skill" ? [] : previousFailed.filter((result) => !items.some((item) => resultMatchesItem(result, item)));
-      const otherItems = uploadItems.filter((item) => !currentPaths.has(item.path));
+      const currentRetryItems = itemsForResults(failed, items, batch);
+      const remainingRetryItems = [...otherRetryItems, ...currentRetryItems];
+      setUploadItems(previous => settleUploadBatch(previous, items, currentRetryItems));
+      setRetryItems(remainingRetryItems);
+      setRetryContext(remainingRetryItems.length ? batch : null);
+      const currentConflicts = itemsForResults(failed.filter(result => result.code === "conflict"), items, batch);
+      setConflictItems(previous => [...previous.filter(item => !submittedIds.has(item.id)), ...(conflict === "ask" ? currentConflicts : [])]);
+      setConflictResults(previous => [...previous.filter(result => !items.some(item => resultMatchesItem(result, item))), ...failed.filter(result => result.code === "conflict")]);
+      setFailedResults([...otherFailed, ...failed]);
       if (failed.length > 0) {
-        const conflictFailures = failed.filter((result) => result.code === "conflict");
-        const currentRetryItems = itemsForResults(failed, items, batch);
-        const retryItems = [...new Map([...otherItems, ...currentRetryItems].map((item) => [item.path, item])).values()];
-        const conflictRetryItems = itemsForResults(conflictFailures, items, batch);
         const allFailed = [...otherFailed, ...failed];
-        setFailedResults(allFailed);
-        setRetryContext(retryItems.length > 0 ? (retryContext ?? batch) : null);
-        setUploadItems((previous) => previous.filter((item) => retryItems.some((retryItem) => retryItem.path === item.path)));
-        setConflictResults(conflictFailures);
-        setConflictItems(conflict === "ask" ? conflictRetryItems : []);
         const succeeded = results.filter((result) => !result.error && !result.skipped).length;
-        const unresolved = retryItems.length > 0 ? `已保留 ${retryItems.length} 个失败文件供重试` : "失败文件无法安全匹配，请重新选择";
+        const unresolved = remainingRetryItems.length > 0 ? `已保留 ${remainingRetryItems.length} 个失败文件供重试，新加入的文件继续保留` : "失败文件无法安全匹配，请重新选择";
         setUploadMessage(`${succeeded} 项已生成草稿，${allFailed.length} 项未完成；${unresolved}。成功文件不会重复提交。`);
         await loadData();
       } else {
         const succeeded = results.filter((result) => !result.error && !result.skipped).length;
         const skipped = results.filter((result) => result.skipped).length;
         const excluded = payload.excluded?.length ? `，${payload.excluded.length} 个依赖/缓存文件已排除` : "";
-        const remainingItems = uploadItems.filter((item) => !currentPaths.has(item.path));
-        const hasRemainingFailures = remainingItems.length > 0 || otherFailed.length > 0;
-        setUploadMessage(`上传处理完成：${succeeded} 项生成草稿${skipped ? `，${skipped} 项已跳过` : ""}${excluded}${hasRemainingFailures ? `；仍有 ${remainingItems.length} 项待处理` : ""}。请打开预览确认后发布。`);
-        setUploadItems(remainingItems);
-        setConflictItems([]);
-        setConflictResults([]);
-        setFailedResults(otherFailed);
-        setRetryContext(hasRemainingFailures ? (retryContext ?? batch) : null);
+        setUploadMessage(`上传处理完成：${succeeded} 项生成草稿${skipped ? `，${skipped} 项已跳过` : ""}${excluded}${remainingRetryItems.length ? `；仍有 ${remainingRetryItems.length} 项待重试` : ""}。新加入的文件继续保留。请打开预览确认后发布。`);
         await loadData();
       }
     } catch (nextError) {
+      // An unknown response cannot safely settle any submitted selection. Bind
+      // retries to this destination, while leaving later selections untouched.
+      setUploadItems(previous => settleUploadBatch(previous, items, items));
+      setRetryItems([...otherRetryItems, ...items]);
+      setRetryContext(batch);
       setUploadError(nextError instanceof Error ? nextError.message : "上传失败，请稍后重试。");
     } finally {
+      uploadInFlightRef.current = false;
       setUploadBusy(false);
     }
   }
 
   function clearUploadQueue() {
+    if (uploadInFlightRef.current) return;
     setUploadItems([]);
     setConflictItems([]);
     setConflictResults([]);
     setFailedResults([]);
     setRetryContext(null);
+    setRetryItems([]);
   }
 
-  function removeUploadItem(path: string) {
-    setUploadItems((previous) => {
-      const next = previous.filter((item) => item.path !== path);
-      if (!next.length) {
-        setConflictItems([]);
-        setConflictResults([]);
-        setFailedResults([]);
-        setRetryContext(null);
-      }
-      return next;
-    });
+  function removeUploadItem(id: string) {
+    if (uploadInFlightRef.current) return;
+    const remainingRetryItems = retryItems.filter(item => item.id !== id);
+    setRetryItems(remainingRetryItems);
+    setConflictItems(previous => previous.filter(item => item.id !== id));
+    if (!remainingRetryItems.length) {
+      setFailedResults([]);
+      setConflictResults([]);
+      setRetryContext(null);
+    }
+    setUploadItems(previous => previous.filter(item => item.id !== id));
   }
 
   const directoryInputProps = { webkitdirectory: "", directory: "" } as unknown as React.InputHTMLAttributes<HTMLInputElement>;
@@ -781,7 +825,7 @@ export function AdminKnowledgeManager() {
         title="知识文件管理"
         description="像整理桌面文件夹一样维护灯塔知识：拖拽归档，批量导入，预览草稿后再发布。"
       >
-        <LhButton type="button" variant="secondary" icon={icon("admin")} onClick={() => window.location.assign("/admin")}>返回后台</LhButton>
+        <LhButton type="button" variant="secondary" icon={icon("admin")} onClick={() => { if (!hasPendingUploads || window.confirm("还有未完成的上传，离开后待导入文件不会保留。确定离开吗？")) router.push("/search"); }}>返回知识资源</LhButton>
       </PageHeading>
 
       {(error || message) && <LhCallout tone={error ? "danger" : "success"} icon={icon(error ? "warning" : "status")} className={styles.topNotice}>{error || message}</LhCallout>}
@@ -840,9 +884,9 @@ export function AdminKnowledgeManager() {
               <input ref={fileInputRef} className={styles.hiddenInput} type="file" multiple accept=".md,.markdown,.zip" disabled={isTrash || Boolean(retryContext)} onChange={(event) => { setUploadFiles(Array.from(event.target.files ?? [])); event.currentTarget.value = ""; }} />
               <input ref={directoryInputRef} className={styles.hiddenInput} type="file" multiple accept=".md,.markdown,*/*" disabled={isTrash || Boolean(retryContext)} {...directoryInputProps} onChange={(event) => { setUploadFiles(Array.from(event.target.files ?? []), true); event.currentTarget.value = ""; }} />
             </div>
-            {uploadItems.length > 0 && <div className={styles.uploadQueue}><div className={styles.queueHeader}><strong>待导入 {uploadItems.length} 项</strong><button type="button" onClick={clearUploadQueue}>清空</button></div><ul>{uploadItems.map((item) => <li key={item.path}><span>{item.path}</span><button type="button" aria-label={`移除 ${item.path}`} onClick={() => removeUploadItem(item.path)}>{icon("close")}</button></li>)}</ul><div className={styles.queueActions}><span>目标：{retryContext ? `${retryContext.folderId ? folders.find((folder) => folder.id === retryContext.folderId)?.name ?? "原目标文件夹" : "全部文件"} · ${typeOptions.find((option) => option.value === retryContext.type)?.label ?? retryContext.type}` : isTrash ? "请先选择知识目录" : currentFolderName}</span><LhButton type="button" size="sm" variant="primary" disabled={uploadBusy || isTrash} icon={uploadBusy ? <LhLoadingGlyph label="正在上传" /> : icon("publish")} onClick={() => void uploadFiles()}>{uploadBusy ? "正在导入" : "上传并生成草稿"}</LhButton></div></div>}
+            {uploadItems.length > 0 && <div className={styles.uploadQueue}><div className={styles.queueHeader}><strong>待导入 {uploadItems.length} 项</strong><button type="button" disabled={uploadBusy} onClick={clearUploadQueue}>清空</button></div><ul>{uploadItems.map((item) => <li key={item.id}><span>{item.path}{retryItems.some(retry => retry.id === item.id) ? " · 待重试" : ""}</span><button type="button" disabled={uploadBusy} aria-label={`移除 ${item.path}`} onClick={() => removeUploadItem(item.id)}>{icon("close")}</button></li>)}</ul><div className={styles.queueActions}><span>{retryContext ? "重试目标：" : "目标："}{retryContext ? `${retryContext.folderId ? folders.find((folder) => folder.id === retryContext.folderId)?.name ?? "原目标文件夹" : "全部文件"} · ${typeOptions.find((option) => option.value === retryContext.type)?.label ?? retryContext.type}` : isTrash ? "请先选择知识目录" : currentFolderName}{retryContext && uploadItems.some(item => !retryItems.some(retry => retry.id === item.id)) ? "；其余文件将在重试完成后单独导入" : ""}</span><LhButton type="button" size="sm" variant="primary" disabled={uploadBusy || isTrash} icon={uploadBusy ? <LhLoadingGlyph label="正在上传" /> : icon("publish")} onClick={() => void uploadFiles()}>{uploadBusy ? "正在导入" : retryContext ? "重试未完成项目" : "上传并生成草稿"}</LhButton></div></div>}
             {(uploadMessage || uploadError) && <div className={`${styles.uploadResult} ${uploadError ? styles.uploadResultError : ""}`} role={uploadError ? "alert" : "status"}>{uploadError || uploadMessage}{!uploadError && uploadExcluded.length > 0 && <details><summary>查看已排除文件（{uploadExcluded.length}）</summary><ul>{uploadExcluded.map((path) => <li key={path}>{path}</li>)}</ul></details>}{!uploadError && failedResults.length > 0 && <details><summary>查看未完成项目（{failedResults.length}）</summary><ul>{failedResults.map((result, index) => <li key={`${result.name}-${index}`}>{result.name}{result.error ? `：${result.error}` : result.code ? `：${result.code}` : ""}</li>)}</ul></details>}</div>}
-            {conflictItems.length > 0 && <div className={styles.conflictPanel}><div><strong>发现同名资料</strong><p>{conflictResults.map((result) => result.name).join("、")}</p><p>将按原目标：{retryContext?.folderId ? folders.find((folder) => folder.id === retryContext.folderId)?.name ?? "原目标文件夹" : "全部文件"} · {retryContext ? typeOptions.find((option) => option.value === retryContext.type)?.label ?? retryContext.type : uploadType} 处理。</p></div><div className={styles.conflictActions}><LhButton type="button" size="sm" variant="secondary" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "overwrite")}>覆盖</LhButton><LhButton type="button" size="sm" variant="signal" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "rename")}>重命名导入</LhButton><LhButton type="button" size="sm" variant="quiet" disabled={uploadBusy} onClick={() => { setUploadItems((previous) => previous.filter((item) => !conflictItems.some((conflictItem) => conflictItem.path === item.path))); setConflictItems([]); setConflictResults([]); setFailedResults((previous) => previous.filter((result) => result.code !== "conflict")); setRetryContext((previous) => failedResults.some((result) => result.code !== "conflict") ? previous : null); setUploadMessage("已跳过同名资料。"); }}>跳过</LhButton></div></div>}
+            {conflictItems.length > 0 && <div className={styles.conflictPanel}><div><strong>发现同名资料</strong><p>{conflictResults.map((result) => result.name).join("、")}</p><p>将按原目标：{retryContext?.folderId ? folders.find((folder) => folder.id === retryContext.folderId)?.name ?? "原目标文件夹" : "全部文件"} · {retryContext ? typeOptions.find((option) => option.value === retryContext.type)?.label ?? retryContext.type : uploadType} 处理。</p></div><div className={styles.conflictActions}><LhButton type="button" size="sm" variant="secondary" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "overwrite")}>覆盖</LhButton><LhButton type="button" size="sm" variant="signal" disabled={uploadBusy} onClick={() => void uploadFiles(conflictItems, "rename")}>重命名导入</LhButton><LhButton type="button" size="sm" variant="quiet" disabled={uploadBusy} onClick={() => { const skippedIds = new Set(conflictItems.map(item => item.id)); const remainingRetryItems = retryItems.filter(item => !skippedIds.has(item.id)); setUploadItems(previous => previous.filter(item => !skippedIds.has(item.id))); setRetryItems(remainingRetryItems); setConflictItems([]); setConflictResults([]); setFailedResults(previous => previous.filter(result => result.code !== "conflict")); if (!remainingRetryItems.length) setRetryContext(null); setUploadMessage("已跳过同名资料。"); }}>跳过</LhButton></div></div>}
           </div>
 
           {loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载知识目录" />正在加载知识目录…</div>}
@@ -858,7 +902,7 @@ export function AdminKnowledgeManager() {
 
       {dialog && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="knowledge-dialog-title"><form onSubmit={(event) => void submitDialog(event)}><div className={styles.modalHeader}><h2 id="knowledge-dialog-title">{dialog.kind === "createFolder" ? "新建文件夹" : dialog.kind === "rename" ? "重命名" : dialog.kind === "move" ? "移动到" : "确认移入回收站"}</h2><button type="button" className={styles.modalClose} onClick={() => setDialog(null)} aria-label="关闭">{icon("close")}</button></div>{error && <LhCallout tone="danger" role="alert">{error}</LhCallout>}{dialog.kind === "trash" ? <p className={styles.modalCopy}>将 {dialog.items.length} 项移入回收站？删除后仍可在回收站恢复。</p> : dialog.kind === "move" ? <label className={styles.modalField}>目标文件夹<select value={dialogValue} onChange={(event) => setDialogValue(event.target.value)}><option value="__root__">全部文件（根目录）</option>{folders.filter((folder) => !folder.deleted && !selected.has(itemKey({ kind: "folder", id: folder.id }))).map((folder) => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label> : <label className={styles.modalField}>名称<input autoFocus value={dialogValue} onChange={(event) => setDialogValue(event.target.value)} placeholder="输入名称" /></label>}<div className={styles.modalActions}><LhButton type="button" size="sm" variant="quiet" onClick={() => setDialog(null)}>取消</LhButton><LhButton type="submit" size="sm" variant={dialog.kind === "trash" ? "danger" : "primary"} disabled={Boolean(busy)} icon={busy === "dialog" ? <LhLoadingGlyph label="处理中" /> : undefined}>{dialog.kind === "trash" ? "移入回收站" : dialog.kind === "move" ? "移动" : "保存"}</LhButton></div></form></div></div>}
 
-       {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview({ loading: false, resource: null, error: "" }); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={() => setPreview({ loading: false, resource: null, error: "" })} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{(preview.error || error) && <LhCallout tone="danger" role="alert" icon={icon("warning")}>{preview.error || error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip>{preview.resource.type === "case" && <LhChip tone={visibilityTones[preview.resource.visibility ?? "internal"]}>{visibilityLabels[preview.resource.visibility ?? "internal"]}</LhChip>}<span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div>{preview.resource.type === "case" && <div className={styles.previewVisibility}><label htmlFor="knowledge-case-visibility">可见范围</label><select id="knowledge-case-visibility" value={preview.resource.visibility ?? "internal"} disabled={Boolean(busy) || preview.resource.archived} aria-busy={busy === "visibility"} onChange={(event) => void setCaseVisibility(event.target.value as CaseVisibility)}><option value="internal">内参</option><option value="public">公开</option></select>{busy === "visibility" && <LhLoadingGlyph label="正在保存可见范围" />}</div>}<div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.archived || preview.resource.version.publishedAt) || busy === "publish" || busy === "visibility"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
+       {(preview.loading || preview.resource || preview.error) && <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closePreview(); }}><div className={`${styles.previewModal} ${preview.loading ? styles.previewLoading : ""}`} role="dialog" aria-modal="true" aria-labelledby="knowledge-preview-title"><div className={styles.modalHeader}><div><span className={styles.panelLabel}>草稿预览</span><h2 id="knowledge-preview-title">{preview.resource?.title ?? "正在加载"}</h2></div><button type="button" className={styles.modalClose} onClick={closePreview} aria-label="关闭">{icon("close")}</button></div>{preview.loading && <div className={styles.loadingState}><LhLoadingGlyph label="正在加载预览" />正在加载资源…</div>}{(preview.error || error) && <LhCallout tone="danger" role="alert" icon={icon("warning")}>{preview.error || error}</LhCallout>}{preview.resource && <><div className={styles.previewMeta}><LhChip tone="primary">{resourceLabels[preview.resource.type]}</LhChip>{preview.resource.type === "case" && <LhChip tone={visibilityTones[preview.resource.visibility ?? "internal"]}>{visibilityLabels[preview.resource.visibility ?? "internal"]}</LhChip>}<span>版本 {preview.resource.version.number}</span><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "有未发布更新" : preview.resource.version.publishedAt ? `发布于 ${formatDate(preview.resource.version.publishedAt)}` : "未发布草稿"}</span><span>{preview.resource.source ?? "用户导入"}</span></div>{preview.resource.type === "case" && <div className={styles.previewVisibility}><label htmlFor="knowledge-case-visibility">可见范围</label><select id="knowledge-case-visibility" value={preview.resource.visibility ?? "internal"} disabled={Boolean(busy) || preview.resource.archived} aria-busy={busy === "visibility"} onChange={(event) => void setCaseVisibility(event.target.value as CaseVisibility)}><option value="internal">内参</option><option value="public">公开</option></select>{busy === "visibility" && <LhLoadingGlyph label="正在保存可见范围" />}</div>}<div className={styles.previewBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{preview.resource.version.markdown}</ReactMarkdown></div>{preview.resource.version.files.length > 0 && <section className={styles.previewFiles}><h3>配套文件</h3><ul>{preview.resource.version.files.map((file) => { const text = decodeFileText(file); const published = Boolean(preview.resource?.version.publishedAt); return <li key={file.path}><div><strong>{file.path}</strong><span>{file.mediaType ?? "文件"}</span></div>{text && <details><summary>预览文本</summary><pre>{text}</pre></details>}{published ? <a href={`/api/resources/${encodeURIComponent(preview.resource!.id)}/files?version=${encodeURIComponent(preview.resource!.version.id)}&path=${encodeURIComponent(file.path)}`} download>下载</a> : <span className={styles.previewOnly}>草稿仅预览</span>}</li>; })}</ul></section>}<div className={styles.previewActions}><div className={styles.previewActionCopy}><a className={styles.packageDownload} href={`/api/admin/knowledge/${encodeURIComponent(preview.resource.id)}/download?version=${encodeURIComponent(preview.resource.version.id)}`} download>下载整包</a><span>{preview.resource.publishedVersionId && preview.resource.version.id !== preview.resource.publishedVersionId ? "发布前请检查未发布更新、正文和附件路径。" : preview.resource.version.publishedAt ? "当前版本已发布" : "发布前请检查正文、资源类型和附件路径。"}</span></div><LhButton type="button" variant="primary" disabled={Boolean(preview.resource.archived || preview.resource.version.publishedAt) || busy === "publish" || busy === "visibility"} onClick={() => void publishPreview()} icon={busy === "publish" ? <LhLoadingGlyph label="正在发布" /> : icon("publish")}>{preview.resource.version.publishedAt ? "已发布" : "手动发布"}</LhButton></div></>}</div></div>}
     </div>
   );
 }

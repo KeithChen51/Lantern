@@ -13,6 +13,7 @@ import {
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { PageHeading } from "@/components/ui/PageHeading";
 import styles from "../content-v3.module.css";
+import { mirrorHermitHref } from "@/components/hermit/case-entry";
 
 const stats = [
   { label: "2025 年销售额", value: "200.35", unit: "亿元", note: "提前达成目标" },
@@ -325,7 +326,7 @@ export default function PangDongLaiPage() {
               title="路引使用方式"
               action={
                 <Link
-                  href="/hermit"
+                  href={mirrorHermitHref()}
                   className="inline-flex min-h-10 items-center justify-center rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-3 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text transition-colors hover:bg-primary-soft"
                 >
                   打开路引
@@ -346,7 +347,7 @@ export default function PangDongLaiPage() {
                   <ul className="mt-4 grid gap-3 text-[length:var(--type-body)] leading-[var(--leading-body)] text-[color:var(--color-ink-soft)]">
                     {card.questions.map((question) => (
                       <li key={question} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
-                        {question}
+                        <Link href={mirrorHermitHref(question)} className="rounded-sm text-primary-text underline decoration-line-strong underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{question}<span className="sr-only">，带入路引继续讨论</span></Link>
                       </li>
                     ))}
                   </ul>
@@ -361,7 +362,7 @@ export default function PangDongLaiPage() {
                 {workflowLabel}
               </Link>
               <Link
-                href="/hermit"
+                href={mirrorHermitHref()}
                 className="inline-flex min-h-11 items-center justify-center rounded-[var(--lh-control-radius)] border border-line-strong bg-panel px-4 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)] text-primary-text transition-colors hover:bg-primary-soft"
               >
                 带着问题问路引

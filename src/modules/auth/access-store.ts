@@ -4,7 +4,7 @@ import { AccessError } from "./access-types";
 
 export type AccessPayloads = {
   guest: { namespace: string; userId: string; grantId: string; csrfToken: string };
-  login: { verifierHash: string; returnTo: string; consumed: boolean; authority?: "portal" | "iam" | "iam-portal" };
+  login: { verifierHash: string; returnTo: string; consumed: boolean; authority?: "portal" | "iam" | "iam-portal"; entry?: "card" };
   pending: { tokenCipher: string; account: string; displayName: string; csrfToken: string; returnTo: string; consumed: boolean; upstreamExpiresAt: number };
   grant: { userId: string; account: string; displayName: string; organization?: string; tokenCipher: string; active: boolean; identityAt: number; rolesAt: number; roles: string[]; authority?: "portal" | "iam" | "iam-portal" };
   iamAccount: { account: string; displayName: string; organization?: string; active: boolean; deleted: boolean };

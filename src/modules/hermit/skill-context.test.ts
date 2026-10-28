@@ -14,7 +14,12 @@ async function fixture() {
     if (options.publish !== false) await employee.publish(id, imported.versionId);
     return { resourceId: id, versionId: imported.versionId };
   };
-  return { employee, guest, create };
+  const setVisibility = async (id: string, visibility: "public" | "internal") => store.transaction(async tx => {
+    const resource = (await tx.getResource(id))!;
+    resource.visibility = visibility;
+    await tx.saveResource(resource);
+  });
+  return { employee, guest, create, setVisibility };
 }
 
 describe("selected platform Skill context", () => {
@@ -32,14 +37,20 @@ describe("selected platform Skill context", () => {
   });
 
   it("uses the guest reader to deny internal resources and internal historical versions", async () => {
-    const { employee, guest, create } = await fixture();
+    const { employee, guest, create, setVisibility } = await fixture();
     const privateSkill = await create("private", { visibility: "internal" });
     const oldInternal = await create("revised", { visibility: "internal" });
+    await setVisibility("revised", "public");
     const publicVersion = await create("revised", { markdown: "# Public method" });
     await expect(resolveHermitSkillContext(guest, privateSkill)).rejects.toMatchObject({ status: 404 });
     await expect(resolveHermitSkillContext(guest, oldInternal)).rejects.toMatchObject({ status: 404 });
     expect(await resolveHermitSkillContext(guest, publicVersion)).toMatchObject(publicVersion);
     expect(await resolveHermitSkillContext(employee, privateSkill)).toMatchObject(privateSkill);
+    await setVisibility("revised", "internal");
+    await expect(resolveHermitSkillContext(guest, publicVersion)).rejects.toMatchObject({ status: 404 });
+    await setVisibility("revised", "public");
+    expect(await resolveHermitSkillContext(guest, publicVersion)).toMatchObject(publicVersion);
+    await expect(resolveHermitSkillContext(guest, oldInternal)).rejects.toMatchObject({ status: 404 });
   });
 
   it("rejects drafts, archived resources, missing resources and a version belonging to another resource", async () => {

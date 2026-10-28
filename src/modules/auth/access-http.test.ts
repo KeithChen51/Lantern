@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { AccessError, OAuthError } from "./access-types";
 import { generateKeyPairSync } from "node:crypto";
-const service = vi.hoisted(() => ({ authorizeDevice: vi.fn(), exchangeDevice: vi.fn(), refresh: vi.fn(), startLogin: vi.fn(), callback: vi.fn(), iamCallback: vi.fn(), confirmPending: vi.fn(), revokeClient: vi.fn(), logout: vi.fn() }));
+const service = vi.hoisted(() => ({ authorizeDevice: vi.fn(), exchangeDevice: vi.fn(), refresh: vi.fn(), startLogin: vi.fn(), loginReturnTo: vi.fn(), callback: vi.fn(), iamCallback: vi.fn(), confirmPending: vi.fn(), revokeClient: vi.fn(), logout: vi.fn() }));
 vi.mock("./access", () => ({
   getAccessService: () => service,
   requireEmployee: vi.fn(async () => ({ userId: "fixture", credentialId: "web", channel: "web", csrfToken: "fixture-csrf" })),
@@ -17,7 +17,7 @@ const env = {
   AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "https://app.example.invalid", PORTAL_API_BASE_URL: "https://portal.example.invalid", PORTAL_LOGIN_URL: "https://portal.example.invalid/login",
   PORTAL_APP_CODE: "lighthouse", PORTAL_APP_SECRET: "synthetic", PORTAL_KNOWLEDGE_ADMIN_ROLE: "knowledge_admin", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 3).toString("base64"), PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true",
 };
-beforeEach(() => { vi.resetAllMocks(); for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value); });
+beforeEach(() => { vi.resetAllMocks(); service.loginReturnTo.mockResolvedValue("/"); for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value); });
 afterEach(() => { vi.unstubAllEnvs(); });
 const form = (path: string, value: Record<string, string>) => new NextRequest(`https://app.example.invalid${path}`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", origin: "https://app.example.invalid" }, body: new URLSearchParams(value) });
 
@@ -61,6 +61,22 @@ describe("device HTTP protocol and native forms stay distinct", () => {
     expect(response.status).toBe(303); expect(response.headers.get("location")).toBe("https://app.example.invalid/login?error=callback");
     expect(await response.text()).not.toContain("sensitive-token"); expect(response.headers.get("referrer-policy")).toBe("no-referrer");
   });
+  it("keeps a validated callback destination on retry, excluding bearer material", async () => {
+    service.loginReturnTo.mockResolvedValue("/auth/device?user_code=ABCD-EFGH");
+    service.callback.mockRejectedValue(new Error("sensitive-token"));
+    const response = await callback(new NextRequest("https://app.example.invalid/auth/portal/callback?token=sensitive-token&state=bound&returnTo=https://evil.invalid", { headers: { cookie: "__Host-lighthouse_login=browser" } }));
+    expect(service.loginReturnTo).toHaveBeenCalledWith({ state: "bound", cookie: "browser" });
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/login"); expect(location.searchParams.get("returnTo")).toBe("/auth/device?user_code=ABCD-EFGH");
+    expect(location.searchParams.get("error")).toBe("callback"); expect(location.href).not.toContain("sensitive-token");
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+  });
+  it("rejects an unbound transaction before using any callback return target", async () => {
+    service.loginReturnTo.mockRejectedValue(new AccessError("invalid", 401));
+    const response = await callback(new NextRequest("https://app.example.invalid/auth/portal/callback?token=private&state=wrong&returnTo=/action"));
+    expect(response.headers.get("location")).toBe("https://app.example.invalid/login?error=callback");
+    expect(service.callback).not.toHaveBeenCalled();
+  });
   it("native failures are readable without JavaScript and do not expose exception text", async () => {
     service.startLogin.mockRejectedValue(new Error("sensitive exception"));
     const response = await start(form("/api/auth/start", {}));
@@ -103,6 +119,15 @@ describe("IAM callback HTTP boundary", () => {
     expect(response.headers.get("set-cookie")).toContain("__Host-lighthouse_iam_session=opaque-session");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
     expect(await response.text()).not.toContain("synthetic-code");
+  });
+  it.each(["code=private-code&state=bound", "error=access_denied&state=bound"])("preserves the bound IAM destination after failure: %s", async query => {
+    service.loginReturnTo.mockResolvedValue("/auth/device?user_code=ABCD-EFGH");
+    service.iamCallback.mockRejectedValue(new Error("private-code"));
+    const response = await iamCallback(new NextRequest(`https://app.example.invalid/auth/iam/callback?${query}`, { headers: { cookie: "__Host-lighthouse_iam_login=browser" } }));
+    expect(service.loginReturnTo).toHaveBeenCalledWith({ state: "bound", cookie: "browser" });
+    const location = new URL(response.headers.get("location")!);
+    expect(location.searchParams.get("returnTo")).toBe("/auth/device?user_code=ABCD-EFGH");
+    expect(location.href).not.toContain("private-code"); expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
   });
   it.each(["code=one&code=two&state=a", "code=a", "code=a&state=a&state=b", "error=denied&code=a&state=b"])("rejects ambiguous callback %s", async query => {
     const response = await iamCallback(new NextRequest(`https://app.example.invalid/auth/iam/callback?${query}`));
