@@ -32,6 +32,7 @@ import type { HermitDocumentRecommendation } from "./types";
 import type { ContextRemoval } from "./message-context";
 import { MessageContext } from "./MessageContext";
 import type { ConversationDetail } from "./conversation-state";
+import type { HermitCaseEntry } from "./case-entry";
 
 function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>>[] {
   if (Array.isArray(node)) return node.flatMap(child => find(child, type));
@@ -39,9 +40,12 @@ function find(node: ReactNode, type: unknown): ReactElement<Record<string, unkno
   const element = node as ReactElement<{ children?: ReactNode }>;
   return [...(element.type === type ? [element as ReactElement<Record<string, unknown>>] : []), ...find(element.props.children, type)];
 }
+let incomingEntry: HermitCaseEntry | undefined;
+let incomingDraft = "";
+const consumeEntry = vi.fn();
 function render(initial?: ConversationDetail) {
   harness.slot = 0; harness.refSlot = 0;
-  return ConversationWorkspace({ id: "saved-session", owner: "employee:a", initial, onNew: vi.fn(), onHistory: vi.fn(), onSaved: vi.fn() });
+  return ConversationWorkspace({ id: "saved-session", owner: "employee:a", initial, entry: incomingEntry, draftText: incomingDraft, onEntryConsumed: consumeEntry, onNew: vi.fn(), onHistory: vi.fn(), onSaved: vi.fn() });
 }
 function composer() { return find(render(), ChatInput)[0].props as unknown as { value: string; onChange: (text: string) => void; onSubmit: () => void;
   onSelectDocument: (document: HermitDocumentRecommendation) => void; onSelectSkill: (skill: HermitDocumentRecommendation) => void;
@@ -50,10 +54,27 @@ const documentA = { id: "doc:a", resourceId: "a", versionId: "v1", title: "文�
 const documentB = { id: "doc:b", resourceId: "b", versionId: "v2", title: "文档 B", source: "中台" };
 const skill = { id: "skill:s", resourceId: "s", versionId: "s1", title: "方法", source: "中台" };
 beforeEach(() => {
+  incomingEntry = undefined; incomingDraft = "";
   vi.clearAllMocks(); harness.slot = 0; harness.refSlot = 0; harness.states = []; harness.refs = []; harness.messages = []; harness.status = "ready"; harness.attachments = [];
   harness.send.mockImplementation(async ({ text, metadata }) => { harness.messages.push({ id: `user-${harness.messages.length}`, role: "user", parts: [{ type: "text", text }], metadata }); }); harness.regenerate.mockResolvedValue(undefined);
 });
 describe("Hermit workspace handlers", () => {
+  it("fills a case question and readable document in an empty composer without sending", () => {
+    incomingEntry = { prompt: "请结合案例分析现场", title: "案例 A", document: documentA };
+    expect(composer()).toMatchObject({ value: incomingEntry.prompt, documentContext: documentA });
+    expect(harness.send).not.toHaveBeenCalled();
+    composer().onChange("我补充了现场情况"); composer().onSubmit();
+    expect(harness.send).toHaveBeenCalledWith(expect.objectContaining({ text: "我补充了现场情况" }), { body: { attachmentIds: [], documentContext: { resourceId: "a", versionId: "v1" } } });
+  });
+  it("keeps an existing draft until the case question is explicitly added", () => {
+    incomingDraft = "原现场描述";
+    incomingEntry = { prompt: "镜鉴案例问题", title: "案例 A", document: documentA };
+    expect(composer()).toMatchObject({ value: incomingDraft, documentContext: null });
+    const apply = find(render(), "button").find(button => button.props.children === "将案例问题加入草稿");
+    (apply?.props.onClick as () => void)();
+    expect(composer()).toMatchObject({ value: "原现场描述\n\n镜鉴案例问题", documentContext: documentA });
+    expect(consumeEntry).toHaveBeenCalledOnce(); expect(harness.send).not.toHaveBeenCalled();
+  });
   it("binds useChat to the selected history ID and only fills the draft when a scenario is clicked", () => {
     const view = render();
     (find(view, ScenarioCards)[0].props.onSelect as (draft: string) => void)("可编辑的场景草稿");

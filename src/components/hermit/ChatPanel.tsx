@@ -23,6 +23,7 @@ import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
 import { contextRequest, messageContext, retryContext, sameContextResource, unrepresentedContext, type ContextRemoval } from "./message-context";
 import { MessageContext } from "./MessageContext";
 import { HermitDraftStore } from "./draft-store";
+import { appendCaseQuestion, type HermitCaseEntry } from "./case-entry";
 import styles from "./hermit-v3.module.css";
 
 function getErrorMessage(error: unknown) {
@@ -36,14 +37,21 @@ const clientReady = () => true;
 const serverReady = () => false;
 const emptyDraftStorage = { getItem: () => null, setItem: () => {} };
 
-export function ChatPanel() {
+export function ChatPanel({ entry }: { entry?: HermitCaseEntry } = {}) {
   const session = useEmployeeSession();
   const owner = hermitUploadOwner(session);
   const ready = useSyncExternalStore(subscribeHydration, clientReady, serverReady);
-  return <HermitSessionWorkspace key={`${owner}:${ready}`} owner={owner} guest={!session || session.kind === "guest"} restoreDrafts={ready} />;
+  return <HermitSessionWorkspace key={`${owner}:${ready}:${entry?.prompt ?? ""}`} owner={owner} guest={!session || session.kind === "guest"} restoreDrafts={ready} entry={ready ? entry : undefined} />;
 }
 
-function HermitSessionWorkspace({ owner, guest, restoreDrafts }: { owner: string | null; guest: boolean; restoreDrafts: boolean }) {
+function HermitSessionWorkspace({ owner, guest, restoreDrafts, entry }: { owner: string | null; guest: boolean; restoreDrafts: boolean; entry?: HermitCaseEntry }) {
+  const [incomingEntry, setIncomingEntry] = useState(entry);
+  function consumeEntry() {
+    setIncomingEntry(undefined);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("from"); url.searchParams.delete("question");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
   const [drafts] = useState(() => new HermitDraftStore(owner, restoreDrafts ? undefined : emptyDraftStorage));
   const [selection, setSelection] = useState<{ id: string; detail?: ConversationDetail; revision: number; focus?: boolean; restore?: boolean }>(() => {
     const previous = drafts.cursor;
@@ -88,6 +96,7 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts }: { owner: string
   }
 
   function newConversation() {
+    if (incomingEntry) consumeEntry();
     detailScope.current.dispose();
     setDetailLoading(false); setDetailError(null); setHistoryOpen(false);
     const id = createConversationId();
@@ -116,7 +125,7 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts }: { owner: string
       <p>{detailError ?? "正在恢复上次对话…"}</p>
       {detailError && <button type="button" onClick={() => { setDetailError(null); setSelection(previous => ({ ...previous, revision: previous.revision + 1 })); }}>重试恢复</button>}
       <button type="button" onClick={startWithRecoveredDraft}>保留草稿，开始新对话</button>
-    </div> : <ConversationWorkspace key={`${selection.id}:${selection.revision}`} id={selection.id} owner={owner} initial={selection.detail} focusOnMount={selection.focus} focusRequest={focusRequest}
+    </div> : <ConversationWorkspace key={`${selection.id}:${selection.revision}`} id={selection.id} owner={owner} initial={selection.detail} focusOnMount={selection.focus} focusRequest={focusRequest} entry={incomingEntry} onEntryConsumed={consumeEntry}
       draftText={drafts.text(selection.id)} onDraftChange={text => { drafts.write(selection.id, text); drafts.select(selection.id, Boolean(selection.detail) || drafts.cursor?.persisted === true); }}
       onStarted={text => { drafts.submitting(selection.id, text); drafts.select(selection.id, !guest); }}
       onAcknowledged={() => drafts.acknowledged(selection.id)}
@@ -129,13 +138,16 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts }: { owner: string
   </>;
 }
 
-interface ConversationWorkspaceProps { id: string; owner: string | null; initial?: ConversationDetail; focusOnMount?: boolean; focusRequest?: number; draftText?: string; onDraftChange?: (text: string) => void; onStarted?: (text: string) => void; onAcknowledged?: () => void; onNew: () => void; onHistory: () => void; onSaved: () => void }
-export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusRequest = 0, draftText = "", onDraftChange, onStarted, onAcknowledged, onNew, onHistory, onSaved }: ConversationWorkspaceProps) {
+interface ConversationWorkspaceProps { id: string; owner: string | null; initial?: ConversationDetail; focusOnMount?: boolean; focusRequest?: number; draftText?: string; entry?: HermitCaseEntry; onEntryConsumed?: () => void; onDraftChange?: (text: string) => void; onStarted?: (text: string) => void; onAcknowledged?: () => void; onNew: () => void; onHistory: () => void; onSaved: () => void }
+export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusRequest = 0, draftText = "", entry, onEntryConsumed, onDraftChange, onStarted, onAcknowledged, onNew, onHistory, onSaved }: ConversationWorkspaceProps) {
   const { attachments, setAttachments, uploadError, isUploadingAttachments, handleFilesSelected, handleRemoveAttachment, handleRetryAttachment, uploadScopeRef } = useHermitAttachments(owner, initial, id);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat", fetch: authFetch }), []);
-  const [input, setInput] = useState(draftText);
+  const [entryPending, setEntryPending] = useState(Boolean(entry && (draftText.trim() || initial?.messages.length)));
+  const [entryNotice, setEntryNotice] = useState(entry);
+  const entryHandled = useRef(false);
+  const [input, setInput] = useState(entry && !entryPending ? entry.prompt : draftText);
   const [replacedDraft, setReplacedDraft] = useState<string | null>(null);
-  const [focusKey, setFocusKey] = useState(focusOnMount ? 1 : 0);
+  const [focusKey, setFocusKey] = useState(focusOnMount || entry && !entryPending ? 1 : 0);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [wasCancelled, setWasCancelled] = useState(false);
@@ -156,7 +168,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   function updateInput(text: string) { setInput(text); onDraftChange?.(text); }
   const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(() => restoredContext(initial));
   const [skillContext, setSkillContext] = useState<HermitDocumentRecommendation | null>(() => initial?.skillContext ? { id: `skill:${initial.skillContext.resourceId}`, ...initial.skillContext } : null);
-  const [draftDocument, setDraftDocument] = useState<HermitDocumentRecommendation | null>(null);
+  const [draftDocument, setDraftDocument] = useState<HermitDocumentRecommendation | null>(entry && !entryPending ? entry.document : null);
   const [draftSkill, setDraftSkill] = useState<HermitDocumentRecommendation | null>(null);
   const activeContext: HermitMessageContext = { attachments: attachments.flatMap(item => item.sent && item.status === "ready" && item.id ? [{ id: item.id, name: item.name, size: item.size }] : []), documentContext, skillContext };
   const pendingContextRef = useRef<HermitMessageContext>(activeContext);
@@ -196,6 +208,22 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   const lastState = messageRunState(lastMessage);
 
   useEffect(() => {
+    if (!entry || entryPending || entryHandled.current) return;
+    entryHandled.current = true;
+    onDraftChange?.(entry.prompt);
+    onEntryConsumed?.();
+  }, [entry, entryPending, onDraftChange, onEntryConsumed]);
+
+  function applyCaseEntry() {
+    if (!entryNotice) return;
+    entryHandled.current = true;
+    updateInput(appendCaseQuestion(input, entryNotice.prompt));
+    setDraftDocument(entryNotice.document);
+    setEntryPending(false); setFocusKey(key => key + 1);
+    onEntryConsumed?.();
+  }
+
+  useEffect(() => {
     const element = scrollRef.current;
     if (element && hasMessages && followLatestRef.current) element.scrollTo({ top: element.scrollHeight, behavior: "auto" });
   }, [hasMessages, isLoading, messages]);
@@ -210,8 +238,9 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     const body = contextRequest(context);
     const scope = uploadScopeRef.current;
     pendingContextRef.current = context;
+    if (entryPending) { entryHandled.current = true; onEntryConsumed?.(); setEntryPending(false); }
     followLatestRef.current = true; setHasUnreadMessages(false);
-    onStarted?.(text); updateInput(""); setReplacedDraft(null); setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
+    onStarted?.(text); updateInput(""); setReplacedDraft(null); setEntryNotice(undefined); setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
     setAttachments(current => current.map(item => item.id && body.attachmentIds.includes(item.id) ? { ...item, sent: true } : item));
     setDocumentContext(draftDocument ?? documentContext); setSkillContext(draftSkill ?? skillContext);
     setDraftDocument(null); setDraftSkill(null);
@@ -241,7 +270,15 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     skillContext: draftSkill, onSelectSkill: setDraftSkill, onClearSkillContext: () => setDraftSkill(null) };
 
   return <div className={styles.workspace}>
+    <div>
     <ConversationHeader title={hasMessages ? title : undefined} onNew={onNew} onHistory={onHistory} />
+    {entryNotice && <aside className={styles.caseEntry} aria-label="镜鉴案例问题">
+      <p>{entryPending ? `已从镜鉴带来《${entryNotice.title}》的问题，原对话和草稿已保留。` : `已带入《${entryNotice.title}》的问题，发送前可以继续补充现场情况。`}</p>
+      {entryNotice.notice && <p>{entryNotice.notice}</p>}
+      <div>{entryPending && <button type="button" onClick={applyCaseEntry}>将案例问题加入草稿</button>}
+        <button type="button" onClick={() => { entryHandled.current = true; setEntryNotice(undefined); setEntryPending(false); onEntryConsumed?.(); }}>{entryPending ? "暂不带入" : "收起提示"}</button></div>
+    </aside>}
+    </div>
     {!hasMessages ? <section data-lh-hermit-start aria-labelledby="hermit-start-title">
       <div data-lh-hermit-start-inner>
         <div className={styles.startCopy}>
