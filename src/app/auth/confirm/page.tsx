@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { getPendingLogin } from "@/modules/auth/access";
 import { AuthNotice, AuthSurface } from "@/components/auth/AuthSurface";
+import { loginRetryHref } from "@/modules/auth/login-return";
 
 export default async function ConfirmLoginPage() {
   let pending;
@@ -11,6 +12,6 @@ export default async function ConfirmLoginPage() {
     <p>请核对本次统一登录返回的账号。</p>
     <dl><dt>姓名</dt><dd>{pending.displayName}</dd><dt>员工账号</dt><dd>{pending.account}</dd></dl>
     <form action="/api/auth/portal-login" method="post"><input type="hidden" name="csrfToken" value={pending.csrfToken} /><button type="submit">使用此账号登录</button></form>
-    <p><a href="/login">重新选择账号</a></p>
+    <p><a href={loginRetryHref(pending.returnTo)}>重新选择账号</a></p>
   </AuthSurface>;
 }

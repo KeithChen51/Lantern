@@ -139,7 +139,13 @@ Runtime home pattern:
 
 ### Knowledge resource reading
 
-Hub-backed documents and cases use the existing cultural-reading / case-workflow archetypes. The shared ResourceView keeps an editorial title, a bounded reading column, and a quiet desktop contents rail; mobile contents collapse into a disclosure. Markdown headings link to original source lines, while the repeated document title is omitted only from rendering. Downloads and version-local citations retain the original content unchanged.
+Hub-backed documents and cases use the existing cultural-reading / case-workflow archetypes. The shared ResourceView keeps an editorial title, a bounded reading column, and a quiet desktop contents rail. At widths up to 900px, non-embedded articles have a lightweight fixed return / contents / top bar with room reserved below the article and safe-area padding; embedded readers retain their host controls. Markdown headings link to original source lines, while the repeated document title is omitted only from rendering. Downloads and version-local citations retain the original content unchanged.
+
+`ReadingEntryLink` and `ReadingListPosition` preserve the originating `/action` or `/search` URL and a one-time tab-local scroll snapshot. Return URLs must pass the internal list allowlist; direct article access has a meaningful default. Browser Back retains the same position behavior. Action filters use GET `q` / `tag` parameters and actual readable-resource tags, with clear and empty-result states.
+
+Mirror-to-Hermit entry points carry an editable question and resolve the currently readable publication on the server. They never auto-send. Empty composers can be prefilled; an existing draft or conversation requires an explicit add-to-draft action that preserves existing text. Unavailable sources are explained and must not appear as attached citations.
+
+Knowledge management entry points are shown only to principals with `knowledge:manage`; server authorization remains mandatory. Unavailable features such as feedback submission state their availability at the entry, before the user navigates.
 
 Raw file paths, resource IDs, and citation IDs belong in the source disclosure at the end, not in the reading header or search excerpts. Source images that are unavailable are labeled as unavailable rather than rendered as broken links. The Home/Heart surface retains HomeBrandHero and its value-path anchor before the Hub-backed article.
 

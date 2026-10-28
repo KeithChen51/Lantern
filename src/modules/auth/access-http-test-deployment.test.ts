@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { AccessError } from "./access-types";
+const identity = vi.hoisted(() => vi.fn());
 vi.mock("@/infrastructure/db", () => ({ prisma: {} }));
 // Exercise real configuration, routes, facade, state, sessions and CSRF with
 // synthetic portal identities and an in-memory transaction store (not MySQL).
@@ -9,7 +11,7 @@ vi.mock("./access-store", async importOriginal => {
   return { ...actual, PrismaAccessStore: class { transaction = store.transaction.bind(store); } };
 });
 vi.mock("./portal", () => ({ HttpPortalAdapter: class {
-  async identity() { return { account: "000123", displayName: "Fixture employee" }; }
+  identity = identity;
   async roles() { return []; }
 } }));
 import { readAccessConfig } from "./access-config";
@@ -22,7 +24,7 @@ const env = {
   AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"), PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true", PORTAL_ALLOW_LEGACY_CONFIRMATION: "false",
   DATABASE_URL: "mysql://fixture", KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql",
 };
-beforeEach(() => { for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value); });
+beforeEach(() => { identity.mockReset().mockResolvedValue({ account: "000123", displayName: "Fixture employee" }); for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value); });
 afterEach(() => vi.unstubAllEnvs());
 const post = (path: string, input: Record<string, string>, headers: Record<string, string> = {}) => new NextRequest(origin + path, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", origin, ...headers }, body: new URLSearchParams(input) });
 function cookie(response: Response, name: string) {
@@ -41,13 +43,30 @@ async function begin(returnTo = "/heart") {
 const callbackRequest = (state: string, cookie: string) => new NextRequest(origin + "/auth/portal/callback?" + new URLSearchParams({ state, token: "synthetic-upstream" }), { headers: { cookie } });
 
 describe("HTTP test login preserves the authentication protocol", () => {
+  it("restarts a failed employee verification with a new bound transaction and the original device destination", async () => {
+    const target = "/auth/device?user_code=ABCD-EFGH", flow = await begin(target);
+    identity.mockRejectedValueOnce(new AccessError("synthetic upstream credential rejected", 401));
+    const failed = await callback(callbackRequest(flow.state, flow.transactionCookie.split(";")[0]));
+    const retryUrl = new URL(failed.headers.get("location")!);
+    expect(retryUrl.pathname).toBe("/login");
+    expect(retryUrl.searchParams.get("returnTo")).toBe(target);
+    expect(retryUrl.searchParams.get("error")).toBe("callback");
+    expect(retryUrl.href).not.toContain("synthetic-upstream");
+    expect(cookie(failed, flow.config.transactionCookie)).toContain("Max-Age=0");
+    const retried = await begin(retryUrl.searchParams.get("returnTo")!);
+    expect(retried.state).not.toBe(flow.state);
+    expect(retried.transactionCookie).not.toBe(flow.transactionCookie);
+    const completed = await callback(callbackRequest(retried.state, retried.transactionCookie.split(";")[0]));
+    expect(completed.headers.get("location")).toBe(origin + target);
+  });
   it("runs card entry through pending identity confirmation before issuing a session", async () => {
     vi.stubEnv("PORTAL_LOGIN_MODE", "card");
     const config = readAccessConfig();
     const started = await start(post("/api/auth/start", { returnTo: "/heart" }));
     expect(started.headers.get("location")).toBe(env.PORTAL_LOGIN_URL);
-    expect(cookie(started, config.transactionCookie)).toContain("Max-Age=0");
-    const response = await callback(new NextRequest(origin + "/?token=synthetic-card"));
+    const browserCookie = cookie(started, config.transactionCookie).split(";")[0];
+    expect(browserCookie).not.toBe(config.transactionCookie + "=");
+    const response = await callback(new NextRequest(origin + "/?token=synthetic-card", { headers: { cookie: browserCookie } }));
     expect(response.headers.get("location")).toBe(origin + "/auth/confirm");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
     expect(response.headers.getSetCookie().some(c => c.startsWith(config.sessionCookie + "="))).toBe(false);
@@ -55,10 +74,12 @@ describe("HTTP test login preserves the authentication protocol", () => {
     expect((await me(new NextRequest(origin + "/api/auth/me", { headers: { cookie: pendingHeader } }))).status).toBe(401);
     const identity = await (await pending(new NextRequest(origin + "/api/auth/pending", { headers: { cookie: pendingHeader } }))).json();
     expect(identity.account).toBe("000123");
+    expect(identity.returnTo).toBe("/heart");
     expect((await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }))).status).toBe(401);
     expect((await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }, { cookie: pendingHeader, origin: "https://foreign.invalid" }))).status).toBe(403);
     const confirmed = await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }, { cookie: pendingHeader }));
     expect(confirmed.status).toBe(303);
+    expect(confirmed.headers.get("location")).toBe(origin + "/heart");
     const sessionHeader = cookie(confirmed, config.sessionCookie).split(";")[0];
     expect((await me(new NextRequest(origin + "/api/auth/me", { headers: { cookie: sessionHeader } }))).status).toBe(200);
     expect((await confirm(post("/api/auth/portal-login", { csrfToken: identity.csrfToken }, { cookie: pendingHeader }))).status).toBe(401);
@@ -92,7 +113,7 @@ describe("HTTP test login preserves the authentication protocol", () => {
     const flow = await begin("https://hostile.invalid");
     for (const request of [callbackRequest("incorrect-state", flow.transactionCookie.split(";")[0]), callbackRequest(flow.state, `${flow.config.transactionCookie}=${"a".repeat(43)}`)]) {
       const response = await callback(request);
-      expect(response.headers.get("location")).toBe(origin + "/login?error=callback"); expect(response.headers.has("set-cookie")).toBe(false);
+      expect(response.headers.get("location")).toBe(origin + "/login?error=callback"); expect(cookie(response, flow.config.transactionCookie)).toContain("Max-Age=0");
     }
     const completed = await callback(callbackRequest(flow.state, flow.transactionCookie.split(";")[0]));
     expect(completed.headers.get("location")).toBe(origin + "/");

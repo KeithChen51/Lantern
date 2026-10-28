@@ -38,8 +38,8 @@ export default async function MyPage() {
           <span aria-hidden="true" className="text-primary-text">→</span>
         </Link>
         <Link href="/feedback" className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-8">
-          <span className="text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈</span>
-          <span aria-hidden="true" className="text-primary-text">→</span>
+          <span><span className="block text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈</span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">在线提交暂未开放</span></span>
+          <LhStatusBadge tone="neutral">暂未开放</LhStatusBadge>
         </Link>
       </LhPanel>
       {!isGuest && <div className="flex flex-wrap items-center justify-between gap-4">

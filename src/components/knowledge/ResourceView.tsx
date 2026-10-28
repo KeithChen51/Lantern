@@ -5,14 +5,20 @@ import remarkGfm from "remark-gfm";
 import type { KnowledgeHub } from "@/modules/knowledge-hub/service";
 import { articleOutline, resourceSourceLabel } from "./presentation";
 import styles from "./knowledge.module.css";
+import { ReadingMobileNavigation } from "./ReadingMobileNavigation";
+import { safeReadingAnchor, safeReadingReturn } from "./reading-return";
 
 export const resourceLabels = { notice: "通知与规范", case: "案例与复盘", document: "知识文档", skill: "Skill", tool: "工具资源" };
-export function ResourceView({ resource, embedded = false }: { resource: Awaited<ReturnType<KnowledgeHub["get"]>>; embedded?: boolean }) {
+export function ResourceView({ resource, embedded = false, returnTo, returnAnchor }: { resource: Awaited<ReturnType<KnowledgeHub["get"]>>; embedded?: boolean; returnTo?: string; returnAnchor?: string }) {
   const { version } = resource;
   const caseVisibility = resource.type === "case"
     ? ((resource as typeof resource & { visibility?: "public" | "internal" }).visibility ?? "internal")
     : null;
   const { titleLine, headings } = articleOutline(version.markdown);
+  const listPath = safeReadingReturn(returnTo) ?? (resource.type === "case" ? "/action" : "/search");
+  const anchor = safeReadingAnchor(returnAnchor);
+  const returnHref = `${listPath}${anchor ? `#${encodeURIComponent(anchor)}` : ""}`;
+  const returnLabel = listPath.startsWith("/search") ? "搜索结果" : "案例列表";
   const base = `/api/resources/${encodeURIComponent(resource.id)}`;
   const fileUrl = (path: string) => `${base}/files?version=${encodeURIComponent(version.id)}&path=${encodeURIComponent(path)}`;
   const resolveUrl = (url: string) => {
@@ -34,8 +40,8 @@ export function ResourceView({ resource, embedded = false }: { resource: Awaited
     },
     table: ({ children }) => <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="文章表格"><table>{children}</table></div>,
   };
-  return <div id="resource-top" className={styles.reader} data-lh-resource data-lh-page-archetype={resource.type === "case" ? "case-workflow" : "cultural-reading"}>
-    <nav className={styles.breadcrumb} aria-label="阅读位置"><Link href={resource.type === "case" ? "/action" : "/search"}>↩ {resource.type === "case" ? "全部案例" : "知识资源"}</Link></nav>
+  return <div id="resource-top" className={styles.reader} data-lh-resource data-lh-reader-embedded={embedded || undefined} data-lh-page-archetype={resource.type === "case" ? "case-workflow" : "cultural-reading"}>
+    <nav className={styles.breadcrumb} aria-label="阅读位置"><Link href={returnHref}>↩ 返回{returnLabel}</Link></nav>
     <div className={styles.readingLayout}>
       <article className={styles.paper}>
         <header className={styles.articleHeader}>
@@ -43,7 +49,7 @@ export function ResourceView({ resource, embedded = false }: { resource: Awaited
           <Title className={styles.articleTitle}>{resource.title}</Title>
           <div className={styles.metadata}><time dateTime={version.publishedAt ?? undefined}>{version.publishedAt?.slice(0, 10)}</time><span>版本 {version.number}</span>{caseVisibility && <span data-case-visibility={caseVisibility}>{caseVisibility === "public" ? "公开" : "内参"}</span>}{resource.type === "notice" && <span>{resource.validity === "effective" ? "当前有效" : resource.validity === "expired" ? "已失效" : resource.validity === "scheduled" ? "待生效" : "有效性待确认"}</span>}</div>
           <div className={styles.readingActions}>{(resource.type === "skill" || version.files.length > 0) && <a href={`${base}/download?version=${encodeURIComponent(version.id)}`} download>{resource.type === "skill" ? "下载完整 Skill" : "下载资料包"} <span aria-hidden="true">↗</span></a>}<a href={`${base}?version=${version.id}&format=md`} download>下载原文 <span aria-hidden="true">↗</span></a><a href="#resource-reference">来源与引用 <span aria-hidden="true">↓</span></a></div>
-          {headings.length > 0 && <details className={styles.mobileContents}><summary>本文目录 <span>{headings.length} 个章节</span></summary><nav aria-label="文章目录">{contents}</nav></details>}
+          {embedded && headings.length > 0 && <details className={styles.mobileContents}><summary>本文目录 <span>{headings.length} 个章节</span></summary><nav aria-label="文章目录">{contents}</nav></details>}
         </header>
         <div className={styles.prose} data-lh-article-prose><ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{version.markdown}</ReactMarkdown></div>
         <footer className={styles.articleFooter} id="resource-reference">
@@ -61,5 +67,6 @@ export function ResourceView({ resource, embedded = false }: { resource: Awaited
         </div>
       </aside>
     </div>
+    {!embedded && <ReadingMobileNavigation returnHref={returnHref} returnLabel={returnLabel} headings={headings} />}
   </div>;
 }

@@ -81,7 +81,10 @@ export function defaultVersion(resource: HubResource, now: string, inactive = fa
   return eligible;
 }
 function publishedMetadata(resource: HubResource, version: HubVersion) {
-  return version.metadata ? { ...version.metadata, visibility: resource.visibility } : { title: version.title, summary: "", source: "", tags: [] as string[], businessScope: "", visibility: resource.type === "case" ? "internal" as const : "public" as const };
+  if (!version.metadata) return { title: version.title, summary: "", source: "", tags: [] as string[], businessScope: "", visibility: resource.type === "case" ? "internal" as const : "public" as const };
+  const { publicationVisibility: _audience, ...importSnapshot } = version.metadata;
+  void _audience;
+  return { ...importSnapshot, visibility: resource.visibility };
 }
 async function requireResource(tx: HubTransaction, id: string) {
   const resource = await tx.getResource(id);
@@ -109,15 +112,18 @@ export class KnowledgeHub {
       if (existing && existing.type !== data.type) throw new HubError("conflict", "Resource type cannot be changed by import");
       const latest = existing?.versions.at(-1);
       if (data.baseVersionId && data.baseVersionId !== latest?.id) throw new HubError("conflict", "Resource changed; read the latest version before updating");
-      const visibility = data.visibility ?? latest?.metadata?.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
+      const visibility = data.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
       const resource: HubResource = existing ?? { id: data.id, type: data.type, title: data.title, summary: "", tags: [], source: data.source, businessScope: "", visibility, archived: false, publishedVersionId: null, createdAt: now, updatedAt: now, versions: [] };
       const before = { title: resource.title, summary: resource.summary, tags: resource.tags, source: resource.source, businessScope: resource.businessScope, visibility: resource.visibility };
       const after = { title: data.title, summary: data.summary, tags: data.tags, source: data.source, businessScope: data.businessScope, visibility };
       const metadataChanged = JSON.stringify(before) !== JSON.stringify(after);
       const checksum = hash(JSON.stringify({ markdown, files, validity: data.validity, from: data.effectiveFrom, to: data.effectiveTo, metadata: after }));
-      const publishedVisibility = resource.visibility;
+      // Audience is a resource permission, independent of version publication.
+      // An imported version may describe its original audience, but must never
+      // undo the administrator's current choice when imported or published.
+      const currentVisibility = resource.visibility;
       Object.assign(resource, after);
-      if (resource.publishedVersionId) resource.visibility = publishedVisibility;
+      if (existing) resource.visibility = currentVisibility;
       const duplicate = resource.versions.find(v => v.checksum === checksum);
       if (!duplicate) {
         const id = uuid();
@@ -142,8 +148,8 @@ export class KnowledgeHub {
       if (current && current.number > version.number) throw new HubError("conflict", "Cannot publish an older version over a newer version");
       const now = this.clock();
       if (resource.publishedVersionId === versionId && !resource.archived) return { resourceId, versionId, publishedAt: version.publishedAt };
+      if (!version.publishedAt && version.metadata) version.metadata = { ...version.metadata, publicationVisibility: resource.visibility };
       version.publishedAt ??= now;
-      if (version.metadata) resource.visibility = version.metadata.visibility;
       resource.publishedVersionId = versionId; resource.archived = false; resource.updatedAt = now;
       await tx.saveResource(resource);
       await record(tx, "published", resourceId, versionId, now, this.actor);

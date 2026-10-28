@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HermitDraftStore } from "./draft-store";
+import { MIRROR_CASE_ID } from "./case-entry";
 
 function storage() {
   const values = new Map<string, string>();
@@ -42,5 +43,18 @@ describe("Hermit tab-local drafts", () => {
     expect(store.recoverText("one")).toBe("未确认发送的问题：\n第一次发送的问题\n\n未发送草稿：\n下一条草稿");
     store.acknowledged("one"); store.write("one", "");
     expect(new HermitDraftStore("employee:a", memory).recoverText("one")).toBe("");
+  });
+  it("keeps case hints local to their draft and discards invalid or stale-owner reference writes", () => {
+    const memory = storage();
+    const first = new HermitDraftStore("employee:a", memory); first.activate(); first.select("one", false);
+    first.setCaseReference("one", { resourceId: MIRROR_CASE_ID, versionId: "published" });
+    first.select("two", false);
+    expect(first.caseReference("two")).toBeNull();
+    first.dispose();
+    const other = new HermitDraftStore("employee:b", memory); other.activate(); other.select("two", false);
+    first.setCaseReference("one", { resourceId: MIRROR_CASE_ID, versionId: "late" });
+    expect(new HermitDraftStore("employee:a", memory).caseReference("one")).toBeNull();
+    other.setCaseReference("two", { resourceId: "untrusted", versionId: "draft" });
+    expect(new HermitDraftStore("employee:b", memory).caseReference("two")).toBeNull();
   });
 });

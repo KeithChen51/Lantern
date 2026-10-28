@@ -72,20 +72,41 @@ export class AccessService {
   async startLogin(returnTo?: string): Promise<{ state: string; cookie: string; redirectUrl: string }> {
     // Card entry has no child-app callback/state contract. The user returns via
     // the registered portal card and confirms the verified identity locally.
-    if (this.config.mode !== "iam" && this.config.portalLoginMode === "card") return { state: "", cookie: "", redirectUrl: this.config.portalLoginUrl };
-    const state = randomToken(), cookie = randomToken();
+    // Its browser-bound record preserves navigation only, never bypassing that confirmation.
+    const card = this.config.mode !== "iam" && this.config.portalLoginMode === "card";
+    const state = card ? "" : randomToken(), cookie = randomToken();
     const url = this.config.mode === "iam"
       ? new URL(this.portal.authorizationUrl!(new URL("/auth/iam/callback", this.config.origin).toString(), state))
       : new URL(this.config.portalLoginUrl);
-    if (this.config.mode !== "iam") {
+    if (this.config.mode !== "iam" && !card) {
       url.searchParams.set(this.config.callbackParam, new URL("/auth/portal/callback", this.config.origin).toString());
       url.searchParams.set(this.config.stateParam, state);
     }
     take(await this.store.transaction(async (tx) => {
       if (!await this.rate(tx, "login-start", "global", 100, 60000)) return new AccessError("Login requests are temporarily limited", 429);
-      await tx.put(this.record("login", key("login", state), "", null, { authority: accessAuthority(this.config), verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
+      await tx.put(this.record("login", key("login", card ? cookie : state), "", null, { authority: accessAuthority(this.config), verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false, ...(card ? { entry: "card" as const } : {}) }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
     }));
     return { state, cookie, redirectUrl: url.toString() };
+  }
+  /** Read navigation context only after proving the live transaction belongs to this browser. */
+  async loginReturnTo(input: { state?: string; cookie?: string }): Promise<string> {
+    const card = input.state === undefined && this.config.mode !== "iam" && this.config.portalLoginMode === "card";
+    if (input.state === undefined && !card) return "/";
+    if (!input.cookie) {
+      if (card) return "/";
+      throw new AccessError("Login transaction is missing", 401);
+    }
+    this.secret(input.cookie);
+    if (!card) this.secret(input.state!);
+    const id = key("login", card ? input.cookie : input.state!), verifier = hashToken(input.cookie);
+    return this.store.transaction(async tx => {
+      const row = await tx.get("login", id);
+      if (!row || row.payload.authority !== accessAuthority(this.config) || expired(row, this.now()) || row.payload.consumed || (row.payload.entry === "card") !== card || !equalSecret(row.payload.verifierHash, verifier)) {
+        if (card) return "/"; // Opening a portal card directly remains supported.
+        throw new AccessError("Login transaction is invalid", 401);
+      }
+      return safeReturnTo(row.payload.returnTo);
+    });
   }
   async callback(input: { token: string; state?: string; cookie?: string }): Promise<LoginResult> {
     if (this.config.mode === "iam") throw new AccessError("Portal authentication is disabled", 401);
@@ -98,7 +119,7 @@ export class AccessService {
       const id = key("login", input.state), verifier = hashToken(input.cookie);
       const transaction = await this.store.transaction(async (tx) => {
         const row = await tx.get("login", id);
-        if (!row || (row.payload.authority ?? "portal") !== "portal" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
+        if (!row || (row.payload.authority ?? "portal") !== "portal" || row.payload.entry === "card" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
         return row;
       });
       const identity = await this.verified(input.token), identityAt = this.now(), roles = await this.roles(identity.account);
@@ -118,7 +139,15 @@ export class AccessService {
     await this.store.transaction(async (tx) => {
       const pending = await tx.find("pending", { subjectId: identity.account, expiresAfter: this.now() });
       if (pending.filter((row) => !row.payload.consumed).length >= 50) throw new AccessError("Too many pending employee confirmations", 429);
-      await tx.put(this.record("pending", key("pending", pendingToken), identity.account, null, { tokenCipher: cipher, account: identity.account, displayName: identity.displayName, csrfToken, returnTo: "/", consumed: false, upstreamExpiresAt: this.grantExpiry(identity) }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
+      let returnTo = "/";
+      if (this.config.portalLoginMode === "card" && input.cookie) {
+        const navigation = await tx.get("login", key("login", input.cookie));
+        if (navigation && navigation.payload.authority === "portal" && navigation.payload.entry === "card" && !expired(navigation, this.now()) && !navigation.payload.consumed && equalSecret(navigation.payload.verifierHash, hashToken(input.cookie))) {
+          returnTo = safeReturnTo(navigation.payload.returnTo);
+          navigation.payload.consumed = true; await this.save(tx, navigation);
+        }
+      }
+      await tx.put(this.record("pending", key("pending", pendingToken), identity.account, null, { tokenCipher: cipher, account: identity.account, displayName: identity.displayName, csrfToken, returnTo, consumed: false, upstreamExpiresAt: this.grantExpiry(identity) }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
     });
     return { kind: "pending", pendingToken, returnTo: "/auth/confirm" };
   }
