@@ -81,7 +81,10 @@ export function defaultVersion(resource: HubResource, now: string, inactive = fa
   return eligible;
 }
 function publishedMetadata(resource: HubResource, version: HubVersion) {
-  return version.metadata ? { ...version.metadata, visibility: resource.visibility } : { title: version.title, summary: "", source: "", tags: [] as string[], businessScope: "", visibility: resource.type === "case" ? "internal" as const : "public" as const };
+  if (!version.metadata) return { title: version.title, summary: "", source: "", tags: [] as string[], businessScope: "", visibility: resource.type === "case" ? "internal" as const : "public" as const };
+  const { publicationVisibility: _audience, ...importSnapshot } = version.metadata;
+  void _audience;
+  return { ...importSnapshot, visibility: resource.visibility };
 }
 async function requireResource(tx: HubTransaction, id: string) {
   const resource = await tx.getResource(id);
@@ -145,6 +148,7 @@ export class KnowledgeHub {
       if (current && current.number > version.number) throw new HubError("conflict", "Cannot publish an older version over a newer version");
       const now = this.clock();
       if (resource.publishedVersionId === versionId && !resource.archived) return { resourceId, versionId, publishedAt: version.publishedAt };
+      if (!version.publishedAt && version.metadata) version.metadata = { ...version.metadata, publicationVisibility: resource.visibility };
       version.publishedAt ??= now;
       resource.publishedVersionId = versionId; resource.archived = false; resource.updatedAt = now;
       await tx.saveResource(resource);

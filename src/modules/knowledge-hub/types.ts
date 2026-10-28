@@ -3,7 +3,10 @@ export type ResourceType = (typeof resourceTypes)[number];
 export type Validity = "effective" | "unknown" | "expired";
 export type HubFile = { path: string; mediaType: string; contentBase64: string; checksum: string };
 export type Citation = { id: string; heading: string; startLine: number; endLine: number; text: string };
-export type HubVersionMetadata = Pick<HubResource, "title" | "summary" | "tags" | "source" | "businessScope" | "visibility">;
+export type HubVersionMetadata = Pick<HubResource, "title" | "summary" | "tags" | "source" | "businessScope" | "visibility"> & {
+  /** Immutable audience at first publication; visibility retains the import snapshot. */
+  publicationVisibility?: HubResource["visibility"];
+};
 export type HubVersion = {
   metadata?: HubVersionMetadata | null;
   id: string; number: number; title: string; markdown: string; checksum: string;

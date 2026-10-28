@@ -15,14 +15,18 @@ describe("knowledge hub publication and retrieval", () => {
     const original = audience === "public" ? "internal" : "public";
     const first = await hub.import({ ...input, type: "case", visibility: original });
     const resource = store.resources.get(input.id)!;
+    const checksum = resource.versions[0].checksum;
     resource.visibility = audience; // Same resource permission changed by setVisibility.
     await hub.publish(input.id, first.versionId);
     expect((await hub.get(input.id)).visibility).toBe(audience);
+    expect(store.resources.get(input.id)?.versions[0]).toMatchObject({ checksum, metadata: { visibility: original, publicationVisibility: audience } });
+    expect(await hub.import({ ...input, type: "case", visibility: original })).toMatchObject({ duplicate: true, versionId: first.versionId });
     const next = await hub.import({ ...input, type: "case", markdown: "# 新版本", visibility: original });
     expect(store.resources.get(input.id)?.visibility).toBe(audience);
     await hub.publish(input.id, next.versionId);
     expect((await hub.get(input.id)).visibility).toBe(audience);
     expect(store.resources.get(input.id)?.versions.at(-1)?.metadata?.visibility).toBe(original);
+    expect(store.resources.get(input.id)?.versions.at(-1)?.metadata?.publicationVisibility).toBe(audience);
     expect((await hub.get(input.id, first.versionId)).visibility).toBe(audience);
   });
   it("keeps case audience separate from publication and preserves omitted audience on updates", async () => {
