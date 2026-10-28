@@ -1515,3 +1515,11 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   .requestError { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) { .page *, .page *::before, .page *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+.draftUndo {
+  margin: 8px 0 0;
+  color: var(--lh-text-muted, #777267);
+  font-size: 13px;
+}
+.draftUndo button { margin-inline-start: 8px; color: var(--lh-accent, #a65d12); text-decoration: underline; }
+.restoreConversation { margin: auto; padding: 32px; text-align: center; }
+.restoreConversation button { margin: 12px 8px; color: var(--lh-accent, #a65d12); text-decoration: underline; }
