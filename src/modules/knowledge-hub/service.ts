@@ -109,15 +109,18 @@ export class KnowledgeHub {
       if (existing && existing.type !== data.type) throw new HubError("conflict", "Resource type cannot be changed by import");
       const latest = existing?.versions.at(-1);
       if (data.baseVersionId && data.baseVersionId !== latest?.id) throw new HubError("conflict", "Resource changed; read the latest version before updating");
-      const visibility = data.visibility ?? latest?.metadata?.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
+      const visibility = data.visibility ?? existing?.visibility ?? (data.type === "case" ? "internal" : "public");
       const resource: HubResource = existing ?? { id: data.id, type: data.type, title: data.title, summary: "", tags: [], source: data.source, businessScope: "", visibility, archived: false, publishedVersionId: null, createdAt: now, updatedAt: now, versions: [] };
       const before = { title: resource.title, summary: resource.summary, tags: resource.tags, source: resource.source, businessScope: resource.businessScope, visibility: resource.visibility };
       const after = { title: data.title, summary: data.summary, tags: data.tags, source: data.source, businessScope: data.businessScope, visibility };
       const metadataChanged = JSON.stringify(before) !== JSON.stringify(after);
       const checksum = hash(JSON.stringify({ markdown, files, validity: data.validity, from: data.effectiveFrom, to: data.effectiveTo, metadata: after }));
-      const publishedVisibility = resource.visibility;
+      // Audience is a resource permission, independent of version publication.
+      // An imported version may describe its original audience, but must never
+      // undo the administrator's current choice when imported or published.
+      const currentVisibility = resource.visibility;
       Object.assign(resource, after);
-      if (resource.publishedVersionId) resource.visibility = publishedVisibility;
+      if (existing) resource.visibility = currentVisibility;
       const duplicate = resource.versions.find(v => v.checksum === checksum);
       if (!duplicate) {
         const id = uuid();
@@ -143,7 +146,6 @@ export class KnowledgeHub {
       const now = this.clock();
       if (resource.publishedVersionId === versionId && !resource.archived) return { resourceId, versionId, publishedAt: version.publishedAt };
       version.publishedAt ??= now;
-      if (version.metadata) resource.visibility = version.metadata.visibility;
       resource.publishedVersionId = versionId; resource.archived = false; resource.updatedAt = now;
       await tx.saveResource(resource);
       await record(tx, "published", resourceId, versionId, now, this.actor);

@@ -114,6 +114,21 @@ function setup() {
 }
 
 describe("knowledge manager", () => {
+  it.each(["public", "internal"] as const)("preserves the administrator's %s audience through draft imports and publication", async visibility => {
+    const { db, manager } = setup();
+    const original = visibility === "public" ? "internal" : "public";
+    const data = importSchema.parse({ id: "case-a", type: "case", title: "案例", markdown: "# 首版", source: "测试", visibility: original });
+    const first = await manager.importManagedResource(data, null, "案例.md", "ask");
+    expect(db.state.resources[0].visibility).toBe(original);
+    await manager.apply({ action: "setVisibility", id: "case-a", visibility });
+    await manager.apply({ action: "publish", id: "case-a", versionId: first.versionId });
+    expect(db.state.resources[0].visibility).toBe(visibility);
+    const next = await manager.importManagedResource({ ...data, markdown: "# 新版" }, null, "案例.md", "overwrite");
+    expect(db.state.resources[0].visibility).toBe(visibility);
+    await manager.apply({ action: "publish", id: "case-a", versionId: next.versionId });
+    expect(db.state.resources[0].visibility).toBe(visibility);
+    expect(db.state.resources[0].versions.at(-1).metadata.visibility).toBe(original);
+  });
   it("maintains case audience with an audit without changing publication", async () => {
     const { db, manager } = setup();
     seedResource(db, "case-a", "案例");
