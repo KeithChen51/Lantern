@@ -78,6 +78,7 @@ export class PrismaHermitChatRepository implements HermitChatRepository {
       id: message.id,
       sessionId: message.sessionId,
       externalMessageId: message.externalMessageId,
+      role: message.role.toLowerCase() as HermitMessageRole,
     };
   }
 
@@ -115,7 +116,7 @@ export class PrismaHermitChatRepository implements HermitChatRepository {
     const owner = ownerColumns({ userId, guestId: null });
     const session = await prisma.chatSession.findFirst({ where: { id, ...owner },
       select: { id: true, title: true, messages: { where: { role: { in: [PrismaChatMessageRole.USER, PrismaChatMessageRole.ASSISTANT] } }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], take: 201,
-        select: { externalMessageId: true, role: true, content: true, metadataJson: true } } },
+        select: { id: true, externalMessageId: true, role: true, content: true, metadataJson: true } } },
     });
     if (!session) throw new AppError("not_found", "对话不存在或无权访问。", 404);
     if (session.messages.length > 200) throw new AppError("bad_request", "该对话过长，暂无法完整恢复。", 413);

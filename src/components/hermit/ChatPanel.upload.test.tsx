@@ -58,10 +58,11 @@ describe("ChatPanel attachment batch lifecycle", () => {
     expect(harness.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps normal two-file uploads sequential and passes the lifecycle signal to each POST", async () => {
+  it("keeps normal two-file uploads sequential and aborts the active file's own signal on unmount", async () => {
     let completeFirst!: (response: Response) => void;
+    let completeSecond!: (response: Response) => void;
     harness.fetch.mockImplementationOnce(() => new Promise<Response>(resolve => { completeFirst = resolve; }))
-      .mockResolvedValueOnce(Response.json({ id: "second", status: "ready" }));
+      .mockImplementationOnce(() => new Promise<Response>(resolve => { completeSecond = resolve; }));
     SelectTwoFiles();
     await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledTimes(1));
     await flush(); expect(harness.fetch).toHaveBeenCalledTimes(1);
@@ -69,8 +70,11 @@ describe("ChatPanel attachment batch lifecycle", () => {
     await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledTimes(2));
     const requests = harness.fetch.mock.calls.map(([, init]) => init as RequestInit);
     expect(requests.map(init => ((init.body as FormData).get("file") as File).name)).toEqual(["first.txt", "second.txt"]);
-    expect(requests[0].signal).toBe(requests[1].signal);
+    expect(requests[0].signal).not.toBe(requests[1].signal);
     expect(requests[0].signal?.aborted).toBe(false);
+    for (const cleanup of harness.cleanups) cleanup();
+    expect(requests[1].signal?.aborted).toBe(true);
+    completeSecond(Response.json({ id: "second", status: "ready" }));
     await flush();
   });
 });

@@ -63,6 +63,8 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
   const [isLoading, setIsLoading] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
 
+  useEffect(() => { bodyRef.current?.focus({ preventScroll: true }); }, [document.resourceId, document.versionId]);
+
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
     const controller = new AbortController();
@@ -123,7 +125,9 @@ export function DocumentReader({ document, onClose, onUse }: DocumentReaderProps
   }, [document.endLine, document.resourceId, document.startLine, document.versionId, resource]);
 
   return (
-    <aside className={styles.readerPanel} aria-label="知识文档阅读区" data-lh-hermit-document-reader>
+    <aside className={styles.readerPanel} aria-label="知识文档阅读区" data-lh-hermit-document-reader onKeyDown={event => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); }
+    }}>
       <header className={styles.readerHeader}>
         <div className={styles.readerHeaderCopy}>
           <p className={styles.readerEyebrow}>灯塔知识中台 · 文档阅读</p>

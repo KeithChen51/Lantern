@@ -23,7 +23,7 @@ describe("Hermit accessible composer components", () => {
     expect(onSelect).toHaveBeenCalledExactlyOnceWith(HERMIT_SCENARIOS[0].draft);
     expect(renderToStaticMarkup(view)).toContain("对照相似案例");
   });
-  it("separates pending attachment tiles from compact sent context and keeps cancel/retry/remove accessible", () => {
+  it("only shows pending attachment tiles in the composer and keeps cancel/retry/remove accessible", () => {
     const props = { attachments: [{ localId: "pending", name: "待发送.txt", size: 10, status: "uploading" as const }, { localId: "sent", id: "sent", name: "已发送.txt", size: 10, status: "ready" as const, sent: true }, { localId: "failed", name: "失败.txt", size: 10, status: "error" as const, file: new File(["x"], "失败.txt") }], isUploading: false, onRemove: vi.fn(), onRetry: vi.fn(), onClearDocument: vi.fn() };
     const tiles = renderToStaticMarkup(<AttachmentContext {...props} variant="pending" />);
     expect(tiles).toContain('aria-label="待发送附件"');
@@ -31,7 +31,7 @@ describe("Hermit accessible composer components", () => {
     expect(tiles).toContain('aria-label="重试上传 失败.txt"');
     expect(tiles).not.toContain("已发送.txt");
     const context = renderToStaticMarkup(<AttachmentContext {...props} />);
-    expect(context).toContain('aria-label="移除后续引用 已发送.txt"');
+    expect(context).not.toContain("已发送.txt");
     expect(context).not.toContain("待发送.txt");
   });
   it("shows real progress labels and explicit terminal states without answer action toolbars", () => {

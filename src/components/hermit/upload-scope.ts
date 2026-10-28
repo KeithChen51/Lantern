@@ -28,6 +28,18 @@ export class HermitUploadScope {
   }
 }
 
+/** Release a cancelled file even if its parser or transport completes late. */
+export function waitForHermitUpload<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const cancel = () => reject(new DOMException("上传已取消。", "AbortError"));
+    if (signal.aborted) cancel();
+    else signal.addEventListener("abort", cancel, { once: true });
+    // Keep observing work after cancellation: callers can safely clean up a
+    // late successful upload without an unhandled rejection on late failure.
+    work.then(resolve, reject).finally(() => signal.removeEventListener("abort", cancel));
+  });
+}
+
 export function hermitUploadOwner(session: { kind?: "employee" | "guest"; user: { id: string } } | null) {
   return session ? `${session.kind ?? "employee"}:${session.user.id}` : null;
 }

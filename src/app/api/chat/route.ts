@@ -156,9 +156,13 @@ export async function POST(req: Request) {
   const context = `当前选中文档索引（参考数据，正文须按需读取）：${JSON.stringify(selectedDocument)}\n当前用户附件索引：${JSON.stringify(attachments.map(({ id, name, size }) => ({ id, name, size })))}`;
   const system = `${buildSystemPrompt()}\n${hub ? "知识中台已启用，请通过工具逐层读取。" : "知识中台未启用，不能查阅或引用平台文件。明确说明此限制，不要声称已查阅资料。"}\n${context}${selectedSkill ? buildSelectedSkillPrompt(selectedSkill) : ""}`;
   const turnContext = { attachments: attachments.map(({ id, name, size }) => ({ id, name, size })), documentContext: selectedDocument, skillContext: selectedSkill };
+  // Persisted user identity and server start time distinguish regeneration
+  // attempts, including an older cancelled stream that finishes writing late.
+  const startedAt = performance.timeOrigin + performance.now();
+  let userMessageId: string;
   try {
     await recheckAccess();
-    await hermitChatService.persistIncomingMessages({ sessionId, participant, messages, modelName: model, turnContext });
+    ({ userMessageId } = await hermitChatService.persistIncomingMessages({ sessionId, participant, messages, modelName: model, turnContext }));
   } catch (error) { return errorResponse(error); }
   const stream = createUIMessageStream({ originalMessages: messages,
     onError: () => "路引暂时未能完成回答，请稍后重试。",
@@ -269,6 +273,7 @@ export async function POST(req: Request) {
         await persistChat("assistant response", () => hermitChatService.persistAssistantResponse({
           sessionId, participant, modelName: model,
           responseMessage: { id: messageId, role: "assistant", parts: [{ type: "text", text: finalText || visibleText }], metadata: { status, hermitStatus: status,
+            hermitTurn: { userMessageId, startedAt },
             hermit: { version: 1, ...turnContext, ...(status === "complete" && answerSources ? { answerSources } : {}) } } },
           retrieval: { query, contextText: "", topK: snapshot.reads.length, sourceSnapshot: snapshot },
         }));
