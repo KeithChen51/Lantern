@@ -9,9 +9,14 @@ import styles from "@/components/knowledge/knowledge.module.css";
 import { PageHeading } from "@/components/ui/PageHeading";
 import { LhButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { headers } from "next/headers";
+import { requireSiteVisitor } from "@/modules/auth/access";
+import { ReadingEntryLink, ReadingListPosition } from "@/components/knowledge/ReadingListNavigation";
+import { readingEntryId, readingListPath } from "@/components/knowledge/reading-return";
 export const dynamic = "force-dynamic";
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const params = await searchParams;
+  const [params, principal] = await Promise.all([searchParams, headers().then(requireSiteVisitor)]);
+  const returnTo = readingListPath("/search", params);
   const query = typeof params.q === "string" ? params.q : "";
   const parsed = searchSchema.safeParse({ query, type: params.type || undefined, sort: params.sort || "relevance", offset: Number(params.offset || 0) });
   const options = parsed.success ? parsed.data : searchSchema.parse({});
@@ -23,6 +28,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const pageLink = (offset: number) => `/search?${new URLSearchParams({ q: options.query, sort: options.sort, ...(options.type ? { type: options.type } : {}), offset: String(offset) })}`;
   const navigationMatches = getHeaderSearchMatches(query);
   return <div className={styles.searchPage} data-lh-resource-search>
+    <ReadingListPosition returnTo={returnTo} />
     <PageHeading title="知识资源" description="搜索品牌文档、服务案例与可复用的知识。" />
     <form action="/search" className={styles.searchForm}>
       <label className={styles.searchQueryLabel}>
@@ -47,11 +53,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     {!isKnowledgeHubEnabled() && <p className={styles.searchMessage}>知识资源尚未开放查询，仍可使用下方页面导航。</p>}
     {result && <section className={styles.searchResults} aria-label="知识资源结果"><p className={styles.resultCount}>全部资源 · {result.total} 条结果</p>{result.items.map(item => <article className={styles.resultRow} key={item.id}>
       <p className={styles.resultMeta}>{resourceLabels[item.type]} · v{item.version} · {item.publishedAt.slice(0, 10)}{item.type === "notice" && item.validity === "unknown" ? " · 有效性未明确" : ""}</p>
-      <h2><Link href={`/resources/${item.id}?version=${item.versionId}`}>{item.title}</Link></h2>
+      <h2><ReadingEntryLink href={`/resources/${encodeURIComponent(item.id)}?version=${encodeURIComponent(item.versionId)}`} returnTo={returnTo} entryId={readingEntryId(item.id)}>{item.title}</ReadingEntryLink></h2>
       <p className={styles.resultExcerpt}>{plainMarkdown(item.summary || item.excerpt)}</p><p className={styles.resultSource}>{resourceSourceLabel(item.source)}</p>
     </article>)}{result.total === 0 && <p className={styles.searchEmpty}>没有匹配的已发布资源，可尝试其他关键词。</p>}
     <nav className={styles.pagination} aria-label="结果分页">{options.offset > 0 && <Link href={pageLink(Math.max(0, options.offset - options.limit))}>上一页</Link>}{options.offset + options.limit < result.total && <Link href={pageLink(options.offset + options.limit)}>下一页</Link>}</nav></section>}
     {navigationMatches.length > 0 && <section className={styles.searchNavigation}><h2>页面导航</h2>{navigationMatches.map(item => <Link key={item.href} href={item.href}>{item.label}</Link>)}</section>}
-    <section className={styles.searchNavigation}><h2>后台维护</h2><Link href="/admin/knowledge">管理知识</Link></section>
+    {principal.capabilities.includes("knowledge:manage") && <section className={styles.searchNavigation}><h2>后台维护</h2><Link href="/admin/knowledge">管理知识</Link></section>}
   </div>;
 }

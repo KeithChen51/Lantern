@@ -1,0 +1,8 @@
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(10rem, 15rem) auto; align-items: end; gap: .75rem; }
+.filters label { display: grid; gap: .5rem; color: var(--color-ink-soft); font-size: var(--type-control); }
+.filters :is(input, select) { min-width: 0; width: 100%; min-height: 2.75rem; padding: .6rem .8rem; border: 1px solid var(--lh-refine-line, var(--color-line)); border-radius: var(--lh-control-radius); background: var(--lh-refine-surface, var(--color-panel)); color: var(--color-ink); }
+.actions { display: flex; align-items: center; gap: 1rem; }
+.actions > a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--color-primary-text); white-space: nowrap; }
+.filters :is(input, select):focus-visible { outline: 2px solid var(--lh-focus-outline); outline-offset: 3px; }
+.actions > a:focus-visible { outline: 2px solid var(--lh-focus-outline); outline-offset: 3px; }
+@media (max-width: 640px) { .filters { grid-template-columns: 1fr; } .actions { justify-content: flex-end; } }
