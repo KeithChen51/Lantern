@@ -314,6 +314,8 @@ Rules:
 
 ## Chat And Assistant Surfaces
 
+Hermit's current composition and states are defined in [hermit-components.md](hermit-components.md). The approved 2026-10-27 workspace uses optional prompt shortcut cards, a compact conversation header, a history drawer and compact pending-file tiles. These compose the primitives below; they do not create another global shell or a mode selector.
+
 Runtime base: `LhChatShell`, `LhChatHeader`, `LhChatMain`, `LhChatFooter`, `LhChatInputShell`, `LhChatTextarea`, `LhChatSubmitButton`, `LhMessageRow`, `LhMessageAvatar`, `LhMessageBubble`, and `LhSuggestionList`.
 
 Use for Hermit-like assistant interfaces where the user submits a scenario and receives structured guidance.
@@ -431,3 +433,5 @@ Rules:
 ## Text-entry focus boundary
 
 Text fields use one focus boundary: the existing rounded border changes to the accent color, with a subtle outer halo. Do not draw an outline around the editable text inside a composite control. Mark composite controls with `data-lh-input-frame`; their frame owns focus-within while the nested input/textarea has no extra outline or shadow. Keyboard focus remains visible; buttons, links, checkboxes and radio controls retain their focus-visible indicators. Invalid fields retain the error color on focus.
+
+The current Hermit composer is an explicit exception: focusing text keeps its default neutral boundary and light shadow, with no added accent border, halo, or inner rectangle. The caret identifies text focus; its buttons and links retain keyboard focus-visible indicators. See [Hermit components](hermit-components.md).

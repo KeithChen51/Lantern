@@ -409,9 +409,9 @@ describe("lighthouse design system contract", () => {
     const input = readProjectFile("src/components/hermit/ChatInput.tsx");
     const message = readProjectFile("src/components/hermit/MessageBubble.tsx");
     const css = readProjectFile("src/components/hermit/hermit-v3.module.css");
-    expect(page).toContain("PageHeading");
-    expect(page).toContain("HermitIdentity");
-    for (const token of ["isVisibleMessage", "shouldShowThinkingIndicator", "LhSuggestionList", "data-lh-hermit-composer"]) expect(panel).toContain(token);
+    expect(page).toContain("ChatPanel");
+    expect(page).toContain('data-lh-page-archetype="tool-workspace"');
+    for (const token of ["ConversationHeader", "HermitIdentity", "ScenarioCards", "HistoryDrawer", "RunFeedback", "data-lh-hermit-composer"]) expect(panel).toContain(token);
     for (const token of ["data-lh-focus-origin", "focusIntentRef", "onPointerDownCapture", "onKeyDownCapture", "onFocusCapture", "onBlurCapture", 'type="file"']) expect(input).toContain(token);
     for (const token of ["remarkPlugins={[remarkGfm]}", "normalizeMarkdownTableSeparators", "data-lh-message-table-wrap", "阅读文档", "data-lh-message-meta-note"]) expect(message).toContain(token);
     expect(message).not.toContain("splitAssistantAnswer");

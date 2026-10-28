@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Prisma } from "@prisma/client";
 
 const database = vi.hoisted(() => ({
-  chatSession: { create: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn() },
+  chatSession: { create: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
   chatMessage: { upsert: vi.fn(), findFirst: vi.fn() },
   retrievalTrace: { create: vi.fn() },
 }));
@@ -41,6 +41,20 @@ beforeEach(() => {
 });
 
 describe("Hermit persisted message immutability", () => {
+  it("scopes history reads to employee ownership, bounds rows and uses date/id cursor ordering", async () => {
+    const repository = new PrismaHermitChatRepository();
+    const date = new Date("2026-10-27T01:00:00Z");
+    database.chatSession.findMany.mockResolvedValue([{ id: "b", title: "Title", updatedAt: date, messages: [{ content: "Preview" }] }, { id: "a", title: null, updatedAt: date, messages: [] }]);
+    const result = await repository.listConversations("employee-a", { limit: 1, cursor: { id: "c", updatedAt: date } });
+    expect(result.items).toEqual([{ id: "b", title: "Title", preview: "Preview", updatedAt: date.toISOString() }]);
+    expect(result.nextCursor).toBeTypeOf("string");
+    expect(database.chatSession.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ userId: "employee-a", guestId: null, OR: [{ updatedAt: { lt: date } }, { updatedAt: date, id: { lt: "c" } }] }), take: 2, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }));
+    expect(database.chatSession.findMany.mock.calls[0][0].select.messages.where).toEqual({ role: { in: ["USER", "ASSISTANT"] } });
+    await expect(repository.listConversations("employee-a", { limit: 1000, cursor: null })).rejects.toMatchObject({ status: 400 });
+    database.chatSession.findFirst.mockResolvedValueOnce(null);
+    await expect(repository.getConversation("employee-a", "foreign")).rejects.toMatchObject({ status: 404 });
+    expect(database.chatSession.findFirst).toHaveBeenLastCalledWith(expect.objectContaining({ where: { id: "foreign", userId: "employee-a", guestId: null }, select: expect.objectContaining({ messages: expect.objectContaining({ take: 201 }) }) }));
+  });
   it.each(["complete", "failed", "cancelled"])("preserves a %s assistant and its source association after a role-spoofed replay", async status => {
     const service = createHermitChatService(new PrismaHermitChatRepository());
     const text = status === "complete" ? "依据资料。[1](#hermit-citation-1)" : "";

@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import type { HermitTurnContext } from "./history";
 
 /** A session belongs to one employee or one opaque browser guest, never both. */
 export type HermitChatOwner =
@@ -47,6 +48,7 @@ export type PersistIncomingMessagesInput = {
   participant: HermitChatParticipant;
   messages: UIMessage[];
   modelName: string;
+  turnContext?: HermitTurnContext;
 };
 
 export type PersistAssistantResponseInput = {

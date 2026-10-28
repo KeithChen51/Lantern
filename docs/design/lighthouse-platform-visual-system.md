@@ -2,7 +2,7 @@
 
 ## Decision
 
-The active implementation baseline is Classic Amber V3. The complete reference is the approved Figma system at `node-id=121-983`; this folder translates that reference into runtime tokens, components, and page patterns.
+The active platform baseline is Classic Amber V3 at Figma `node-id=121-983`. Hermit's approved 2026-10-27 interaction update at `node-id=179-51` supersedes only the earlier Hermit layout; see [its authority and scope](hermit-authoritative-definition.md). This folder translates the references into runtime tokens, components, and page patterns.
 
 The Lighthouse platform visual system is independent from the service-brand VI.
 
