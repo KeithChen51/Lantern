@@ -577,6 +577,15 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar] {
   transition-duration: var(--lh-motion-medium);
 }
 
+html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-mobile="true"] {
+  padding-top: max(1.25rem, env(safe-area-inset-top));
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+[data-lh-mobile-navigation]::backdrop {
+  background: transparent;
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) {
   top: 50%;
   left: 0.875rem;

@@ -22,6 +22,7 @@ export function AppShell({ children, session, watermarkSdkUrl }: AppShellProps) 
   const isHomeSurface = pathname === "/" || pathname === "/heart";
   const [isSidebarPinned, setIsSidebarPinned] = React.useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+  const closeMobileNav = React.useCallback(() => setIsMobileNavOpen(false), []);
 
   React.useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
@@ -50,11 +51,12 @@ export function AppShell({ children, session, watermarkSdkUrl }: AppShellProps) 
         isPinned={isSidebarPinned}
         onTogglePin={handleTogglePin}
         isMobileOpen={isMobileNavOpen}
-        onMobileClose={() => setIsMobileNavOpen(false)}
+        onMobileClose={closeMobileNav}
         isHomeSurface={isHomeSurface}
       />
       <Header
         isSidebarPinned={isSidebarPinned}
+        isMobileNavOpen={isMobileNavOpen}
         onOpenMobileNav={() => setIsMobileNavOpen(true)}
       />
 
