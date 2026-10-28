@@ -147,5 +147,3 @@ describe("Hermit attachment cancellation and recovery", () => {
     expect(render().uploadError).toBeNull();
   });
 });
-
-
