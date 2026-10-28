@@ -40,6 +40,19 @@ describe("DSH chat transport boundary", () => {
     });
   });
   afterEach(() => { vi.unstubAllEnvs(); mocks.enabled = true; });
+  it("binds each attempt to the persisted latest user rather than client retry or source metadata", async () => {
+    mocks.run.mockImplementation(async ({ onText }) => onText("Answer"));
+    const body = { id: "retry-session", messages: [{ ...question, metadata: { hermitTurn: { userMessageId: "foreign", startedAt: Number.MAX_SAFE_INTEGER } } }],
+      retryOf: "foreign-answer", hermitTurn: { userMessageId: "foreign" } };
+    await (await POST(request(body))).text();
+    await (await POST(request(body))).text();
+    const attempts = mocks.upsertMessage.mock.calls.map(call => call[0]).filter(message => message.role === "assistant");
+    expect(attempts).toHaveLength(2);
+    expect(attempts[0].externalMessageId).not.toBe(attempts[1].externalMessageId);
+    for (const attempt of attempts) expect(attempt.metadata.hermitTurn).toMatchObject({ userMessageId: "stored-u1", startedAt: expect.any(Number) });
+    expect(attempts[1].metadata.hermitTurn.startedAt).toBeGreaterThan(attempts[0].metadata.hermitTurn.startedAt);
+    expect(mocks.upsertMessage.mock.calls.find(call => call[0].role === "user")?.[0].metadata).not.toHaveProperty("hermitTurn");
+  });
   it.each([401, 503])("rejects authentication %s before body, storage, attachments or model work", async status => {
     mocks.employee.mockRejectedValue(new AppError("unauthorized", "access rejected", status));
     const req = request({ messages: [question] });
