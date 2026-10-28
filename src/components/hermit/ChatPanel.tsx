@@ -23,7 +23,8 @@ import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
 import { contextRequest, messageContext, retryContext, sameContextResource, unrepresentedContext, type ContextRemoval } from "./message-context";
 import { MessageContext } from "./MessageContext";
 import { HermitDraftStore } from "./draft-store";
-import { appendCaseQuestion, type HermitCaseEntry } from "./case-entry";
+import { appendCaseQuestion, caseDraftReference, type CaseDraftReference, type HermitCaseEntry } from "./case-entry";
+import { restoreCaseReference } from "./restore-case-reference";
 import styles from "./hermit-v3.module.css";
 
 function getErrorMessage(error: unknown) {
@@ -58,7 +59,11 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts, entry }: { owner:
     // Guest history is not an account history capability. Carry only the unsent
     // text into a fresh conversation after reload, never reuse a hidden turn.
     const id = guest ? createConversationId() : previous?.id ?? createConversationId();
-    if (guest && previous) drafts.write(id, drafts.recoverText(previous.id));
+    if (guest && previous) {
+      drafts.write(id, drafts.recoverText(previous.id));
+      drafts.setCaseReference(id, drafts.caseReference(previous.id));
+      drafts.setCaseReference(previous.id, null);
+    }
     return { id, revision: 0, restore: !guest && previous?.persisted };
   });
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -91,12 +96,14 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts, entry }: { owner:
     detailScope.current.dispose();
     const text = drafts.recoverText(selection.id);
     const id = createConversationId();
-    drafts.write(id, text); drafts.acknowledged(selection.id); drafts.select(id, false); setDetailError(null);
+    drafts.write(id, text); drafts.setCaseReference(id, drafts.caseReference(selection.id));
+    drafts.setCaseReference(selection.id, null); drafts.acknowledged(selection.id); drafts.select(id, false); setDetailError(null);
     setSelection(previous => ({ id, revision: previous.revision + 1, focus: true }));
   }
 
   function newConversation() {
     if (incomingEntry) consumeEntry();
+    drafts.setCaseReference(selection.id, null);
     detailScope.current.dispose();
     setDetailLoading(false); setDetailError(null); setHistoryOpen(false);
     const id = createConversationId();
@@ -126,6 +133,7 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts, entry }: { owner:
       {detailError && <button type="button" onClick={() => { setDetailError(null); setSelection(previous => ({ ...previous, revision: previous.revision + 1 })); }}>重试恢复</button>}
       <button type="button" onClick={startWithRecoveredDraft}>保留草稿，开始新对话</button>
     </div> : <ConversationWorkspace key={`${selection.id}:${selection.revision}`} id={selection.id} owner={owner} initial={selection.detail} focusOnMount={selection.focus} focusRequest={focusRequest} entry={incomingEntry} onEntryConsumed={consumeEntry}
+      restoredCaseReference={drafts.caseReference(selection.id)} onCaseReferenceChange={reference => drafts.setCaseReference(selection.id, reference)}
       draftText={drafts.text(selection.id)} onDraftChange={text => { drafts.write(selection.id, text); drafts.select(selection.id, Boolean(selection.detail) || drafts.cursor?.persisted === true); }}
       onStarted={text => { drafts.submitting(selection.id, text); drafts.select(selection.id, !guest); }}
       onAcknowledged={() => drafts.acknowledged(selection.id)}
@@ -138,8 +146,8 @@ function HermitSessionWorkspace({ owner, guest, restoreDrafts, entry }: { owner:
   </>;
 }
 
-interface ConversationWorkspaceProps { id: string; owner: string | null; initial?: ConversationDetail; focusOnMount?: boolean; focusRequest?: number; draftText?: string; entry?: HermitCaseEntry; onEntryConsumed?: () => void; onDraftChange?: (text: string) => void; onStarted?: (text: string) => void; onAcknowledged?: () => void; onNew: () => void; onHistory: () => void; onSaved: () => void }
-export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusRequest = 0, draftText = "", entry, onEntryConsumed, onDraftChange, onStarted, onAcknowledged, onNew, onHistory, onSaved }: ConversationWorkspaceProps) {
+interface ConversationWorkspaceProps { id: string; owner: string | null; initial?: ConversationDetail; focusOnMount?: boolean; focusRequest?: number; draftText?: string; entry?: HermitCaseEntry; onEntryConsumed?: () => void; restoredCaseReference?: CaseDraftReference | null; onCaseReferenceChange?: (reference: CaseDraftReference | null) => void; onDraftChange?: (text: string) => void; onStarted?: (text: string) => void; onAcknowledged?: () => void; onNew: () => void; onHistory: () => void; onSaved: () => void }
+export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusRequest = 0, draftText = "", entry, onEntryConsumed, restoredCaseReference, onCaseReferenceChange, onDraftChange, onStarted, onAcknowledged, onNew, onHistory, onSaved }: ConversationWorkspaceProps) {
   const { attachments, setAttachments, uploadError, isUploadingAttachments, handleFilesSelected, handleRemoveAttachment, handleRetryAttachment, uploadScopeRef } = useHermitAttachments(owner, initial, id);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat", fetch: authFetch }), []);
   const [entryPending, setEntryPending] = useState(Boolean(entry && (draftText.trim() || initial?.messages.length)));
@@ -169,6 +177,25 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(() => restoredContext(initial));
   const [skillContext, setSkillContext] = useState<HermitDocumentRecommendation | null>(() => initial?.skillContext ? { id: `skill:${initial.skillContext.resourceId}`, ...initial.skillContext } : null);
   const [draftDocument, setDraftDocument] = useState<HermitDocumentRecommendation | null>(entry && !entryPending ? entry.document : null);
+  const [isRestoringCase, setIsRestoringCase] = useState(Boolean(restoredCaseReference && !(entry && !entryPending)));
+  const [caseRestoreError, setCaseRestoreError] = useState(false);
+  const [caseRestoreAttempt, setCaseRestoreAttempt] = useState(0);
+  const caseRestoreController = useRef<AbortController | null>(null);
+  const caseReferenceChanged = useRef(onCaseReferenceChange);
+  useLayoutEffect(() => { caseReferenceChanged.current = onCaseReferenceChange; }, [onCaseReferenceChange]);
+  // The initial reference belongs to this mounted conversation, never a newly selected history item.
+  const referenceToRestore = useRef(entry && !entryPending ? null : restoredCaseReference);
+
+  function cancelCaseRestore() {
+    caseRestoreController.current?.abort();
+    setIsRestoringCase(false); setCaseRestoreError(false);
+  }
+  function selectDraftDocument(document: HermitDocumentRecommendation | null) {
+    cancelCaseRestore();
+    referenceToRestore.current = null;
+    caseReferenceChanged.current?.(null);
+    setDraftDocument(document);
+  }
   const [draftSkill, setDraftSkill] = useState<HermitDocumentRecommendation | null>(null);
   const activeContext: HermitMessageContext = { attachments: attachments.flatMap(item => item.sent && item.status === "ready" && item.id ? [{ id: item.id, name: item.name, size: item.size }] : []), documentContext, skillContext };
   const pendingContextRef = useRef<HermitMessageContext>(activeContext);
@@ -208,9 +235,25 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   const lastState = messageRunState(lastMessage);
 
   useEffect(() => {
+    const reference = referenceToRestore.current;
+    if (!reference) return;
+    const controller = new AbortController();
+    caseRestoreController.current = controller;
+    void restoreCaseReference(reference, controller.signal).then(document => {
+      if (controller.signal.aborted) return;
+      setDraftDocument(document); setIsRestoringCase(false);
+    }).catch(() => {
+      if (controller.signal.aborted) return;
+      setCaseRestoreError(true); setIsRestoringCase(false);
+    });
+    return () => controller.abort();
+  }, [caseRestoreAttempt]);
+
+  useEffect(() => {
     if (!entry || entryPending || entryHandled.current) return;
     entryHandled.current = true;
     onDraftChange?.(entry.prompt);
+    caseReferenceChanged.current?.(caseDraftReference(entry.document));
     onEntryConsumed?.();
   }, [entry, entryPending, onDraftChange, onEntryConsumed]);
 
@@ -218,7 +261,9 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     if (!entryNotice) return;
     entryHandled.current = true;
     updateInput(appendCaseQuestion(input, entryNotice.prompt));
+    cancelCaseRestore(); referenceToRestore.current = null;
     setDraftDocument(entryNotice.document);
+    caseReferenceChanged.current?.(caseDraftReference(entryNotice.document));
     setEntryPending(false); setFocusKey(key => key + 1);
     onEntryConsumed?.();
   }
@@ -230,7 +275,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
 
   async function submitText() {
     const text = input.trim();
-    if (!text || isLoading || attachments.some(item => item.status !== "ready")) return;
+    if (!text || isLoading || isRestoringCase || caseRestoreError || attachments.some(item => item.status !== "ready")) return;
     const context: HermitMessageContext = {
       attachments: attachments.flatMap(item => item.id ? [{ id: item.id, name: item.name, size: item.size }] : []),
       documentContext: draftDocument ?? documentContext, skillContext: draftSkill ?? skillContext,
@@ -239,6 +284,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     const scope = uploadScopeRef.current;
     pendingContextRef.current = context;
     if (entryPending) { entryHandled.current = true; onEntryConsumed?.(); setEntryPending(false); }
+    caseReferenceChanged.current?.(null); referenceToRestore.current = null;
     followLatestRef.current = true; setHasUnreadMessages(false);
     onStarted?.(text); updateInput(""); setReplacedDraft(null); setEntryNotice(undefined); setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
     setAttachments(current => current.map(item => item.id && body.attachmentIds.includes(item.id) ? { ...item, sent: true } : item));
@@ -265,8 +311,9 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   }
   function handleStop() { if (isLoading) { setWasCancelled(true); void stop(); } }
   const inputProps = { value: input, focusKey: focusKey + focusRequest, onChange: (text: string) => { updateInput(text); setReplacedDraft(null); }, onSubmit: () => { void submitText(); }, onStop: handleStop, isLoading, isUploading: isUploadingAttachments,
+    isResolvingContext: isRestoringCase, submitBlockedReason: caseRestoreError ? "案例引用未恢复，请重试或移除后发送" : undefined,
     attachments: attachments.filter(item => !item.sent), uploadError, onFilesSelected: handleFilesSelected, onRemoveAttachment: handleRemoveAttachment, onRetryAttachment: handleRetryAttachment,
-    documentContext: draftDocument, onSelectDocument: setDraftDocument, onClearDocumentContext: () => setDraftDocument(null),
+    documentContext: draftDocument, onSelectDocument: selectDraftDocument, onClearDocumentContext: () => selectDraftDocument(null),
     skillContext: draftSkill, onSelectSkill: setDraftSkill, onClearSkillContext: () => setDraftSkill(null) };
 
   return <div className={styles.workspace}>
@@ -278,6 +325,8 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
       <div>{entryPending && <button type="button" onClick={applyCaseEntry}>将案例问题加入草稿</button>}
         <button type="button" onClick={() => { entryHandled.current = true; setEntryNotice(undefined); setEntryPending(false); onEntryConsumed?.(); }}>{entryPending ? "暂不带入" : "收起提示"}</button></div>
     </aside>}
+    {isRestoringCase && <aside className={styles.caseEntry} role="status"><p>正在恢复案例引用，问题草稿已保留…</p><button type="button" onClick={() => selectDraftDocument(null)}>移除引用，继续编辑</button></aside>}
+    {caseRestoreError && <aside className={styles.caseEntry} role="alert"><p>案例引用暂时无法恢复，可能已不可读取。你的问题草稿已保留。</p><div><button type="button" onClick={() => { setIsRestoringCase(true); setCaseRestoreError(false); setCaseRestoreAttempt(attempt => attempt + 1); }}>重试恢复引用</button><button type="button" onClick={() => selectDraftDocument(null)}>移除引用，继续提问</button></div></aside>}
     </div>
     {!hasMessages ? <section data-lh-hermit-start aria-labelledby="hermit-start-title">
       <div data-lh-hermit-start-inner>
@@ -324,7 +373,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
           <div data-lh-hermit-composer><ChatInput {...inputProps} /><p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p></div>
         </footer>
       </section>
-      {readerDocument && <DocumentReader document={readerDocument} onClose={closeReader} onUse={document => { setDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
+      {readerDocument && <DocumentReader document={readerDocument} onClose={closeReader} onUse={document => { selectDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
     </div>}
   </div>;
 }

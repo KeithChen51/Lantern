@@ -1,6 +1,8 @@
-/** Tab-local text drafts only: never serialize messages, file contents or credentials. */
+import { caseDraftReference, type CaseDraftReference } from "./case-entry";
+
+/** Tab-local text and case reference IDs only: never serialize documents or credentials. */
 export interface DraftCursor { id: string; persisted: boolean }
-interface Draft { text: string; updatedAt: number; pendingText?: string }
+interface Draft { text: string; updatedAt: number; pendingText?: string; caseReference?: CaseDraftReference }
 interface DraftSnapshot { version: 1; owner: string; cursor: DraftCursor | null; drafts: Record<string, Draft> }
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 const KEY = "lighthouse:hermit:drafts:v1";
@@ -26,10 +28,12 @@ export class HermitDraftStore {
       const drafts: Record<string, Draft> = Object.create(null);
       if (saved.drafts && typeof saved.drafts === "object") {
         for (const [id, draft] of Object.entries(saved.drafts).slice(-MAX_DRAFTS)) {
+          const reference = caseDraftReference(draft?.caseReference);
           if (id.length <= 160 && draft && typeof draft.text === "string" && draft.text.length <= MAX_TEXT &&
             typeof draft.updatedAt === "number" && draft.updatedAt <= now() && now() - draft.updatedAt < TTL) drafts[id] = {
               text: draft.text, updatedAt: draft.updatedAt,
               ...(typeof draft.pendingText === "string" && draft.pendingText.length <= MAX_TEXT ? { pendingText: draft.pendingText } : {}),
+              ...(reference ? { caseReference: reference } : {}),
             };
         }
       }
@@ -41,6 +45,15 @@ export class HermitDraftStore {
   get cursor() { return this.snapshot.cursor; }
   text(id: string) { return this.snapshot.drafts[id]?.text ?? ""; }
   pendingText(id: string) { return this.snapshot.drafts[id]?.pendingText; }
+  caseReference(id: string) { return this.snapshot.drafts[id]?.caseReference ?? null; }
+  setCaseReference(id: string, reference: CaseDraftReference | null) {
+    const draft = this.snapshot.drafts[id] ??= { text: "", updatedAt: this.now() };
+    const parsed = caseDraftReference(reference);
+    if (parsed) draft.caseReference = parsed;
+    else delete draft.caseReference;
+    draft.updatedAt = this.now();
+    this.save();
+  }
   recoverText(id: string) {
     const text = this.text(id), pending = this.pendingText(id);
     return pending && text && pending !== text ? `未确认发送的问题：\n${pending}\n\n未发送草稿：\n${text}` : text || pending || "";

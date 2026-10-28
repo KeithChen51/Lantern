@@ -6,6 +6,7 @@ const harness = vi.hoisted(() => ({
   slot: 0, states: [] as unknown[], refs: [] as Array<{ current: unknown }>, refSlot: 0,
   messages: [] as UIMessage[], status: "ready", options: {} as Record<string, (value: never) => void>,
   send: vi.fn(), regenerate: vi.fn(), stop: vi.fn(), clearError: vi.fn(), attachments: [] as Array<{ id: string; localId: string; name: string; size: number; status: "ready"; sent?: boolean }>,
+  effects: [] as Array<{ run: () => void | (() => void); dependencies: unknown[] }>, fetch: vi.fn(),
 }));
 vi.mock("react", async original => ({ ...await original<typeof import("react")>(),
   useState: (initial: unknown) => {
@@ -14,8 +15,10 @@ vi.mock("react", async original => ({ ...await original<typeof import("react")>(
     return [harness.states[slot], (next: unknown) => { harness.states[slot] = typeof next === "function" ? next(harness.states[slot]) : next; }];
   },
   useRef: (initial: unknown) => { const slot = harness.refSlot++; return harness.refs[slot] ??= { current: initial }; },
-  useMemo: (factory: () => unknown) => factory(), useEffect: vi.fn(),
+  useMemo: (factory: () => unknown) => factory(), useEffect: (run: () => void | (() => void), dependencies: unknown[] = []) => { harness.effects.push({ run, dependencies }); },
+  useLayoutEffect: vi.fn(),
 }));
+vi.mock("@/components/auth/auth-fetch", () => ({ authFetch: harness.fetch }));
 vi.mock("@ai-sdk/react", () => ({ useChat: (options: typeof harness.options) => {
   harness.options = options;
   return { messages: harness.messages, setMessages: (update: (messages: UIMessage[]) => UIMessage[]) => { harness.messages = update(harness.messages); }, status: harness.status,
@@ -32,7 +35,9 @@ import type { HermitDocumentRecommendation } from "./types";
 import type { ContextRemoval } from "./message-context";
 import { MessageContext } from "./MessageContext";
 import type { ConversationDetail } from "./conversation-state";
-import type { HermitCaseEntry } from "./case-entry";
+import { MIRROR_CASE_ID, type CaseDraftReference, type HermitCaseEntry } from "./case-entry";
+import { HermitDraftStore } from "./draft-store";
+import { LhChatInputShell, LhChatSubmitButton } from "@/components/ui/lighthouse-primitives";
 
 function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>>[] {
   if (Array.isArray(node)) return node.flatMap(child => find(child, type));
@@ -42,21 +47,92 @@ function find(node: ReactNode, type: unknown): ReactElement<Record<string, unkno
 }
 let incomingEntry: HermitCaseEntry | undefined;
 let incomingDraft = "";
+let incomingReference: CaseDraftReference | null = null;
+let draftStore: HermitDraftStore | undefined;
 const consumeEntry = vi.fn();
 function render(initial?: ConversationDetail) {
   harness.slot = 0; harness.refSlot = 0;
-  return ConversationWorkspace({ id: "saved-session", owner: "employee:a", initial, entry: incomingEntry, draftText: incomingDraft, onEntryConsumed: consumeEntry, onNew: vi.fn(), onHistory: vi.fn(), onSaved: vi.fn() });
+  harness.effects = [];
+  return ConversationWorkspace({ id: "saved-session", owner: "employee:a", initial, entry: incomingEntry, draftText: incomingDraft, onEntryConsumed: consumeEntry,
+    restoredCaseReference: incomingReference, onCaseReferenceChange: reference => draftStore?.setCaseReference("saved-session", reference),
+    onDraftChange: text => { draftStore?.write("saved-session", text); draftStore?.select("saved-session", false); },
+    onNew: vi.fn(), onHistory: vi.fn(), onSaved: vi.fn() });
 }
 function composer() { return find(render(), ChatInput)[0].props as unknown as { value: string; onChange: (text: string) => void; onSubmit: () => void;
   onSelectDocument: (document: HermitDocumentRecommendation) => void; onSelectSkill: (skill: HermitDocumentRecommendation) => void;
-  documentContext: HermitDocumentRecommendation | null; skillContext: HermitDocumentRecommendation | null; attachments: typeof harness.attachments }; }
+  documentContext: HermitDocumentRecommendation | null; skillContext: HermitDocumentRecommendation | null; attachments: typeof harness.attachments;
+  onClearDocumentContext: () => void; isResolvingContext: boolean; submitBlockedReason?: string }; }
 const documentA = { id: "doc:a", resourceId: "a", versionId: "v1", title: "文档 A", source: "中台" };
 const documentB = { id: "doc:b", resourceId: "b", versionId: "v2", title: "文档 B", source: "中台" };
 const skill = { id: "skill:s", resourceId: "s", versionId: "s1", title: "方法", source: "中台" };
 beforeEach(() => {
-  incomingEntry = undefined; incomingDraft = "";
+  incomingEntry = undefined; incomingDraft = ""; incomingReference = null; draftStore = undefined;
   vi.clearAllMocks(); harness.slot = 0; harness.refSlot = 0; harness.states = []; harness.refs = []; harness.messages = []; harness.status = "ready"; harness.attachments = [];
   harness.send.mockImplementation(async ({ text, metadata }) => { harness.messages.push({ id: `user-${harness.messages.length}`, role: "user", parts: [{ type: "text", text }], metadata }); }); harness.regenerate.mockResolvedValue(undefined);
+});
+
+const caseReference = { resourceId: MIRROR_CASE_ID, versionId: "case-published" };
+const casePublication = { id: MIRROR_CASE_ID, title: "镜鉴案例", source: "灯塔", version: { id: "case-published", markdown: "案例正文", publishedAt: "2026-10-28T00:00:00Z" } };
+async function settle() { for (let index = 0; index < 8; index++) await Promise.resolve(); }
+function runReferenceEffect() { return harness.effects.find(effect => effect.dependencies.length === 1 && typeof effect.dependencies[0] === "number")!.run(); }
+
+describe("case intake draft lifecycle", () => {
+  it("restores an accepted case reference after URL consumption and a fresh component mount", async () => {
+    const values = new Map<string, string>();
+    const memory = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+    draftStore = new HermitDraftStore("employee:a", memory); draftStore.activate();
+    incomingEntry = { title: "镜鉴案例", prompt: "请结合案例分析现场", document: { id: "case", ...caseReference, title: "镜鉴案例", source: "灯塔" } };
+    render();
+    harness.effects.find(effect => effect.dependencies.length === 4)!.run();
+    expect(consumeEntry).toHaveBeenCalledOnce();
+    expect(draftStore.caseReference("saved-session")).toEqual(caseReference);
+    draftStore.dispose();
+
+    draftStore = new HermitDraftStore("employee:a", memory); draftStore.activate();
+    incomingEntry = undefined; incomingDraft = draftStore.text("saved-session"); incomingReference = draftStore.caseReference("saved-session");
+    harness.states = []; harness.refs = [];
+    harness.fetch.mockResolvedValue(Response.json(casePublication));
+    expect(composer()).toMatchObject({ value: "请结合案例分析现场", documentContext: null, isResolvingContext: true });
+    composer().onSubmit(); expect(harness.send).not.toHaveBeenCalled();
+    const cleanup = runReferenceEffect();
+    await settle();
+    expect(composer()).toMatchObject({ isResolvingContext: false, documentContext: { ...caseReference, title: "镜鉴案例", source: "灯塔" } });
+    composer().onSubmit();
+    expect(harness.send).toHaveBeenCalledWith(expect.anything(), { body: { attachmentIds: [], documentContext: caseReference } });
+    expect(new HermitDraftStore("employee:a", memory).caseReference("saved-session")).toBeNull();
+    cleanup?.();
+  });
+
+  it("makes recovery failure actionable, retries, and prevents late restoration after removal", async () => {
+    incomingDraft = "保留的草稿"; incomingReference = caseReference;
+    harness.fetch.mockResolvedValueOnce(Response.json({ error: "forbidden" }, { status: 403 }));
+    render(); let cleanup = runReferenceEffect(); await settle();
+    expect(composer().submitBlockedReason).toContain("案例引用未恢复");
+    composer().onSubmit(); expect(harness.send).not.toHaveBeenCalled();
+    const retry = find(render(), "button").find(button => button.props.children === "重试恢复引用")!;
+    (retry.props.onClick as () => void)(); cleanup?.();
+    let release!: (value: Response) => void;
+    harness.fetch.mockImplementationOnce(() => new Promise<Response>(resolve => { release = resolve; }));
+    render(); cleanup = runReferenceEffect();
+    const remove = find(render(), "button").find(button => button.props.children === "移除引用，继续编辑")!;
+    (remove.props.onClick as () => void)();
+    release(Response.json(casePublication)); await settle();
+    expect(composer()).toMatchObject({ value: "保留的草稿", documentContext: null, isResolvingContext: false, submitBlockedReason: undefined });
+    composer().onSubmit();
+    expect(harness.send).toHaveBeenCalledWith(expect.anything(), { body: { attachmentIds: [] } });
+    cleanup?.();
+  });
+
+  it("disables only sending while reference recovery is pending or failed", () => {
+    const props = { value: "可以继续编辑", onChange: vi.fn(), onSubmit: vi.fn(), onStop: vi.fn(), isLoading: false, isUploading: false,
+      attachments: [], onFilesSelected: vi.fn(), onRemoveAttachment: vi.fn(), onRetryAttachment: vi.fn(), onClearDocumentContext: vi.fn() };
+    for (const state of [{ isResolvingContext: true }, { submitBlockedReason: "请重试或移除引用" }]) {
+      const view = ChatInput({ ...props, ...state });
+      expect(find(view, LhChatSubmitButton)[0].props.disabled).toBe(true);
+      (find(view, LhChatInputShell)[0].props.onSubmit as (event: unknown) => void)({ preventDefault: vi.fn() });
+      expect(props.onSubmit).not.toHaveBeenCalled();
+    }
+  });
 });
 describe("Hermit workspace handlers", () => {
   it("fills a case question and readable document in an empty composer without sending", () => {

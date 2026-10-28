@@ -10,6 +10,17 @@ export interface HermitCaseEntry {
   notice?: string;
 }
 
+/** A restoration hint only. Access and display metadata must be read again. */
+export interface CaseDraftReference { resourceId: string; versionId: string }
+
+export function caseDraftReference(value: unknown): CaseDraftReference | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<CaseDraftReference>;
+  return candidate.resourceId === MIRROR_CASE_ID && typeof candidate.versionId === "string" &&
+    candidate.versionId.length > 0 && candidate.versionId.length <= 160
+    ? { resourceId: MIRROR_CASE_ID, versionId: candidate.versionId } : null;
+}
+
 export function mirrorHermitHref(question = DEFAULT_QUESTION) {
   return `/hermit?${new URLSearchParams({ from: "mirror-pang-dong-lai", question })}`;
 }
