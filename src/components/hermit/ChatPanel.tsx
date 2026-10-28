@@ -13,6 +13,7 @@ import { HermitIdentity } from "./HermitIdentity";
 import { ConversationHeader } from "./ConversationHeader";
 import { ScenarioCards } from "./ScenarioCards";
 import { RunFeedback } from "./RunFeedback";
+import { createConversationId } from "./conversation-id";
 import { HistoryDrawer, readConversation, useConversationHistory } from "./ConversationHistory";
 import { ConversationReadScope, conversationTitle, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
 import { hermitUploadOwner } from "./upload-scope";
@@ -33,7 +34,7 @@ export function ChatPanel() {
 }
 
 function HermitSessionWorkspace({ owner, guest }: { owner: string | null; guest: boolean }) {
-  const [selection, setSelection] = useState<{ id: string; detail?: ConversationDetail; revision: number; focus?: boolean }>(() => ({ id: crypto.randomUUID(), revision: 0 }));
+  const [selection, setSelection] = useState<{ id: string; detail?: ConversationDetail; revision: number; focus?: boolean }>(() => ({ id: createConversationId(), revision: 0 }));
   const [historyOpen, setHistoryOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -46,7 +47,7 @@ function HermitSessionWorkspace({ owner, guest }: { owner: string | null; guest:
   function newConversation() {
     detailScope.current.dispose();
     setDetailLoading(false); setDetailError(null); setHistoryOpen(false);
-    setSelection(previous => ({ id: crypto.randomUUID(), revision: previous.revision + 1, focus: true }));
+    setSelection(previous => ({ id: createConversationId(), revision: previous.revision + 1, focus: true }));
   }
   async function selectConversation(id: string) {
     const request = detailScope.current.begin();
