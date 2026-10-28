@@ -79,10 +79,53 @@ describe("employee login and identity shadows", () => {
     f.advance(300001);
     expect((await f.service.webPrincipal(login.sessionToken)).organization).toBeUndefined();
   });
-  it("starts card login at the portal without inventing callback parameters or a transaction", async () => {
+  it("starts card login without callback parameters and binds its navigation to this browser", async () => {
     const f = fixture({ portalLoginMode: "card" });
-    expect(await f.service.startLogin("/heart")).toEqual({ state: "", cookie: "", redirectUrl: config.portalLoginUrl });
-    expect(f.store.snapshot()).toHaveLength(0);
+    const start = await f.service.startLogin("/auth/device?user_code=ABC123");
+    expect(start).toEqual({ state: "", cookie: expect.any(String), redirectUrl: config.portalLoginUrl });
+    expect(start.cookie).toHaveLength(43);
+    expect(await f.service.loginReturnTo({ cookie: start.cookie })).toBe("/auth/device?user_code=ABC123");
+    expect(await f.service.loginReturnTo({ cookie: "wrong-browser" })).toBe("/");
+    await expect(f.service.callback({ token: "synthetic", state: start.cookie, cookie: start.cookie })).rejects.toMatchObject({ status: 401 });
+    expect(f.identity).not.toHaveBeenCalled();
+    const result = await f.service.callback({ token: "synthetic-card", cookie: start.cookie });
+    if (result.kind !== "pending") throw new Error("Expected pending");
+    const pending = await f.service.pending(result.pendingToken);
+    expect(pending.returnTo).toBe("/auth/device?user_code=ABC123");
+    expect(f.store.snapshot().some(row => row.kind === "session")).toBe(false);
+    expect(await f.service.loginReturnTo({ cookie: start.cookie })).toBe("/");
+    const confirmed = await f.service.confirmPending(result.pendingToken, pending.csrfToken);
+    expect(confirmed.returnTo).toBe(pending.returnTo);
+  });
+  it("reads retry destinations only from live, unused, browser-bound state", async () => {
+    const f = fixture(), start = await f.service.startLogin("/auth/device?user_code=ABCD-EFGH");
+    expect(await f.service.loginReturnTo(start)).toBe("/auth/device?user_code=ABCD-EFGH");
+    for (const input of [{ state: start.state }, { state: start.state, cookie: "wrong" }, { state: "unknown", cookie: start.cookie }, { state: "", cookie: start.cookie }]) {
+      await expect(f.service.loginReturnTo(input)).rejects.toMatchObject({ status: 401 });
+    }
+    const result = await f.service.callback({ token: "synthetic", ...start });
+    expect(result.returnTo).toBe("/auth/device?user_code=ABCD-EFGH");
+    await expect(f.service.loginReturnTo(start)).rejects.toMatchObject({ status: 401 });
+    const expired = await f.service.startLogin("/action");
+    f.advance(config.transactionMs + 1);
+    await expect(f.service.loginReturnTo(expired)).rejects.toMatchObject({ status: 401 });
+  });
+  it.each(["https://evil.invalid", "//evil.invalid", "/%252f%252fevil.invalid", "/auth/portal/callback"])("sanitizes card and callback retry destinations %s", async returnTo => {
+    for (const portalLoginMode of ["card", "callback"] as const) {
+      const f = fixture({ portalLoginMode }), start = await f.service.startLogin(returnTo);
+      expect(await f.service.loginReturnTo({ cookie: start.cookie, ...(portalLoginMode === "callback" ? { state: start.state } : {}) })).toBe("/");
+    }
+  });
+  it("defaults direct, expired, or mismatched card navigation to home and still requires confirmation", async () => {
+    const f = fixture({ portalLoginMode: "card" }), start = await f.service.startLogin("/action");
+    f.advance(config.transactionMs + 1);
+    expect(await f.service.loginReturnTo({ cookie: start.cookie })).toBe("/");
+    for (const cookie of [undefined, start.cookie, "wrong-browser"]) {
+      const result = await f.service.callback({ token: "synthetic-card", cookie });
+      if (result.kind !== "pending") throw new Error("Expected pending");
+      expect((await f.service.pending(result.pendingToken)).returnTo).toBe("/");
+    }
+    expect(f.store.snapshot().some(row => row.kind === "session")).toBe(false);
   });
   it("requires explicit card confirmation and never accepts a supplied bad state", async () => {
     const f = fixture({ portalLoginMode: "card", allowLegacyConfirmation: false });

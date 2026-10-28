@@ -78,11 +78,23 @@ describe("IAM login and synchronized authorization", () => {
     expect(results.find(item => item.status === "fulfilled")).toMatchObject({ value: { returnTo: "/" } });
   });
   it("does not retry an exchange after its transaction was consumed", async () => {
-    const f = fixture(), start = await f.service.startLogin();
+    const f = fixture(), start = await f.service.startLogin("/auth/device?user_code=ABCD-EFGH");
+    expect(await f.service.loginReturnTo(start)).toBe("/auth/device?user_code=ABCD-EFGH");
     f.exchange.mockRejectedValueOnce(new Error("upstream unavailable"));
     await expect(f.service.iamCallback({ code: "code", state: start.state, cookie: start.cookie })).rejects.toThrow();
+    await expect(f.service.loginReturnTo(start)).rejects.toMatchObject({ status: 401 });
     await expect(f.service.iamCallback({ code: "code", state: start.state, cookie: start.cookie })).rejects.toMatchObject({ status: 401 });
     expect(f.exchange).toHaveBeenCalledTimes(1);
+  });
+  it("refuses retry destinations for wrong, expired, and cross-authority transactions", async () => {
+    const f = fixture(), start = await f.service.startLogin("/action");
+    await expect(f.service.loginReturnTo({ state: start.state, cookie: "wrong-cookie" })).rejects.toMatchObject({ status: 401 });
+    const portal = new AccessService({ ...f.config, mode: "portal", portalLoginMode: "callback" }, { identity: f.identity, roles: async () => [] }, f.store, f.now);
+    const other = await portal.startLogin("/me");
+    await expect(f.service.loginReturnTo(other)).rejects.toMatchObject({ status: 401 });
+    f.advance(f.config.transactionMs + 1);
+    await expect(f.service.loginReturnTo(start)).rejects.toMatchObject({ status: 401 });
+    expect(f.exchange).not.toHaveBeenCalled();
   });
   it("refuses identity-only login and requires both account and application role", async () => {
     const f = fixture();
