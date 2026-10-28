@@ -1389,7 +1389,8 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page {
   grid-template-rows: minmax(0, 1fr);
 }
-.workspace { display: grid; width: 100%; min-width: 0; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; }
+.workspace { display: grid; width: 100%; min-width: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; }
+.workspace > * { min-width: 0; }
 .conversationHeader { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px 12px; }
 .conversationTitle { display: flex; min-width: 0; align-items: center; gap: 10px; }
 .conversationTitle h1 { overflow: hidden; margin: 0; color: var(--hermit-ink); font: 600 16px/24px var(--font-sans-stack); text-overflow: ellipsis; white-space: nowrap; }
@@ -1466,12 +1467,16 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 .attachmentTile > .attachmentRetry { position: absolute; right: 3px; bottom: 4px; width: 22px; height: 22px; color: var(--hermit-danger); }
 .attachmentTile[data-status="error"] { border-color: var(--hermit-danger); }
 .attachmentTile[data-status="error"] > .attachmentState { color: var(--hermit-danger); }
-:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-conversation] { padding: 20px 16px 0; }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-conversation] { padding: 12px 16px 0; }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-scroll-content],
-:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] { width: min(800px, 100%); }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] { width: min(1040px, 100%); }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-main] { padding-bottom: 28px; }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer] { padding: 12px 0 0; }
-[data-lh-hermit-composer] > .startFootnote { padding-top: 16px; }
+[data-lh-hermit-composer] > .startFootnote { padding-top: 8px; }
+/* The conversation gives space to answers; the centered start keeps its larger composer. */
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-input] { padding: 12px 16px; }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-textarea] { min-height: 28px; padding: 0; }
+[data-lh-hermit-composer] .inputTools { padding-top: 6px; }
 .runCancelled, .expiredAttachments { margin: 0; border-radius: 10px; background: var(--hermit-subtle); padding: 10px 12px; color: var(--hermit-secondary); font-size: 13px; line-height: 22px; }
 .runCancelled { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .runCancelled p { margin: 0; }
