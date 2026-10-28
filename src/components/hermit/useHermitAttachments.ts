@@ -23,12 +23,16 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
   const uploadQueueRef = useRef<Promise<void>>(Promise.resolve());
   const uploadQueueLengthRef = useRef(0);
   const fileControllersRef = useRef(new Map<string, AbortController>());
+  const cancelledUploadIdsRef = useRef(new Set<string>());
   const errorAttachmentIdRef = useRef<string | null>(null);
   const [attachments, setAttachments] = useState<HermitAttachment[]>(() => restoredAttachments(initial));
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   async function uploadAttachment(file: File, localId: string, scope: HermitUploadScope) {
     scope.assertActive();
+    // Retried files can already have a visible card while waiting behind
+    // another request. Cancellation must cover that queue, before a controller exists.
+    if (cancelledUploadIdsRef.current.has(localId)) return;
     const controller = new AbortController();
     const cancel = () => controller.abort();
     scope.signal.addEventListener("abort", cancel, { once: true });
@@ -114,7 +118,10 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
         await task(scope);
       } finally {
         uploadQueueLengthRef.current -= 1;
-        if (scope.active && uploadQueueLengthRef.current === 0) setIsUploadingAttachments(false);
+        if (uploadQueueLengthRef.current === 0) {
+          cancelledUploadIdsRef.current.clear();
+          if (scope.active) setIsUploadingAttachments(false);
+        }
       }
     };
 
@@ -140,6 +147,7 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
   }
 
   async function handleRemoveAttachment(attachment: HermitAttachment) {
+    if (attachment.status === "uploading") cancelledUploadIdsRef.current.add(attachment.localId);
     fileControllersRef.current.get(attachment.localId)?.abort();
     if (attachment.id) {
       const scope = uploadScopeRef.current;

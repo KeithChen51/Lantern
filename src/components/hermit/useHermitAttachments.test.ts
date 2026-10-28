@@ -107,6 +107,31 @@ describe("Hermit attachment cancellation and recovery", () => {
     expect(render().uploadError).toBeNull();
   });
 
+  it("never posts a queued retry removed before that file gets an upload controller", async () => {
+    let completeFirstRetry!: (response: Response) => void;
+    harness.fetch.mockResolvedValueOnce(Response.json({ error: { message: "首次上传失败。" } }, { status: 422 }))
+      .mockResolvedValueOnce(Response.json({ error: { message: "首次上传失败。" } }, { status: 422 }))
+      .mockImplementationOnce(() => new Promise<Response>(resolve => { completeFirstRetry = resolve; }));
+    select("first.txt", "second.txt");
+    await vi.waitFor(() => expect(render().isUploadingAttachments).toBe(false));
+    expect(render().attachments.map(file => file.status)).toEqual(["error", "error"]);
+    render().handleRetryAttachment(pendingFile("first.txt"));
+    render().handleRetryAttachment(pendingFile("second.txt"));
+    await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledTimes(3));
+    expect(pendingFile("second.txt").status).toBe("uploading");
+    await render().handleRemoveAttachment(pendingFile("second.txt"));
+    completeFirstRetry(Response.json({ id: "first-retry", status: "ready" }));
+    await vi.waitFor(() => expect(render().isUploadingAttachments).toBe(false));
+    await flush();
+    expect(harness.fetch).toHaveBeenCalledTimes(3);
+    expect(render().attachments).toEqual([expect.objectContaining({ name: "first.txt", id: "first-retry", status: "ready" })]);
+    expect(render().uploadError).toBeNull();
+    harness.fetch.mockResolvedValueOnce(Response.json({ id: "replacement", status: "ready" }));
+    select("replacement.txt");
+    await vi.waitFor(() => expect(pendingFile("replacement.txt")?.status).toBe("ready"));
+    expect(harness.fetch).toHaveBeenCalledTimes(4);
+  });
+
   it("preserves the card and a retryable removal when server cleanup fails", async () => {
     harness.fetch.mockResolvedValueOnce(Response.json({ id: "ready", status: "ready" }))
       .mockResolvedValueOnce(Response.json({ error: "busy" }, { status: 500 }))
