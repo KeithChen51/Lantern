@@ -13,7 +13,7 @@ export const HERMIT_ATTACHMENT_TTL_MS = 30 * 60 * 1000;
 export const HERMIT_ATTACHMENT_MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const HERMIT_ATTACHMENT_MAX_REQUEST_BYTES = 12 * 1024 * 1024;
 export const HERMIT_ATTACHMENT_MAX_TEXT_CHARS = 200_000;
-export const HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER = 5;
+export const HERMIT_ATTACHMENT_MAX_FILES_PER_CONVERSATION = 5;
 export const HERMIT_ATTACHMENT_MAX_STORE_ENTRIES = 256;
 export const HERMIT_ATTACHMENT_MAX_STORE_TEXT_CHARS = 4_000_000;
 export const HERMIT_ATTACHMENT_MAX_RESOLVE_IDS = 5;
@@ -40,6 +40,7 @@ type StoredHermitAttachment = ResolvedHermitAttachment & {
   userId: string;
   grantId: string;
   credentialId: string;
+  conversationId?: string;
   expiresAt: number;
 };
 
@@ -64,10 +65,10 @@ function purgeExpiredAttachments(now = Date.now()) {
   }
 }
 
-function countOwnerAttachments(principal: Principal) {
+function countConversationAttachments(principal: Principal, conversationId?: string) {
   let count = 0;
   for (const attachment of attachments.values()) {
-    if (ownsAttachment(attachment, principal)) count += 1;
+    if (ownsAttachment(attachment, principal) && attachment.conversationId === conversationId) count += 1;
   }
   return count;
 }
@@ -233,14 +234,17 @@ function assertRequestBodySize(request: Request) {
   }
 }
 
-export async function saveHermitAttachment(request: Request, file: File, principal: Principal): Promise<{ summary: HermitAttachmentSummary }> {
+export async function saveHermitAttachment(request: Request, file: File, principal: Principal, conversationId?: string): Promise<{ summary: HermitAttachmentSummary }> {
   assertHermitPrincipal(principal, "hermit:attachment:self");
   request.signal.throwIfAborted();
   assertRequestBodySize(request);
   purgeExpiredAttachments();
+  if (conversationId !== undefined && (!conversationId.trim() || conversationId.length > 160 || /[\u0000-\u001f\u007f]/.test(conversationId))) {
+    throw new AppError("validation_error", "对话标识无效，请重新打开对话后上传。", 422);
+  }
 
-  if (countOwnerAttachments(principal) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
-    throw new AppError("validation_error", "每个访问会话最多保留 5 个附件，请先移除旧附件。", 422);
+  if (countConversationAttachments(principal, conversationId) >= HERMIT_ATTACHMENT_MAX_FILES_PER_CONVERSATION) {
+    throw new AppError("validation_error", "本次对话最多保留 5 个附件，请先移除本对话中的附件。", 422);
   }
   if (attachments.size >= HERMIT_ATTACHMENT_MAX_STORE_ENTRIES) {
     throw new AppError("bad_request", "附件暂存空间已满，请稍后重试。", 503);
@@ -250,8 +254,8 @@ export async function saveHermitAttachment(request: Request, file: File, princip
   request.signal.throwIfAborted();
   assertHermitPrincipal(principal, "hermit:attachment:self");
   purgeExpiredAttachments();
-  if (countOwnerAttachments(principal) >= HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER) {
-    throw new AppError("validation_error", "每个访问会话最多保留 5 个附件，请先移除旧附件。", 422);
+  if (countConversationAttachments(principal, conversationId) >= HERMIT_ATTACHMENT_MAX_FILES_PER_CONVERSATION) {
+    throw new AppError("validation_error", "本次对话最多保留 5 个附件，请先移除本对话中的附件。", 422);
   }
   if (attachments.size >= HERMIT_ATTACHMENT_MAX_STORE_ENTRIES) {
     throw new AppError("bad_request", "附件暂存空间已满，请稍后重试。", 503);
@@ -272,6 +276,7 @@ export async function saveHermitAttachment(request: Request, file: File, princip
     userId: principal.userId,
     grantId: principal.grantId,
     credentialId: principal.credentialId,
+    conversationId,
     text: parsed.text,
     expiresAt: Math.min(Date.now() + HERMIT_ATTACHMENT_TTL_MS, principal.expiresAt),
   });

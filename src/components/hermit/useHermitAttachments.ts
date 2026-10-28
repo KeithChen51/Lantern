@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { authFetch } from "@/components/auth/auth-fetch";
-import { HermitUploadScope } from "./upload-scope";
+import { HermitUploadScope, waitForHermitUpload } from "./upload-scope";
 import { getHermitApiError, isSupportedHermitFile, type HermitAttachment } from "./types";
 import { restoredAttachments, type ConversationDetail } from "./conversation-state";
 
@@ -11,7 +11,7 @@ function createLocalAttachmentId(file: File) {
   return `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function useHermitAttachments(uploadOwner: string | null, initial?: ConversationDetail) {
+export function useHermitAttachments(uploadOwner: string | null, initial?: ConversationDetail, conversationId?: string) {
   const uploadOwnerRef = useRef(uploadOwner);
   const uploadScopeRef = useRef<HermitUploadScope | null>(null);
   useLayoutEffect(() => {
@@ -22,17 +22,23 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
   }, [uploadOwner]);
   const uploadQueueRef = useRef<Promise<void>>(Promise.resolve());
   const uploadQueueLengthRef = useRef(0);
-  const canceledUploadIdsRef = useRef(new Set<string>());
+  const fileControllersRef = useRef(new Map<string, AbortController>());
+  const errorAttachmentIdRef = useRef<string | null>(null);
   const [attachments, setAttachments] = useState<HermitAttachment[]>(() => restoredAttachments(initial));
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   async function uploadAttachment(file: File, localId: string, scope: HermitUploadScope) {
     scope.assertActive();
+    const controller = new AbortController();
+    const cancel = () => controller.abort();
+    scope.signal.addEventListener("abort", cancel, { once: true });
+    fileControllersRef.current.set(localId, controller);
     const formData = new FormData();
     formData.append("file", file);
+    if (conversationId) formData.append("conversationId", conversationId);
 
-    try {
-      const response = await authFetch("/api/hermit/attachments", { method: "POST", body: formData, signal: scope.signal });
+    const upload = async () => {
+      const response = await authFetch("/api/hermit/attachments", { method: "POST", body: formData, signal: controller.signal });
       scope.assertActive();
       const responseText = await response.text();
       scope.assertActive();
@@ -48,7 +54,7 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
 
       const data = payload as { id: string; name?: unknown; size?: unknown; status?: unknown };
       if (data.status !== "ready") throw new Error(getHermitApiError(payload, "文件暂时无法读取，请重试。"));
-      if (canceledUploadIdsRef.current.delete(localId)) {
+      if (controller.signal.aborted) {
         await deleteServerAttachment(data.id, scope);
         return;
       }
@@ -65,19 +71,27 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
             }
           : attachment
       )));
+    };
+    try {
+      await waitForHermitUpload(upload(), controller.signal);
     } catch (error) {
-      if (!scope.active) return;
+      if (!scope.active || controller.signal.aborted) return;
       const message = getHermitApiError(error, "有文件未能上传，请重试或移除后继续。");
       setAttachments((current) => current.map((attachment) => (
         attachment.localId === localId ? { ...attachment, status: "error", error: message } : attachment
       )));
+      errorAttachmentIdRef.current = localId;
       setUploadError(message);
+    } finally {
+      scope.signal.removeEventListener("abort", cancel);
+      if (fileControllersRef.current.get(localId) === controller) fileControllersRef.current.delete(localId);
     }
   }
 
   async function uploadSelectedFiles(files: File[], availableSlots: number, scope: HermitUploadScope) {
     await scope.forEach(files.slice(0, availableSlots), async file => {
       if (!isSupportedHermitFile(file)) {
+        errorAttachmentIdRef.current = null;
         setUploadError(`${file.name} 暂不支持。请选择 PDF、Word、TXT 或 Markdown 文件。`);
         return;
       }
@@ -111,6 +125,7 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
   function handleFilesSelected(files: FileList | null) {
     if (!files?.length) return;
     if (isUploadingAttachments || uploadQueueLengthRef.current > 0) return;
+    errorAttachmentIdRef.current = null;
     setUploadError(null);
 
     const availableSlots = Math.max(0, MAX_ATTACHMENTS_PER_CONVERSATION - attachments.length);
@@ -125,30 +140,45 @@ export function useHermitAttachments(uploadOwner: string | null, initial?: Conve
   }
 
   async function handleRemoveAttachment(attachment: HermitAttachment) {
-    if (attachment.status === "uploading") canceledUploadIdsRef.current.add(attachment.localId);
+    fileControllersRef.current.get(attachment.localId)?.abort();
+    if (attachment.id) {
+      const scope = uploadScopeRef.current;
+      if (!scope?.active) return;
+      const deleted = await deleteServerAttachment(attachment.id, scope);
+      if (!scope.active) return;
+      if (!deleted) {
+        errorAttachmentIdRef.current = attachment.localId;
+        setUploadError("暂时无法移除这个附件，请再次点击移除重试。");
+        return;
+      }
+    }
     setAttachments((current) => current.filter((item) => item.localId !== attachment.localId));
-    if (!attachment.id) return;
-
-    const scope = uploadScopeRef.current;
-    if (scope?.active) await deleteServerAttachment(attachment.id, scope);
+    if (errorAttachmentIdRef.current === attachment.localId) {
+      errorAttachmentIdRef.current = null;
+      setUploadError(null);
+    }
   }
 
   async function deleteServerAttachment(id: string, scope: HermitUploadScope) {
     try {
       scope.assertActive();
-      await authFetch("/api/hermit/attachments", {
+      const response = await authFetch("/api/hermit/attachments", {
         method: "DELETE",
         signal: scope.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id }),
       });
+      return response.ok || response.status === 404;
     } catch {
-      // The local removal still gives the user control; the server can clean up expired attachments.
+      // A cancelled late upload has no card left to act on and expires by TTL;
+      // explicit removal keeps its card so a failed cleanup can be retried.
+      return false;
     }
   }
 
   function handleRetryAttachment(attachment: HermitAttachment) {
     if (!attachment.file) return;
+    errorAttachmentIdRef.current = null;
     setUploadError(null);
     setAttachments((current) => current.map((item) => (
       item.localId === attachment.localId ? { ...item, status: "uploading", error: undefined } : item
