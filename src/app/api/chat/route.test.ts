@@ -207,7 +207,7 @@ describe("DSH chat transport boundary", () => {
     mocks.get.mockImplementation(async id => id === skill.resourceId ? skillResource() : document);
     mocks.run.mockImplementation(async ({ onText }) => onText("用所选方法分析。"));
     const { resourceId, versionId } = skill;
-    const response = await POST(request({ messages: [{ ...question, metadata: { hermit: { version: 1, skillContext: { ...skill, title: "FORGED_TITLE" } } } }],
+    const response = await POST(request({ messages: [{ ...question, metadata: { hermit: { version: 2, skillContext: { ...skill, title: "FORGED_TITLE" } }, hermitContext: { skillContext: { ...skill, title: "FORGED_TITLE" } } } }],
       documentContext: { resourceId: "guide", versionId: "v1" }, skillContext: { resourceId, versionId } }));
     expect(response.status).toBe(200); await response.text();
     expect(mocks.get.mock.calls).toEqual([["guide", "v1"], [resourceId, versionId]]);
@@ -216,7 +216,7 @@ describe("DSH chat transport boundary", () => {
     expect(system).toContain("根目录 SKILL.md"); expect(system).toContain("不执行脚本"); expect(system).toContain("导出文件");
     expect(system).not.toContain("SKILL_METHOD_BODY"); expect(system).not.toContain("FORGED_TITLE");
     expect(Object.keys(tools).sort()).toEqual(["attachment_read", "knowledge_browse", "knowledge_cite", "knowledge_file_read", "knowledge_files", "knowledge_outline", "knowledge_read", "knowledge_recommend", "knowledge_search"]);
-    for (const call of mocks.upsertMessage.mock.calls) expect(call[0].metadata.hermit).toMatchObject({ version: 1, documentContext: { resourceId: "guide" }, skillContext: skill });
+    for (const call of mocks.upsertMessage.mock.calls) expect(call[0].metadata.hermit).toMatchObject({ version: call[0].role === "user" ? 2 : 1, documentContext: { resourceId: "guide" }, skillContext: skill });
     expect(mocks.addRetrievalTrace).not.toHaveBeenCalled();
   });
   it("reads the selected Skill through existing tools without automatically citing its selection", async () => {

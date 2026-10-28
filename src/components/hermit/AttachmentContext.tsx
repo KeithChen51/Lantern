@@ -11,7 +11,7 @@ export function AttachmentContext({ attachments, documentContext, skillContext, 
   variant?: "pending" | "context";
   skillContext?: HermitDocumentRecommendation | null; onClearSkill?: () => void;
 }) {
-  const visibleAttachments = attachments.filter(attachment => variant === "pending" ? !attachment.sent : attachment.sent);
+  const visibleAttachments = variant === "pending" ? attachments.filter(attachment => !attachment.sent) : [];
   return <>
     {variant === "context" && (documentContext || skillContext) && <div className={styles.contextSelections}>
     {documentContext && <div className={styles.selectedDocument} aria-label={`当前引用文档：${documentContext.title}`}>

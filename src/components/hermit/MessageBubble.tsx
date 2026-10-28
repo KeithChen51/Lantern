@@ -14,12 +14,18 @@ import {
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import styles from "./hermit-v3.module.css";
 import { HermitIdentity } from "./HermitIdentity";
+import { MessageContext } from "./MessageContext";
+import { messageContext, type ContextRemoval } from "./message-context";
+import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
 import { getDocumentRecommendations, getHermitCitationFromHref, getHermitCitations, getTextContent, type HermitCitation, type HermitDocumentRecommendation } from "./types";
 
 interface MessageBubbleProps {
   message: UIMessage;
   onOpenDocument?: (document: HermitDocumentRecommendation) => void;
   showRecommendations?: boolean;
+  activeContext?: HermitMessageContext;
+  contextDisabled?: boolean;
+  onRemoveContext?: (item: ContextRemoval) => void;
 }
 
 const markdownComponents: Components = {
@@ -122,7 +128,7 @@ function UserAvatar() {
   );
 }
 
-export function MessageBubble({ message, onOpenDocument, showRecommendations = true }: MessageBubbleProps) {
+export function MessageBubble({ message, onOpenDocument, showRecommendations = true, activeContext, contextDisabled, onRemoveContext }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
   const citations = getHermitCitations(message);
@@ -137,6 +143,7 @@ export function MessageBubble({ message, onOpenDocument, showRecommendations = t
             <p className="whitespace-pre-wrap">{text}</p>
           </LhMessageBubbleFrame>
         </div>
+        <MessageContext context={messageContext(message)} active={activeContext} disabled={contextDisabled} onOpenDocument={onOpenDocument} onRemove={onRemoveContext} />
         <UserAvatar />
       </LhMessageRow>
     );

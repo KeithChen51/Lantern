@@ -18,7 +18,10 @@ import { HistoryDrawer, readConversation, useConversationHistory } from "./Conve
 import { ConversationReadScope, conversationTitle, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
 import { hermitUploadOwner } from "./upload-scope";
 import { useHermitAttachments } from "./useHermitAttachments";
-import { getDocumentRecommendations, getHermitApiError, getTextContent, type HermitDocumentContext, type HermitDocumentRecommendation } from "./types";
+import { getDocumentRecommendations, getHermitApiError, getTextContent, type HermitDocumentRecommendation } from "./types";
+import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
+import { contextRequest, messageContext, retryContext, sameContextResource, unrepresentedContext, type ContextRemoval } from "./message-context";
+import { MessageContext } from "./MessageContext";
 import styles from "./hermit-v3.module.css";
 
 function getErrorMessage(error: unknown) {
@@ -82,7 +85,10 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   const [readerDocument, setReaderDocument] = useState<HermitDocumentRecommendation | null>(null);
   const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(() => restoredContext(initial));
   const [skillContext, setSkillContext] = useState<HermitDocumentRecommendation | null>(() => initial?.skillContext ? { id: `skill:${initial.skillContext.resourceId}`, ...initial.skillContext } : null);
-  const pendingBodyRef = useRef<{ attachmentIds: string[]; documentContext?: HermitDocumentContext }>({ attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}) });
+  const [draftDocument, setDraftDocument] = useState<HermitDocumentRecommendation | null>(null);
+  const [draftSkill, setDraftSkill] = useState<HermitDocumentRecommendation | null>(null);
+  const activeContext: HermitMessageContext = { attachments: attachments.flatMap(item => item.sent && item.status === "ready" && item.id ? [{ id: item.id, name: item.name, size: item.size }] : []), documentContext, skillContext };
+  const pendingContextRef = useRef<HermitMessageContext>(activeContext);
   const followLatestRef = useRef(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -112,6 +118,9 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   const title = conversationTitle(messages, initial?.title);
   const displayedError = requestError ?? (error ? "这次请求没有完成，请重试。" : null);
   const lastMessage = messages[messages.length - 1];
+  const lastUser = messages.findLast(message => message.role === "user");
+  const unmappedContext = unrepresentedContext(activeContext, lastUser ? messageContext(lastUser) : null);
+  const hasUnmappedContext = unmappedContext.attachments.length > 0 || unmappedContext.documentContext || unmappedContext.skillContext;
   const lastState = messageRunState(lastMessage);
 
   useEffect(() => {
@@ -122,30 +131,42 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   async function submitText() {
     const text = input.trim();
     if (!text || isLoading || attachments.some(item => item.status !== "ready")) return;
-    const body = { attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}), ...(skillContext ? { skillContext: { resourceId: skillContext.resourceId, versionId: skillContext.versionId } } : {}) };
+    const context: HermitMessageContext = {
+      attachments: attachments.flatMap(item => item.id ? [{ id: item.id, name: item.name, size: item.size }] : []),
+      documentContext: draftDocument ?? documentContext, skillContext: draftSkill ?? skillContext,
+    };
+    const body = contextRequest(context);
     const scope = uploadScopeRef.current;
-    pendingBodyRef.current = body;
+    pendingContextRef.current = context;
     followLatestRef.current = true; setHasUnreadMessages(false);
     setInput(""); setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
     setAttachments(current => current.map(item => item.id && body.attachmentIds.includes(item.id) ? { ...item, sent: true } : item));
+    setDocumentContext(draftDocument ?? documentContext); setSkillContext(draftSkill ?? skillContext);
+    setDraftDocument(null); setDraftSkill(null);
     try {
-      await sendMessage({ text }, { body });
+      await sendMessage({ text, metadata: { hermitContext: context } }, { body });
     } catch (error) { if (scope?.active) { setRequestError(getErrorMessage(error)); setMessages(current => markTerminalState(current, "failed")); } }
   }
   function handleRetry() {
     if (isLoading) return;
     const scope = uploadScopeRef.current;
     setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
-    // Removed or expired attachments must never re-enter a request through retry.
-    const readyIds = new Set(attachments.flatMap(item => item.status === "ready" && item.id ? [item.id] : []));
-    const body = { ...pendingBodyRef.current, attachmentIds: pendingBodyRef.current.attachmentIds.filter(id => readyIds.has(id)), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : { documentContext: undefined }), ...(skillContext ? { skillContext: { resourceId: skillContext.resourceId, versionId: skillContext.versionId } } : { skillContext: undefined }) };
+    const body = contextRequest(retryContext(pendingContextRef.current, activeContext));
     void regenerate({ body }).catch(error => { if (scope?.active) { setRequestError(getErrorMessage(error)); setMessages(current => markTerminalState(current, "failed")); } });
+  }
+  function removeSentContext(item: ContextRemoval) {
+    if (isLoading) return;
+    if (item.kind === "attachment") {
+      const attachment = attachments.find(file => file.id === item.id);
+      if (attachment) void handleRemoveAttachment(attachment);
+    } else if (item.kind === "document" && sameContextResource(documentContext, item)) setDocumentContext(null);
+    else if (item.kind === "skill" && sameContextResource(skillContext, item)) setSkillContext(null);
   }
   function handleStop() { if (isLoading) { setWasCancelled(true); void stop(); } }
   const inputProps = { value: input, focusKey: focusKey + focusRequest, onChange: setInput, onSubmit: () => { void submitText(); }, onStop: handleStop, isLoading, isUploading: isUploadingAttachments,
-    attachments, uploadError, onFilesSelected: handleFilesSelected, onRemoveAttachment: handleRemoveAttachment, onRetryAttachment: handleRetryAttachment,
-    documentContext, onSelectDocument: setDocumentContext, onClearDocumentContext: () => setDocumentContext(null),
-    skillContext, onSelectSkill: setSkillContext, onClearSkillContext: () => setSkillContext(null) };
+    attachments: attachments.filter(item => !item.sent), uploadError, onFilesSelected: handleFilesSelected, onRemoveAttachment: handleRemoveAttachment, onRetryAttachment: handleRetryAttachment,
+    documentContext: draftDocument, onSelectDocument: setDraftDocument, onClearDocumentContext: () => setDraftDocument(null),
+    skillContext: draftSkill, onSelectSkill: setDraftSkill, onClearSkillContext: () => setDraftSkill(null) };
 
   return <div className={styles.workspace}>
     <ConversationHeader title={hasMessages ? title : undefined} onNew={onNew} onHistory={onHistory} />
@@ -175,10 +196,14 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
             const state = messageRunState(message);
             const visible = message.role !== "assistant" || getTextContent(message).trim() || getDocumentRecommendations(message).length;
             return <Fragment key={message.id}>
-              {visible ? <MessageBubble message={message} onOpenDocument={setReaderDocument} showRecommendations={state !== "failed" && state !== "cancelled" && (!last || !isLoading && !displayedError)} /> : null}
+              {visible ? <MessageBubble message={message} onOpenDocument={setReaderDocument} activeContext={message.id === lastUser?.id ? activeContext : undefined} contextDisabled={isLoading} onRemoveContext={removeSentContext} showRecommendations={state !== "failed" && state !== "cancelled" && (!last || !isLoading && !displayedError)} /> : null}
               {message.role === "assistant" && (!last || !isLoading) && <RunFeedback error={last ? displayedError ?? (state === "failed" ? "这条回答未完成，请重试。" : null) : state === "failed" ? "这条回答未完成。" : null} cancelled={state === "cancelled" || last && wasCancelled} onRetry={last && (displayedError || state === "failed" || state === "cancelled" || wasCancelled) ? handleRetry : undefined} />}
             </Fragment>;
           })}
+          {!!hasUnmappedContext && <section className={styles.followUpContext} aria-label="后续引用材料">
+            <span>后续引用</span>
+            <MessageContext context={unmappedContext} active={activeContext} disabled={isLoading} onOpenDocument={setReaderDocument} onRemove={removeSentContext} />
+          </section>}
           {lastMessage?.role !== "assistant" && displayedError && <RunFeedback error={displayedError} onRetry={handleRetry} />}
           {isLoading && <RunFeedback loading progress={progress} />}
           {!isLoading && lastMessage?.role !== "assistant" && (lastState === "cancelled" || wasCancelled) && <RunFeedback cancelled onRetry={handleRetry} />}
@@ -188,7 +213,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
           <div data-lh-hermit-composer><ChatInput {...inputProps} /><p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p></div>
         </footer>
       </section>
-      {readerDocument && <DocumentReader document={readerDocument} onClose={() => setReaderDocument(null)} onUse={document => { setDocumentContext(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
+      {readerDocument && <DocumentReader document={readerDocument} onClose={() => setReaderDocument(null)} onUse={document => { setDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
     </div>}
   </div>;
 }

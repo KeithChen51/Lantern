@@ -9,7 +9,8 @@
 | 输入区 | [Composer 177:17](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=177-17) | `src/components/hermit/ChatInput.tsx` | 共享首屏与会话输入；受控草稿；生成期间可编辑；发送与停止互换 |
 | 添加内容 | [添加菜单与资源组件 249:1123](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=249-1123) | `AddContentMenu.tsx` / `context-resources.ts` | 悬浮提示；本地文件、知识文件、平台 Skill；原生 popover；搜索、分页、空态、重试与过期请求隔离 |
 | 快捷提示词 | [ScenarioCard 179:24](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=179-24) | `ScenarioCards.tsx` | 普通按钮，仅填入草稿并聚焦；无模式、持久选中态或自动发送 |
-| 发送前附件 | [AttachmentTile 212:1102](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=212-1102) | `AttachmentContext.tsx` | Ready / Uploading / Error；输入框上方左对齐、横排换行；移除、取消与重试 |
+| 发送前附件 | [AttachmentTile 212:1102](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=212-1102) | `AttachmentContext.tsx` | Ready / Uploading / Error；仅待发送材料；输入框上方横排换行；移除、取消与重试 |
+| 消息引用材料 | 沿用附件卡与文档图标规范，发送后位置按本契约 | `MessageContext.tsx` / `message-context.ts` | 绑定该条用户消息的材料快照；消息下方右对齐；知识文档可打开；当前材料可移除后续引用 |
 | 会话栏 | [ConversationHeader 179:50](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=179-50) | `ConversationHeader.tsx` | 新对话与历史；起步页只显示操作，会话页增加身份与截断标题 |
 | 历史行与抽屉 | [HistoryRow 181:331](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=181-331) | `ConversationHistory.tsx` | 标题、摘要、时间；账号内分页、加载、空态、失败、恢复；原生 dialog 支持 Escape 与焦点返回 |
 | 执行反馈 | [生成 / 失败 / 停止示例](https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=183-562) | `RunFeedback.tsx` | 只展示真实事件；错误在对应回答位置；重试保留下一条草稿 |
@@ -25,13 +26,17 @@
 - 输入底部左侧只显示加号，悬浮提示“添加文件和更多内容”；浮层包含本地文件、灯塔知识文件、使用技能。上传限制收进浮层说明：PDF、DOCX、TXT、Markdown，单文件 10 MB、会话最多 5 个，限制以后端为准。
 - 知识文件选择器查询当前站点可访问的文档、案例、通知；技能选择器只查询平台已发布 Skill，不读取服务器或用户个人技能目录。支持搜索、分页、加载失败与重试；搜索回车不发送草稿，Escape 关闭并返回焦点。
 - 文档与技能各选一项，可以和本地附件同时使用。选择后聚焦输入框；重新选择同类内容替换旧选择，移除不影响其他内容。
-- `AttachmentContext` 的 `pending` 变体显示未发送文件卡，`context` 变体显示已参与会话的文件、当前引用文档和技能。移除上下文不改草稿，也不删除已经发送的历史文字；重试不会重新带入已移除的上下文。
+- 发送时把本地附件、知识文档和技能快照附在该条用户消息下，输入区仅保留待发送材料。`AttachmentContext` 的 `pending` 变体显示未发送文件卡，`context` 变体仅显示草稿文档和技能；已发送材料由 `MessageContext` 展示。
+- 已发送材料仍参与后续追问，最新用户消息的材料卡提供“移除后续引用”；移除不改草稿、不删除历史材料快照。生成期间禁用移除，避免正在读取的材料被删除。知识/技能卡的阅读操作继续走权限校验。
+- 重试使用对应已发送轮次的材料，排除已主动移除的项，不混入下一条草稿新选的材料；新材料仅在下一次发送后替换活动上下文。
+- 兼容旧历史中“重试更换材料”的情况：无法归属原用户消息的活动材料在消息区单独显示为“后续引用”，可移除，不冒充原消息的附件。
 - 卡片宽度随可用空间收缩；文件名省略但保留完整可访问名称，状态与按钮不能被挤掉。上传中取消必须中断关联任务，失败文件不能随消息发送。
 
 ## 会话与执行
 
 - `ChatPanel` 按当前身份和会话建立独立状态。新建、恢复或身份变化时，取消旧异步工作，忽略过期回包，避免串入另一对话。
-- 历史接口仅接受服务端当前身份。恢复附件先重新检查所有权、状态与有效期；失效附件显示提示。旧记录缺少来源数据时只显示文本，不推断引用。
+- 历史接口仅接受服务端当前身份。用户消息恢复服务端保存的材料快照，附件与文档名称仅表示历史引用；恢复活动上下文仍重新检查所有权、状态与有效期。旧记录缺少材料快照时只显示文本，不推断引用。客户端显示用 metadata 不能替代服务端授权或来源记录。
+- 新用户材料快照使用服务端 envelope v2；旧用户 v1 只有与紧邻助手记录的材料一致时才恢复，无法确认的旧 JSON 不自动显示或激活材料。已保存用户消息但尚无助手记录时，v2 材料仍可恢复并重新校验；后续助手记录优先反映重试移除后的上下文。无 schema 迁移。
 - `skillContext` 与 `documentContext` 独立携带资源 ID 和版本 ID；服务器校验类型、发布、权限及有效期，恢复历史时再次检查。Skill 仅提供方法指导，正文和参考文件仍须实际读取，不执行脚本、不导出文件，也不自动生成引用。不可用技能显示提示并移出活动上下文。
 - `data-hermit-progress` 对应 connecting / searching / reading / answering；实际工具调用和文本流驱动，不使用模拟计时器。
 - 终态为 complete / failed / cancelled，写入服务端可信消息元数据。客户端传入的来源与终态不能替代服务端记录。

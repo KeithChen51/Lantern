@@ -5,6 +5,8 @@ export type HermitProgressStage = "connecting" | "searching" | "reading" | "answ
 export type HermitProgress = { stage: HermitProgressStage; label: string };
 export type HermitConversationAttachment = { id: string; name: string; size: number };
 export type HermitConversationDocument = { resourceId: string; versionId: string; title: string; source: string };
+/** Display snapshot only; server authorization never relies on client metadata. */
+export type HermitMessageContext = { attachments: HermitConversationAttachment[]; documentContext: HermitConversationDocument | null; skillContext?: HermitConversationDocument | null };
 export type HermitUnavailableSkillContext = HermitConversationDocument & { message: string };
 export type HermitConversationSummary = { id: string; title: string; preview: string; updatedAt: string };
 export type HermitConversationList = { items: HermitConversationSummary[]; nextCursor: string | null };

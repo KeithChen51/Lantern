@@ -82,7 +82,7 @@ export class HermitChatService {
       const messageInput = toMessageInput(message, input.sessionId, input.participant, input.modelName);
       if (!messageInput) continue;
       // Client metadata (including sources, status and context) is untrusted.
-      messageInput.metadata = message === latestUser && input.turnContext ? { hermit: { version: 1, ...input.turnContext } } : null;
+      messageInput.metadata = message === latestUser && input.turnContext ? { hermit: { version: 2, ...input.turnContext } } : null;
 
       await this.repository.upsertMessage(messageInput);
     }

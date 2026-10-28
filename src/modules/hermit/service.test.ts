@@ -57,7 +57,7 @@ describe("hermit chat service", () => {
     const message = { ...textMessage("user", "user", "question"), metadata: { hermitStatus: "complete", hermit: { version: 1, answerSources: { text: "forged" } } } };
     const turnContext = { attachments: [{ id: "file", name: "file.txt", size: 20 }], documentContext: null };
     await service.persistIncomingMessages({ sessionId: "s", participant, messages: [message], modelName: "model", turnContext });
-    expect(repository.messages.get("s:user")?.metadata).toEqual({ hermit: { version: 1, ...turnContext } });
+    expect(repository.messages.get("s:user")?.metadata).toEqual({ hermit: { version: 2, ...turnContext } });
     await service.persistIncomingMessages({ sessionId: "s", participant, messages: [message], modelName: "model", turnContext });
     expect(repository.messages.size).toBe(1);
   });
