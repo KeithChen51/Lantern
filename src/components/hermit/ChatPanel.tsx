@@ -370,10 +370,11 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
         </div></div>
         <footer data-lh-hermit-footer>
           {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => { followLatestRef.current = true; setHasUnreadMessages(false); scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" }); }}>查看最新回复 ↓</button>}
-          <div data-lh-hermit-composer><ChatInput {...inputProps} /><p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p></div>
+          <div data-lh-hermit-composer><ChatInput {...inputProps} /></div>
         </footer>
       </section>
       {readerDocument && <DocumentReader document={readerDocument} onClose={closeReader} onUse={document => { selectDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
+      <p className={`${styles.startFootnote} ${styles.conversationFootnote}`}>回答供参考，请结合现场情况判断。</p>
     </div>}
   </div>;
 }
