@@ -166,7 +166,12 @@ export function ChatInput({
 
           <LhChatSubmitButton
             type={isLoading ? "button" : "submit"}
-            onClick={isLoading ? onStop : undefined}
+            onClick={isLoading ? event => {
+              // Stopping can synchronously turn this same node into a submit
+              // button. Cancel the click default before that state transition.
+              event.preventDefault();
+              onStop();
+            } : undefined}
             disabled={isLoading ? false : !canSubmit}
             aria-label={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}
             title={isLoading ? "停止生成" : hasPendingAttachment ? "等待附件读取完成" : "发送"}

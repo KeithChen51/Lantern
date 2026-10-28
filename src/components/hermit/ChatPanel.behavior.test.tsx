@@ -5,7 +5,7 @@ import type { UIMessage } from "ai";
 const harness = vi.hoisted(() => ({
   slot: 0, states: [] as unknown[], refs: [] as Array<{ current: unknown }>, refSlot: 0,
   messages: [] as UIMessage[], status: "ready", options: {} as Record<string, (value: never) => void>,
-  send: vi.fn(), regenerate: vi.fn(), stop: vi.fn(), clearError: vi.fn(), attachments: [] as Array<{ id: string; localId: string; name: string; size: number; status: "ready" }>,
+  send: vi.fn(), regenerate: vi.fn(), stop: vi.fn(), clearError: vi.fn(), attachments: [] as Array<{ id: string; localId: string; name: string; size: number; status: "ready"; sent?: boolean }>,
 }));
 vi.mock("react", async original => ({ ...await original<typeof import("react")>(),
   useState: (initial: unknown) => {
@@ -21,12 +21,17 @@ vi.mock("@ai-sdk/react", () => ({ useChat: (options: typeof harness.options) => 
   return { messages: harness.messages, setMessages: (update: (messages: UIMessage[]) => UIMessage[]) => { harness.messages = update(harness.messages); }, status: harness.status,
     sendMessage: harness.send, regenerate: harness.regenerate, stop: harness.stop, clearError: harness.clearError };
 } }));
-vi.mock("./useHermitAttachments", () => ({ useHermitAttachments: () => ({ attachments: harness.attachments, setAttachments: vi.fn(), uploadError: null, isUploadingAttachments: false,
-  handleFilesSelected: vi.fn(), handleRemoveAttachment: vi.fn(), handleRetryAttachment: vi.fn(), uploadScopeRef: { current: { active: true } } }) }));
+vi.mock("./useHermitAttachments", () => ({ useHermitAttachments: () => ({ attachments: harness.attachments, setAttachments: (update: (files: typeof harness.attachments) => typeof harness.attachments) => { harness.attachments = update(harness.attachments); }, uploadError: null, isUploadingAttachments: false,
+  handleFilesSelected: vi.fn(), handleRemoveAttachment: (file: { id: string }) => { harness.attachments = harness.attachments.filter(item => item.id !== file.id); }, handleRetryAttachment: vi.fn(), uploadScopeRef: { current: { active: true } } }) }));
 import { ConversationWorkspace } from "./ChatPanel";
 import { ChatInput } from "./ChatInput";
 import { RunFeedback } from "./RunFeedback";
 import { ScenarioCards } from "./ScenarioCards";
+import { MessageBubble } from "./MessageBubble";
+import type { HermitDocumentRecommendation } from "./types";
+import type { ContextRemoval } from "./message-context";
+import { MessageContext } from "./MessageContext";
+import type { ConversationDetail } from "./conversation-state";
 
 function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>>[] {
   if (Array.isArray(node)) return node.flatMap(child => find(child, type));
@@ -34,14 +39,19 @@ function find(node: ReactNode, type: unknown): ReactElement<Record<string, unkno
   const element = node as ReactElement<{ children?: ReactNode }>;
   return [...(element.type === type ? [element as ReactElement<Record<string, unknown>>] : []), ...find(element.props.children, type)];
 }
-function render() {
+function render(initial?: ConversationDetail) {
   harness.slot = 0; harness.refSlot = 0;
-  return ConversationWorkspace({ id: "saved-session", owner: "employee:a", onNew: vi.fn(), onHistory: vi.fn(), onSaved: vi.fn() });
+  return ConversationWorkspace({ id: "saved-session", owner: "employee:a", initial, onNew: vi.fn(), onHistory: vi.fn(), onSaved: vi.fn() });
 }
-function composer() { return find(render(), ChatInput)[0].props as unknown as { value: string; onChange: (text: string) => void; onSubmit: () => void }; }
+function composer() { return find(render(), ChatInput)[0].props as unknown as { value: string; onChange: (text: string) => void; onSubmit: () => void;
+  onSelectDocument: (document: HermitDocumentRecommendation) => void; onSelectSkill: (skill: HermitDocumentRecommendation) => void;
+  documentContext: HermitDocumentRecommendation | null; skillContext: HermitDocumentRecommendation | null; attachments: typeof harness.attachments }; }
+const documentA = { id: "doc:a", resourceId: "a", versionId: "v1", title: "文档 A", source: "中台" };
+const documentB = { id: "doc:b", resourceId: "b", versionId: "v2", title: "文档 B", source: "中台" };
+const skill = { id: "skill:s", resourceId: "s", versionId: "s1", title: "方法", source: "中台" };
 beforeEach(() => {
   vi.clearAllMocks(); harness.slot = 0; harness.refSlot = 0; harness.states = []; harness.refs = []; harness.messages = []; harness.status = "ready"; harness.attachments = [];
-  harness.send.mockResolvedValue(undefined); harness.regenerate.mockResolvedValue(undefined);
+  harness.send.mockImplementation(async ({ text, metadata }) => { harness.messages.push({ id: `user-${harness.messages.length}`, role: "user", parts: [{ type: "text", text }], metadata }); }); harness.regenerate.mockResolvedValue(undefined);
 });
 describe("Hermit workspace handlers", () => {
   it("binds useChat to the selected history ID and only fills the draft when a scenario is clicked", () => {
@@ -53,7 +63,7 @@ describe("Hermit workspace handlers", () => {
   });
   it("anchors errors at the answer and retries without sending another user turn or overwriting the next draft", async () => {
     composer().onChange("第一问"); composer().onSubmit();
-    expect(harness.send).toHaveBeenCalledWith({ text: "第一问" }, { body: { attachmentIds: [] } });
+    expect(harness.send).toHaveBeenCalledWith(expect.objectContaining({ text: "第一问" }), { body: { attachmentIds: [] } });
     harness.messages = [{ id: "user-1", role: "user", parts: [{ type: "text", text: "第一问" }] }];
     composer().onChange("还没发出的下一句");
     harness.options.onError(new Error("network unavailable") as never);
@@ -61,9 +71,51 @@ describe("Hermit workspace handlers", () => {
     const feedback = find(render(), RunFeedback).find(element => element.props.error);
     (feedback?.props.onRetry as () => void)();
     await Promise.resolve();
-    expect(harness.regenerate).toHaveBeenCalledExactlyOnceWith({ body: { attachmentIds: [], documentContext: undefined } });
+    expect(harness.regenerate).toHaveBeenCalledExactlyOnceWith({ body: { attachmentIds: [] } });
     expect(harness.send).toHaveBeenCalledTimes(1);
     expect(composer().value).toBe("还没发出的下一句");
+  });
+  it("moves sent materials to their user turn, preserves follow-up context and isolates the next draft from retry", async () => {
+    harness.attachments = [{ id: "file-a", localId: "file-a", name: "记录.txt", size: 8, status: "ready" }];
+    composer().onSelectDocument(documentA); composer().onSelectSkill(skill);
+    composer().onChange("分析 A"); composer().onSubmit();
+    await Promise.resolve();
+    expect(composer()).toMatchObject({ value: "", attachments: [], documentContext: null, skillContext: null });
+    expect(harness.messages[0].metadata).toMatchObject({ hermitContext: { attachments: [{ id: "file-a", name: "记录.txt", size: 8 }], documentContext: documentA, skillContext: skill } });
+    composer().onSelectDocument(documentB); composer().onChange("下一条草稿");
+    harness.options.onError(new Error("network") as never);
+    (find(render(), RunFeedback).find(element => element.props.onRetry)?.props.onRetry as () => void)();
+    expect(harness.regenerate).toHaveBeenLastCalledWith({ body: { attachmentIds: ["file-a"], documentContext: { resourceId: "a", versionId: "v1" }, skillContext: { resourceId: "s", versionId: "s1" } } });
+    expect(composer()).toMatchObject({ value: "下一条草稿", documentContext: documentB });
+    composer().onSubmit(); await Promise.resolve();
+    const users = harness.messages.filter(message => message.role === "user");
+    expect(users[0].metadata).toMatchObject({ hermitContext: { documentContext: documentA } });
+    expect(users[1].metadata).toMatchObject({ hermitContext: { documentContext: documentB, attachments: [{ id: "file-a" }], skillContext: skill } });
+    expect(composer().documentContext).toBeNull();
+  });
+  it("removing a sent reference affects later requests without erasing the user message snapshot", async () => {
+    harness.attachments = [{ id: "file-a", localId: "file-a", name: "记录.txt", size: 8, status: "ready" }];
+    composer().onSelectDocument(documentA); composer().onSelectSkill(skill); composer().onChange("分析"); composer().onSubmit();
+    await Promise.resolve();
+    const remove = (item: ContextRemoval) => (find(render(), MessageBubble)[0].props.onRemoveContext as (item: ContextRemoval) => void)(item);
+    remove({ kind: "document", resourceId: "a", versionId: "v1" }); remove({ kind: "skill", resourceId: "s", versionId: "s1" }); remove({ kind: "attachment", id: "file-a" });
+    harness.options.onError(new Error("network") as never);
+    (find(render(), RunFeedback).find(element => element.props.onRetry)?.props.onRetry as () => void)();
+    expect(harness.regenerate).toHaveBeenLastCalledWith({ body: { attachmentIds: [] } });
+    expect(harness.messages[0].metadata).toMatchObject({ hermitContext: { attachments: [{ id: "file-a" }], documentContext: documentA, skillContext: skill } });
+    composer().onChange("下一问"); composer().onSubmit(); await Promise.resolve();
+    expect(harness.send).toHaveBeenLastCalledWith(expect.objectContaining({ text: "下一问" }), { body: { attachmentIds: [] } });
+  });
+  it("shows restored active materials separately if a legacy retry used different materials from the user snapshot", () => {
+    harness.messages = [
+      { id: "u", role: "user", parts: [{ type: "text", text: "原问题" }], metadata: { hermitContext: { attachments: [], documentContext: documentA } } },
+      { id: "a", role: "assistant", parts: [], metadata: { hermitStatus: "failed" } },
+    ];
+    const view = render({ id: "saved-session", title: "历史", messages: harness.messages, attachments: [], unavailableAttachments: [], documentContext: documentB, skillContext: null, unavailableSkillContext: null });
+    expect(find(view, ChatInput)[0].props.documentContext).toBeNull();
+    expect(find(view, MessageContext)[0].props.context).toMatchObject({ documentContext: documentB });
+    (find(view, RunFeedback).find(element => element.props.onRetry)?.props.onRetry as () => void)();
+    expect(harness.regenerate).toHaveBeenLastCalledWith({ body: { attachmentIds: [], documentContext: { resourceId: "b", versionId: "v2" } } });
   });
   it("accepts the next draft while streaming but refuses another send, then stops explicitly", () => {
     harness.status = "streaming";

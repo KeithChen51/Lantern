@@ -33,6 +33,7 @@ export type HermitChatMessageRecord = {
   id: string;
   sessionId: string;
   externalMessageId: string;
+  role: HermitMessageRole;
 };
 
 export type HermitRetrievalTraceInput = HermitChatOwner & {

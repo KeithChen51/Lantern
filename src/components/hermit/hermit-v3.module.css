@@ -504,6 +504,20 @@
 }
 
 .contextSelections { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.messageContext { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; width: 100%; min-width: 0; margin: 8px 0 0; padding: 0; list-style: none; }
+.messageContextCard { display: flex; align-items: center; width: min(240px, 100%); min-width: 0; border: 1px solid var(--hermit-line); border-radius: 12px; background: var(--hermit-surface); }
+.messageContextContent { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; border: 0; border-radius: 11px; padding: 10px 12px; background: transparent; color: var(--hermit-ink); text-align: left; }
+button.messageContextContent { cursor: pointer; }
+button.messageContextContent:hover { background: var(--hermit-selected); }
+.messageContextContent > svg { flex-shrink: 0; width: 22px; height: 22px; color: var(--hermit-accent); }
+.messageContextContent > span { min-width: 0; }
+.messageContextContent strong { display: block; overflow: hidden; font-size: 13px; line-height: 20px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.messageContextContent small { display: block; color: var(--hermit-muted); font-size: 11px; line-height: 18px; }
+.messageContextRemove { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 6px; border: 0; border-radius: 8px; background: transparent; color: var(--hermit-muted); cursor: pointer; }
+.messageContextRemove:hover:not(:disabled) { background: var(--hermit-selected); color: var(--hermit-ink); }
+.messageContextRemove:disabled { opacity: 0.4; cursor: default; }
+.messageContextContent:focus-visible, .messageContextRemove:focus-visible { outline: 2px solid var(--hermit-accent); outline-offset: 2px; }
+.followUpContext { margin: 12px 0; color: var(--hermit-muted); font-size: 12px; text-align: right; }
 .selectedDocument {
   display: flex;
   min-width: 0;
@@ -1501,3 +1515,11 @@
   .requestError { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) { .page *, .page *::before, .page *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+.draftUndo {
+  margin: 8px 0 0;
+  color: var(--lh-text-muted, #777267);
+  font-size: 13px;
+}
+.draftUndo button { margin-inline-start: 8px; color: var(--lh-accent, #a65d12); text-decoration: underline; }
+.restoreConversation { margin: auto; padding: 32px; text-align: center; }
+.restoreConversation button { margin: 12px 8px; color: var(--lh-accent, #a65d12); text-decoration: underline; }

@@ -40,6 +40,19 @@ describe("DSH chat transport boundary", () => {
     });
   });
   afterEach(() => { vi.unstubAllEnvs(); mocks.enabled = true; });
+  it("binds each attempt to the persisted latest user rather than client retry or source metadata", async () => {
+    mocks.run.mockImplementation(async ({ onText }) => onText("Answer"));
+    const body = { id: "retry-session", messages: [{ ...question, metadata: { hermitTurn: { userMessageId: "foreign", startedAt: Number.MAX_SAFE_INTEGER } } }],
+      retryOf: "foreign-answer", hermitTurn: { userMessageId: "foreign" } };
+    await (await POST(request(body))).text();
+    await (await POST(request(body))).text();
+    const attempts = mocks.upsertMessage.mock.calls.map(call => call[0]).filter(message => message.role === "assistant");
+    expect(attempts).toHaveLength(2);
+    expect(attempts[0].externalMessageId).not.toBe(attempts[1].externalMessageId);
+    for (const attempt of attempts) expect(attempt.metadata.hermitTurn).toMatchObject({ userMessageId: "stored-u1", startedAt: expect.any(Number) });
+    expect(attempts[1].metadata.hermitTurn.startedAt).toBeGreaterThan(attempts[0].metadata.hermitTurn.startedAt);
+    expect(mocks.upsertMessage.mock.calls.find(call => call[0].role === "user")?.[0].metadata).not.toHaveProperty("hermitTurn");
+  });
   it.each([401, 503])("rejects authentication %s before body, storage, attachments or model work", async status => {
     mocks.employee.mockRejectedValue(new AppError("unauthorized", "access rejected", status));
     const req = request({ messages: [question] });
@@ -207,7 +220,7 @@ describe("DSH chat transport boundary", () => {
     mocks.get.mockImplementation(async id => id === skill.resourceId ? skillResource() : document);
     mocks.run.mockImplementation(async ({ onText }) => onText("用所选方法分析。"));
     const { resourceId, versionId } = skill;
-    const response = await POST(request({ messages: [{ ...question, metadata: { hermit: { version: 1, skillContext: { ...skill, title: "FORGED_TITLE" } } } }],
+    const response = await POST(request({ messages: [{ ...question, metadata: { hermit: { version: 2, skillContext: { ...skill, title: "FORGED_TITLE" } }, hermitContext: { skillContext: { ...skill, title: "FORGED_TITLE" } } } }],
       documentContext: { resourceId: "guide", versionId: "v1" }, skillContext: { resourceId, versionId } }));
     expect(response.status).toBe(200); await response.text();
     expect(mocks.get.mock.calls).toEqual([["guide", "v1"], [resourceId, versionId]]);
@@ -216,7 +229,7 @@ describe("DSH chat transport boundary", () => {
     expect(system).toContain("根目录 SKILL.md"); expect(system).toContain("不执行脚本"); expect(system).toContain("导出文件");
     expect(system).not.toContain("SKILL_METHOD_BODY"); expect(system).not.toContain("FORGED_TITLE");
     expect(Object.keys(tools).sort()).toEqual(["attachment_read", "knowledge_browse", "knowledge_cite", "knowledge_file_read", "knowledge_files", "knowledge_outline", "knowledge_read", "knowledge_recommend", "knowledge_search"]);
-    for (const call of mocks.upsertMessage.mock.calls) expect(call[0].metadata.hermit).toMatchObject({ version: 1, documentContext: { resourceId: "guide" }, skillContext: skill });
+    for (const call of mocks.upsertMessage.mock.calls) expect(call[0].metadata.hermit).toMatchObject({ version: call[0].role === "user" ? 2 : 1, documentContext: { resourceId: "guide" }, skillContext: skill });
     expect(mocks.addRetrievalTrace).not.toHaveBeenCalled();
   });
   it("reads the selected Skill through existing tools without automatically citing its selection", async () => {

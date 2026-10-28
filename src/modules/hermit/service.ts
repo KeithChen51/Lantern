@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import { AppError } from "@/shared/errors";
 import type {
   HermitChatParticipant,
   HermitChatOwner,
@@ -75,6 +76,7 @@ export class HermitChatService {
     );
 
     const latestUser = input.messages.findLast(message => message.role === "user");
+    let userMessageId: string | undefined;
     for (const message of input.messages) {
       // Assistant content and completion status are owned by the server. A client
       // history replay must not overwrite the finalized answer or its audit.
@@ -82,10 +84,18 @@ export class HermitChatService {
       const messageInput = toMessageInput(message, input.sessionId, input.participant, input.modelName);
       if (!messageInput) continue;
       // Client metadata (including sources, status and context) is untrusted.
-      messageInput.metadata = message === latestUser && input.turnContext ? { hermit: { version: 1, ...input.turnContext } } : null;
+      messageInput.metadata = message === latestUser && input.turnContext ? { hermit: { version: 2, ...input.turnContext } } : null;
 
-      await this.repository.upsertMessage(messageInput);
+      const stored = await this.repository.upsertMessage(messageInput);
+      if (message === latestUser) {
+        // Turn identity comes from the owned persisted user row. Replaying an
+        // assistant ID as the latest user cannot supersede that assistant.
+        if (stored.role !== "user") throw new AppError("bad_request", "问题标识无效，请开启新对话后重试。", 400);
+        userMessageId = stored.id;
+      }
     }
+    if (!userMessageId) throw new AppError("bad_request", "请输入问题。", 400);
+    return { userMessageId };
   }
 
   async persistAssistantResponse(input: PersistAssistantResponseInput) {
