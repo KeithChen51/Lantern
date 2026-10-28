@@ -6,7 +6,7 @@ import {
   resolveHermitProviderSettings,
   selectHermitLanguageModel,
 } from "@/lib/hermit/model-provider";
-import { buildSystemPrompt } from "@/lib/hermit/system-prompt";
+import { buildSystemPrompt, buildSelectedSkillPrompt } from "@/lib/hermit/system-prompt";
 import { requireSiteVisitor, enforceGuestRequestLimit, assertWebMutation, authErrorResponse, type Principal } from "@/modules/auth/access";
 import { assertHermitPrincipal } from "@/modules/hermit/access";
 import { AppError, toErrorResponse } from "@/shared/errors";
@@ -19,8 +19,10 @@ import {
 import { getSiteKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
 import { createHermitAgentTools, documentContextSchema, type HermitDocument, type HermitAgentTool } from "@/lib/hermit/agent-tools";
 import { runDshTurn, verifyDshInstallation } from "@/lib/hermit/dsh-runtime";
-import { createAnswerSources, stripSourceMarkers } from "@/lib/hermit/answer-sources";
+import { createAnswerSources, stripSourceMarkers, type FinalizedAnswerSources } from "@/lib/hermit/answer-sources";
 import { resolveHermitAttachments } from "@/lib/hermit/attachments";
+import type { HermitProgressStage, HermitConversationDocument } from "@/lib/hermit/conversation-contract";
+import { resolveHermitSkillContext } from "@/modules/hermit/skill-context";
 
 export const runtime = "nodejs";
 
@@ -44,9 +46,10 @@ const chatBodySchema = z.object({
   messages: z.array(z.object({
     id: z.string().min(1).max(160), role: z.enum(["user", "assistant"]),
     parts: z.array(z.object({ type: z.string().max(80), text: z.string().max(16000).optional() }).passthrough()).max(50),
-  }).passthrough()).min(1).max(60),
+  }).passthrough()).min(1).max(200),
   attachmentIds: z.array(z.string().min(1).max(120)).max(5).default([]),
   documentContext: documentContextSchema.optional(),
+  skillContext: documentContextSchema.optional(),
 }).passthrough();
 
 async function readChatBody(request: Request) {
@@ -123,7 +126,7 @@ export async function POST(req: Request) {
   catch (error) { return errorResponse(error); }
   const useDsh = process.env.HERMIT_RUNTIME === "dsh";
   const hub = isKnowledgeHubEnabled() ? getSiteKnowledgeHub() : null;
-  if (!hub && (useDsh || body.documentContext || body.attachmentIds.length)) return Response.json({ error: "请先启用并初始化知识中台。" }, { status: 503 });
+  if (!hub && (useDsh || body.documentContext || body.skillContext || body.attachmentIds.length)) return Response.json({ error: "请先启用并初始化知识中台。" }, { status: 503 });
   if (useDsh) {
     try { await verifyDshInstallation(); }
     catch { return Response.json({ error: "路引 Agent 运行环境尚未准备好，请联系维护人员。" }, { status: 503 }); }
@@ -138,19 +141,35 @@ export async function POST(req: Request) {
       selectedDocument = { resourceId: resource.id, versionId: resource.version.id, title: resource.title, source: resource.source };
     } catch { return Response.json({ error: "该文档已不可访问，请关闭文档后继续对话。" }, { status: 404 }); }
   }
+  let selectedSkill: HermitConversationDocument | null = null;
+  if (body.skillContext && hub) {
+    try { selectedSkill = await resolveHermitSkillContext(hub, body.skillContext); }
+    catch (error) {
+      if (error instanceof AppError) return errorResponse(error);
+      return Response.json({ error: "所选平台 Skill 已不可访问，请重新选择后继续对话。" }, { status: 404 });
+    }
+  }
   const history = messages.map(message => ({ role: message.role, text: message.parts.filter(p => p.type === "text").map(p => p.text).join("\n") }));
   if (history.reduce((length, message) => length + message.text.length, 0) > 24000) return Response.json({ error: "当前对话较长，请开启新对话后继续。" }, { status: 413 });
   const providerSettings = resolveHermitProviderSettings();
   const model = readHermitModelName();
   const context = `当前选中文档索引（参考数据，正文须按需读取）：${JSON.stringify(selectedDocument)}\n当前用户附件索引：${JSON.stringify(attachments.map(({ id, name, size }) => ({ id, name, size })))}`;
-  const system = `${buildSystemPrompt()}\n${hub ? "知识中台已启用，请通过工具逐层读取。" : "知识中台未启用，不能查阅或引用平台文件。明确说明此限制，不要声称已查阅资料。"}\n${context}`;
+  const system = `${buildSystemPrompt()}\n${hub ? "知识中台已启用，请通过工具逐层读取。" : "知识中台未启用，不能查阅或引用平台文件。明确说明此限制，不要声称已查阅资料。"}\n${context}${selectedSkill ? buildSelectedSkillPrompt(selectedSkill) : ""}`;
+  const turnContext = { attachments: attachments.map(({ id, name, size }) => ({ id, name, size })), documentContext: selectedDocument, skillContext: selectedSkill };
   try {
     await recheckAccess();
-    await hermitChatService.persistIncomingMessages({ sessionId, participant, messages, modelName: model });
+    await hermitChatService.persistIncomingMessages({ sessionId, participant, messages, modelName: model, turnContext });
   } catch (error) { return errorResponse(error); }
   const stream = createUIMessageStream({ originalMessages: messages,
     onError: () => "路引暂时未能完成回答，请稍后重试。",
     execute: async ({ writer }) => {
+      let progressStage: HermitProgressStage | undefined;
+      const progress = (stage: HermitProgressStage) => {
+        if (stage === progressStage) return;
+        progressStage = stage;
+        const labels = { connecting: "正在连接路引", searching: "正在查找资料", reading: "正在阅读资料", answering: "正在生成回答" };
+        writer.write({ type: "data-hermit-progress", id: "hermit-progress", data: { stage, label: labels[stage] } });
+      };
       const revoked = new AbortController();
       const signal = AbortSignal.any([req.signal, revoked.signal, AbortSignal.timeout(180_000)]);
       // Local revocation interrupts an otherwise quiet long model request.
@@ -167,26 +186,34 @@ export async function POST(req: Request) {
       const capabilities: Record<string, HermitAgentTool> | null = hub ? createHermitAgentTools({ hub, attachments, signal,
         onDocument: document => sources!.recordRead(document), additionalTools: sources!.tools,
       }) : null;
-      if (capabilities) for (const capability of Object.values(capabilities)) {
+      if (capabilities) for (const [name, capability] of Object.entries(capabilities)) {
         const execute = capability.execute;
-        capability.execute = async raw => { await recheckAccess(); signal.throwIfAborted(); return execute(raw); };
+        capability.execute = async raw => {
+          await recheckAccess(); signal.throwIfAborted();
+          const parsed = capability.schema.parse(raw);
+          if (["knowledge_browse", "knowledge_search", "knowledge_outline", "knowledge_files"].includes(name)) progress("searching");
+          if (["knowledge_read", "knowledge_file_read", "attachment_read"].includes(name)) progress("reading");
+          return execute(parsed);
+        };
       }
       const messageId = crypto.randomUUID();
       const textId = crypto.randomUUID();
       let rawText = "";
       let visibleText = "";
       let finalText = "";
+      let answerSources: FinalizedAnswerSources | undefined;
       let status: "complete" | "failed" | "cancelled" = "failed";
       const onText = (delta: string) => {
         signal.throwIfAborted();
         rawText += delta;
         const next = stripSourceMarkers(rawText);
         const suffix = next.slice(visibleText.length);
-        if (suffix) writer.write({ type: "text-delta", id: textId, delta: suffix });
+        if (suffix) { if (suffix.trim()) progress("answering"); writer.write({ type: "text-delta", id: textId, delta: suffix }); }
         visibleText = next;
       };
       writer.write({ type: "start", messageId });
       writer.write({ type: "text-start", id: textId });
+      progress("connecting");
       try {
         revocationTimer = setTimeout(() => void pollAccess(), 5_000); revocationTimer.unref?.();
         await recheckAccess();
@@ -226,12 +253,14 @@ export async function POST(req: Request) {
         const finalized = sources ? await sources.finalize(rawText) : { status: "complete" as const, text: visibleText, citations: [], recommendations: [] };
         signal.throwIfAborted();
         finalText = finalized.text;
+        answerSources = { ...finalized, text: finalized.text.trim() };
         writer.write({ type: "data-answer-sources", data: finalized });
         writer.write({ type: "text-end", id: textId });
-        writer.write({ type: "finish", finishReason: "stop" });
+        writer.write({ type: "finish", finishReason: "stop", messageMetadata: { hermitStatus: "complete" } });
         status = "complete";
       } catch (error) {
         status = req.signal.aborted ? "cancelled" : "failed";
+        writer.write({ type: "message-metadata", messageMetadata: { hermitStatus: status } });
         throw error;
       } finally {
         closed = true;
@@ -239,7 +268,8 @@ export async function POST(req: Request) {
         const snapshot = sources?.snapshot(status) ?? { mode: "progressive-index", status, reads: [], citations: [], recommendations: [] };
         await persistChat("assistant response", () => hermitChatService.persistAssistantResponse({
           sessionId, participant, modelName: model,
-          responseMessage: { id: messageId, role: "assistant", parts: [{ type: "text", text: finalText || visibleText }], metadata: { status } },
+          responseMessage: { id: messageId, role: "assistant", parts: [{ type: "text", text: finalText || visibleText }], metadata: { status, hermitStatus: status,
+            hermit: { version: 1, ...turnContext, ...(status === "complete" && answerSources ? { answerSources } : {}) } } },
           retrieval: { query, contextText: "", topK: snapshot.reads.length, sourceSnapshot: snapshot },
         }));
       }

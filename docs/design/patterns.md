@@ -135,7 +135,7 @@ Runtime home pattern:
 | Search / 知识资源 | Shared heading, query field, scoped result list, explicit empty/error states. | Query and filters stack; result rows keep source and read action visible. | Find published knowledge without creating a second navigation shell. |
 | Feedback / 意见反馈 | Shared heading, form panel, helper/error stack, success state. | Single-column form with full-width action and preserved entered content on error. | Collect product feedback and recovery context. |
 | Admin / 内容维护 | Shared heading, access state or dense editing surface, status and save actions. | Controls stack; table/list becomes readable rows with explicit actions. | Maintain knowledge and permissions with operational density. |
-| Hermit / 路引 | Shared heading with Hermit identity, centered conversation, composer, recommendations, optional document reader. | Conversation remains primary; reader becomes an in-page view with return to chat. | Answer service-culture questions and let users read and ask about knowledge documents. |
+| Hermit / 路引 | Centered start with identity, composer and three optional prompt shortcuts; compact conversation header after sending, bottom composer, optional reader and account history drawer. | Prompt cards stack, attachments wrap; reader becomes an in-page view with return to chat. | Use Lighthouse knowledge to find principles, compare cases and analyze materials. |
 
 ### Knowledge resource reading
 
@@ -205,8 +205,8 @@ UI requirements:
 
 V3 Hermit contract:
 
-- The title block uses the shared page heading and a small amber Hermit identity mark. The navigation remains the original Lighthouse rail.
-- The empty state leads with “把现场的难题，一起理清。” and keeps three high-quality suggested questions close to the composer.
+- Current interaction authority: [Hermit knowledge workspace](hermit-authoritative-definition.md), confirmed 2026-10-27; earlier Hermit layout examples are archived. The navigation remains the original Lighthouse rail.
+- The empty state leads with “让灯塔知识，帮你找到下一步。” and places the composer centrally with three optional prompt shortcuts below it. Clicking fills an editable draft; cards have no persistent selected state and do not select a mode.
 - The composer places the writing area above the attachment and send tools. Its states are empty, input, processing, disabled, and keyboard focus.
 - Upload supports PDF, Word, TXT, and Markdown in the UI. Each attachment exposes name, size, upload/readiness status, cancel, retry, and remove actions; unfinished or failed attachments cannot be sent.
 - A recommendation identifies document source, title, related chapter, and reason. Opening it uses an in-page reader and preserves the current conversation.
@@ -214,7 +214,9 @@ V3 Hermit contract:
 - There is no artifact or deliverable workspace. Model and Harness remain implementation details and do not become navigation labels.
 
 - Prompt entry is prominent but not flashy.
-- Suggested questions are guidance chips, not decorative pills.
+- Pending files are compact tiles immediately above the composer, left aligned and wrapping; sent file context stays removable. Restrictions are available on demand.
+- Generation leaves the draft editable. Real execution events drive progress; failure and stop appear in the associated response position. Retry never duplicates the question or overwrites the next draft.
+- Account history uses a dismissible drawer with owned conversations, pagination, loading/empty/error states and keyboard focus return. Expired files are disclosed and excluded from resumed context.
 - Responses distinguish assistant answer, source/evidence, and next-step recommendation.
 - Loading and retry states are clear.
 - User and assistant message bubbles use readable contrast and shared tokens.
@@ -222,7 +224,7 @@ V3 Hermit contract:
 
 Runtime migration rule:
 
-- Hermit chat uses `LhChat*`, `LhMessage*`, and `LhSuggestionList` primitives. Page files keep behavior, data flow, and role semantics; visual styling belongs to `globals.css` token rules and component primitives.
+- Hermit reuses `LhChat*`, `LhMessage*`, buttons and typography tokens. Dedicated composition components are defined in [hermit-components.md](hermit-components.md); module CSS owns their structure without affecting the global shell.
 - Hermit auto-scroll respects `useLhReducedMotion`; loading or typing indicators use `LhLoadingGlyph`, not page-local spinner classes.
 - Migrated Hermit files are covered by the design-system test migration list. They should not reintroduce local Tailwind text sizes, raw font weights, ad hoc rounded corners, `shadow-lh-*`, or arbitrary gradient backgrounds.
 

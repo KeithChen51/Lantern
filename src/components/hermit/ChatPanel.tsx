@@ -1,57 +1,24 @@
 "use client";
 
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { Icon } from "@iconify/react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { LhButton, LhStatusBadge, LhSuggestionList } from "@/components/ui/lighthouse-primitives";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useLhReducedMotion } from "@/hooks/use-lighthouse-motion";
-import { ChatInput } from "./ChatInput";
-import { DocumentReader } from "./DocumentReader";
-import { MessageBubble, TypingIndicator } from "./MessageBubble";
-import styles from "./hermit-v3.module.css";
 import { authFetch } from "@/components/auth/auth-fetch";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
-import { HermitUploadScope, hermitUploadOwner } from "./upload-scope";
-import {
-  getDocumentRecommendations,
-  getHermitApiError,
-  getTextContent,
-  isSupportedHermitFile,
-  type HermitAttachment,
-  type HermitDocumentContext,
-  type HermitDocumentRecommendation,
-} from "./types";
-
-const SUGGESTED_QUESTIONS = [
-  "交车时间未定，客户持续追问",
-  "客户诉求与门店成本冲突",
-  "客户情绪升高，先稳住第一句话",
-];
-
-const MAX_ATTACHMENTS_PER_CONVERSATION = 5;
-
-function getConversationTitle(messages: UIMessage[]) {
-  const firstUserMessage = messages.find((message) => message.role === "user");
-  const text = firstUserMessage ? getTextContent(firstUserMessage).trim() : "";
-  if (!text) return "当前服务场景";
-  return text.length > 34 ? `${text.slice(0, 34)}…` : text;
-}
-
-function isVisibleMessage(message: UIMessage) {
-  return message.role !== "assistant" || getTextContent(message).trim().length > 0 || getDocumentRecommendations(message).length > 0;
-}
-
-function shouldShowThinkingIndicator(messages: UIMessage[], isLoading: boolean) {
-  if (!isLoading) return false;
-
-  const lastMessage = messages[messages.length - 1];
-  if (!lastMessage) return true;
-  if (lastMessage.role !== "assistant") return true;
-
-  return getTextContent(lastMessage).trim().length === 0 && getDocumentRecommendations(lastMessage).length === 0;
-}
+import { ChatInput } from "./ChatInput";
+import { DocumentReader } from "./DocumentReader";
+import { MessageBubble } from "./MessageBubble";
+import { HermitIdentity } from "./HermitIdentity";
+import { ConversationHeader } from "./ConversationHeader";
+import { ScenarioCards } from "./ScenarioCards";
+import { RunFeedback } from "./RunFeedback";
+import { HistoryDrawer, readConversation, useConversationHistory } from "./ConversationHistory";
+import { ConversationReadScope, conversationTitle, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
+import { hermitUploadOwner } from "./upload-scope";
+import { useHermitAttachments } from "./useHermitAttachments";
+import { getDocumentRecommendations, getHermitApiError, getTextContent, type HermitDocumentContext, type HermitDocumentRecommendation } from "./types";
+import styles from "./hermit-v3.module.css";
 
 function getErrorMessage(error: unknown) {
   const raw = error instanceof Error ? error.message : error;
@@ -59,420 +26,168 @@ function getErrorMessage(error: unknown) {
   return getHermitApiError(raw, "这次请求没有完成，请重试。");
 }
 
-function createLocalAttachmentId(file: File) {
-  return `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2)}`;
+export function ChatPanel() {
+  const session = useEmployeeSession();
+  const owner = hermitUploadOwner(session);
+  return <HermitSessionWorkspace key={owner} owner={owner} guest={!session || session.kind === "guest"} />;
 }
 
-export function ChatPanel() {
-  const uploadOwner = hermitUploadOwner(useEmployeeSession());
-  const uploadOwnerRef = useRef(uploadOwner);
-  const uploadScopeRef = useRef<HermitUploadScope | null>(null);
-  useLayoutEffect(() => {
-    uploadOwnerRef.current = uploadOwner;
-    const scope = new HermitUploadScope(uploadOwner, () => uploadOwnerRef.current);
-    uploadScopeRef.current = scope;
-    return () => { scope.dispose(); };
-  }, [uploadOwner]);
+function HermitSessionWorkspace({ owner, guest }: { owner: string | null; guest: boolean }) {
+  const [selection, setSelection] = useState<{ id: string; detail?: ConversationDetail; revision: number; focus?: boolean }>(() => ({ id: crypto.randomUUID(), revision: 0 }));
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const detailId = useRef<string | null>(null);
+  const detailScope = useRef(new ConversationReadScope());
+  const history = useConversationHistory(!guest);
+  useEffect(() => { const scope = detailScope.current; return () => scope.dispose(); }, []);
+
+  function newConversation() {
+    detailScope.current.dispose();
+    setDetailLoading(false); setDetailError(null); setHistoryOpen(false);
+    setSelection(previous => ({ id: crypto.randomUUID(), revision: previous.revision + 1, focus: true }));
+  }
+  async function selectConversation(id: string) {
+    const request = detailScope.current.begin();
+    detailId.current = id; setDetailLoading(true); setDetailError(null);
+    try {
+      const detail = await readConversation(id, request.signal);
+      if (!request.current()) return;
+      setSelection(previous => ({ id: detail.id, detail, revision: previous.revision + 1, focus: true }));
+      setHistoryOpen(false);
+    } catch (error) { if (request.current()) setDetailError(error instanceof Error ? error.message : "暂时无法打开对话，请重试。"); }
+    finally { if (request.current()) setDetailLoading(false); }
+  }
+  return <>
+    <ConversationWorkspace key={`${selection.id}:${selection.revision}`} id={selection.id} owner={owner} initial={selection.detail} focusOnMount={selection.focus} focusRequest={focusRequest}
+      onNew={newConversation} onHistory={() => { setHistoryOpen(true); void history.load(); }} onSaved={() => { void history.load(); }} />
+    <HistoryDrawer open={historyOpen} guest={guest} {...history} activeId={selection.id} detailLoading={detailLoading} detailError={detailError}
+      onClose={() => { setHistoryOpen(false); detailScope.current.dispose(); setDetailLoading(false); }} onNew={newConversation}
+      onFocusConversation={() => setFocusRequest(request => request + 1)}
+      onSelect={id => { void selectConversation(id); }} onRetryDetail={() => { if (detailId.current) void selectConversation(detailId.current); }} onLoad={cursor => { void history.load(cursor); }} />
+  </>;
+}
+
+interface ConversationWorkspaceProps { id: string; owner: string | null; initial?: ConversationDetail; focusOnMount?: boolean; focusRequest?: number; onNew: () => void; onHistory: () => void; onSaved: () => void }
+export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusRequest = 0, onNew, onHistory, onSaved }: ConversationWorkspaceProps) {
+  const { attachments, setAttachments, uploadError, isUploadingAttachments, handleFilesSelected, handleRemoveAttachment, handleRetryAttachment, uploadScopeRef } = useHermitAttachments(owner, initial);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat", fetch: authFetch }), []);
-  const pendingTextRef = useRef<string | null>(null);
-  const pendingBodyRef = useRef<{ attachmentIds: string[]; documentContext?: HermitDocumentContext }>({ attachmentIds: [] });
-  const uploadQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const uploadQueueLengthRef = useRef(0);
-  const canceledUploadIdsRef = useRef(new Set<string>());
   const [input, setInput] = useState("");
-  const [attachments, setAttachments] = useState<HermitAttachment[]>([]);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [focusKey, setFocusKey] = useState(focusOnMount ? 1 : 0);
   const [requestError, setRequestError] = useState<string | null>(null);
-  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [wasCancelled, setWasCancelled] = useState(false);
   const [readerDocument, setReaderDocument] = useState<HermitDocumentRecommendation | null>(null);
-  const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(null);
-  const [wasAborted, setWasAborted] = useState(false);
+  const [documentContext, setDocumentContext] = useState<HermitDocumentRecommendation | null>(() => restoredContext(initial));
+  const [skillContext, setSkillContext] = useState<HermitDocumentRecommendation | null>(() => initial?.skillContext ? { id: `skill:${initial.skillContext.resourceId}`, ...initial.skillContext } : null);
+  const pendingBodyRef = useRef<{ attachmentIds: string[]; documentContext?: HermitDocumentContext }>({ attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}) });
   const followLatestRef = useRef(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useLhReducedMotion();
-  const {
-    messages,
-    sendMessage,
-    regenerate,
-    stop,
-    clearError,
-    status,
-    error,
-  } = useChat({
-    transport,
-    onError: (chatError) => {
+  const { messages, setMessages, sendMessage, regenerate, stop, clearError, status, error } = useChat({
+    id, transport, messages: initial?.messages,
+    onData: part => {
+      if (!uploadScopeRef.current?.active || part.type !== "data-hermit-progress") return;
+      const data = part.data as { label?: unknown };
+      if (typeof data?.label === "string") setProgress(data.label);
+    },
+    onError: chatError => {
+      if (!uploadScopeRef.current?.active) return;
       setRequestError(getErrorMessage(chatError));
-      const pendingText = pendingTextRef.current;
-      if (pendingText) setInput((current) => current || pendingText);
+      setMessages(current => markTerminalState(current, "failed"));
+    },
+    onFinish: ({ isAbort, isError }) => {
+      if (!uploadScopeRef.current?.active) return;
+      if (isAbort || isError) setMessages(current => markTerminalState(current, isAbort ? "cancelled" : "failed"));
+      onSaved();
     },
   });
+  useEffect(() => () => { void stop(); }, [stop]);
 
   const isLoading = status === "submitted" || status === "streaming";
   const hasMessages = messages.length > 0;
-  const conversationTitle = getConversationTitle(messages);
-  const visibleMessages = messages.filter(isVisibleMessage);
-  const showThinkingIndicator = shouldShowThinkingIndicator(messages, isLoading);
+  const title = conversationTitle(messages, initial?.title);
   const displayedError = requestError ?? (error ? "这次请求没有完成，请重试。" : null);
-  const lastMessageId = messages[messages.length - 1]?.id;
+  const lastMessage = messages[messages.length - 1];
+  const lastState = messageRunState(lastMessage);
 
   useEffect(() => {
     const element = scrollRef.current;
-    if (element && (hasMessages || isLoading) && followLatestRef.current) {
-      element.scrollTo({ top: element.scrollHeight, behavior: "auto" });
-    } else if (element && !followLatestRef.current && isLoading) {
-      setHasUnreadMessages(true);
-    }
-  }, [hasMessages, isLoading, messages, status]);
+    if (element && hasMessages && followLatestRef.current) element.scrollTo({ top: element.scrollHeight, behavior: "auto" });
+  }, [hasMessages, isLoading, messages]);
 
-  async function uploadAttachment(file: File, localId: string, scope: HermitUploadScope) {
-    scope.assertActive();
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await authFetch("/api/hermit/attachments", { method: "POST", body: formData, signal: scope.signal });
-      scope.assertActive();
-      const responseText = await response.text();
-      scope.assertActive();
-      let payload: unknown = responseText;
-      try {
-        payload = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        // Keep the plain text body for the short actionable error extractor.
-      }
-      if (!response.ok || !payload || typeof payload !== "object" || !("id" in payload) || typeof payload.id !== "string") {
-        throw new Error(getHermitApiError(payload, "文件上传失败，请重试。"));
-      }
-
-      const data = payload as { id: string; name?: unknown; size?: unknown; status?: unknown };
-      if (data.status !== "ready") throw new Error(getHermitApiError(payload, "文件暂时无法读取，请重试。"));
-      if (canceledUploadIdsRef.current.delete(localId)) {
-        await deleteServerAttachment(data.id, scope);
-        return;
-      }
-      setAttachments((current) => current.map((attachment) => (
-        attachment.localId === localId
-          ? {
-              ...attachment,
-              id: data.id,
-              name: typeof data.name === "string" ? data.name : attachment.name,
-              size: typeof data.size === "number" ? data.size : attachment.size,
-              status: "ready",
-              sent: false,
-              error: undefined,
-            }
-          : attachment
-      )));
-    } catch (error) {
-      if (!scope.active) return;
-      const message = getHermitApiError(error, "有文件未能上传，请重试或移除后继续。");
-      setAttachments((current) => current.map((attachment) => (
-        attachment.localId === localId ? { ...attachment, status: "error", error: message } : attachment
-      )));
-      setUploadError(message);
-    }
-  }
-
-  async function uploadSelectedFiles(files: File[], availableSlots: number, scope: HermitUploadScope) {
-    await scope.forEach(files.slice(0, availableSlots), async file => {
-      if (!isSupportedHermitFile(file)) {
-        setUploadError(`${file.name} 暂不支持。请选择 PDF、Word、TXT 或 Markdown 文件。`);
-        return;
-      }
-
-      const localId = createLocalAttachmentId(file);
-      setAttachments((current) => [...current, { localId, name: file.name, size: file.size, status: "uploading", file }]);
-      await uploadAttachment(file, localId, scope);
-    });
-  }
-
-  function enqueueUpload(task: (scope: HermitUploadScope) => Promise<void>) {
+  async function submitText() {
+    const text = input.trim();
+    if (!text || isLoading || attachments.some(item => item.status !== "ready")) return;
+    const body = { attachmentIds: attachments.flatMap(item => item.id ? [item.id] : []), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}), ...(skillContext ? { skillContext: { resourceId: skillContext.resourceId, versionId: skillContext.versionId } } : {}) };
     const scope = uploadScopeRef.current;
-    if (!scope?.active) return;
-    uploadQueueLengthRef.current += 1;
-    setIsUploadingAttachments(true);
-
-    const run = async () => {
-      try {
-        scope.assertActive();
-        await task(scope);
-      } finally {
-        uploadQueueLengthRef.current -= 1;
-        if (scope.active && uploadQueueLengthRef.current === 0) setIsUploadingAttachments(false);
-      }
-    };
-
-    const next = uploadQueueRef.current.then(run, run);
-    uploadQueueRef.current = next.catch(() => undefined);
-  }
-
-  function handleFilesSelected(files: FileList | null) {
-    if (!files?.length) return;
-    if (isUploadingAttachments || uploadQueueLengthRef.current > 0) return;
-    setUploadError(null);
-
-    const availableSlots = Math.max(0, MAX_ATTACHMENTS_PER_CONVERSATION - attachments.length);
-    if (availableSlots === 0) {
-      setUploadError("本次对话最多保留 5 个附件。");
-      return;
-    }
-
-    if (files.length > availableSlots) setUploadError("本次对话最多保留 5 个附件，其他文件未加入。");
-    const selectedFiles = Array.from(files);
-    enqueueUpload(scope => uploadSelectedFiles(selectedFiles, availableSlots, scope));
-  }
-
-  async function handleRemoveAttachment(attachment: HermitAttachment) {
-    if (attachment.status === "uploading") canceledUploadIdsRef.current.add(attachment.localId);
-    setAttachments((current) => current.filter((item) => item.localId !== attachment.localId));
-    if (!attachment.id) return;
-
-    const scope = uploadScopeRef.current;
-    if (scope?.active) await deleteServerAttachment(attachment.id, scope);
-  }
-
-  async function deleteServerAttachment(id: string, scope: HermitUploadScope) {
-    try {
-      scope.assertActive();
-      await authFetch("/api/hermit/attachments", {
-        method: "DELETE",
-        signal: scope.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-    } catch {
-      // The local removal still gives the user control; the server can clean up expired attachments.
-    }
-  }
-
-  function handleRetryAttachment(attachment: HermitAttachment) {
-    if (!attachment.file) return;
-    setUploadError(null);
-    setAttachments((current) => current.map((item) => (
-      item.localId === attachment.localId ? { ...item, status: "uploading", error: undefined } : item
-    )));
-    enqueueUpload(scope => uploadAttachment(attachment.file as File, attachment.localId, scope));
-  }
-
-  async function submitText(rawText: string) {
-    const text = rawText.trim();
-    const readyAttachments = attachments.filter((attachment) => attachment.status === "ready" && attachment.id).slice(0, MAX_ATTACHMENTS_PER_CONVERSATION);
-    if (!text || isLoading || attachments.some((attachment) => attachment.status !== "ready")) return;
-
-    const body = {
-      attachmentIds: readyAttachments.map((attachment) => attachment.id as string),
-      ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : {}),
-    };
-    followLatestRef.current = true;
-    setHasUnreadMessages(false);
-    pendingTextRef.current = text;
     pendingBodyRef.current = body;
-    setInput("");
-    setRequestError(null);
-    setWasAborted(false);
-    clearError();
-
+    followLatestRef.current = true; setHasUnreadMessages(false);
+    setInput(""); setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
+    setAttachments(current => current.map(item => item.id && body.attachmentIds.includes(item.id) ? { ...item, sent: true } : item));
     try {
       await sendMessage({ text }, { body });
-      setAttachments((current) => current.map((attachment) => (
-        attachment.id && body.attachmentIds.includes(attachment.id) ? { ...attachment, sent: true } : attachment
-      )));
-      pendingTextRef.current = null;
-    } catch (submitError) {
-      setInput((current) => current || text);
-      setRequestError(getErrorMessage(submitError));
-    }
+    } catch (error) { if (scope?.active) { setRequestError(getErrorMessage(error)); setMessages(current => markTerminalState(current, "failed")); } }
   }
-
-  function handleSubmit() {
-    void submitText(input);
-  }
-
-  function handleSuggestedQuestion(question: string) {
-    if (isLoading) return;
-    void submitText(question);
-  }
-
-  function handleStop() {
-    if (!isLoading) return;
-    setWasAborted(true);
-    stop();
-  }
-
   function handleRetry() {
     if (isLoading) return;
-    setWasAborted(false);
-    setRequestError(null);
-    clearError();
-    void regenerate({ body: pendingBodyRef.current }).catch((regenerateError) => {
-      setRequestError(getErrorMessage(regenerateError));
-      const pendingText = pendingTextRef.current;
-      if (pendingText) setInput((current) => current || pendingText);
-    });
+    const scope = uploadScopeRef.current;
+    setRequestError(null); setProgress(null); setWasCancelled(false); clearError();
+    // Removed or expired attachments must never re-enter a request through retry.
+    const readyIds = new Set(attachments.flatMap(item => item.status === "ready" && item.id ? [item.id] : []));
+    const body = { ...pendingBodyRef.current, attachmentIds: pendingBodyRef.current.attachmentIds.filter(id => readyIds.has(id)), ...(documentContext ? { documentContext: { resourceId: documentContext.resourceId, versionId: documentContext.versionId } } : { documentContext: undefined }), ...(skillContext ? { skillContext: { resourceId: skillContext.resourceId, versionId: skillContext.versionId } } : { skillContext: undefined }) };
+    void regenerate({ body }).catch(error => { if (scope?.active) { setRequestError(getErrorMessage(error)); setMessages(current => markTerminalState(current, "failed")); } });
   }
+  function handleStop() { if (isLoading) { setWasCancelled(true); void stop(); } }
+  const inputProps = { value: input, focusKey: focusKey + focusRequest, onChange: setInput, onSubmit: () => { void submitText(); }, onStop: handleStop, isLoading, isUploading: isUploadingAttachments,
+    attachments, uploadError, onFilesSelected: handleFilesSelected, onRemoveAttachment: handleRemoveAttachment, onRetryAttachment: handleRetryAttachment,
+    documentContext, onSelectDocument: setDocumentContext, onClearDocumentContext: () => setDocumentContext(null),
+    skillContext, onSelectSkill: setSkillContext, onClearSkillContext: () => setSkillContext(null) };
 
-  function handleUseDocument(document: HermitDocumentRecommendation) {
-    setDocumentContext(document);
-    setReaderDocument(null);
-  }
-
-  if (!hasMessages) {
-    return (
-      <EmptyChatStart
-        input={input}
-        isLoading={isLoading}
-        isUploading={isUploadingAttachments}
-        attachments={attachments}
-        uploadError={uploadError ?? displayedError}
-        onInputChange={setInput}
-        onSubmit={handleSubmit}
-        onStop={handleStop}
-        onFilesSelected={handleFilesSelected}
-        onRemoveAttachment={handleRemoveAttachment}
-        onRetryAttachment={handleRetryAttachment}
-        onSuggestedQuestion={handleSuggestedQuestion}
-        documentContext={documentContext}
-        onClearDocumentContext={() => setDocumentContext(null)}
-      />
-    );
-  }
-
-  return (
-    <div className={`${styles.chatLayout} ${readerDocument ? styles.chatLayoutWithReader : ""}`} data-lh-hermit-layout>
-      <section className={styles.conversation} data-lh-hermit-conversation aria-label="路引当前对话">
-        <div className={styles.conversationStatus} aria-live="polite">
-          <span className={styles.visuallyHidden}>{conversationTitle}</span>
-          <LhStatusBadge tone={isLoading ? "warning" : displayedError ? "danger" : "neutral"}>
-            {isLoading ? "生成中" : displayedError ? "需要重试" : "可追问"}
-          </LhStatusBadge>
+  return <div className={styles.workspace}>
+    <ConversationHeader title={hasMessages ? title : undefined} onNew={onNew} onHistory={onHistory} />
+    {!hasMessages ? <section data-lh-hermit-start aria-labelledby="hermit-start-title">
+      <div data-lh-hermit-start-inner>
+        <div className={styles.startCopy}>
+          <div className={styles.startIdentity}><HermitIdentity size="sm" /><span>路引</span></div>
+          <h1 id="hermit-start-title" data-lh-hermit-start-title>让灯塔知识，帮你找到下一步。</h1>
+          <p>查找依据、对照案例，或结合你的材料一起分析。</p>
         </div>
-
-        <div data-lh-hermit-main ref={scrollRef} tabIndex={0} role="region" aria-label="对话消息" onScroll={(event) => {
+        <div data-lh-hermit-start-input><ChatInput {...inputProps} /></div>
+        <ScenarioCards onSelect={draft => { setInput(draft); setFocusKey(key => key + 1); }} />
+        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p>
+      </div>
+    </section> : <div className={`${styles.chatLayout} ${readerDocument ? styles.chatLayoutWithReader : ""}`} data-lh-hermit-layout>
+      <section className={styles.conversation} data-lh-hermit-conversation aria-label="路引当前对话">
+        <div data-lh-hermit-main ref={scrollRef} tabIndex={0} role="region" aria-label="对话消息" onScroll={event => {
           const element = event.currentTarget;
           followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
           if (followLatestRef.current) setHasUnreadMessages(false);
-        }}>
-          <div data-lh-chat-scroll-content>
-            {displayedError && (
-              <div className={styles.requestError} role="alert">
-                <p>{displayedError}</p>
-                <LhButton type="button" size="sm" variant="danger" className={styles.requestRetry} onClick={handleRetry} icon={<Icon icon={lighthouseIcons.refresh} aria-hidden="true" />}>
-                  重试
-                </LhButton>
-              </div>
-            )}
-            {visibleMessages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                onOpenDocument={setReaderDocument}
-                showRecommendations={message.id !== lastMessageId || (!isLoading && !displayedError && !wasAborted)}
-              />
-            ))}
-            {showThinkingIndicator && <TypingIndicator label="思考中" />}
-          </div>
-        </div>
-
+          else if (isLoading) setHasUnreadMessages(true);
+        }}><div data-lh-chat-scroll-content>
+          {initial?.unavailableAttachments.length ? <p className={styles.expiredAttachments} role="status">部分历史附件已过期或不可用：{initial.unavailableAttachments.map(item => item.name).join("、")}。请重新上传后继续引用。</p> : null}
+          {initial?.unavailableSkillContext && <p className={styles.expiredAttachments} role="status">{initial.unavailableSkillContext.message}</p>}
+          {messages.map(message => {
+            const last = message.id === lastMessage?.id;
+            const state = messageRunState(message);
+            const visible = message.role !== "assistant" || getTextContent(message).trim() || getDocumentRecommendations(message).length;
+            return <Fragment key={message.id}>
+              {visible ? <MessageBubble message={message} onOpenDocument={setReaderDocument} showRecommendations={state !== "failed" && state !== "cancelled" && (!last || !isLoading && !displayedError)} /> : null}
+              {message.role === "assistant" && (!last || !isLoading) && <RunFeedback error={last ? displayedError ?? (state === "failed" ? "这条回答未完成，请重试。" : null) : state === "failed" ? "这条回答未完成。" : null} cancelled={state === "cancelled" || last && wasCancelled} onRetry={last && (displayedError || state === "failed" || state === "cancelled" || wasCancelled) ? handleRetry : undefined} />}
+            </Fragment>;
+          })}
+          {lastMessage?.role !== "assistant" && displayedError && <RunFeedback error={displayedError} onRetry={handleRetry} />}
+          {isLoading && <RunFeedback loading progress={progress} />}
+          {!isLoading && lastMessage?.role !== "assistant" && (lastState === "cancelled" || wasCancelled) && <RunFeedback cancelled onRetry={handleRetry} />}
+        </div></div>
         <footer data-lh-hermit-footer>
-          {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => {
-            followLatestRef.current = true;
-            setHasUnreadMessages(false);
-            scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
-          }}>查看最新回复 ↓</button>}
-          <div data-lh-hermit-composer>
-            <ChatInput
-              value={input}
-              onChange={setInput}
-              onSubmit={handleSubmit}
-              onStop={handleStop}
-              isLoading={isLoading}
-              isUploading={isUploadingAttachments}
-              attachments={attachments}
-              onFilesSelected={handleFilesSelected}
-              onRemoveAttachment={handleRemoveAttachment}
-              onRetryAttachment={handleRetryAttachment}
-              uploadError={uploadError}
-              documentContext={documentContext}
-              onClearDocumentContext={() => setDocumentContext(null)}
-            />
-          </div>
+          {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => { followLatestRef.current = true; setHasUnreadMessages(false); scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" }); }}>查看最新回复 ↓</button>}
+          <div data-lh-hermit-composer><ChatInput {...inputProps} /><p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p></div>
         </footer>
       </section>
-
-      {readerDocument && <DocumentReader document={readerDocument} onClose={() => setReaderDocument(null)} onUse={handleUseDocument} />}
-    </div>
-  );
-}
-
-interface EmptyChatStartProps {
-  input: string;
-  isLoading: boolean;
-  isUploading: boolean;
-  attachments: HermitAttachment[];
-  uploadError: string | null;
-  onInputChange: (value: string) => void;
-  onSubmit: () => void;
-  onStop: () => void;
-  onFilesSelected: (files: FileList | null) => void;
-  onRemoveAttachment: (attachment: HermitAttachment) => void;
-  onRetryAttachment: (attachment: HermitAttachment) => void;
-  onSuggestedQuestion: (question: string) => void;
-  documentContext: HermitDocumentRecommendation | null;
-  onClearDocumentContext: () => void;
-}
-
-function EmptyChatStart({
-  input,
-  isLoading,
-  isUploading,
-  attachments,
-  uploadError,
-  onInputChange,
-  onSubmit,
-  onStop,
-  onFilesSelected,
-  onRemoveAttachment,
-  onRetryAttachment,
-  onSuggestedQuestion,
-  documentContext,
-  onClearDocumentContext,
-}: EmptyChatStartProps) {
-  return (
-    <section data-lh-hermit-start aria-labelledby="hermit-start-title">
-      <div data-lh-hermit-start-inner>
-        <div className={styles.startCopy}>
-          <h2 id="hermit-start-title" data-lh-hermit-start-title>把现场的难题，一起理清。</h2>
-          <p>说说发生了什么，也可以上传相关文件。路引会结合灯塔知识，帮助你形成下一步判断。</p>
-        </div>
-        <div data-lh-hermit-start-examples>
-          <LhSuggestionList
-            label="可直接提问"
-            questions={SUGGESTED_QUESTIONS}
-            disabled={isLoading}
-            hideLabel
-            onSelect={onSuggestedQuestion}
-          />
-        </div>
-        <div data-lh-hermit-start-input>
-          <ChatInput
-            value={input}
-            onChange={onInputChange}
-            onSubmit={onSubmit}
-            onStop={onStop}
-            isLoading={isLoading}
-            isUploading={isUploading}
-            attachments={attachments}
-            onFilesSelected={onFilesSelected}
-            onRemoveAttachment={onRemoveAttachment}
-            onRetryAttachment={onRetryAttachment}
-            uploadError={uploadError}
-            documentContext={documentContext}
-            onClearDocumentContext={onClearDocumentContext}
-          />
-        </div>
-        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p>
-      </div>
-    </section>
-  );
+      {readerDocument && <DocumentReader document={readerDocument} onClose={() => setReaderDocument(null)} onUse={document => { setDocumentContext(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
+    </div>}
+  </div>;
 }

@@ -74,12 +74,15 @@ export class HermitChatService {
       buildSessionInput(input.sessionId, input.participant, buildSessionTitle(input.messages)),
     );
 
+    const latestUser = input.messages.findLast(message => message.role === "user");
     for (const message of input.messages) {
       // Assistant content and completion status are owned by the server. A client
       // history replay must not overwrite the finalized answer or its audit.
       if (message.role !== "user") continue;
       const messageInput = toMessageInput(message, input.sessionId, input.participant, input.modelName);
       if (!messageInput) continue;
+      // Client metadata (including sources, status and context) is untrusted.
+      messageInput.metadata = message === latestUser && input.turnContext ? { hermit: { version: 1, ...input.turnContext } } : null;
 
       await this.repository.upsertMessage(messageInput);
     }
@@ -90,7 +93,7 @@ export class HermitChatService {
 
     const snapshot = input.retrieval.sourceSnapshot;
     const hasEvidence = !!snapshot && typeof snapshot === "object" && "mode" in snapshot && snapshot.mode === "progressive-index" && "reads" in snapshot && Array.isArray(snapshot.reads) && snapshot.reads.length > 0;
-    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.participant, input.modelName, hasEvidence);
+    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.participant, input.modelName, true);
     if (!messageInput) return;
 
     const storedMessage = await this.repository.upsertMessage(messageInput);
