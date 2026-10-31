@@ -2,7 +2,7 @@ CREATE TABLE `analytics_page_views` (
   `event_id` VARCHAR(36) NOT NULL,
   `actor_kind` VARCHAR(12) NOT NULL,
   `subject_id` VARCHAR(191) NOT NULL,
-  `organization` VARCHAR(512) NULL,
+  `organization` VARCHAR(1000) NULL,
   `module` VARCHAR(32) NOT NULL,
   `occurred_at` DATETIME(3) NOT NULL,
   PRIMARY KEY (`event_id`),

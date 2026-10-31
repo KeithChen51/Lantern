@@ -8,7 +8,7 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 KNOWLEDGE_HUB_DRIVER=mysql
 ENV LD_LIBRARY_PATH=/opt/lighthouse-system/lib PATH="/opt/lighthouse-system/bin:${PATH}"
 ENV PRISMA_SCHEMA_ENGINE_BINARY=/app/engines/schema-engine PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 COPY system/ /opt/lighthouse-system/
-COPY --chown=node:node operations.cjs check-access-config.cjs retention-preview.cjs package.json build-manifest.json ./
+COPY --chown=node:node operations.cjs check-access-config.cjs retention-preview.cjs usage-prune.cjs package.json build-manifest.json ./
 COPY --chown=node:node engines/ ./engines/
 COPY --chown=node:node node_modules/ ./node_modules/
 COPY --chown=node:node prisma/ ./prisma/

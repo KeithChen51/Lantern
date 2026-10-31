@@ -24,6 +24,7 @@ export async function packageOperations({ root = process.cwd(), env = process.en
   // implementation or require a runtime TypeScript/npm installation.
   await build({ entryPoints: [path.join(root, 'scripts/check-access-config.ts')], outfile: path.join(output, 'check-access-config.cjs'), bundle: true, platform: 'node', target: 'node24', format: 'cjs' });
   await build({ entryPoints: [path.join(root, 'scripts/retention-preview.ts')], outfile: path.join(output, 'retention-preview.cjs'), bundle: true, external: ['@prisma/client'], platform: 'node', target: 'node24', format: 'cjs' });
+  await build({ entryPoints: [path.join(root, 'scripts/usage-prune.ts')], outfile: path.join(output, 'usage-prune.cjs'), bundle: true, external: ['@prisma/client'], platform: 'node', target: 'node24', format: 'cjs' });
   const allowed = source => !['.git', '.cache', '.npmrc'].includes(path.basename(source)) && !path.basename(source).startsWith('.env') && !path.basename(source).endsWith('.log');
   // Copy installed Linux tools, not the repository/source workspace. No npm at runtime.
   for (const relative of ['node_modules', 'prisma/schema.prisma', 'prisma/migrations', 'release/knowledge-cli', 'deploy/system']) {

@@ -757,7 +757,7 @@ model AnalyticsPageView {
   eventId      String   @id @map("event_id") @db.VarChar(36)
   actorKind    String   @map("actor_kind") @db.VarChar(12)
   subjectId    String   @map("subject_id") @db.VarChar(191)
-  organization String?  @db.VarChar(512)
+  organization String?  @db.VarChar(1000)
   module       String   @db.VarChar(32)
   occurredAt   DateTime @map("occurred_at") @db.DateTime(3)
 
