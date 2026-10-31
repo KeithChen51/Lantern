@@ -58,4 +58,3 @@ export function reportBounds(period: ReportPeriod, now = new Date()): { start: D
   const followingMidnight = new Date(dateStart(checked.endDate).getTime() + DAY);
   return { start, endExclusive: new Date(Math.min(followingMidnight.getTime(), now.getTime())) };
 }
-

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/infrastructure/db";
 import { visitCoverageStart } from "./policy";
 import { dateStart, reportBounds, shanghaiDate, type ReportPeriod } from "./report-period";
+import { VISIT_MODULES, type VisitModule } from "./visit-modules";
 
 export type ReportStatus = "available" | "partial" | "not_collected" | "unavailable";
 export type ReportCoverage = { status: ReportStatus; note: string; observedFrom: string | null };
@@ -19,10 +20,6 @@ type ReportQuery = (query: Prisma.Sql) => Promise<unknown[]>;
 type Options = { now?: Date; coverageStart?: Date | null; query?: ReportQuery };
 const DAY = 86_400_000;
 const RETENTION_DAYS = 180;
-const MODULE_LABELS: Record<string, string> = {
-  heart: "本心", mirror: "镜鉴", action: "笃行", games: "启航",
-  hermit: "路引", search: "搜索", me: "我的", updates: "版本消息",
-};
 
 function safeCount(value: unknown): number {
   if (typeof value !== "number" && typeof value !== "bigint") throw new Error("Invalid report count");
@@ -92,8 +89,8 @@ export async function getUsageReport(period: ReportPeriod, options: Options = {}
         WHERE day >= ${collectedAt && shanghaiDate(collectedAt) > period.startDate ? shanghaiDate(collectedAt) : period.startDate} AND day <= ${period.endDate} GROUP BY module
       `));
       const modules = rows.map(row => {
-        if (!Object.hasOwn(MODULE_LABELS, row.module)) throw new Error("Unknown report module");
-        return { module: row.module, label: MODULE_LABELS[row.module], views: safeCount(row.views) };
+        if (!Object.hasOwn(VISIT_MODULES, row.module)) throw new Error("Unknown report module");
+        return { module: row.module, label: VISIT_MODULES[row.module as VisitModule], views: safeCount(row.views) };
       }).sort((a, b) => b.views - a.views || a.module.localeCompare(b.module, "en"));
       const total = safeCount(modules.reduce((sum, item) => sum + item.views, 0));
       return { ...empty, total, modules };
@@ -164,4 +161,3 @@ export async function getUsageReport(period: ReportPeriod, options: Options = {}
   const [heatmapData, visitsData, visitorsData, aiData, departmentData] = await Promise.all([heatmap(), visits(), visitors(), ai(), departments()]);
   return { period, generatedAt: now.toISOString(), heatmap: heatmapData, visits: visitsData, visitors: visitorsData, ai: aiData, departments: departmentData };
 }
-

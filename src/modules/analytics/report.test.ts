@@ -103,4 +103,3 @@ describe("usage report", () => {
     expect(report.visitors.status).toBe("unavailable");
   });
 });
-

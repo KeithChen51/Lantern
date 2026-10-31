@@ -32,4 +32,3 @@ describe("Shanghai report calendar", () => {
     expect(() => parse("preset=custom&start=2026-02-27&end=2028-02-29", at)).toThrow();
   });
 });
-
