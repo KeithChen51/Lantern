@@ -66,6 +66,17 @@ export async function requireKnowledgeAdmin(request: Request | Headers, options?
   if (options?.write) assertMutationHeaders(requestHeaders(request), principal);
   return principal;
 }
+/** Dashboard reads use the short administration freshness window, too. */
+export async function requireAnalyticsSummary(request: Request | Headers): Promise<Principal> {
+  denyGuestEmployeeAccess();
+  const token = readAccessCookie(requestHeaders(request), readAccessConfig().sessionCookie);
+  if (!token) throw new AccessError("请先使用员工账号登录。", 401);
+  const principal = await getAccessService().webPrincipal(token, { adminWrite: true });
+  if (principal.kind === "guest" || principal.channel !== "web" || !principal.capabilities.includes("analytics:summary")) {
+    throw new AccessError("当前账号没有访问与使用统计权限。", 403);
+  }
+  return principal;
+}
 export async function requireKnowledgeClient(request: Request): Promise<Principal> {
   denyGuestEmployeeAccess();
   const authorization = request.headers.get("authorization");
