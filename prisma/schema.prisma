@@ -105,6 +105,7 @@ model HubAudit {
   createdAt DateTime
 
   @@index([targetId, createdAt])
+  @@index([createdAt], map: "hub_audits_summary_time_idx")
   @@map("hub_audits")
 }
 
@@ -714,6 +715,7 @@ model ChatMessage {
 
   @@unique([sessionId, externalMessageId])
   @@index([sessionId, createdAt])
+  @@index([role, createdAt, sessionId], map: "chat_messages_summary_window_idx")
   @@map("chat_messages")
 }
 
@@ -745,6 +747,7 @@ model AccessRecord {
   updatedAt DateTime
 
   @@index([kind, subjectId])
+  @@index([kind, createdAt], map: "access_records_summary_window_idx")
   @@index([parentId])
   @@index([expiresAt])
   @@map("access_records")

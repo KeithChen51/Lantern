@@ -5,7 +5,7 @@ import { AppError } from "@/shared/errors";
 export function assertDatabaseConfigured() {
   if (!process.env.DATABASE_URL) throw new AppError("bad_request", "数据库尚未配置。", 503);
 }
-// Legacy callers must await this guard. Knowledge administration is the only supported admin capability.
+// Legacy callers request knowledge management only. Analytics uses its own guard.
 export async function requireAdminPortalFromHeaders(requestHeaders: Headers) {
   return requireKnowledgeAdmin(requestHeaders);
 }

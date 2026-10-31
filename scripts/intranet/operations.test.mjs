@@ -31,7 +31,20 @@ test('default/help and unknown/extra arguments cannot start a database tool', ()
   assert.equal(runOperations(['help'], options), 0);
   assert.equal(runOperations(['db:setup'], options), 2);
   assert.equal(runOperations(['initialize', '--force'], options), 2);
+  assert.equal(runOperations(['retention-preview', '--apply'], options), 2);
   assert.equal(calls, 0);
+});
+
+test('retention preview passes only an optional notice instant to its read-only entrypoint', () => {
+  const f = fixture();
+  try {
+    runOperations(['retention-preview'], f);
+    runOperations(['retention-preview', '--notice-at', '2026-10-01T16:00:00+08:00'], f);
+    assert.deepEqual(f.calls.map(call => call.args), [
+      [path.join(f.root, 'retention-preview.cjs')],
+      [path.join(f.root, 'retention-preview.cjs'), '--notice-at', '2026-10-01T16:00:00+08:00'],
+    ]);
+  } finally { f.cleanup(); }
 });
 
 test('each mutation command has a distinct fixed entrypoint; migrate never imports or seeds', () => {
@@ -208,6 +221,7 @@ for (const version of ['1.1.3', '1.3.3-beta.1']) test(`operations packaging acce
     put('release/knowledge-cli/initialize.cjs', 'console.log("preview")');
     put('deploy/system/bin/openssl', 'test fixture');
     put('scripts/intranet/operations.mjs', 'console.log("help")');
+    for (const source of ['scripts/retention-preview.ts', 'src/modules/analytics/retention-preview.ts', 'src/infrastructure/db/client.ts']) put(source, readFileSync(path.join(repo, source)));
     for (const source of ['scripts/check-access-config.ts', 'src/modules/auth/site-access-config.ts', 'src/modules/auth/access-config.ts', 'src/modules/auth/access-types.ts', 'src/modules/auth/iam-config.ts', 'src/modules/auth/iam-sync-config.ts', 'src/shared/errors/index.ts', 'tsconfig.json']) put(source, readFileSync(path.join(repo, source)));
     put('deploy/offline/manifest.json', JSON.stringify({ prismaEngineCommit: revision }));
     put(`deploy/offline/engines/all_commits/${revision}/debian-openssl-3.0.x/schema-engine.gz`, gzipSync('schema engine fixture'));

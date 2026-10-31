@@ -4,8 +4,8 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { isReleaseVersion } from '../release-version.mjs';
 
-const commands = ['verify', 'migrate', 'inventory', 'initialize'];
-const usage = 'Usage: operations <verify|migrate|inventory|initialize>\nInventory is read-only; initialize imports only into an empty migrated database.\n';
+const commands = ['verify', 'migrate', 'inventory', 'initialize', 'retention-preview'];
+const usage = 'Usage: operations <verify|migrate|inventory|initialize|retention-preview [--notice-at ISO_TIMESTAMP_WITH_TIMEZONE]>\nInventory and retention-preview are read-only; initialize imports only into an empty migrated database.\n';
 
 /** The trusted server image has no implicit database operation. */
 export function runOperations(args, options = {}) {
@@ -16,14 +16,19 @@ export function runOperations(args, options = {}) {
   const platform = options.platform ?? process.platform;
   const arch = options.arch ?? process.arch;
   if (!args.length || ['--help', '-h', 'help'].includes(args[0])) { write(usage); return 0; }
-  if (args.length !== 1 || !commands.includes(args[0])) { write(usage); return 2; }
   const command = args[0];
+  const noticeArg = command === 'retention-preview' && args.length === 3 && args[1] === '--notice-at';
+  if (!commands.includes(command) || (args.length !== 1 && !noticeArg)) { write(usage); return 2; }
   const invoke = (file, argv, capture = false, childEnv = env) => {
     const result = run(file, argv, { cwd: root, env: childEnv, stdio: capture ? 'pipe' : 'inherit', encoding: 'utf8' });
     if (result.error || result.signal || result.status !== 0) throw new Error(`${command}: tool failed (${result.status ?? result.signal ?? 'start error'}).`);
     return result.stdout ?? '';
   };
   const initialize = path.join(root, 'knowledge-cli', 'initialize.cjs');
+  if (command === 'retention-preview') {
+    invoke(process.execPath, [path.join(root, 'retention-preview.cjs'), ...args.slice(1)]);
+    return 0;
+  }
   if (command === 'inventory') { invoke(process.execPath, [initialize, '--dry-run']); return 0; }
   if (command === 'initialize') { invoke(process.execPath, [initialize, '--apply']); return 0; }
   if (command === 'migrate') {

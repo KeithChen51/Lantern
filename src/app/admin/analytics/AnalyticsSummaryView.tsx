@@ -17,9 +17,6 @@ export function AnalyticsSummaryView({ summary }: { summary: AnalyticsSummary })
         统计日期 {summary.period.startDate} 至 {summary.period.endDate}（北京时间，含今日）。
         本次读取时间 {new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", dateStyle: "short", timeStyle: "short" }).format(new Date(summary.period.generatedAt))}。
       </p>
-      <div className="mt-4">
-        <LhCallout tone="neutral">本页展示已接入记录的汇总。尚未采集或暂不可用的数据显示为“—”，已采集且没有记录时显示 0。使用次数不代表问题解决或个人绩效。</LhCallout>
-      </div>
       <div className={styles.sections}>
         {summary.sections.map(section => (
           <LhPanel key={section.id} className={styles.section} aria-labelledby={`analytics-${section.id}`}>
@@ -43,6 +40,7 @@ export function AnalyticsSummaryView({ summary }: { summary: AnalyticsSummary })
           </LhPanel>
         ))}
       </div>
+      <LhCallout tone="neutral">0 表示该来源没有记录；“—”表示尚未采集或本次读取失败。使用次数不能衡量个人绩效或问题解决情况。</LhCallout>
     </>
   );
 }
