@@ -55,12 +55,17 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup?.(); vi.unstubAllGlobals(); });
 describe("employee ranking sensitive-result lifetime", () => {
-  it.each(["pagehide", "hidden", "expiry"])("clears named rows on %s", async event => {
+  it.each(["pagehide", "hidden", "expiry", "restored"])("clears named rows on %s", async event => {
     setPurpose(); await submit();
     expect(text(render())).toContain("PRIVATE_EMPLOYEE");
     if (event === "pagehide") page.dispatchEvent(new Event("pagehide"));
     if (event === "hidden") { documentEvents.visibilityState = "hidden"; documentEvents.dispatchEvent(new Event("visibilitychange")); }
     if (event === "expiry") harness.expiry!();
+    if (event === "restored") {
+      const pageShow = new Event("pageshow");
+      Object.defineProperty(pageShow, "persisted", { value: true });
+      page.dispatchEvent(pageShow);
+    }
     expect(text(render())).not.toContain("PRIVATE_EMPLOYEE");
     expect(nodes(render(), "input")[0].props.value).toBe("");
   });

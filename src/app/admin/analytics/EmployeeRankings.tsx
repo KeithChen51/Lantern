@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { flushSync } from "react-dom";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { authFetch } from "@/components/auth/auth-fetch";
 import type { EmployeeRankingResult } from "@/modules/analytics/employee-rankings";
@@ -41,13 +42,21 @@ function RankingQuery({ period, expiresAt }: Pick<Props, "period"> & { expiresAt
     function onVisibilityChange() {
       if (document.visibilityState === "hidden") clearResults();
     }
-    window.addEventListener("pagehide", clearResults);
+    function onPageHide() {
+      flushSync(clearResults);
+    }
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) flushSync(clearResults);
+    }
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisibilityChange);
     const expiry = window.setTimeout(clearResults, Math.max(0, Math.min(expiresAt - Date.now(), 2_147_483_647)));
     return () => {
       request.current?.abort();
       window.clearTimeout(expiry);
-      window.removeEventListener("pagehide", clearResults);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [expiresAt]);
