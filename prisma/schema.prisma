@@ -788,3 +788,10 @@ model AnalyticsPersonAudit {
   @@index([createdAt], map: "analytics_person_audit_time_idx")
   @@map("analytics_person_audits")
 }
+
+model AnalyticsDailyVisitor {
+  day      DateTime @id @db.Date
+  visitors BigInt   @db.UnsignedBigInt
+
+  @@map("analytics_daily_visitors")
+}
