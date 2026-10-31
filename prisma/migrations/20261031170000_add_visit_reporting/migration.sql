@@ -24,6 +24,7 @@ CREATE TABLE `analytics_person_audits` (
   `start_day` DATE NOT NULL,
   `end_day` DATE NOT NULL,
   `status` VARCHAR(16) NOT NULL,
+  `result_rows` SMALLINT UNSIGNED NULL,
   `created_at` DATETIME(3) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `analytics_person_audit_time_idx` (`created_at`)

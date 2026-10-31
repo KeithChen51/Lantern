@@ -9,6 +9,8 @@ async function main() {
   const dayMs = 86_400_000;
   const shanghaiDate = new Date(now.getTime() + 8 * 3_600_000).toISOString().slice(0, 10);
   const sources = [
+    { name: "visitRateBuckets", table: Prisma.sql`access_records`, order: Prisma.sql`expiresAt, id`,
+      expired: Prisma.sql`kind = 'bucket' AND subjectId = 'analytics-visits' AND expiresAt <= ${now}` },
     { name: "pageViews", table: Prisma.sql`analytics_page_views`, order: Prisma.sql`occurred_at, event_id`,
       expired: Prisma.sql`occurred_at <= ${new Date(+now - 180 * dayMs)}` },
     { name: "personAudits", table: Prisma.sql`analytics_person_audits`, order: Prisma.sql`created_at, id`,

@@ -782,6 +782,7 @@ model AnalyticsPersonAudit {
   startDay    DateTime @map("start_day") @db.Date
   endDay      DateTime @map("end_day") @db.Date
   status      String   @db.VarChar(16)
+  resultRows  Int?     @map("result_rows") @db.UnsignedSmallInt
   createdAt   DateTime @map("created_at") @db.DateTime(3)
 
   @@index([createdAt], map: "analytics_person_audit_time_idx")
