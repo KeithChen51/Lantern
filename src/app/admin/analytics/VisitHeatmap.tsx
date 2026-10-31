@@ -40,7 +40,22 @@ export function VisitHeatmap({ heatmap }: { heatmap: UsageReport["heatmap"] }) {
 
   useEffect(() => {
     const container = scroller.current;
-    if (container) container.scrollLeft = container.scrollWidth;
+    if (!container) return;
+    container.scrollLeft = container.scrollWidth;
+    if (typeof ResizeObserver === "undefined") return;
+    // Keep the selected date visible when rotating a phone or resizing the
+    // window, without taking over ordinary horizontal scrolling.
+    const observer = new ResizeObserver(() => {
+      const selectedDay = container.querySelector<HTMLButtonElement>("button[data-selected]");
+      if (!selectedDay) return;
+      const cell = selectedDay.getBoundingClientRect();
+      const viewport = container.getBoundingClientRect();
+      const axisWidth = container.querySelector("[data-weekday-axis]")?.getBoundingClientRect().width ?? 0;
+      if (cell.right > viewport.right) container.scrollLeft += cell.right - viewport.right + 4;
+      else if (cell.left < viewport.left + axisWidth) container.scrollLeft -= viewport.left + axisWidth - cell.left + 4;
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
   }, []);
 
   function move(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -62,7 +77,7 @@ export function VisitHeatmap({ heatmap }: { heatmap: UsageReport["heatmap"] }) {
       </div>
       <div className={styles.calendarScroller} ref={scroller} role="region" aria-label="全年访问日历，可横向滚动">
         <div className={styles.calendar}>
-          <div className={styles.weekLabels} aria-hidden="true"><span>一</span><span>三</span><span>五</span><span>日</span></div>
+          <div className={styles.weekLabels} data-weekday-axis aria-hidden="true"><span>一</span><span>三</span><span>五</span><span>日</span></div>
           <div className={styles.calendarWeeks}>
             {weeks.map((week, weekIndex) => {
               const monthStart = week.find(day => day?.date.endsWith("-01"));
