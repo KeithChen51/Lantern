@@ -7,7 +7,7 @@ import { getUsageReport } from "@/modules/analytics/report";
 import { parseReportPeriod, shanghaiDate } from "@/modules/analytics/report-period";
 import { hasEmployeeRankingGrant } from "@/modules/analytics/employee-rank-access";
 import { PlatformAdminNav } from "../PlatformAdminNav";
-import { VisitHeatmap } from "./VisitHeatmap";
+import { VisitActivity } from "./VisitActivity";
 import { ReportPeriodFilter } from "./ReportPeriodFilter";
 import { UsageReportView } from "./UsageReportView";
 import { EmployeeRankings } from "./EmployeeRankings";
@@ -45,7 +45,7 @@ export default async function AdminAnalyticsPage({ searchParams }: {
     <div className={styles.page}>
       <PageHeading title="访问与使用" />
       {report ? <>
-        <VisitHeatmap heatmap={report.heatmap} />
+        <VisitActivity key={principal.userId} heatmap={report.heatmap} />
         <section className={styles.periodReport} aria-labelledby="period-report-title">
           <div className={styles.reportHeading}>
             <div>

@@ -29,7 +29,7 @@ function describeDay(day: HeatmapDay) {
   return `${date}，${numberFormat.format(day.views)} 次访问${day.status === "partial" ? "（部分记录）" : ""}`;
 }
 
-export function VisitHeatmap({ heatmap }: { heatmap: UsageReport["heatmap"] }) {
+export function VisitHeatmap({ heatmap, embedded = false }: { heatmap: UsageReport["heatmap"]; embedded?: boolean }) {
   const scroller = useRef<HTMLDivElement>(null);
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const [selected, setSelected] = useState(heatmap.days.length - 1);
@@ -69,12 +69,11 @@ export function VisitHeatmap({ heatmap }: { heatmap: UsageReport["heatmap"] }) {
   }
 
   const current = heatmap.days[selected];
-  return (
-    <section className={styles.heatmapSection} aria-labelledby="visit-calendar-title">
-      <div className={styles.sectionHeader}>
+  const content = <>
+      {!embedded && <div className={styles.sectionHeader}>
         <div><h2 id="visit-calendar-title">访问日历</h2><p className={styles.caption}>过去 365 天 · 每格代表一天</p></div>
         {observed.length > 0 && <p className={styles.heatmapTotal}>已记录 <strong>{numberFormat.format(total)}</strong> 次访问</p>}
-      </div>
+      </div>}
       <div className={styles.calendarScroller} ref={scroller} role="region" aria-label="全年访问日历，可横向滚动">
         <div className={styles.calendar}>
           <div className={styles.weekLabels} data-weekday-axis aria-hidden="true"><span>一</span><span>三</span><span>五</span><span>日</span></div>
@@ -107,6 +106,6 @@ export function VisitHeatmap({ heatmap }: { heatmap: UsageReport["heatmap"] }) {
         </div>
       </div>
       {heatmap.note && <p className={styles.note}>{heatmap.note}</p>}
-    </section>
-  );
+    </>;
+  return embedded ? content : <section className={styles.heatmapSection} aria-labelledby="visit-calendar-title">{content}</section>;
 }
