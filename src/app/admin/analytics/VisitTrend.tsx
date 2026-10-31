@@ -109,9 +109,12 @@ export function VisitLineChart({ report }: { report: VisitTrend }) {
   const chartWidth = width - left - right;
   const values = report.days.flatMap(day => [day.pv ?? 0, day.uv ?? 0]);
   const maximum = Math.max(1, ...values);
-  const magnitude = 10 ** Math.floor(Math.log10(maximum / 4));
-  const tickStep = Math.max(1, ([1, 2, 5, 10].find(value => value * magnitude >= maximum / 4) ?? 10) * magnitude);
-  const ceiling = tickStep * 4;
+  const targetStep = Math.max(1, maximum / 4);
+  const magnitude = 10 ** Math.floor(Math.log10(targetStep));
+  const tickStep = [1, 2, 2.5, 5, 10].map(value => value * magnitude).filter(Number.isInteger)
+    .reduce((best, step) => Math.abs(step - targetStep) < Math.abs(best - targetStep) ? step : best);
+  const intervals = Math.ceil(maximum / tickStep);
+  const ceiling = tickStep * intervals;
   const x = (index: number) => report.days.length === 1 ? left + chartWidth / 2 : left + index / (report.days.length - 1) * chartWidth;
   const y = (value: number) => bottom - value / ceiling * (bottom - top);
   const day = report.days[Math.max(0, Math.min(selected, report.days.length - 1))];
@@ -129,7 +132,7 @@ export function VisitLineChart({ report }: { report: VisitTrend }) {
       event.preventDefault(); setSelected(value => Math.max(0, Math.min(report.days.length - 1, value + offsets[event.key])));
     }
   };
-  const tickCount = width < 480 ? 3 : 5;
+  const tickCount = width < 480 ? 3 : report.days.length === 7 ? 7 : 5;
   const showYear = report.startDate?.slice(0, 4) !== report.endDate.slice(0, 4);
   const ticks = Array.from(new Set(Array.from({ length: tickCount }, (_, index) => Math.round(index / (tickCount - 1) * (report.days.length - 1)))));
   const missing = report.days.some(item => item.pv === null || item.uv === null || item.pvStatus === "unavailable" || item.uvStatus === "unavailable");
@@ -142,8 +145,8 @@ export function VisitLineChart({ report }: { report: VisitTrend }) {
       <svg viewBox={"0 0 " + width + " " + height} width="100%" height={height} role="img" aria-label="PV 实线与 UV 虚线的每日访问趋势"
         onPointerMove={event => { if (event.pointerType !== "touch" || event.buttons) selectFromPointer(event); }}
         onPointerDown={event => { frame.current?.focus({ preventScroll: true }); selectFromPointer(event); }}>
-        {Array.from({ length: 5 }, (_, index) => {
-          const value = ceiling * index / 4;
+        {Array.from({ length: intervals + 1 }, (_, index) => {
+          const value = tickStep * index;
           const axisY = y(value);
           return <g key={index} className={styles.axis}>
             <line x1={left} x2={width - right} y1={axisY} y2={axisY} />
