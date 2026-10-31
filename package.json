@@ -35,7 +35,8 @@
     "check:fonts": "node scripts/check-fonts.mjs",
     "lighthouse": "node packages/lighthouse-client/src/cli.js",
     "test:client": "npm test --prefix packages/lighthouse-client",
-    "auth:prune": "tsx scripts/auth-prune.ts"
+    "auth:prune": "tsx scripts/auth-prune.ts",
+    "retention:preview": "tsx scripts/retention-preview.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
