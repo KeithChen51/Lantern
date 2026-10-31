@@ -12,6 +12,7 @@
   --hermit-ink: #2c2c2c;
   --hermit-secondary: #666158;
   --hermit-muted: #787166;
+  --hermit-footnote: #8b8478;
   --hermit-accent: #a65d12;
   --hermit-accent-deep: #8f4e0d;
   --hermit-selected: #f3e5ce;
@@ -86,12 +87,14 @@
   min-width: 0;
   min-height: 752px;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  row-gap: 8px;
   align-items: stretch;
 }
 
 .chatLayoutWithReader {
   grid-template-columns: minmax(0, 1fr) minmax(28rem, 40%);
-  gap: 24px;
+  column-gap: 24px;
 }
 
 .conversation {
@@ -146,9 +149,14 @@
 
 .startFootnote {
   margin: 12px 0 0;
-  color: var(--hermit-muted);
+  color: var(--hermit-footnote);
   font-size: 12px;
   line-height: 20px;
+}
+
+.conversationFootnote {
+  grid-column: 1;
+  grid-row: 2;
 }
 
 /* The selected page has no visible conversation toolbar; the state remains
@@ -1173,6 +1181,10 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
     display: block;
   }
 
+  .chatLayoutWithReader .conversationFootnote {
+    display: none;
+  }
+
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page .chatLayoutWithReader [data-lh-hermit-conversation] {
     display: none;
   }
@@ -1472,7 +1484,6 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] { width: min(1040px, 100%); }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-main] { padding-bottom: 28px; }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer] { padding: 12px 0 0; }
-[data-lh-hermit-composer] > .startFootnote { padding-top: 8px; }
 /* The conversation gives space to answers; the centered start keeps its larger composer. */
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-input] { padding: 12px 16px; }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-textarea] { min-height: 28px; padding: 0; }
