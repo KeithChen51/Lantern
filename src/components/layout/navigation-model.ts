@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
 export function getVisibleNavItems(capabilities?: readonly string[] | "normal_user" | "highest_admin" | null) {
   const items = NAV_ITEMS.filter((item) => item.href !== "/games" || isGamesModuleEnabled());
   if (Array.isArray(capabilities) && capabilities.includes("knowledge:manage")) {
-    return [...items, { label: "资料维护", subLabel: "知识管理", icon: lighthouseIcons.admin, href: "/admin/knowledge" }];
+    return [...items, { label: "管理知识与使用数据", subLabel: "平台管理", icon: lighthouseIcons.admin, href: "/admin" }];
   }
   return items;
 }
