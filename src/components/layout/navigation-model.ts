@@ -19,7 +19,8 @@ export const NAV_ITEMS: NavItem[] = [
 export function getVisibleNavItems(capabilities?: readonly string[] | "normal_user" | "highest_admin" | null) {
   const items = NAV_ITEMS.filter((item) => item.href !== "/games" || isGamesModuleEnabled());
   if (Array.isArray(capabilities) && capabilities.includes("knowledge:manage")) {
-    return [...items, { label: "资料维护", subLabel: "知识管理", icon: lighthouseIcons.admin, href: "/admin/knowledge" }];
+    const label = capabilities.includes("analytics:summary") ? "知识维护与使用汇总" : "知识维护";
+    return [...items, { label, subLabel: "平台管理", icon: lighthouseIcons.admin, href: "/admin" }];
   }
   return items;
 }

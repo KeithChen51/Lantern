@@ -73,7 +73,7 @@ AUTH_ALLOW_LOCAL_HTTP=false
 
 已确认的服务端门户 API 可以使用精确内网 HTTP 例外。例如 `PORTAL_API_BASE_URL=http://10.20.30.40:20002/api` 必须同时配置 `PORTAL_API_HTTP_ORIGIN=http://10.20.30.40:20002`；后者只接受逐字标准 RFC1918 IPv4 HTTP origin，不能有尾斜线、路径、凭证、query 或 fragment，且必须等于 API 基础地址的 origin。该例外在生产/测试均可显式配置，不允许任意 HTTP、API 重定向或全局 TLS 降级，也不放宽门户浏览器登录地址。
 
-门户确认的 appKey（`PORTAL_APP_CODE`）、配套 `PORTAL_APP_SECRET` 和精确角色可由生产测试共用，门户仍须分别确认两个环境的卡片落点；灯塔本地数据库、上传存储、会话 Cookie 及 32 字节 base64 `AUTH_ENCRYPTION_KEY` 必须隔离。`PORTAL_KNOWLEDGE_ADMIN_ROLE` 保留；可选 `PORTAL_PLATFORM_ADMIN_ROLE` 只把精确上游角色映射到现有知识管理能力，不推断角色名称、不新增管理权限。普通升级禁止悄悄换加密密钥；脚本比较旧容器与新配置里的密钥，不一致就拒绝。备份额外保存旧容器实际环境，避免运维修改文件后丢掉旧钥。`PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true` 只能在平台明确有效员工语义后配置。不要通过旧共享密码、`ADMIN_COOKIE_SECURE` 或 development 构建绕过新登录方案。
+门户确认的 appKey（`PORTAL_APP_CODE`）、配套 `PORTAL_APP_SECRET` 和精确角色可由生产测试共用，门户仍须分别确认两个环境的卡片落点；灯塔本地数据库、上传存储、会话 Cookie 及 32 字节 base64 `AUTH_ENCRYPTION_KEY` 必须隔离。旧门户的可选 `PORTAL_PLATFORM_ADMIN_ROLE` 只有与 `PORTAL_KNOWLEDGE_ADMIN_ROLE` 可区分时才开放[访问与使用汇总](../platform-management.md)，需向上游核对角色映射。普通升级禁止悄悄换加密密钥；脚本比较旧容器与新配置里的密钥，不一致就拒绝。备份额外保存旧容器实际环境，避免运维修改文件后丢掉旧钥。`PORTAL_EMPLOYEE_VALIDATION_CONFIRMED=true` 只能在平台明确有效员工语义后配置。不要通过旧共享密码、`ADMIN_COOKIE_SECURE` 或 development 构建绕过新登录方案。
 
 ## 新生产：准备、预览、首次初始化
 

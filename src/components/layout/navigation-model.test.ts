@@ -9,10 +9,13 @@ afterEach(() => {
 });
 
 describe("navigation model", () => {
-  it("shows knowledge administration only for its capability, never for legacy role labels", () => {
-    expect(getVisibleNavItems(["knowledge:manage"]).some(item => item.href === "/admin/knowledge")).toBe(true);
-    expect(getVisibleNavItems(["content:read", "knowledge:read"]).some(item => item.href === "/admin/knowledge")).toBe(false);
-    expect(getVisibleNavItems("highest_admin").some(item => item.href === "/admin/knowledge")).toBe(false);
+  it("shows one platform management entry only for a management capability, never legacy role labels", () => {
+    expect(getVisibleNavItems(["knowledge:manage"]).filter(item => item.href === "/admin")).toEqual([
+      expect.objectContaining({ subLabel: "平台管理", href: "/admin" }),
+    ]);
+    expect(getVisibleNavItems(["knowledge:manage", "analytics:summary"]).filter(item => item.href.startsWith("/admin"))).toHaveLength(1);
+    expect(getVisibleNavItems(["content:read", "knowledge:read"]).some(item => item.href.startsWith("/admin"))).toBe(false);
+    expect(getVisibleNavItems("highest_admin").some(item => item.href.startsWith("/admin"))).toBe(false);
   });
   it("keeps the active module registry available", () => {
     const expectedLabels = ["价值起点", "外部标杆", "内部实践", "文化游戏", "AI问答"];

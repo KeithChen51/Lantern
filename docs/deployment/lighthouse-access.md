@@ -6,7 +6,7 @@
 
 ## 权限与客户端
 
-原 portal 模式的业务浏览、知识读取、路引对话和附件访问要求门户验证的有效员工身份。该模式有效员工即使角色列表为空仍可浏览；当前应用的指定知识管理员角色，或显式配置的精确平台管理员角色，提供已有 `knowledge:manage`，仅用于知识中台管理。灯塔仅保存必要的身份映射和授权状态，不在本地分配人员或角色，不新增平台管理、Action、Workshop 或反馈提交权限。角色名称不能推导权限语义，须由门户确认对应的精确标识。组合模式采用固定三角色且空/未知角色拒绝，不能套用该空角色规则。
+原 portal 模式要求门户验证有效员工身份；该模式有效员工即使角色列表为空仍可浏览。知识管理员和平台管理员可管理知识。仅当门户配置了可与知识角色明确区分的平台管理员角色时，才开放 [访问与使用汇总](../platform-management.md)。灯塔不在本地分配角色。组合模式采用固定三角色，空角色或未知角色均拒绝。
 
 员工 CLI/MCP 是独立的 `packages/lighthouse-client` 包。员工在已登录浏览器中确认设备授权，客户端只取得 `knowledge:read`，由员工自己的 Agent 完成推理；无对话、知识写入或交互沉淀工具。员工包不能包含门户应用密钥、数据库地址、服务器环境文件或直连数据库的运维工具。
 
@@ -28,7 +28,7 @@
 | `PORTAL_LOGIN_MODE` | `card` / `callback`；代码缺省为 `callback` 保持旧部署兼容，部署示例显式选 `card`。只有门户已确认支持 `redirectUrl` / `state` 契约时才选 `callback` |
 | `PORTAL_APP_CODE` / `PORTAL_APP_SECRET` | 平台分配的当前应用标识和密钥；secret 仅在服务端运行时注入 |
 | `PORTAL_KNOWLEDGE_ADMIN_ROLE` | 当前应用知识管理员的精确角色标识 |
-| `PORTAL_PLATFORM_ADMIN_ROLE` | 可选；门户确认的平台管理员精确角色标识，映射到已有 `knowledge:manage`；为空时不启用此映射 |
+| `PORTAL_PLATFORM_ADMIN_ROLE` | 可选；精确匹配时授予 `knowledge:manage`。仅其与知识管理员标识不同时，另授予 `analytics:summary`。为空或重名时均不开放统计。 |
 | `AUTH_ENCRYPTION_KEY` | 专用随机 32 字节密钥的 base64 编码；与数据库备份一同受控保存，不能用示例值 |
 | `PORTAL_EMPLOYEE_VALIDATION_CONFIRMED` | 平台确认身份查询成功表示当前有效内部员工后，才显式设置 `true` |
 | `PORTAL_CALLBACK_PARAM` / `PORTAL_STATE_PARAM` / `PORTAL_TOKEN_PARAM` | 默认 `redirectUrl` / `state` / `token`；callback 模式须匹配已确认的回调契约；card 模式也使用 token 字段。三者名称不能相同 |

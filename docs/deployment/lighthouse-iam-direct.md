@@ -9,7 +9,7 @@
 - 用户直接打开灯塔：未登录时显示灯塔登录页，只有“OA 登录”入口；由灯塔发起 IAM 授权码流程，完成后返回原先安全的站内页面。浏览器已有 OA 会话时，是否免输密码由 IAM 决定。
 - 中台卡片只做导航，地址登记为 `灯塔 origin/auth/iam/start`。不再向灯塔传中台 `token`，也不把中台角色查询作为 IAM 模式的权限来源。
 - IAM 后端 `getUserInfo` 确定工号；账号资料与角色来自已验签、解密并落库的 IAM / 集团权限平台同步。OAuth 登录成功不等于拥有灯塔访问权：有效账号及灯塔允许角色都必须先同步。
-- 普通用户角色为 `lighthouse_user`，知识管理员为 `lighthouse_knowledge_admin`，平台管理员为 `lighthouse_admin`。后两者目前只增加已有的 `knowledge:manage` 能力，角色名称不会自动产生尚未实现的管理功能。
+- 普通用户为 `lighthouse_user`。`lighthouse_knowledge_admin` 与 `lighthouse_admin` 均可管理知识；仅 `lighthouse_admin` 可打开 Web [访问与使用汇总](../platform-management.md)。该角色不授予个人访问明细或聊天排查权限。
 - 当前产品退出行为是只结束灯塔会话，回到灯塔登录页，不自动重登、不退出 OA。官方验收指南要求 IAM 注销 / 超时注销，与此产品约定有差异；上线前必须与 IAM 明确验收口径及适用注销接口，不能把仅本地退出标成 IAM 单点注销通过。
 
 ## 向 IAM 登记的端点与方向

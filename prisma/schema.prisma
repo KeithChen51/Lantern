@@ -105,6 +105,7 @@ model HubAudit {
   createdAt DateTime
 
   @@index([targetId, createdAt])
+  @@index([createdAt], map: "hub_audits_summary_time_idx")
   @@map("hub_audits")
 }
 
@@ -714,6 +715,7 @@ model ChatMessage {
 
   @@unique([sessionId, externalMessageId])
   @@index([sessionId, createdAt])
+  @@index([role, createdAt, sessionId], map: "chat_messages_summary_window_idx")
   @@map("chat_messages")
 }
 
@@ -745,7 +747,51 @@ model AccessRecord {
   updatedAt DateTime
 
   @@index([kind, subjectId])
+  @@index([kind, createdAt], map: "access_records_summary_window_idx")
   @@index([parentId])
   @@index([expiresAt])
   @@map("access_records")
+}
+
+model AnalyticsPageView {
+  eventId      String   @id @map("event_id") @db.VarChar(36)
+  actorKind    String   @map("actor_kind") @db.VarChar(12)
+  subjectId    String   @map("subject_id") @db.VarChar(191)
+  organization String?  @db.VarChar(1000)
+  module       String   @db.VarChar(32)
+  occurredAt   DateTime @map("occurred_at") @db.DateTime(3)
+
+  @@index([occurredAt, actorKind, subjectId], map: "analytics_pv_time_actor_idx")
+  @@map("analytics_page_views")
+}
+
+model AnalyticsVisitDay {
+  day    DateTime @db.Date
+  module String   @db.VarChar(32)
+  views  BigInt   @db.UnsignedBigInt
+
+  @@id([day, module])
+  @@map("analytics_visit_days")
+}
+
+model AnalyticsPersonAudit {
+  id          String   @id @db.VarChar(36)
+  operatorId  String   @map("operator_id") @db.VarChar(191)
+  approvalRef String   @map("approval_ref") @db.VarChar(128)
+  purpose     String   @db.VarChar(256)
+  startDay    DateTime @map("start_day") @db.Date
+  endDay      DateTime @map("end_day") @db.Date
+  status      String   @db.VarChar(16)
+  resultRows  Int?     @map("result_rows") @db.UnsignedSmallInt
+  createdAt   DateTime @map("created_at") @db.DateTime(3)
+
+  @@index([createdAt], map: "analytics_person_audit_time_idx")
+  @@map("analytics_person_audits")
+}
+
+model AnalyticsDailyVisitor {
+  day      DateTime @id @db.Date
+  visitors BigInt   @db.UnsignedBigInt
+
+  @@map("analytics_daily_visitors")
 }

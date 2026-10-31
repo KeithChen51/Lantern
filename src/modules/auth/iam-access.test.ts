@@ -51,6 +51,15 @@ describe("IAM configuration is independent of portal credentials", () => {
 });
 
 describe("IAM login and synchronized authorization", () => {
+  it.each(["lighthouse_user", "lighthouse_knowledge_admin", "lighthouse_admin"])("separates %s summary permissions and immediately observes synchronized revocation", async role => {
+    const f = fixture();
+    await f.account(); await f.permission(0, role);
+    const login = await f.login();
+    expect(login.principal.capabilities.includes("knowledge:manage")).toBe(role !== "lighthouse_user");
+    expect(login.principal.capabilities.includes("analytics:summary")).toBe(role === "lighthouse_admin");
+    await f.permission(2, role);
+    await expect(f.service.webPrincipal(login.sessionToken, { adminWrite: true })).rejects.toMatchObject({ status: 401 });
+  });
   it("binds a one-use browser callback, preserves a trusted shadow ID and profile, and caps token lifetime", async () => {
     const f = fixture();
     f.store.seedEmployee({ id: "existing-portal-user", account: "000042", displayName: "old name", active: true, employee: true });
