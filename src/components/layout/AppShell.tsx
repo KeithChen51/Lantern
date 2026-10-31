@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { SessionProvider } from "@/components/auth/SessionContext";
 import type { WebSession } from "@/components/auth/auth-fetch";
 import { EmployeeWatermark } from "@/components/watermark/EmployeeWatermark";
+import { VisitTracker } from "@/components/analytics/VisitTracker";
 
 const SIDEBAR_STORAGE_KEY = "lighthouse-sidebar-pinned";
 
@@ -15,9 +16,10 @@ interface AppShellProps {
   children: React.ReactNode;
   session: WebSession;
   watermarkSdkUrl?: string | null;
+  visitTrackingEnabled?: boolean;
 }
 
-export function AppShell({ children, session, watermarkSdkUrl }: AppShellProps) {
+export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnabled = false }: AppShellProps) {
   const pathname = usePathname();
   const isHomeSurface = pathname === "/" || pathname === "/heart";
   const [isSidebarPinned, setIsSidebarPinned] = React.useState(false);
@@ -76,6 +78,6 @@ export function AppShell({ children, session, watermarkSdkUrl }: AppShellProps) 
       >
         <div data-lh-main-frame className={cn("mx-auto w-full", isHomeSurface ? "max-w-none" : "max-w-[1680px]")}>{children}</div>
       </main>
-    </div></SessionProvider>
+    </div>{visitTrackingEnabled && <React.Suspense fallback={null}><VisitTracker session={session} /></React.Suspense>}</SessionProvider>
   );
 }

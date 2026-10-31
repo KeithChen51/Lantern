@@ -12,4 +12,3 @@ export function visitModuleForPath(pathname: string): VisitModule | null {
   }
   return null;
 }
-
