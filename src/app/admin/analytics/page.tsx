@@ -3,38 +3,62 @@ import Link from "next/link";
 import { PageHeading } from "@/components/ui/PageHeading";
 import { LhCallout } from "@/components/ui/lighthouse-primitives";
 import { requireAnalyticsSummary } from "@/modules/auth/access";
-import { getAnalyticsSummary } from "@/modules/analytics/summary";
+import { getUsageReport } from "@/modules/analytics/report";
+import { parseReportPeriod, shanghaiDate } from "@/modules/analytics/report-period";
+import { hasEmployeeRankingGrant } from "@/modules/analytics/employee-rank-access";
 import { PlatformAdminNav } from "../PlatformAdminNav";
-import { AnalyticsSummaryView } from "./AnalyticsSummaryView";
+import { VisitHeatmap } from "./VisitHeatmap";
+import { ReportPeriodFilter } from "./ReportPeriodFilter";
+import { UsageReportView } from "./UsageReportView";
+import { EmployeeRankings } from "./EmployeeRankings";
 import styles from "../platform-admin.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAnalyticsPage({ searchParams }: {
-  searchParams: Promise<{ days?: string | string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  try { await requireAnalyticsSummary(await headers()); } catch (error) {
+  let principal;
+  try { principal = await requireAnalyticsSummary(await headers()); } catch (error) {
     const forbidden = error && typeof error === "object" && "status" in error && error.status === 403;
     return <section role="alert"><h1>访问与使用</h1><p>{forbidden ? "当前账号没有访问与使用汇总权限。" : "登录或权限验证暂不可用，请稍后重试。"}</p><Link href="/">返回首页</Link></section>;
   }
-  const days = (await searchParams).days === "30" ? 30 : 7;
-  let summary;
-  try { summary = await getAnalyticsSummary(days); } catch { /* Keep source failures and internal errors out of rendered output. */ }
+  const now = new Date();
+  const params = new URLSearchParams();
+  for (const [key, entry] of Object.entries(await searchParams)) {
+    if (entry === undefined) continue;
+    const values = Array.isArray(entry) ? entry : [entry];
+    for (const value of values) params.append(key, value);
+  }
+  let period;
+  try { period = parseReportPeriod(params, now); } catch {
+    return <><PlatformAdminNav active="analytics" canViewAnalytics /><div className={styles.page}>
+      <PageHeading title="访问与使用" /><LhCallout tone="warning">请选择有效的统计日期。自定义范围须从开始日期至结束日期，最多 24 个月，且截止今天。</LhCallout>
+      <Link className={styles.recovery} href="/admin/analytics?preset=week">查看本周统计</Link>
+    </div></>;
+  }
+  let report;
+  try { report = await getUsageReport(period, { now }); } catch { /* Render a bounded retry state without exposing source errors. */ }
 
-  return (
-    <>
-      <PlatformAdminNav active="analytics" canViewAnalytics />
-      <div className={styles.page}>
-        <PageHeading title="访问与使用" description="查看平台使用汇总、知识供给和数据采集状态。" />
-        <div className={styles.toolbar}>
-          <nav className={styles.periodNav} aria-label="统计时间范围">
-            <Link href="/admin/analytics?days=7" aria-current={days === 7 ? "page" : undefined}>最近 7 天</Link>
-            <Link href="/admin/analytics?days=30" aria-current={days === 30 ? "page" : undefined}>最近 30 天</Link>
-          </nav>
-          <p className={styles.metadata}>日常查看汇总数据</p>
-        </div>
-        {summary ? <AnalyticsSummaryView summary={summary} /> : <><LhCallout tone="warning">访问统计暂不可用，请重新加载页面，持续失败时联系平台管理员。</LhCallout><a className={styles.recovery} href={`/admin/analytics?days=${days}`}>重新加载统计</a></>}
-      </div>
-    </>
-  );
+  return <>
+    <PlatformAdminNav active="analytics" canViewAnalytics />
+    <div className={styles.page}>
+      <PageHeading title="访问与使用" />
+      {report ? <>
+        <VisitHeatmap heatmap={report.heatmap} />
+        <section className={styles.periodReport} aria-labelledby="period-report-title">
+          <div className={styles.reportHeading}>
+            <div>
+              <h2 id="period-report-title">时段统计</h2>
+              <p className={styles.caption}>{period.startDate} 至 {period.endDate} · 北京时间</p>
+            </div>
+            <ReportPeriodFilter key={period.preset + period.startDate + period.endDate} period={period} today={shanghaiDate(now)} />
+          </div>
+          <UsageReportView report={report} />
+          <EmployeeRankings key={principal.userId + period.startDate + period.endDate} period={period} canView={hasEmployeeRankingGrant(principal)} />
+        </section>
+        <p className={styles.updatedAt}>更新于 {new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", dateStyle: "short", timeStyle: "short" }).format(new Date(report.generatedAt))}</p>
+      </> : <><LhCallout tone="warning">访问统计暂不可用，请重新加载页面。</LhCallout><a className={styles.recovery} href={`/admin/analytics?${params.toString()}`}>重新加载统计</a></>}
+    </div>
+  </>;
 }
