@@ -109,4 +109,3 @@ function RankingQuery({ period, expiresAt }: Pick<Props, "period"> & { expiresAt
     </>
   );
 }
-

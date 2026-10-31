@@ -41,4 +41,3 @@ describe("protected employee ranking entry", () => {
     expect(renderToStaticMarkup(<EmployeeRankings period={period} canView />)).not.toContain("<form");
   });
 });
-

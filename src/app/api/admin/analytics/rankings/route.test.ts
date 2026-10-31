@@ -70,4 +70,3 @@ describe("employee ranking endpoint", () => {
     expect(await response.text()).not.toContain("private-connection");
   });
 });
-

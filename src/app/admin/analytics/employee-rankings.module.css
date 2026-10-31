@@ -22,4 +22,3 @@
 .error { margin-top: 1rem; color: var(--color-danger); }
 @media (max-width: 800px) { .tables { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) { .section { padding: 1.125rem; } .controls { flex-direction: column; } .controls input { width: 100%; } }
-

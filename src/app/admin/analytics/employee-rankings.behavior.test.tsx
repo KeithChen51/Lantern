@@ -76,4 +76,3 @@ describe("employee ranking sensitive-result lifetime", () => {
     expect(text(render())).not.toContain("PRIVATE_EMPLOYEE");
   });
 });
-

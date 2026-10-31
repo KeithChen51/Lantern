@@ -90,4 +90,3 @@ describe("audited employee rankings", () => {
     expect(() => validateEmployeeRankingPurpose(reason)).toThrow();
   });
 });
-

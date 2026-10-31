@@ -120,4 +120,3 @@ export async function getAuditedEmployeeRankings(input: {
     throw error;
   }
 }
-

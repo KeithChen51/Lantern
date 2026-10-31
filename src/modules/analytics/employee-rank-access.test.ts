@@ -20,4 +20,3 @@ describe("employee ranking approvals", () => {
     expect(hasEmployeeRankingGrant({ ...principal, ...change } as Principal, { LIGHTHOUSE_ANALYTICS_PERSON_GRANTS: '{"0007":"APPROVAL-107"}' })).toBe(false);
   });
 });
-

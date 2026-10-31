@@ -32,4 +32,3 @@ export function requireEmployeeRankingGrant(principal: Principal, env: ApprovalE
   if (!approval) throw new AccessError("当前账号没有员工榜单专项授权。", 403);
   return approval;
 }
-
