@@ -11,9 +11,11 @@ afterEach(() => {
 describe("navigation model", () => {
   it("shows one platform management entry only for a management capability, never legacy role labels", () => {
     expect(getVisibleNavItems(["knowledge:manage"]).filter(item => item.href === "/admin")).toEqual([
-      expect.objectContaining({ subLabel: "平台管理", href: "/admin" }),
+      expect.objectContaining({ subLabel: "管理", label: "知识维护", href: "/admin" }),
     ]);
-    expect(getVisibleNavItems(["knowledge:manage", "analytics:summary"]).filter(item => item.href.startsWith("/admin"))).toHaveLength(1);
+    expect(getVisibleNavItems(["knowledge:manage", "analytics:summary"]).filter(item => item.href.startsWith("/admin"))).toEqual([
+      expect.objectContaining({ subLabel: "管理", label: "平台运营", href: "/admin" }),
+    ]);
     expect(getVisibleNavItems(["content:read", "knowledge:read"]).some(item => item.href.startsWith("/admin"))).toBe(false);
     expect(getVisibleNavItems("highest_admin").some(item => item.href.startsWith("/admin"))).toBe(false);
   });
