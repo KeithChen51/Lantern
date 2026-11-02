@@ -1049,11 +1049,21 @@ html[data-lighthouse-interface="classic"] [data-lh-home-brand-veil] {
   pointer-events: none;
 }
 
+/* The arrival camera and the existing scroll depth own separate transforms. */
+html[data-lighthouse-interface="classic"] [data-lh-home-brand-scene] {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  isolation: isolate;
+  pointer-events: none;
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-home-brand-bg] {
   z-index: -2;
   inset: -4% 0 -10%;
   background-image: url("/lighthouse-home-hero-bg-v2-realistic-shore.png");
-  background-position: center;
+  /* Keep the lantern (at 86% of the photograph) in frame as cover crops it. */
+  background-position: 86% center;
   background-size: cover;
   transform: translate3d(0, 0, 0) scale(1.035);
   transform-origin: center top;
@@ -1598,7 +1608,7 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
 @keyframes lh-heart-rise-in {
   from {
-    opacity: 0.92;
+    opacity: var(--lh-heart-rise-enter-opacity, 0.92);
     transform: translateY(0.35rem);
   }
   to {
@@ -1609,13 +1619,25 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
 @keyframes lh-heart-soft-in {
   from {
-    opacity: 0.96;
+    opacity: var(--lh-heart-copy-enter-opacity, 0.96);
+    filter: var(--lh-heart-copy-enter-filter, none);
     transform: translateY(0.25rem);
   }
   to {
     opacity: 1;
+    filter: none;
     transform: translateY(0);
   }
+}
+
+@keyframes lh-login-camera {
+  0%, 34% { transform: translate3d(0, 4svh, 0) scale(2.8); }
+  to { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes lh-login-chrome-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1650,6 +1672,32 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
   html[data-lighthouse-interface="classic"] [data-lh-heart-next] {
     animation-delay: 300ms;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-scene] {
+    transform-origin: right 34%;
+    animation: lh-login-camera var(--lh-arrival-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  /* Keep each original animation name so removing the arrival marker cannot replay it. */
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-copy] {
+    --lh-heart-copy-enter-opacity: 0;
+    --lh-heart-copy-enter-filter: blur(2px);
+    animation-delay: calc(var(--lh-arrival-duration) * .46);
+    animation-duration: calc(var(--lh-arrival-duration) * .5);
+    animation-timing-function: ease-in-out;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-path] {
+    --lh-heart-rise-enter-opacity: 0;
+    animation-delay: calc(var(--lh-arrival-duration) * .72);
+    animation-duration: calc(var(--lh-arrival-duration) * .27);
+    animation-timing-function: ease-in-out;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-sidebar],
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-header] {
+    animation: lh-login-chrome-in var(--lh-motion-medium) var(--lh-ease-out) calc(var(--lh-arrival-duration) * .81) both;
   }
 }
 
@@ -1713,7 +1761,8 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-closing] p {
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-home-brand-title] {
-    font-size: clamp(3rem, 15vw, 5rem);
+    font-size: clamp(2.75rem, 13vw, 4.5rem);
+    word-break: keep-all;
     white-space: normal;
   }
 

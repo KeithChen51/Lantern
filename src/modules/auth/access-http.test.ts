@@ -13,6 +13,8 @@ vi.mock("./access", () => ({
   authErrorResponse: (error: { status?: number }) => Response.json({ error: "access" }, { status: error.status ?? 503, headers: { "cache-control": "no-store" } }),
 }));
 import { body, callback, confirm, deviceAuthorize, iamCallback, iamStart, logout, start, token } from "./access-http";
+import { loginArrivalCookie, validLoginArrival } from "./login-arrival";
+import { readAccessConfig } from "./access-config";
 const env = {
   AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "https://app.example.invalid", PORTAL_API_BASE_URL: "https://portal.example.invalid", PORTAL_LOGIN_URL: "https://portal.example.invalid/login",
   PORTAL_APP_CODE: "lighthouse", PORTAL_APP_SECRET: "synthetic", PORTAL_KNOWLEDGE_ADMIN_ROLE: "knowledge_admin", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 3).toString("base64"), PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true",
@@ -117,6 +119,11 @@ describe("IAM callback HTTP boundary", () => {
     expect(service.iamCallback).toHaveBeenCalledWith({ code: "synthetic-code", state: "state", cookie: "browser" });
     expect(response.status).toBe(303); expect(response.headers.get("location")).toBe("https://app.example.invalid/heart");
     expect(response.headers.get("set-cookie")).toContain("__Host-lighthouse_iam_session=opaque-session");
+    const markerName = loginArrivalCookie("__Host-lighthouse_iam_session");
+    const marker = response.headers.get("set-cookie")!.split(`${markerName}=`)[1]?.split(";")[0];
+    expect(marker).toBeDefined();
+    expect(validLoginArrival(readAccessConfig(), marker!, "opaque-session", "/heart")).toBe(true);
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=90");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
     expect(await response.text()).not.toContain("synthetic-code");
   });
@@ -128,6 +135,7 @@ describe("IAM callback HTTP boundary", () => {
     const location = new URL(response.headers.get("location")!);
     expect(location.searchParams.get("returnTo")).toBe("/auth/device?user_code=ABCD-EFGH");
     expect(location.href).not.toContain("private-code"); expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+    expect(response.headers.get("set-cookie")).toContain(`${loginArrivalCookie("__Host-lighthouse_iam_session")}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
   });
   it.each(["code=one&code=two&state=a", "code=a", "code=a&state=a&state=b", "error=denied&code=a&state=b"])("rejects ambiguous callback %s", async query => {
     const response = await iamCallback(new NextRequest(`https://app.example.invalid/auth/iam/callback?${query}`));
@@ -139,5 +147,6 @@ describe("IAM callback HTTP boundary", () => {
     const response = await logout(false)(form("/api/auth/logout", { csrfToken: "fixture-csrf" }));
     expect(response.headers.get("location")).toBe("https://app.example.invalid/login?loggedOut=1");
     expect(response.headers.get("set-cookie")).toContain("__Host-lighthouse_iam_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
+    expect(response.headers.get("set-cookie")).toContain(`${loginArrivalCookie("__Host-lighthouse_iam_session")}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
   });
 });
