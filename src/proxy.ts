@@ -76,9 +76,6 @@ export async function proxy(request: NextRequest) {
     }
     return noStore(await callback(request));
   }
-  if (process.env.AUTH_MODE === "iam" && path === "/" && ["token", "code", "state"].some(name => request.nextUrl.searchParams.has(name))) {
-    return noStore(NextResponse.redirect(new URL("/login?error=callback", readAccessConfig().origin), 303));
-  }
   const forwarded = new Headers(request.headers);
   // Always overwrite the untrusted client header, including on public routes.
   forwarded.set(REQUEST_PATH_HEADER, path!);
@@ -98,6 +95,9 @@ export async function proxy(request: NextRequest) {
     return response;
   }
   try {
+    if (process.env.AUTH_MODE === "iam" && path === "/" && ["token", "code", "state"].some(name => request.nextUrl.searchParams.has(name))) {
+      return noStore(NextResponse.redirect(new URL("/login?error=callback", readAccessConfig().origin), 303));
+    }
     await requireEmployee(request);
     let arrivalCookie: string | undefined;
     let secureCookies = false;
