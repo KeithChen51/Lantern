@@ -1,6 +1,5 @@
-import { requireAnalyticsSummary } from "@/modules/auth/access";
-import { listHermitRecords } from "@/modules/hermit/admin-records-data";
-import { validateHermitRecordCursor, validateHermitRecordId } from "@/modules/hermit/admin-records-access";
+import { AccessError, requireAnalyticsSummary } from "@/modules/auth/access";
+import { getAuditedHermitRecords, validateHermitRecordCursor, validateHermitRecordId } from "@/modules/hermit/admin-records-access";
 import { AppError } from "@/shared/errors";
 
 export const runtime = "nodejs";
@@ -9,7 +8,7 @@ const PRIVATE = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-r
 
 export async function GET(request: Request) {
   try {
-    await requireAnalyticsSummary(request);
+    const principal = await requireAnalyticsSummary(request);
     const params = new URL(request.url).searchParams;
     if ([...params.keys()].some(key => !["start", "end", "actor", "id", "cursor"].includes(key) || params.getAll(key).length !== 1)) {
       throw new AppError("bad_request", "筛选参数无效。", 400);
@@ -25,7 +24,16 @@ export async function GET(request: Request) {
     }
     const id = params.has("id") ? validateHermitRecordId(params.get("id")) : undefined;
     const cursor = validateHermitRecordCursor(params.get("cursor") ?? undefined);
-    return Response.json(await listHermitRecords({ start, end, actor, id, cursor }), { headers: PRIVATE });
+    const result = await getAuditedHermitRecords({
+      principal, filters: { start, end, actor, id, cursor },
+      recheck: async () => {
+        const current = await requireAnalyticsSummary(request);
+        if (current.userId !== principal.userId || current.credentialId !== principal.credentialId) {
+          throw new AccessError("会话授权已变更，请重新加载路引记录。", 403);
+        }
+      },
+    });
+    return Response.json(result, { headers: PRIVATE });
   } catch (error) {
     const status = error instanceof AppError && [400, 401, 403].includes(error.status) ? error.status : 503;
     const message = status === 401 ? "请先使用员工账号登录。" : status === 403 ? "当前账号没有路引记录查看权限。"
