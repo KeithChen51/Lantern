@@ -44,9 +44,9 @@ function invoke(owner: string, component: Element): ReactNode {
   harness.owner = owner; harness.slot = 0; harness.refSlot = 0; harness.effects = [];
   return (component.type as (props: unknown) => ReactNode)(component.props);
 }
-function list(canReadContent = true) { return invoke("list", HermitRecords({ canReadContent }) as Element); }
-function modal(canReadContent = true) {
-  const component = nodes(list(canReadContent), node => typeof node.type === "function" && node.type.name === "ConversationWindow")[0];
+function list() { return invoke("list", HermitRecords() as Element); }
+function modal() {
+  const component = nodes(list(), node => typeof node.type === "function" && node.type.name === "ConversationWindow")[0];
   expect(component).toBeDefined();
   return invoke("modal", component);
 }
@@ -69,20 +69,15 @@ async function loadedList() {
   click(nodes(tree, node => node.type === "button" && node.props["aria-label"] === `回看会话 ${row.id}`)[0]);
   return tree;
 }
-function openedModal(canReadContent = true) {
-  const tree = modal(canReadContent);
+function openedModal() {
+  const tree = modal();
   const dialog = { showModal: vi.fn(), close: vi.fn() };
   harness.refs.modal[0].current = dialog;
   for (const effect of harness.effects) { const dispose = effect(); if (dispose) cleanup.push(dispose); }
   return tree;
 }
-async function authorize() {
-  let tree = modal();
-  const input = nodes(tree, node => node.type === "textarea")[0];
-  (input.props.onChange as (event: unknown) => void)({ target: { value: "排查员工反馈的回答" } });
-  tree = modal();
-  const form = nodes(tree, node => node.type === "form")[0];
-  (form.props.onSubmit as (event: unknown) => void)({ preventDefault() {} });
+async function readAutomatically() {
+  await vi.advanceTimersByTimeAsync(0);
   await settle();
 }
 
@@ -105,37 +100,85 @@ describe("路引记录列表与正文边界", () => {
     expect(html).not.toContain("PRIVATE_");
     expect(harness.fetch).not.toHaveBeenCalled();
   });
-  it("loads list metadata and opens a reason form without a content request", async () => {
+  it("loads list metadata and starts a content read only after opening the window", async () => {
     await loadedList();
+    expect(harness.fetch).toHaveBeenCalledTimes(1);
     const tree = openedModal();
     expect(harness.fetch).toHaveBeenCalledTimes(1);
-    expect(text(tree)).toContain("查看事由");
-    expect(text(tree)).not.toContain("PRIVATE_");
-    expect(nodes(tree, node => node.type === "textarea")).toHaveLength(1);
-  });
-  it("keeps list-only administrators out of the content form", async () => {
-    await loadedList();
-    const tree = openedModal(false);
-    expect(text(tree)).toContain("专项权限");
+    expect(text(tree)).toContain("正在读取对话");
     expect(nodes(tree, node => node.type === "textarea")).toHaveLength(0);
-    expect(harness.fetch).toHaveBeenCalledTimes(1);
+    await readAutomatically();
+    expect(harness.fetch).toHaveBeenCalledTimes(2);
   });
-  it("POSTs one bounded reason inside the modal and renders an inert conversation", async () => {
-    await loadedList(); openedModal(); await authorize();
+  it("keeps knowledge-only administrators outside the records workspace", () => {
+    harness.allowed = false;
+    expect(text(HermitRecords())).toContain("平台管理员账号");
+    expect(harness.fetch).not.toHaveBeenCalled();
+  });
+  it("POSTs only the record id and renders a read-only conversation", async () => {
+    await loadedList(); openedModal(); await readAutomatically();
     const [url, init] = harness.fetch.mock.calls[1];
     expect(url).toBe("/api/admin/hermit-records/content");
-    expect(JSON.parse(init.body)).toEqual({ id: row.id, purpose: "排查员工反馈的回答" });
+    expect(JSON.parse(init.body)).toEqual({ id: row.id });
     const html = renderToStaticMarkup(modal());
     expect(html).toContain("PRIVATE_QUESTION");
     expect(html).toContain("PRIVATE_ANSWER");
     expect(html.indexOf("PRIVATE_QUESTION")).toBeLessThan(html.indexOf("PRIVATE_ANSWER"));
     expect(html).not.toContain("textarea");
+    expect(html).not.toContain("查看事由");
     expect(html).not.toContain("继续提问");
+  });
+  it("shows trusted employee numbers and marks older records as current profile data", async () => {
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, identity: { employeeNo: "EMP-001", account: "account-one", organization: "集团 / 售后服务", source: "current-profile" } }], nextCursor: null }));
+    await loadedList();
+    const html = renderToStaticMarkup(list());
+    expect(html).toContain("工号 EMP-001");
+    expect(html).toContain("集团 / 售后服务");
+    expect(html).toContain("当前资料");
+    expect(html).not.toContain("account-one");
+    openedModal();
+    expect(renderToStaticMarkup(modal())).toContain("不代表会话发生时的工号与组织");
+  });
+  it("labels account-only identities as login accounts and preserves snapshot provenance", async () => {
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, identity: { employeeNo: null, account: "portal-001", organization: "服务部", source: "session-snapshot" } }], nextCursor: null }));
+    await loadedList();
+    const html = renderToStaticMarkup(list());
+    expect(html).toContain("登录账号 portal-001");
+    expect(html).not.toContain("工号 portal-001");
+    expect(html).toContain("会话资料快照");
+  });
+  it("does not display identity payloads for guests", async () => {
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, actor: "guest", identity: { employeeNo: "GUEST_PRIVATE", account: "GUEST_ACCOUNT", organization: "GUEST_ORG", source: "current-profile" } }], nextCursor: null }));
+    await loadedList();
+    const html = renderToStaticMarkup(list());
+    expect(html).toContain("访客");
+    expect(html).not.toContain("GUEST_");
+    openedModal();
+    expect(renderToStaticMarkup(modal())).not.toContain("GUEST_");
+  });
+  it("provides previous and next pages outside the scrollable table and resets only table scroll", async () => {
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [row], nextCursor: "page-two" }));
+    await loadedList();
+    const scroll = { scrollTop: 300 };
+    harness.refs.list[1].current = scroll;
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, id: "second-session" }], nextCursor: null }));
+    click(button(list(), "下一页")); await settle();
+    expect(harness.fetch.mock.calls[1][0]).toContain("cursor=page-two");
+    expect(scroll.scrollTop).toBe(0);
+    const html = renderToStaticMarkup(list());
+    expect(html).toContain("第 2 页");
+    expect(html).toContain("second-session");
+    expect(html).not.toContain("session-fixture");
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [row], nextCursor: "page-two" }));
+    click(button(list(), "上一页")); await settle();
+    expect(harness.fetch.mock.calls[2][0]).not.toContain("cursor=");
+    expect(renderToStaticMarkup(list())).toContain("第 1 页");
+    expect(renderToStaticMarkup(list())).not.toContain("选择日期可查看");
   });
   it("renders markdown tables and citation labels without links, images or raw HTML", async () => {
     await loadedList(); openedModal();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "a", role: "assistant", text: "|列|值|\n|---|---|\n|A|B|\n\n[1](#hermit-citation-1) [外链](https://private.invalid) ![图片](https://tracker.invalid/pixel) <script>bad()</script>" }], nextCursor: null }));
-    await authorize();
+    await readAutomatically();
     const html = renderToStaticMarkup(modal());
     expect(html).toContain("<table>");
     expect(html).toContain("外链");
@@ -149,7 +192,7 @@ describe("路引记录列表与正文边界", () => {
   it("merges later message pages without repeating messages", async () => {
     await loadedList(); openedModal();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "u1", role: "user", text: "FIRST" }], nextCursor: "next" }));
-    await authorize();
+    await readAutomatically();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "u1", role: "user", text: "FIRST" }, { id: "a1", role: "assistant", text: "SECOND" }], nextCursor: null }));
     click(button(modal(), "继续读取后续对话")); await settle();
     const html = renderToStaticMarkup(modal());
@@ -160,27 +203,33 @@ describe("路引记录列表与正文边界", () => {
   it("shows an empty saved session accurately", async () => {
     await loadedList(); openedModal();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [], nextCursor: null }));
-    await authorize();
+    await readAutomatically();
     expect(text(modal())).toContain("暂无已保存的提问或回复");
   });
   it("marks long transcripts that include stored retry attempts", async () => {
     await loadedList(); openedModal();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [], nextCursor: null, view: "stored-attempts" }));
-    await authorize();
+    await readAutomatically();
     expect(text(modal())).toContain("包含重试回答");
   });
-  it("does not send a short purpose even if the form submit handler is invoked", async () => {
-    await loadedList(); openedModal();
-    const form = nodes(modal(), node => node.type === "form")[0];
-    (form.props.onSubmit as (event: unknown) => void)({ preventDefault() {} });
-    await settle();
-    expect(harness.fetch).toHaveBeenCalledTimes(1);
+  it("coalesces Strict Mode setup into one content read and ignores an obsolete native close", async () => {
+    await loadedList();
+    const tree = openedModal();
+    const effect = harness.effects[0];
+    cleanup.pop()!();
+    const dispose = effect();
+    if (dispose) cleanup.push(dispose);
+    const dialog = nodes(tree, node => node.type === "dialog")[0];
+    (dialog.props.onClose as (event: unknown) => void)({ currentTarget: { open: true } });
+    await readAutomatically();
+    expect(harness.fetch.mock.calls.filter(call => call[0].includes("/content"))).toHaveLength(1);
+    expect(renderToStaticMarkup(modal())).toContain("PRIVATE_QUESTION");
   });
   it("aborts a read on unmount and ignores its eventual response", async () => {
     await loadedList(); openedModal();
     let resolve!: (response: Response) => void;
     harness.fetch.mockReturnValueOnce(new Promise<Response>(done => { resolve = done; }));
-    await authorize();
+    await readAutomatically();
     const signal = harness.fetch.mock.calls[1][1].signal as AbortSignal;
     cleanup.pop()!();
     expect(signal.aborted).toBe(true);
@@ -204,15 +253,36 @@ describe("路引记录列表与正文边界", () => {
   it("clears already read text after a failed later page", async () => {
     await loadedList(); openedModal();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "u1", role: "user", text: "PRIVATE_QUESTION" }], nextCursor: "next" }));
-    await authorize();
+    await readAutomatically();
     harness.fetch.mockResolvedValueOnce(new Response(null, { status: 403 }));
     click(button(modal(), "继续读取后续对话")); await settle();
     const html = renderToStaticMarkup(modal());
     expect(html).not.toContain("PRIVATE_QUESTION");
-    expect(html).toContain("请确认授权仍有效");
+    expect(html).toContain("若权限已变化");
+  });
+  it("allows a failed direct read to be retried without asking for a reason", async () => {
+    await loadedList(); openedModal();
+    harness.fetch.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await readAutomatically();
+    expect(renderToStaticMarkup(modal())).toContain("重试读取对话");
+    harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "retry", role: "assistant", text: "RETRIED_ANSWER" }], nextCursor: null }));
+    click(button(modal(), "重试读取对话")); await settle();
+    expect(renderToStaticMarkup(modal())).toContain("RETRIED_ANSWER");
+    expect(JSON.parse(harness.fetch.mock.calls[2][1].body)).toEqual({ id: row.id });
+  });
+  it("returns focus without changing the table scroll when the window closes", async () => {
+    await loadedList();
+    const scroll = { scrollTop: 280 };
+    harness.refs.list[1].current = scroll;
+    const tree = openedModal();
+    click(button(tree, "关闭"));
+    cleanup.pop()!();
+    expect(scroll.scrollTop).toBe(280);
+    expect(trigger.focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(nodes(list(), node => typeof node.type === "function" && node.type.name === "ConversationWindow")).toHaveLength(0);
   });
   it("closes the read window when the page becomes hidden", async () => {
-    await loadedList(); openedModal(); await authorize();
+    await loadedList(); openedModal(); await readAutomatically();
     documentEvents.visibilityState = "hidden";
     documentEvents.dispatchEvent(new Event("visibilitychange"));
     expect(nodes(list(), node => typeof node.type === "function" && node.type.name === "ConversationWindow")).toHaveLength(0);
