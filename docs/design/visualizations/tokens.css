@@ -1,0 +1,70 @@
+/* Lighthouse Classic Amber V3. Loaded before SVG and canvas theme initialization. */
+:root {
+  color-scheme: light;
+  --viz-palette: classic-amber;
+  --calendar-mark: square;
+  /* colors:start - generated from visual spec #color */
+  --bg: #f3efe0;
+  --surface: #f8f5ec;
+  --surface-raised: #f8f3e5;
+  --surface-muted: #eee6d0;
+  --surface-inverse: #2c2c2c;
+  --surface-inverse-muted: #40403e;
+  --text: #2c2c2c;
+  --text-muted: #5e5d59;
+  --text-soft: #6c6a66;
+  --text-inverse: #f8f3e5;
+  --border: #d5d2c5;
+  --border-strong: #a9a79d;
+  --primary: #d97706;
+  --on-primary: #242424;
+  --primary-text: #9b5c14;
+  --primary-soft: #efdec1;
+  --viz-grid: #d5d2c5;
+  --viz-reference: #6c6a66;
+  --viz-series-secondary: #9b7a4c;
+  --viz-series-secondary-text: #806744;
+  --danger: #b85c46;
+  --danger-text: #965040;
+  --viz-accent-strong: #9b5c14;
+  --viz-accent: #d97706;
+  --viz-accent-mid: #e09943;
+  --viz-accent-soft: #e7b87c;
+  --viz-accent-subtle: #edd1aa;
+  --viz-accent-area: #f0e1c6;
+  --viz-accent-on-dark-strong: #edd5b0;
+  --viz-accent-on-dark: #e7b77a;
+  --viz-accent-on-dark-mid: #df9136;
+  --viz-accent-on-dark-soft: #d97706;
+  --viz-accent-on-dark-subtle: #9b5c14;
+  --viz-accent-on-dark-area: #4f3b24;
+  /* colors:end */
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
+  --radius-lg: 16px;
+  --radius-xs: 4px;
+}
+
+.gallery-nav {
+  max-width: 1440px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font: 14px/1.5 var(--font-sans);
+  color: var(--text-muted);
+}
+.gallery-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--primary-text);
+  font-weight: 650;
+  text-underline-offset: 3px;
+}
+.card[id] { scroll-margin-top: 12px; }
+
+body > .gallery-nav:has(+ .card) { width: min(1100px, 100%); }
+
+html :is(a, button, [tabindex]):focus-visible { outline: 2px solid var(--primary-text) !important; outline-offset: 3px; }

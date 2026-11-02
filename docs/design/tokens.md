@@ -11,11 +11,30 @@ This is the active platform token contract for Lighthouse product UI. V3 is the 
 
 Obsolete palette and kit HTML explorations were removed from the repository; brand and campaign assets remain separate from runtime sources. A token is active only when this document, the browser visual spec, the runtime CSS, and the relevant component contract agree.
 
-## V3 Canonical Values
+## Color Authority for UI Development
 
-The following values are the compact contract used when calibrating the V3 pages. The longer compatibility tables below retain the semantic aliases used by existing primitives and tests.
+The approved shared colors are the swatches in [the visual specification's color system](lighthouse-classic-amber-visual-spec.html#color). Use the following roles when selecting chart colors. Production UI reads the matching semantic CSS tokens from its current scope. The gallery resolves these roles in [its tokens](visualizations/tokens.css) for offline SVG and Canvas rendering.
 
-| Role | Canonical value | Use |
+| Role | Approved value | Shared runtime token | Gallery token |
+| --- | --- | --- | --- |
+| Warm paper | `#F3EFE0` | `--lh-page` / `--color-page` | `--bg` |
+| Primary text | `#2C2C2C` | `--lh-ink` / `--color-ink` | `--text` |
+| Main data | `#D97706` | `--lh-classic-amber` | `--viz-accent` |
+| Small amber text | `#9B5C14` | `--lh-primary-text` / `--color-primary-text` | `--primary-text` |
+| Secondary data | `#9B7A4C` | `--lh-brass` / `--color-brass` | `--viz-series-secondary` |
+| Small brass text | `#806744` | `--lh-brass-text` / `--color-brass-text` | `--viz-series-secondary-text` |
+| Risk and error | `#B85C46` | `--lh-danger` / `--color-danger` | `--danger` |
+| Small risk and error text | `#965040` | `--lh-danger-text` / `--color-danger-text` | `--danger-text` |
+
+Read `src/app/globals.css` for shared aliases and `src/app/visual-v3.css` for existing `[data-lh-v3]` working-page overrides. Those overrides currently include `#A65D12` for primary actions and primary text, and `#8A4A0C` for the deep and hover roles. Existing pages consume their scoped tokens. Chart data roles follow the approved table above. Inspect the computed scope before adapting an existing component. A documentation update does not migrate a page's CSS.
+
+Template comments mentioning Mono, Porcelain or the upstream palette describe source history. Their color literals do not supersede the approved shared roles.
+
+## V3 Working-page Compatibility Values
+
+The following values describe the existing V3 working-page layer. They help maintain current pages and their semantic aliases. Read the approved shared table above for chart color selection.
+
+| Role | Working-page value | Use |
 | --- | --- | --- |
 | Paper page | `#F3EFE0` | Product background and long-page reading field. |
 | Warm white surface | `#FFFDF8` | Primary cards, panels, readers, forms, and work surfaces. |
@@ -42,11 +61,11 @@ Lighthouse is a service-culture knowledge and execution platform. The UI should 
 - Use the lighthouse metaphor as orientation, signal, and guidance; avoid decorative glow as a default styling language.
 - Keep platform controls independent from the service-brand VI palette unless a specific content surface calls for official brand assets.
 
-## Color Roles
+## Color Aliases and Compatibility
 
-The active platform palette is Classic Amber: a warm paper surface with amber action color and brass secondary signal color.
+The active shared palette is Classic Amber. The table below records the earlier working-page mapping for compatibility and migration review. Literal targets such as `#8a4d0c` belong to that mapping. Current resolved values come from the applicable runtime CSS scope and the approved shared roles above.
 
-| Role | Target token | Target value | Meaning |
+| Role | Compatibility alias | Earlier target | Meaning |
 | --- | --- | --- | --- |
 | Page | `--color-page` | `#f3efe0` | App background and large warm paper regions. |
 | Page start | `--color-page-start` | `#f3efe0` | Non-home pages stay on the flat paper field; the homepage cover may own its image treatment. |
@@ -86,7 +105,7 @@ Classic Amber keeps the semantic set intentionally warm and restrained. If futur
 
 ### Runtime Mapping
 
-This table is the bridge between the HTML visual specification and the active CSS runtime. A design role is considered implemented only when the HTML demo token, runtime CSS token, and component usage agree.
+This table maps role names between the HTML specification and runtime CSS. Resolve each token in the component's actual scope. The working-page overrides described above may differ from the shared specification.
 
 | Design role | HTML demo token | Runtime CSS token | Usage |
 | --- | --- | --- | --- |

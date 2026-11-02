@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>力导向网络 · 服务调用关系</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../tokens.css" data-design-consultant-tokens>
+<script src="lieflat-theme.js" data-design-consultant-theme></script>
+<script src="../runtime/echarts.min.js"></script>
+<style>
+  :root{--bg:var(--viz-editorial-c-f0efeb);--dark:var(--viz-editorial-c-1c1c1a)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);font-family:var(--font-sans);padding:40px;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center}
+  .card{background:var(--dark);color:var(--viz-editorial-c-f0efeb);border-radius:24px;padding:34px 34px 24px;
+    width:min(1100px,100%)}
+  h2{font-weight:700;font-size:19px;letter-spacing:-.02em;margin-bottom:4px}
+  .sub{font-size:12px;color:var(--viz-editorial-c-8f8e88);margin-bottom:10px}
+  .src{font-size:9.5px;color:var(--viz-editorial-c-55554f);margin-top:12px;letter-spacing:.08em;font-weight:500}
+  #ch{height:78vh;min-height:620px;cursor:grab}
+</style>
+<style data-design-consultant-lieflat>
+  html{background:var(--bg) !important}
+  body{background:var(--bg) !important;color:var(--text) !important;font-family:var(--font-sans) !important}
+  h1,h2,h3,.pagehead h1{font-family:var(--font-display) !important;letter-spacing:0 !important}
+  svg text{font-family:var(--font-sans) !important}
+  .sub,.src{color:var(--text-muted) !important}
+  .card{border-radius:var(--radius-lg) !important;background:var(--bg) !important;color:var(--text) !important}
+  .card.dark{background:var(--surface-inverse) !important;color:var(--text-inverse) !important}
+  .card.dark .sub,.card.dark .src{color:color-mix(in srgb,var(--text-inverse) 62%,transparent) !important}
+  .badge{border-radius:var(--radius-xs) !important}
+  html[data-embedded="true"] .pagehead{display:none !important}
+  .hit:focus{outline:none !important;stroke:var(--primary) !important;stroke-width:2 !important;stroke-opacity:1 !important}
+  button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary) !important;outline-offset:2px !important}
+  @media (max-width:900px){
+    body{padding:20px !important}
+    .grid2{grid-template-columns:minmax(0,1fr) !important;gap:18px !important;width:100% !important;min-width:0 !important}
+    .card.wide{grid-column:auto !important}
+    .card{padding:24px 20px 18px !important;min-width:0 !important;overflow-x:auto !important;overscroll-behavior-inline:contain;touch-action:pan-x pan-y pinch-zoom}
+    .split{grid-template-columns:minmax(0,1fr) !important;gap:18px !important;min-width:0 !important}
+    .card>svg{width:720px !important;max-width:none !important}
+    .ch,.wrap{width:720px !important;max-width:none !important;height:420px !important}
+    #ch{width:1140px !important;max-width:none !important;height:640px !important;min-height:640px !important}
+    canvas{max-width:none !important}
+    .pagehead{margin-bottom:18px !important}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-delay:0ms !important;transition-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+<nav class="gallery-nav" aria-label="图库导航"><a href="../index.html#interactive">← 返回图表目录</a><span>大型交互图 · 示例数据</span></nav>
+<div class="card dark" id="B2">
+  <h2>一百八十项服务的调用网络</h2>
+  <div class="sub">节点大小表示调用量，颜色区分 8 个业务域；可拖动节点重新观察聚类，单击空白处重播</div>
+  <div id="ch"></div>
+  <div class="src">力导向网络 · 高密度 · 服务调用</div>
+</div>
+<script>
+window.DC_LIEFLAT_THEME.installAdapters();const C=window.DC_LIEFLAT_COLORS;const FONT_FAMILY=getComputedStyle(document.documentElement).getPropertyValue("--font-sans").trim()||"sans-serif";const ACCENT=window.DC_LIEFLAT_THEME.accent;const ACCENT_ON_DARK=window.DC_LIEFLAT_THEME.accentOnDark;const formatWan=(value,unit="")=>{const amount=Number(value)/10;const text=Number.isInteger(amount)?String(amount):amount.toFixed(1);return text+"万"+unit;};
+const INK=C["1C1C1A"],PAPER=C["F0EFEB"];
+const rnd=(i,k)=>((i*73856093)^(k*19349663))%1000/1000; // deterministic
+
+// ── 8 domain hubs, each with a swarm of services; hubs interconnect ──
+const DOMAINS=[
+  ['鉴权',26,C["F0EFEB"]],['计费',24,C["DCDAD2"]],['内容',28,C["C9C7BD"]],
+  ['搜索',20,C["B3B0A4"]],['通知',22,C["9C9A91"]],['媒体',20,C["8F8E88"]],
+  ['分析',18,C["7C7A72"]],['边缘',14,C["6A6963"]],
+];
+const nodes=[],links=[];
+DOMAINS.forEach(([dom,count,shade],di)=>{
+  // the hub
+  nodes.push({name:dom,value:60+Math.round(rnd(di+1,3)*50),hub:true,shade,dom:di});
+  // satellites: long-tail sizes, a couple of mid-weights per domain
+  for(let i=0;i<count;i++){
+    const v=i<3?14+rnd(di+2,i+4)*18:2+rnd(di+5,i+9)*9;
+    const name=dom+'-'+String(i+1).padStart(2,'0');
+    nodes.push({name,value:Math.round(v),hub:false,shade,dom:di});
+    // satellite -> its hub
+    links.push({source:name,target:dom,
+      lineStyle:{width:.5+v*.05,color:C["3F3E38"],opacity:.5}});
+    // occasional satellite-to-satellite shortcut inside the domain
+    if(i>1&&rnd(di+3,i+11)<.22){
+      links.push({source:name,target:dom+'-'+String(1+Math.floor(rnd(di+4,i+13)*i)).padStart(2,'0'),
+        lineStyle:{width:.5,color:C["33322D"],opacity:.4}});
+    }
+  }
+});
+// hub-to-hub backbone: every domain talks to 2-3 others
+const H=DOMAINS.length;
+for(let a=0;a<H;a++)for(let b=a+1;b<H;b++){
+  if(rnd(a+7,b+9)<.42){
+    links.push({source:DOMAINS[a][0],target:DOMAINS[b][0],
+      lineStyle:{width:1.6+rnd(a+2,b+3)*2.2,color:C["55534B"],opacity:.65,curveness:.08}});
+  }
+}
+// a few cross-domain satellite shortcuts — the messy real-world wires
+for(let k=0;k<26;k++){
+  const a=nodes[1+Math.floor(rnd(k+1,17)*(nodes.length-1))];
+  const b=nodes[1+Math.floor(rnd(k+3,23)*(nodes.length-1))];
+  if(a.name!==b.name&&a.dom!==b.dom&&!a.hub&&!b.hub){
+    links.push({source:a.name,target:b.name,
+      lineStyle:{width:.5,color:C["2E2D29"],opacity:.38,curveness:.15}});
+  }
+}
+
+const g=echarts.init(document.getElementById('ch'));
+const opt={
+  animationDuration:300,
+  tooltip:{backgroundColor:PAPER,borderWidth:0,
+    textStyle:{color:INK,fontFamily:FONT_FAMILY,fontSize:12},padding:[10,14],
+    formatter:p=>p.dataType==='node'?p.name+' · '+formatWan(p.value,'次调用/日'):''},
+  series:[{
+    type:'graph',layout:'force',
+    force:{repulsion:46,edgeLength:[10,42],gravity:.16,friction:.22,layoutAnimation:true},
+    roam:true,draggable:true,
+    left:6,right:6,top:6,bottom:6,
+    data:nodes.map(n=>({
+      name:n.name,value:n.value,
+      symbolSize:n.hub?16+Math.sqrt(n.value)*1.6:2.5+Math.sqrt(n.value)*1.5,
+      itemStyle:{color:n.shade,borderWidth:n.hub?2:0,borderColor:INK},
+      label:{show:n.hub,position:'inside',
+        color:INK,fontFamily:FONT_FAMILY,fontSize:9.5,fontWeight:800},
+    })),
+    links,
+    emphasis:{
+      focus:'adjacency',
+      lineStyle:{color:PAPER,opacity:.9,width:1.4},
+      label:{show:true,color:PAPER,position:'right'},
+    },
+    blur:{itemStyle:{opacity:.1},lineStyle:{opacity:.03}},
+  }],
+};
+const play=()=>{g.clear();g.setOption(opt)};
+play();
+// click on empty canvas replays; clicks on nodes are for dragging
+g.getZr().on('click',e=>{if(!e.target)play()});
+addEventListener('resize',()=>g.resize());
+
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>环形网络 · 仓库协作关系</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../tokens.css" data-design-consultant-tokens>
+<script src="lieflat-theme.js" data-design-consultant-theme></script>
+<script src="../runtime/echarts.min.js"></script>
+<style>
+  :root{--bg:var(--viz-editorial-c-f0efeb);--dark:var(--viz-editorial-c-1c1c1a)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);font-family:var(--font-sans);padding:40px;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center}
+  .card{background:var(--dark);color:var(--viz-editorial-c-f0efeb);border-radius:24px;padding:34px 34px 24px;
+    width:min(1100px,100%)}
+  h2{font-weight:700;font-size:19px;letter-spacing:-.02em;margin-bottom:4px}
+  .sub{font-size:12px;color:var(--viz-editorial-c-8f8e88);margin-bottom:10px}
+  .src{font-size:9.5px;color:var(--viz-editorial-c-55554f);margin-top:12px;letter-spacing:.08em;font-weight:500}
+  #ch{height:78vh;min-height:620px;cursor:pointer}
+</style>
+<style data-design-consultant-lieflat>
+  html{background:var(--bg) !important}
+  body{background:var(--bg) !important;color:var(--text) !important;font-family:var(--font-sans) !important}
+  h1,h2,h3,.pagehead h1{font-family:var(--font-display) !important;letter-spacing:0 !important}
+  svg text{font-family:var(--font-sans) !important}
+  .sub,.src{color:var(--text-muted) !important}
+  .card{border-radius:var(--radius-lg) !important;background:var(--bg) !important;color:var(--text) !important}
+  .card.dark{background:var(--surface-inverse) !important;color:var(--text-inverse) !important}
+  .card.dark .sub,.card.dark .src{color:color-mix(in srgb,var(--text-inverse) 62%,transparent) !important}
+  .badge{border-radius:var(--radius-xs) !important}
+  html[data-embedded="true"] .pagehead{display:none !important}
+  .hit:focus{outline:none !important;stroke:var(--primary) !important;stroke-width:2 !important;stroke-opacity:1 !important}
+  button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary) !important;outline-offset:2px !important}
+  @media (max-width:900px){
+    body{padding:20px !important}
+    .grid2{grid-template-columns:minmax(0,1fr) !important;gap:18px !important;width:100% !important;min-width:0 !important}
+    .card.wide{grid-column:auto !important}
+    .card{padding:24px 20px 18px !important;min-width:0 !important;overflow-x:auto !important;overscroll-behavior-inline:contain;touch-action:pan-x pan-y pinch-zoom}
+    .split{grid-template-columns:minmax(0,1fr) !important;gap:18px !important;min-width:0 !important}
+    .card>svg{width:720px !important;max-width:none !important}
+    .ch,.wrap{width:720px !important;max-width:none !important;height:420px !important}
+    #ch{width:1140px !important;max-width:none !important;height:640px !important;min-height:640px !important}
+    canvas{max-width:none !important}
+    .pagehead{margin-bottom:18px !important}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-delay:0ms !important;transition-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+<nav class="gallery-nav" aria-label="图库导航"><a href="../index.html#interactive">← 返回图表目录</a><span>大型交互图 · 示例数据</span></nav>
+<div class="card dark" id="B1">
+  <h2>六十个代码仓库的协作关系</h2>
+  <div class="sub">连线表示共同贡献者；悬停查看关联仓库，单击空白处重播</div>
+  <div id="ch"></div>
+  <div class="src">环形网络 · 高密度 · Git 协作记录</div>
+</div>
+<script>
+window.DC_LIEFLAT_THEME.installAdapters();const C=window.DC_LIEFLAT_COLORS;const FONT_FAMILY=getComputedStyle(document.documentElement).getPropertyValue("--font-sans").trim()||"sans-serif";const ACCENT=window.DC_LIEFLAT_THEME.accent;const ACCENT_ON_DARK=window.DC_LIEFLAT_THEME.accentOnDark;const formatWan=(value,unit="")=>{const amount=Number(value)/10;const text=Number.isInteger(amount)?String(amount):amount.toFixed(1);return text+"万"+unit;};
+const INK=C["1C1C1A"],PAPER=C["F0EFEB"];
+const rnd=(i,k)=>((i*73856093)^(k*19349663))%1000/1000; // deterministic
+
+// ── 60 repos in 5 org clusters; cluster = shade family ──
+const ORGS=[
+  ['平台',16,C["F0EFEB"]],   // paper — the core
+  ['产品',14,C["C9C7BD"]],
+  ['数据',12,C["A5A39A"]],
+  ['基础设施',10,C["8F8E88"]],
+  ['实验室',8,C["6A6963"]],
+];
+const nodes=[];
+ORGS.forEach(([org,count],oi)=>{
+  for(let i=0;i<count;i++){
+    // activity: a few giants per cluster, long tail of small repos
+    const heavy=i<2?30+rnd(oi+1,i+2)*45:4+rnd(oi+3,i+7)*16;
+    nodes.push({
+      name:org+'/仓库-'+String(i+1).padStart(2,'0'),
+      org:oi,value:Math.round(heavy),
+    });
+  }
+});
+// links: dense inside a cluster, sparser across; weight = shared contributors
+const links=[];
+const idx={};nodes.forEach((n,i)=>idx[n.name]=i);
+nodes.forEach((a,i)=>{
+  nodes.forEach((b,j)=>{
+    if(j<=i)return;
+    const same=a.org===b.org;
+    const p=same?.16:.045;
+    if(rnd(i+1,j+2)<p){
+      links.push({source:i,target:j,
+        w:1+Math.round(rnd(i+2,j+3)*6),same});
+    }
+  });
+});
+
+const g=echarts.init(document.getElementById('ch'));
+const opt={
+  animationDuration:1800,animationEasing:'quarticOut',
+  tooltip:{backgroundColor:PAPER,borderWidth:0,
+    textStyle:{color:INK,fontFamily:FONT_FAMILY,fontSize:12},padding:[10,14],
+    formatter:p=>p.dataType==='node'
+      ?p.name+' · '+p.value+' 位贡献者'
+      :p.data.rawS+' ↔ '+p.data.rawT+' · '+p.data.w+' 位共同贡献者'},
+  series:[{
+    type:'graph',layout:'circular',
+    circular:{rotateLabel:true},
+    left:24,right:24,top:24,bottom:24,
+    data:nodes.map((n,i)=>({
+      name:n.name,value:n.value,
+      symbolSize:3.5+Math.sqrt(n.value)*1.7,
+      itemStyle:{color:ORGS[n.org][2],borderWidth:0},
+      // only the giants get a label — 60 names would be soup
+      label:{show:n.value>=26,position:'right',distance:4,
+        color:C["B3B0A4"],fontFamily:FONT_FAMILY,fontSize:8.5,fontWeight:600},
+    })),
+    links:links.map(l=>({
+      source:l.source,target:l.target,
+      rawS:nodes[l.source].name,rawT:nodes[l.target].name,w:l.w,
+      lineStyle:{
+        width:.4+l.w*.28,
+        color:l.same?C["55534B"]:C["3A3934"],
+        opacity:l.same?.5:.32,
+        curveness:.3,
+      },
+    })),
+    emphasis:{
+      focus:'adjacency',
+      lineStyle:{color:PAPER,opacity:.9,width:1.6},
+      label:{show:true,color:PAPER},
+    },
+    blur:{itemStyle:{opacity:.12},lineStyle:{opacity:.03}},
+  }],
+};
+const play=()=>{g.clear();g.setOption(opt)};
+play();
+document.getElementById('ch').addEventListener('click',play);
+addEventListener('resize',()=>g.resize());
+
+</script>
+</body>
+</html>

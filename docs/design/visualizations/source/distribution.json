@@ -1,0 +1,15 @@
+{
+  "sourcePackage": "design-consultant",
+  "revision": "bc60ea6f8b610bdf48593b968a4a78f27da3df7b",
+  "directory": "dist/design-consultant/templates/visualization-lieflat",
+  "sha256": {
+    "basics-gallery.html": "dab01097b1d79d7c9dd7a1393f8b948201319aa6a3a8ef45773621bfe4eeef1d",
+    "big-circular.html": "a8be45ab290f24a418f7fe19369a694dc4109d377de8d929eb6a432393f73ad3",
+    "big-force.html": "84a1d361084f07e17895e6733f8d1f92c08b319022afe4edaf0c90d735a570d8",
+    "big-threads.html": "8bb83aecc20323dfc025d8f05d6d1a9ac1b0f1e4a480a588f04fe25e166d7228",
+    "glance-gallery.html": "c01eea7ef5e8e41430fa531d6a06b1fe7bd2dd647abd37fa259344c610ba2355",
+    "lieflat-theme.js": "4840d3d21b734a84706976a4bf70ae1de07d9399e17adf446659f6325217d590",
+    "lupi-gallery.html": "c798c86a27e28300da6853d3789794702ade491d8344d52ef21db97200f65e2a",
+    "mono-tokens.js": "0917207d077477809c756df4e6619cf9cd1aeadd81328b2f83d1dc0e30a0ba48"
+  }
+}

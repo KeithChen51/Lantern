@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/larashero3-dotcom/lieflat-charts.git",
+  "commit": "e5b369de1d0d32637093ee62d60bd556cf2c1af4",
+  "importedAt": "2026-07-25",
+  "integrationAuthorization": "confirmed-by-user",
+  "policy": "Keep the vendored files byte-identical to upstream. Generate token-themed derivatives with scripts/sync-lieflat-module.mjs.",
+  "files": {
+    "LICENSE": "ffcca38841adb694b6f380647e15f17c446a4d1656fed51a1e2041d064c94cc8",
+    "README.md": "12c253e00b806ccaa04635f9045c7a392d29a29101010c3706a4f09e4faa3aaa",
+    "SKILL.md": "786c2fef9f701fe76b2bdeab2e8baed1337d456973c671b2b04539a00d907ef7",
+    "THIRD_PARTY_NOTICES.md": "3545b3af3d3d3f34ecebd603ddb1867e5ea1d45ef86bf2c065002f5033ede7a3",
+    "catalog.md": "ef29c04bacb0cce077b4439fb48f0c5a4e76049f49cb2577465bddf491b16bfc",
+    "examples/README.md": "667d75bfee4cb7eb46b3a73231c5aaed7814f2422114745bb58df86c4b7e4366",
+    "examples/lenny-2026-survey.html": "1a0db34e70922b913575cefbb1c228c0f78d8e3b307b93b8616df8d385e44496",
+    "mono-tokens.js": "fc44eb4c24c56bb42514c4572db8d8883cc26eddae1556b5629e74855205f837",
+    "templates/basics-gallery.html": "66c48c036bb42b47fa0d87caf89f52b68719771549debcb1db87000e9e234d27",
+    "templates/big-circular.html": "38af6e7022b58ddf28872c606d58ba99176fbc092acbb70e6bb53124cf776176",
+    "templates/big-force.html": "e331808fbb83814c7557bfc9ca821c84e6f2dfb8a7425b2ae16a1842e669ac37",
+    "templates/big-threads.html": "093d08d506722d61edcbb1f5b33fb5a35cb9edc904c7cdc3d92b3377cdcfd39b",
+    "templates/glance-gallery.html": "f6ed29aa32f921575a497ddc7b439e4b4df81d5c1b84c5abe668ff1cdbe7adb0",
+    "templates/lupi-gallery.html": "d2af07c8ea1c8d935cb70b19ca9284253be78481743284d0bd23ed5b8058a042"
+  }
+}
