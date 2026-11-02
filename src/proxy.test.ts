@@ -2,14 +2,78 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { proxy } from "./proxy";
 import { REQUEST_PATH_HEADER } from "./modules/auth/page-access";
+import { createLoginArrival, loginArrivalCookie, LOGIN_ARRIVAL_HEADER } from "./modules/auth/login-arrival";
 
 const { employee, portalCallback } = vi.hoisted(() => ({ employee: vi.fn(), portalCallback: vi.fn() }));
 vi.mock("@/modules/auth/access-http", () => ({ callback: portalCallback }));
-vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee }));
-vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: () => ({ origin: "https://lighthouse.invalid" }) }));
+vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee, readAccessCookie: (headers: Headers, name: string) => headers.get("cookie")?.split("; ").find(value => value.startsWith(`${name}=`))?.slice(name.length + 1) }));
+vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: () => ({ origin: "https://lighthouse.invalid", mode: process.env.AUTH_MODE ?? "portal", sessionCookie: "lighthouse_test_session", secureCookies: true, transactionMs: 300000, encryptionKey: Buffer.alloc(32, 5).toString("base64") }) }));
 beforeEach(() => { employee.mockReset(); portalCallback.mockReset(); });
 afterEach(() => vi.unstubAllEnvs());
 describe("employee request gate", () => {
+  it("starts IAM automatically from the domain document while preserving its local query", async () => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/?view=values", { headers: { accept: "text/html" } }));
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/auth/iam/start?returnTo=%2F%3Fview%3Dvalues");
+  });
+  it("does not auto-start twice when a returned session cookie is missing", async () => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/", { headers: { accept: "text/html", cookie: `${loginArrivalCookie("lighthouse_test_session")}=recent-callback` } }));
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2F");
+    expect(response.headers.has("set-cookie")).toBe(false);
+  });
+  it.each(["/login?loggedOut=1", "/login?error=callback", "/?loggedOut=1", "/?error=callback", "/heart"])("keeps explicit retry and other page entries out of automatic login: %s", async path => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`, { headers: { accept: "text/html" } }));
+    expect(response.headers.get("location") ?? "").not.toContain("/auth/iam/start");
+  });
+  it.each([
+    { rsc: "1" }, { "next-router-prefetch": "1" }, { purpose: "prefetch" }, { "sec-purpose": "prefetch;prerender" },
+  ] as Record<string, string>[])("does not start IAM for flight or speculative requests %j", async headers => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/", { headers: { accept: "text/html", ...headers } }));
+    expect(response.headers.get("location") ?? "").not.toContain("/auth/iam/start");
+  });
+  it.each(["/?code=private", "/?state=private", "/?token=private"])("clears stray IAM material without automatic authentication: %s", async path => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`, { headers: { accept: "text/html" } }));
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?error=callback");
+    expect(employee).not.toHaveBeenCalled();
+  });
+  it("consumes a successful IAM arrival only on the authenticated destination document", async () => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    employee.mockResolvedValue({ userId: "employee" });
+    const config = { origin: "https://lighthouse.invalid", encryptionKey: Buffer.alloc(32, 5).toString("base64") };
+    const token = "synthetic-session";
+    const name = loginArrivalCookie("lighthouse_test_session");
+    const marker = createLoginArrival(config, token, "/heart?view=values");
+    const cookie = `lighthouse_test_session=${token}; ${name}=${marker}`;
+    const prefetched = await proxy(new NextRequest("https://lighthouse.invalid/heart?view=values", { headers: { accept: "text/html", cookie, "next-router-prefetch": "1" } }));
+    expect(prefetched.headers.has("set-cookie")).toBe(false);
+    expect(prefetched.headers.has(`x-middleware-request-${LOGIN_ARRIVAL_HEADER}`)).toBe(false);
+    const otherTab = await proxy(new NextRequest("https://lighthouse.invalid/action", { headers: { accept: "text/html", cookie } }));
+    expect(otherTab.headers.has("set-cookie")).toBe(false);
+    expect(otherTab.headers.has(`x-middleware-request-${LOGIN_ARRIVAL_HEADER}`)).toBe(false);
+    const document = await proxy(new NextRequest("https://lighthouse.invalid/heart?view=values", { headers: { accept: "text/html", cookie } }));
+    expect(document.headers.get(`x-middleware-request-${LOGIN_ARRIVAL_HEADER}`)).toBe("/heart");
+    expect(document.headers.get("set-cookie")).toContain(`${name}=;`);
+    expect(document.headers.get("set-cookie")).toContain("Max-Age=0");
+    const refreshed = await proxy(new NextRequest("https://lighthouse.invalid/heart?view=values", { headers: { accept: "text/html", cookie: `lighthouse_test_session=${token}` } }));
+    expect(refreshed.headers.has(`x-middleware-request-${LOGIN_ARRIVAL_HEADER}`)).toBe(false);
+  });
+  it("drops forged arrival headers and markers even for authenticated pages", async () => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    employee.mockResolvedValue({ userId: "employee" });
+    for (const path of ["/login", "/api/auth/me", "/heart"]) {
+      const response = await proxy(new NextRequest(`https://lighthouse.invalid${path}`, { headers: { accept: "text/html", [LOGIN_ARRIVAL_HEADER]: "/heart", cookie: `${loginArrivalCookie("lighthouse_test_session")}=forged` } }));
+      expect(response.headers.has(`x-middleware-request-${LOGIN_ARRIVAL_HEADER}`)).toBe(false);
+    }
+  });
   it("does not accept middle-platform card tokens as IAM credentials", async () => {
     vi.stubEnv("AUTH_MODE", "iam");
     const response = await proxy(new NextRequest("https://lighthouse.invalid/?token=synthetic"));
