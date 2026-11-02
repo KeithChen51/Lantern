@@ -36,8 +36,8 @@
 .calendarDay[data-level="zero"]::before, .legendSquare[data-level="zero"] { border-color: var(--color-line); }
 .calendarDay[data-level="1"], .legendSquare[data-level="1"] { --cell-fill: color-mix(in srgb, var(--calendar-apricot) 50%, var(--color-surface)); }
 .calendarDay[data-level="2"], .legendSquare[data-level="2"] { --cell-fill: var(--calendar-apricot); }
-.calendarDay[data-level="3"], .legendSquare[data-level="3"] { --cell-fill: #e7a03f; }
-.calendarDay[data-level="4"], .legendSquare[data-level="4"] { --cell-fill: var(--lh-classic-amber); }
+.calendarDay[data-level="3"], .legendSquare[data-level="3"] { --cell-fill: color-mix(in oklab, #e7a03f 86%, #aeaeae); }
+.calendarDay[data-level="4"], .legendSquare[data-level="4"] { --cell-fill: color-mix(in oklab, var(--lh-classic-amber) 86%, #919191); }
 .calendarDay[data-level="unknown"]::before, .legendSquare[data-level="unknown"] { border: 1px dashed var(--color-line); background: repeating-linear-gradient(135deg, var(--color-line) 0 2px, var(--color-surface) 2px 6px); }
 .calendarLegend { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .75rem; color: var(--color-ink-soft); font-size: .6875rem; }
 .legendItem { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }

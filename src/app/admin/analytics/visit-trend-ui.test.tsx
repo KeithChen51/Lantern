@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { VisitTrend } from "@/modules/analytics/visit-trend";
 import { VisitActivity } from "./VisitActivity";
 import { heatmapLevel, heatmapScale, VisitHeatmap } from "./VisitHeatmap";
-import { describeTrendValue, readTrendResponse, trendSegments, VisitLineChart, VisitTrendPanel } from "./VisitTrend";
+import { compareTrendDay, describeTrendValue, readTrendResponse, trendDailyAverage, trendSegments, VisitLineChart, VisitTrendPanel } from "./VisitTrend";
 
 const report: VisitTrend = {
   range: "7", startDate: "2026-10-27", endDate: "2026-10-31",
@@ -65,6 +65,40 @@ describe("visit trend chart", () => {
     expect(html).toContain('data-mark="pv-peak"');
     expect(html).toContain("已记录最高 4");
     expect(html).toMatch(/<rect[^>]*width="10"[^>]*height="10"/);
+    expect(html).not.toContain("data-visit-tooltip");
+    expect(html).not.toContain('data-mark="pv-active-bar"');
+    expect(html).toContain('data-mark="pv-average"');
+    expect(html).toContain("PV 日均 2");
+    expect(html).toContain("截至当前，较本期日均高 50%");
+  });
+
+  it("computes the daily baseline from complete earlier dates including measured zero", () => {
+    expect(trendDailyAverage(report)).toEqual({ value: 2, samples: 3 });
+    const days = report.days.map(day => ({ ...day, pvStatus: "partial" as const }));
+    expect(trendDailyAverage({ ...report, days })).toEqual({ value: null, samples: 0 });
+    expect(trendDailyAverage({ ...report, days: [{ ...report.days[4], pv: 999, pvStatus: "available" }] })).toEqual({ value: null, samples: 0 });
+    const withNull = [{ ...report.days[0], pv: null }, report.days[1], report.days[4]];
+    expect(trendDailyAverage({ ...report, days: withNull })).toEqual({ value: 0, samples: 1 });
+  });
+
+  it("compares current partial values but avoids historical partial, missing and zero-baseline percentages", () => {
+    expect(compareTrendDay(report.days[4], report.endDate, 2)).toBe("截至当前，较本期日均高 50%");
+    expect(compareTrendDay({ ...report.days[0], pvStatus: "partial" }, report.endDate, 2)).toBe("部分记录，暂不比较日均");
+    expect(compareTrendDay(report.days[3], report.endDate, 2)).toBe("PV 暂无完整记录，暂不比较");
+    expect(compareTrendDay(report.days[4], report.endDate, 0)).toBe("截至当前，高于本期日均 3 次（日均为 0）");
+    expect(compareTrendDay({ ...report.days[4], pv: 0 }, report.endDate, 0)).toBe("截至当前，与本期日均持平");
+    expect(compareTrendDay(report.days[4], report.endDate, null)).toBe("截至当前，暂无完整历史日作为日均基准");
+    expect(compareTrendDay(report.days[4], report.endDate, 7 / 3)).toBe("截至当前，较本期日均高 28.6%");
+  });
+
+  it("omits the average line without complete earlier samples and does not invent a percent at zero", () => {
+    const single = renderToStaticMarkup(<VisitLineChart report={{ ...report, startDate: report.endDate, days: [report.days[4]] }} />);
+    expect(single).not.toContain('data-mark="pv-average"');
+    expect(single).toContain("暂无完整历史日作为日均基准");
+    const zero = renderToStaticMarkup(<VisitLineChart report={{ ...report, days: [report.days[1], report.days[4]] }} />);
+    expect(zero).toContain("PV 日均 0");
+    expect(zero).toContain("日均为 0");
+    expect(zero).not.toMatch(/日均[^<。]*%/);
   });
 
   it("closes each PV area at zero without spanning missing days or filling UV", () => {
