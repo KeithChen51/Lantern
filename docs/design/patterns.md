@@ -120,6 +120,9 @@ Runtime home pattern:
 - Heart motion uses `--lh-motion-*` and `--lh-ease-*` tokens. Motion should clarify reading order and interaction feedback, not decorate.
 - Heart scroll motion must use `useLhElementScrollProgress`; the global shell transition must use `useLhScrollProgress`. Do not create page-local scroll listeners.
 - Entrance animation is allowed once on page load for hero and major sections; repeated or looping motion is not allowed.
+- A successful IAM login may reveal the destination once through a temporary cloud curtain. Home uses two `--lh-motion-slow` intervals for the camera to settle into the existing cover, then reveals the title and navigation. Other destinations use one slow interval and keep their original route. The trusted server arrival path scopes this effect to the first destination, and the shell consumes it before later navigation.
+- The arrival camera uses `data-lh-home-brand-scene`; scroll depth continues to transform its inner background. Keep the approved image as a single scene and preload it with high priority on Home. The cloud curtain stays pointer-transparent and finishes in CSS, so delayed scripts or image loading cannot block the page. Reduced-motion users get the destination directly.
+- At viewport aspect ratios of 4:3 or narrower, align the cover image at 86% horizontally so the tower stays in view on phones and portrait tablets. Keep the arrival camera's transformed bounds outside the viewport throughout the move.
 - Scroll-driven motion is allowed only for cover depth and the sidebar surface transition. Other product pages should not use scroll-driven chrome changes.
 - Hover motion may use opacity and transform only. It must not change layout dimensions, spacing, or content order.
 - `prefers-reduced-motion` must disable Heart page motion and keep all content immediately available.
