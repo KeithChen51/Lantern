@@ -36,10 +36,10 @@ describe("administrator conversation inventory", () => {
     await listHermitRecords({ start: "2026-11-01", end: "2026-11-02", actor: "guest", id: "session' OR 1=1 --" }, options);
     const sql = query.mock.calls[0][0] as Prisma.Sql;
     expect(sql.values).toEqual([
-      ...Array(4).fill("session' OR 1=1 --"), new Date("2026-10-31T16:00:00.000Z"), new Date("2026-11-02T16:00:00.000Z"), "guest", 21,
+      ...Array(3).fill("session' OR 1=1 --"), new Date("2026-10-31T16:00:00.000Z"), new Date("2026-11-02T16:00:00.000Z"), "guest", 21,
     ]);
     expect(sql.sql).not.toContain("OR 1=1");
-    expect(sql.sql).toContain("AND session_id = ? AND BINARY session_id = BINARY ?");
+    expect(sql.sql).toContain("AND session_id = ?");
     expect(sql.sql).toContain("WHERE s.id = ? AND BINARY s.id = BINARY ?");
   });
 

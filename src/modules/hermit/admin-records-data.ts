@@ -71,7 +71,7 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
       FROM chat_sessions s LEFT JOIN (
         SELECT session_id, MAX(created_at) AS lastQuestionAt, COUNT(*) AS turns
         FROM chat_messages WHERE role = 'user'
-          ${id ? Prisma.sql`AND session_id = ${id} AND BINARY session_id = BINARY ${id}` : Prisma.empty}
+          ${id ? Prisma.sql`AND session_id = ${id}` : Prisma.empty}
         GROUP BY session_id
       ) question ON question.session_id = s.id
       ${id ? Prisma.sql`WHERE s.id = ${id} AND BINARY s.id = BINARY ${id}` : Prisma.empty}
