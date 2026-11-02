@@ -11,11 +11,30 @@ This is the active platform token contract for Lighthouse product UI. V3 is the 
 
 Obsolete palette and kit HTML explorations were removed from the repository; brand and campaign assets remain separate from runtime sources. A token is active only when this document, the browser visual spec, the runtime CSS, and the relevant component contract agree.
 
-## V3 Canonical Values
+## Color Authority for UI Development
 
-The following values are the compact contract used when calibrating the V3 pages. The longer compatibility tables below retain the semantic aliases used by existing primitives and tests.
+The approved shared colors are the swatches in [the visual specification's color system](lighthouse-classic-amber-visual-spec.html#color). Use the following roles when selecting chart colors. Production UI reads the matching semantic CSS tokens from its current scope. The gallery resolves these roles in [its tokens](visualizations/tokens.css) for offline SVG and Canvas rendering.
 
-| Role | Canonical value | Use |
+| Role | Approved value | Shared runtime token | Gallery token |
+| --- | --- | --- | --- |
+| Warm paper | `#F3EFE0` | `--lh-page` / `--color-page` | `--bg` |
+| Primary text | `#2C2C2C` | `--lh-ink` / `--color-ink` | `--text` |
+| Main data | `#D97706` | `--lh-classic-amber` | `--viz-accent` |
+| Small amber text | `#9B5C14` | `--lh-primary-text` / `--color-primary-text` | `--primary-text` |
+| Secondary data | `#9B7A4C` | `--lh-brass` / `--color-brass` | `--viz-series-secondary` |
+| Small brass text | `#806744` | `--lh-brass-text` / `--color-brass-text` | `--viz-series-secondary-text` |
+| Risk and error | `#B85C46` | `--lh-danger` / `--color-danger` | `--danger` |
+| Small risk and error text | `#965040` | `--lh-danger-text` / `--color-danger-text` | `--danger-text` |
+
+Read `src/app/globals.css` for shared aliases and `src/app/visual-v3.css` for existing `[data-lh-v3]` working-page overrides. Those overrides currently include `#A65D12` for primary actions and primary text, and `#8A4A0C` for the deep and hover roles. Existing pages consume their scoped tokens. Chart data roles follow the approved table above. Inspect the computed scope before adapting an existing component. A documentation update does not migrate a page's CSS.
+
+Template comments mentioning Mono, Porcelain or the upstream palette describe source history. Their color literals do not supersede the approved shared roles.
+
+## V3 Working-page Compatibility Values
+
+The following values describe the existing V3 working-page layer. They help maintain current pages and their semantic aliases. Read the approved shared table above for chart color selection.
+
+| Role | Working-page value | Use |
 | --- | --- | --- |
 | Paper page | `#F3EFE0` | Product background and long-page reading field. |
 | Warm white surface | `#FFFDF8` | Primary cards, panels, readers, forms, and work surfaces. |
@@ -42,11 +61,11 @@ Lighthouse is a service-culture knowledge and execution platform. The UI should 
 - Use the lighthouse metaphor as orientation, signal, and guidance; avoid decorative glow as a default styling language.
 - Keep platform controls independent from the service-brand VI palette unless a specific content surface calls for official brand assets.
 
-## Color Roles
+## Color Aliases and Compatibility
 
-The active platform palette is Classic Amber: a warm paper surface with amber action color and brass secondary signal color.
+The active shared palette is Classic Amber. The table below records the earlier working-page mapping for compatibility and migration review. Literal targets such as `#8a4d0c` belong to that mapping. Current resolved values come from the applicable runtime CSS scope and the approved shared roles above.
 
-| Role | Target token | Target value | Meaning |
+| Role | Compatibility alias | Earlier target | Meaning |
 | --- | --- | --- | --- |
 | Page | `--color-page` | `#f3efe0` | App background and large warm paper regions. |
 | Page start | `--color-page-start` | `#f3efe0` | Non-home pages stay on the flat paper field; the homepage cover may own its image treatment. |
@@ -86,7 +105,7 @@ Classic Amber keeps the semantic set intentionally warm and restrained. If futur
 
 ### Runtime Mapping
 
-This table is the bridge between the HTML visual specification and the active CSS runtime. A design role is considered implemented only when the HTML demo token, runtime CSS token, and component usage agree.
+This table maps role names between the HTML specification and runtime CSS. Resolve each token in the component's actual scope. The working-page overrides described above may differ from the shared specification.
 
 | Design role | HTML demo token | Runtime CSS token | Usage |
 | --- | --- | --- | --- |
@@ -100,7 +119,7 @@ This table is the bridge between the HTML visual specification and the active CS
 | Focus outline | `--lh-focus-outline` | `--lh-focus-outline` | `2px` visible outline for every keyboard-reachable control. |
 | Focus halo | `--lh-focus-halo`, `--shadow-focus` | `--lh-focus-halo`, `--shadow-focus` | Secondary glow around focus outline; never the only indicator. |
 | Focus offset | `3px` | `--lh-focus-offset` | Separation between component edge and focus outline. |
-| UI font | `--font-sans-stack` | `--font-sans-stack`, `--font-hei-stack` | App chrome, navigation, controls, tables, admin, Hermit interaction UI. Must start with PingFang SC. |
+| UI font | `--font-sans-stack` | `--font-sans-stack`, `--font-hei-stack` | App chrome, navigation, controls, tables, admin, Hermit interaction UI. Inter for Latin text and digits, platform fonts for Chinese. |
 | Serif accent font | `--font-serif-stack` | `--font-serif-stack`, `--font-noto-stack` | Page display titles and explicit editorial moments. Must start with Source Han Serif SC. |
 | Type scale | `--type-*` | `--type-caption`, `--type-label`, `--type-control`, `--type-body`, `--type-reading`, `--type-lead`, `--type-h3`, `--type-h2`, `--type-display` | Runtime source for all reusable component font sizes. |
 | Title scale | `--title-*` | `--title-display`, `--title-page`, `--title-section`, `--title-subsection`, `--title-card`, `--title-kicker` | Runtime source for page, section, card, and kicker hierarchy. |
@@ -114,9 +133,10 @@ Use a sans-serif UI system by default. Serif is an editorial accent, not the bod
 
 | Role | Token | Rule |
 | --- | --- | --- |
-| UI and body | `--font-sans` / `--font-hei-stack` | Use PingFang SC first for app chrome, controls, forms, tables, cards, admin, Hermit input/output, and normal UI body. Fallback: PingFang TC, Hiragino Sans GB, Microsoft YaHei UI, Microsoft YaHei, Source Han Sans SC, Noto Sans SC, sans-serif. |
-| Chinese reading | `--font-reading` | Use PingFang SC for ordinary long-form product reading unless the page has an explicit editorial reason to use serif. |
+| UI and body | `--font-sans` / `--font-hei-stack` | Use bundled Inter for Latin text and digits. Use PingFang SC on Apple platforms and Microsoft YaHei UI (then Microsoft YaHei) on Windows. Bundled Source Han Sans SC covers devices without these system fonts. |
+| Chinese reading | `--font-sans-stack` | Use the same UI stack for ordinary long-form reading. Editorial passages may use the serif accent. |
 | Serif accent | `--font-serif` / `--font-serif-stack` | Use Source Han Serif SC first for quotations, chapter-like moments, page display titles, and rare value-emphasis headings. Fallback: Noto Serif SC, Songti SC, SimSun, serif. |
+| Numbers | `font-variant-numeric` | Use proportional figures in prose and version labels. Use `tabular-nums` on comparable metrics, numeric columns and chart readouts. |
 | Mono | `--font-mono` | Code, file names, IDs, technical counters. |
 
 Recommended size scale:
@@ -143,8 +163,8 @@ Heading style roles:
 | Page Title | `--title-page` | Source Han Serif SC | `44px / 56px` desktop; `32px / 44px` mobile | `900` | Product page main title; one per page. |
 | Section Title | `--title-section` | Source Han Serif SC | `28px / 40px` | `700` | Main section title inside a page or spec document. |
 | Subsection | `--title-subsection` | Source Han Serif SC | `22px / 32px` | `700` | Secondary group title inside a section. |
-| Card Title | `--title-card` | Source Han Serif SC or PingFang SC | `22px / 32px` | `700` | Card, panel, form group, and compact module title. |
-| Kicker / Label | `--title-kicker` | PingFang SC | `12px / 1.2`, `0.12em` letter spacing | `900` | Structural label above a heading. Do not use it as body content. |
+| Card Title | `--title-card` | Source Han Serif SC or the UI sans stack | `22px / 32px` | `700` | Card, panel, form group, and compact module title. |
+| Kicker / Label | `--title-kicker` | UI sans stack | `12px / 1.2`, `0.12em` letter spacing | `900` | Structural label above a heading. Do not use it as body content. |
 
 Rules:
 
@@ -152,7 +172,7 @@ Rules:
 - Homepage / Heart may use the Home Brand Display rule once, on the first screen only. The second screen and below return to normal Classic Amber reading typography.
 - Use Kicker labels sparingly for structure, not for decorative numbering.
 - Do not create one-off heading sizes between the defined title roles.
-- Product controls and dense admin surfaces should prefer PingFang SC card titles when serif headings feel too editorial.
+- Product controls and dense admin surfaces should prefer the UI sans stack for card titles when serif headings feel too editorial.
 
 Weight scale:
 

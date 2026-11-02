@@ -1,0 +1,7 @@
+{
+  "upstreamRepository": "https://github.com/larashero3-dotcom/lieflat-charts",
+  "upstreamCommit": "ed436ba56b3cbeee20b9b9966b38a9a9689e239c",
+  "localizedCommit": "0d46b8b5883d2e101398441b1473b459f6d71cf1",
+  "localizedDirectory": "zh-CN",
+  "themeSource": "../../lighthouse-classic-amber-visual-spec.html#color"
+}

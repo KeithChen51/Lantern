@@ -25,6 +25,7 @@ describe("native employee entry and approval pages", () => {
     expect(html).toContain("OA 登录");
     expect(html).toContain('action="/api/auth/start"');
     expect(html).toContain("欢迎来到灯塔");
+    expect(html.match(/aria-label="Powered by SPACE AI Native"/g)).toHaveLength(1);
     expect(html).toContain('src="/lighthouse-home-hero-bg-v2-realistic-shore.png"');
     expect(redirect).not.toHaveBeenCalled();
   });

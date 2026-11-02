@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="灯塔访问与使用周报，自有 Classic Amber 整页报告样稿，使用虚构示例数据。">
+  <title>灯塔访问与使用周报 · 整页报告</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../tokens.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); background: var(--surface-muted); font: 14px/1.6 var(--font-sans); font-variant-numeric: tabular-nums; }
+    a { color: var(--primary-text); text-underline-offset: 3px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; max-width: 880px; margin: 16px auto; padding: 0 12px; }
+    .toolbar a { display: inline-flex; align-items: center; min-height: 44px; }
+    .report { max-width: 880px; margin: 0 auto 40px; padding: 36px 44px 28px; background: var(--bg); }
+    .masthead { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+    .sample { color: var(--primary-text); }
+    .heading { padding: 22px 0 18px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font: 500 34px/1.35 var(--font-display); letter-spacing: .02em; }
+    .period { margin-top: 7px; color: var(--text-muted); font-size: 12px; }
+    .finding { display: grid; grid-template-columns: 38px 1fr; gap: 14px; margin-bottom: 22px; padding: 15px 18px; border-left: 3px solid var(--primary); background: var(--primary-soft); }
+    .finding-number { color: var(--primary-text); font: 400 32px/1.25 var(--font-display); }
+    .finding h2 { font-size: 19px; line-height: 1.5; }
+    .finding p { margin-top: 4px; color: var(--text-muted); font-size: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 23px; padding-bottom: 20px; border-bottom: 1px solid var(--border-strong); }
+    .metric { padding: 0 15px; border-left: 1px solid var(--border); }
+    .metric:first-child { padding-left: 0; border: 0; }
+    .metric dt { color: var(--text-muted); font-size: 11px; }
+    .metric dd { margin: 4px 0 0; font-size: 33px; font-weight: 650; letter-spacing: -.03em; line-height: 1.25; }
+    .metric dd small { margin-left: 5px; color: var(--text-muted); font-size: 11px; font-weight: 400; letter-spacing: 0; }
+    .section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 11px; }
+    .section-heading h2 { font-size: 16px; }
+    .section-heading span { color: var(--text-muted); font-size: 11px; }
+    .legend { display: flex; gap: 18px; color: var(--text-muted); font-size: 11px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 21px; border-top: 2px solid var(--primary); }
+    .legend .uv { border-top: 2px dashed var(--viz-series-secondary); }
+    .trend { width: 100%; height: auto; display: block; overflow: visible; }
+    .trend text { font: 11px var(--font-sans); fill: var(--text-muted); }
+    .grid { stroke: var(--viz-grid); stroke-width: 1; }
+    .pv-line { stroke: var(--primary); }
+    .uv-line { stroke: var(--viz-series-secondary); stroke-dasharray: 6 5; }
+    .pv-mark { fill: var(--bg); stroke: var(--primary); stroke-width: 2; }
+    .uv-mark { fill: var(--bg); stroke: var(--viz-series-secondary); stroke-width: 2; }
+    .peak-label { fill: var(--primary-text) !important; font-weight: 700 !important; }
+    .trend-table { width: 100%; margin: 0 0 22px; border-collapse: collapse; font-size: 10px; text-align: right; }
+    .trend-table caption { text-align: left; color: var(--text-muted); font-size: 10px; margin-bottom: 5px; }
+    .trend-table th, .trend-table td { padding: 4px 7px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .trend-table thead th { color: var(--text-muted); font-weight: 400; }
+    .trend-table tr > :first-child { text-align: left; padding-left: 0; }
+    .trend-table tbody th { font-weight: 600; }
+    .lower { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; margin-bottom: 23px; }
+    .modules { list-style: none; padding: 0; margin: 0; }
+    .modules li { display: grid; grid-template-columns: 30px 1fr 33px 40px; gap: 10px; align-items: center; margin-top: 10px; font-size: 12px; }
+    .module-bar { height: 5px; background: var(--border); }
+    .module-bar span { display: block; height: 100%; background: var(--viz-series-secondary); }
+    .modules li:first-child .module-bar span { background: var(--primary); }
+    .module-value { font-weight: 600; text-align: right; }
+    .module-share { text-align: right; color: var(--text-muted); font-size: 10px; }
+    .reading { border-top: 2px solid var(--primary); padding-top: 10px; }
+    .reading h2 { font-size: 16px; }
+    .reading .average { margin: 9px 0 5px; font-size: 12px; color: var(--text-muted); }
+    .reading .average strong { color: var(--text); font-size: 29px; line-height: 1.2; font-weight: 650; }
+    .reading p { color: var(--text-muted); font-size: 12px; line-height: 1.75; }
+    .reading p + p { margin-top: 8px; }
+    .method { border-top: 1px solid var(--border-strong); padding-top: 12px; }
+    .method h2 { font-size: 11px; margin-bottom: 4px; }
+    .method p { color: var(--text-muted); font-size: 10px; line-height: 1.7; }
+    .footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 14px; padding-top: 9px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 10px; }
+    noscript { display: block; padding: 16px; color: var(--danger-text); }
+    @media (max-width: 600px) {
+      body { background: var(--bg); }
+      .report { padding: 22px 20px; margin-bottom: 0; }
+      .toolbar { padding: 0 20px; margin: 6px 0; font-size: 12px; }
+      .masthead { letter-spacing: 0; font-size: 10px; }
+      h1 { font-size: 28px; }
+      .finding { grid-template-columns: 26px 1fr; gap: 9px; padding: 13px 12px; }
+      .finding-number { font-size: 26px; }
+      .finding h2 { font-size: 16px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); gap: 17px 0; }
+      .metric:nth-child(3) { border-left: 0; padding-left: 0; }
+      .metric dd { font-size: 31px; }
+      .lower { grid-template-columns: 1fr; gap: 23px; }
+      .trend-table th, .trend-table td { padding: 4px 2px; font-size: 9px; }
+      .section-heading { align-items: start; }
+      .legend { gap: 10px; }
+      .footer { flex-direction: column; gap: 3px; }
+    }
+    @page { size: A4; margin: 12mm; }
+    @media print {
+      html, body { background: var(--bg); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .toolbar { display: none; }
+      .report { width: 100%; max-width: none; margin: 0; padding: 0; }
+      .heading { padding: 17px 0 15px; }
+      h1 { font-size: 29px; }
+      .finding { margin-bottom: 18px; padding: 12px 15px; }
+      .finding h2 { font-size: 17px; }
+      .metrics { margin-bottom: 18px; padding-bottom: 15px; }
+      .trend-table { margin-bottom: 18px; }
+      .lower { margin-bottom: 18px; gap: 24px; }
+      .finding, .metrics, .trend-block, .lower, .method, .footer { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="toolbar" aria-label="样稿导航"><a href="../index.html">← 返回开发图库</a><a href="presentation.html">查看演示版 →</a></nav>
+  <main class="report">
+    <div class="masthead"><span>灯塔 · 访问与使用</span><span class="sample">虚构示例数据 · 设计样稿</span></div>
+    <header class="heading"><h1>灯塔访问与使用周报</h1><p class="period" id="period"></p></header>
+    <section class="finding" aria-labelledby="finding-title"><span class="finding-number" aria-hidden="true">01</span><div><h2 id="finding-title"></h2><p id="finding-detail"></p></div></section>
+    <dl class="metrics" aria-label="本周关键指标">
+      <div class="metric"><dt>访问次数 · PV</dt><dd><span id="total-visits"></span><small>次</small></dd></div>
+      <div class="metric"><dt>去重访问人数 · UV</dt><dd><span id="weekly-users"></span><small>人</small></dd></div>
+      <div class="metric"><dt>AI 对话次数</dt><dd><span id="conversations"></span><small>段</small></dd></div>
+      <div class="metric"><dt>AI 对话轮次</dt><dd><span id="rounds"></span><small>轮</small></dd></div>
+    </dl>
+    <section class="trend-block" aria-labelledby="trend-title">
+      <div class="section-heading"><h2 id="trend-title">每天有多少人来、看了多少次</h2><div class="legend" aria-hidden="true"><span><i></i>PV</span><span><i class="uv"></i>UV</span></div></div>
+      <svg class="trend" id="trend" viewBox="0 0 720 200" role="img" aria-labelledby="trend-graphic-title trend-graphic-description"><title id="trend-graphic-title">每日访问次数与去重访问人数</title><desc id="trend-graphic-description">实线圆点表示 PV，虚线方点表示 UV。逐日读数见图下数据表。</desc></svg>
+      <table class="trend-table" id="trend-table"><caption>逐日读数 · 每日 UV 按日去重</caption><thead></thead><tbody></tbody></table>
+    </section>
+    <div class="lower">
+      <section aria-labelledby="modules-title"><div class="section-heading"><h2 id="modules-title">常用模块</h2><span>访问次数 / 占总访问比例</span></div><ol class="modules" id="modules"></ol></section>
+      <section class="reading" aria-labelledby="ai-title"><h2 id="ai-title">一次 AI 对话，平均提问几轮</h2><p class="average"><strong id="average-rounds"></strong> 轮 / 段</p><p id="ai-reading"></p><p id="peak-reading"></p></section>
+    </div>
+    <section class="method" aria-labelledby="method-title"><h2 id="method-title">统计口径与数据来源</h2><p>本页为虚构示例，供灯塔 UI 开发与报告排版参考。PV 按已显示的业务页面计数。本示例仅包含登录账号，周 UV 按整周账号去重，每日 UV 按当日账号去重，周 UV 不能由每日 UV 相加得到。AI 对话次数为时段内有已保存用户提问的会话数，每条用户提问计一轮。数据由同目录 weekly-data.js 提供。</p></section>
+    <footer class="footer"><span>灯塔 · Classic Amber</span><span>整页报告样稿 · 与演示版共用示例数据</span></footer>
+    <noscript>请启用 JavaScript 以读取本地示例数据和绘制图表。</noscript>
+  </main>
+  <script src="weekly-data.js"></script>
+  <script>
+    (() => {
+      const data = window.LanternWeeklyExample;
+      const text = (id, value) => { document.getElementById(id).textContent = value; };
+      if (!data?.daily?.length) {
+        text("finding-title", "示例数据未加载");
+        text("finding-detail", "请将 weekly-data.js 与本页保存在同一目录后重新打开。");
+        return;
+      }
+      const format = (value) => new Intl.NumberFormat("zh-CN").format(value);
+      const total = data.daily.reduce((sum, day) => sum + day.pv, 0);
+      const modules = [...data.modules].sort((a, b) => b.pv - a.pv);
+      const share = (value) => total ? Math.round(value / total * 100) : 0;
+      const peak = data.daily.reduce((best, day) => day.pv > best.pv ? day : best);
+      const dayName = (date) => new Intl.DateTimeFormat("zh-CN", { weekday: "long", timeZone: "UTC" }).format(new Date(date + "T00:00:00Z"));
+      const dateLabel = (date) => date.slice(5).replace("-", "/");
+      text("period", data.period.start + " — " + data.period.end + " · 自然周 · 共 " + data.daily.length + " 天");
+      const leaders = modules.slice(0, 2);
+      const leaderVisits = leaders.reduce((sum, item) => sum + item.pv, 0);
+      text("finding-title", total && leaders.length ? leaders.map((item) => item.name).join("与") + "占本周访问的 " + share(leaderVisits) + "%" : "本周暂无模块访问");
+      text("finding-detail", (leaders.length ? "上述模块合计 " + format(leaderVisits) + " 次访问。" : "") + "本周共有 " + format(data.weeklyUsers) + " 个去重账号访问平台。");
+      text("total-visits", format(total));
+      text("weekly-users", format(data.weeklyUsers));
+      text("conversations", format(data.ai.conversations));
+      text("rounds", format(data.ai.rounds));
+      text("average-rounds", data.ai.conversations ? (data.ai.rounds / data.ai.conversations).toFixed(1) : "—");
+      text("ai-reading", format(data.ai.rounds) + " 轮用户提问分布在 " + format(data.ai.conversations) + " 段对话中。平均轮次描述对话长度，效果评估还需结合回答反馈。");
+      text("peak-reading", total ? dayName(peak.date) + "（" + dateLabel(peak.date) + "）访问次数最高，为 " + format(peak.pv) + " 次，当日去重访问人数为 " + format(peak.uv) + " 人。" : "本周各日访问次数均为零。");
+      const list = document.getElementById("modules");
+      for (const module of modules) {
+        const item = document.createElement("li");
+        const name = document.createElement("span"); name.textContent = module.name;
+        const bar = document.createElement("div"); bar.className = "module-bar"; bar.setAttribute("aria-hidden", "true");
+        const fill = document.createElement("span"); fill.style.width = (modules[0].pv ? module.pv / modules[0].pv * 100 : 0) + "%"; bar.append(fill);
+        const value = document.createElement("span"); value.className = "module-value"; value.textContent = format(module.pv);
+        const percent = document.createElement("span"); percent.className = "module-share"; percent.textContent = share(module.pv) + "%";
+        item.append(name, bar, value, percent); list.append(item);
+      }
+      const svg = document.getElementById("trend");
+      const node = (tag, attrs, value) => {
+        const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        for (const [key, attr] of Object.entries(attrs)) element.setAttribute(key, attr);
+        if (value !== undefined) element.textContent = value;
+        svg.append(element); return element;
+      };
+      const drawTrend = (fixedWidth) => {
+        const width = fixedWidth ?? Math.max(280, Math.min(720, Math.round(svg.clientWidth)));
+        svg.setAttribute("viewBox", "0 0 " + width + " 200");
+        svg.querySelectorAll("line,text,polyline,circle,rect").forEach((element) => element.remove());
+        const maximum = Math.max(1, ...data.daily.flatMap((day) => [day.pv, day.uv]));
+        const ceiling = Math.ceil(maximum / 40) * 40;
+        const x = (index) => 35 + index * (width - 70) / Math.max(1, data.daily.length - 1);
+        const y = (value) => 157 - value / ceiling * 132;
+        for (let step = 0; step <= 3; step++) {
+          const value = ceiling * step / 3;
+          node("line", { x1: 35, x2: width - 35, y1: y(value), y2: y(value), class: "grid" });
+          node("text", { x: 27, y: y(value) + 4, "text-anchor": "end" }, Math.round(value));
+        }
+        for (const [key, lineClass, markClass] of [["pv", "pv-line", "pv-mark"], ["uv", "uv-line", "uv-mark"]]) {
+          node("polyline", { points: data.daily.map((day, index) => x(index) + "," + y(day[key])).join(" "), fill: "none", "stroke-width": 2.5, class: lineClass });
+          data.daily.forEach((day, index) => {
+            const mark = key === "pv" ? node("circle", { cx: x(index), cy: y(day[key]), r: 3.8, class: markClass }) : node("rect", { x: x(index) - 3.5, y: y(day[key]) - 3.5, width: 7, height: 7, class: markClass });
+            const title = document.createElementNS("http://www.w3.org/2000/svg", "title"); title.textContent = day.date + " " + key.toUpperCase() + " " + day[key]; mark.append(title);
+          });
+        }
+        data.daily.forEach((day, index) => node("text", { x: x(index), y: 180, "text-anchor": "middle" }, dateLabel(day.date)));
+        const peakIndex = data.daily.indexOf(peak);
+        node("text", { x: x(peakIndex), y: y(peak.pv) - 13, "text-anchor": "middle", class: "peak-label" }, "峰值 " + peak.pv);
+        };
+      drawTrend();
+      window.addEventListener("resize", () => drawTrend());
+      window.addEventListener("beforeprint", () => drawTrend(720));
+      window.addEventListener("afterprint", () => drawTrend());
+      const table = document.getElementById("trend-table");
+      const row = (values, header) => {
+        const tr = document.createElement("tr");
+        values.forEach((value, index) => {
+          const cell = document.createElement(header || index === 0 ? "th" : "td");
+          if (header || index === 0) cell.scope = header ? "col" : "row";
+          cell.textContent = value; tr.append(cell);
+        });
+        return tr;
+      };
+      table.tHead.append(row(["日期", ...data.daily.map((day) => dateLabel(day.date))], true));
+      table.tBodies[0].append(row(["PV · 次", ...data.daily.map((day) => day.pv)]), row(["UV · 人", ...data.daily.map((day) => day.uv)]));
+    })();
+  </script>
+</body>
+</html>

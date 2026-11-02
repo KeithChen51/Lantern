@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
+import { BrandAttribution } from "@/components/ui/BrandAttribution";
 import { requireSiteVisitor } from "@/modules/auth/access";
 import { employeeDisplayName } from "@/modules/auth/employee-name";
-import { PageHeading } from "@/components/ui/PageHeading";
 import { LhButton, LhPanel, LhStatusBadge } from "@/components/ui/lighthouse-primitives";
 import { currentVersion } from "@/lib/releases";
 import { EmployeeAvatar } from "./EmployeeAvatar";
+import { ReleaseUnreadBadge } from "./ReleaseUnreadBadge";
 
 export const metadata: Metadata = { title: "我的 | 灯塔" };
 
@@ -17,12 +18,11 @@ export default async function MyPage() {
 
   return (
     <div data-lh-page="me" className="mx-auto w-full max-w-3xl space-y-8">
-      <PageHeading title="我的" />
       <LhPanel aria-label={isGuest ? "访客信息" : "员工信息"} className="p-5 sm:p-8">
         <div className="flex items-center gap-5">
           <EmployeeAvatar displayName={displayName} avatarUrl={isGuest ? undefined : principal.avatarUrl} />
           <div className="min-w-0 space-y-2">
-            <h2 className="break-words text-[length:var(--title-section)] font-[var(--weight-bold)] text-ink">{displayName}</h2>
+            <h1 className="break-words text-[length:var(--title-section)] font-[var(--weight-bold)] text-ink">{displayName}</h1>
             <LhStatusBadge tone={isGuest ? "neutral" : "success"}>{isGuest ? "访客模式" : "已登录"}</LhStatusBadge>
           </div>
         </div>
@@ -34,12 +34,18 @@ export default async function MyPage() {
       </LhPanel>
       <LhPanel aria-label="消息与反馈" className="divide-y divide-line overflow-hidden">
         <Link href="/updates" className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-8">
-          <span><span className="block text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">版本消息</span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">当前版本 v{currentVersion}</span></span>
+          <span>
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">版本消息</span>
+              <ReleaseUnreadBadge />
+            </span>
+            <span className="mt-1 block text-[length:var(--type-caption)] text-muted">当前版本 v{currentVersion}</span>
+          </span>
           <span aria-hidden="true" className="text-primary-text">→</span>
         </Link>
         <Link href="/feedback" className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-8">
-          <span><span className="block text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈</span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">在线提交暂未开放</span></span>
-          <LhStatusBadge tone="neutral">暂未开放</LhStatusBadge>
+          <span><span className="block text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈</span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">使用问题与改进建议</span></span>
+          <LhStatusBadge tone="neutral">即将开放</LhStatusBadge>
         </Link>
       </LhPanel>
       {!isGuest && <div className="flex flex-wrap items-center justify-between gap-4">
@@ -49,6 +55,9 @@ export default async function MyPage() {
           <LhButton type="submit">退出登录</LhButton>
         </form>
       </div>}
+      <footer data-lh-profile-attribution>
+        <BrandAttribution layout="compact-horizontal" tone="amber" />
+      </footer>
     </div>
   );
 }

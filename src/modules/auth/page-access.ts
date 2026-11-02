@@ -4,6 +4,7 @@ const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback"
 const PUBLIC_ASSETS = new Set([
   "/nav-lighthouse-transparent.png", "/favicon.ico", "/icon.png", "/apple-icon.png",
   "/lighthouse-home-hero-bg-v2-realistic-shore.png",
+  "/fonts/brand/inter/InterVariable.woff2",
   "/fonts/brand/source-han-serif-sc/SourceHanSerifSC-VF.otf.woff2",
   "/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf",
   "/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf",

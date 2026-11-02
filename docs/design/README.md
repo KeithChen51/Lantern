@@ -14,11 +14,23 @@
 - [平台边界与事实源](lighthouse-platform-visual-system.md)
 - [技术署名样张 · 深墨、纯白、琥珀](lighthouse-classic-amber-visual-spec.html#brand-attribution) · [颜色、尺寸与落位规则](components.md#brand-attribution)
 
-V3 保留本心首页的品牌封面和灯塔原有导航框架。平台页面共享颜色、栅格、卡片、表单、阅读和状态规则。标准页面标题为桌面端 `44/56`、移动端 `32/44`；路引采用用户确认的居中起步与紧凑会话栏，具体见路引权威定义。背景使用 `#F3EFE0`，主要表面使用 `#FFFDF8`，边框使用 `#DED9CD`，正文使用 `#2C2C2C`，主要行动使用 `#A65D12`。
+V3 保留本心首页的品牌封面和灯塔原有导航框架。平台页面共享颜色、栅格、卡片、表单、阅读和状态规则。标准页面标题为桌面端 `44/56`、移动端 `32/44`；路引采用用户确认的居中起步与紧凑会话栏，具体见路引权威定义。颜色以[视觉规范的颜色系统](lighthouse-classic-amber-visual-spec.html#color)为准，暖纸背景为 `#F3EFE0`，正文为 `#2C2C2C`，琥珀主色为 `#D97706`，小字号琥珀文字为 `#9B5C14`。
 
 路引仍是汽车售后服务文化领域助手：回答留在对话中，相关知识以文档推荐卡出现，点击后在路引页内阅读并继续提问。当前产品定义不引入“产物”或“成果”工作台；上传组件支持 PDF、Word、TXT 和 Markdown 的设计状态，实际解析与权限行为以运行代码和接入文档为准。
 
-## 阅读顺序
+## 按开发任务阅读
+
+本索引供开发者与编程 AI 实现灯塔 UI 时使用。先确认当前工作分支中的实现，再按任务读取需要的契约。
+
+| 开发任务 | 阅读路径 | 查找实现 |
+| --- | --- | --- |
+| 普通页面、导航、表单、卡片 | 本页 → tokens → components → 对应 patterns | `src/components/ui/`、`src/components/layout/` 与目标页面 |
+| 页面中的趋势、排名、日历或其他图表 | 本页 → [图表制作指南](visualizations/guides/chart-workflow.md) → [按用途选图](visualizations/index.html#catalog) → 选中编号的单个预览 | 先查当前分支 `src/` 中的组件，再按编号定位参考 HTML |
+| 灯塔演示、整页报告 | [灯塔演示](visualizations/lantern/presentation.html)或[灯塔周报](visualizations/lantern/report.html) → 对应制作指南 | 同源虚构聚合样例与当前交付文件，额外版式按需查第三方参考 |
+
+图库卡片标明复用状态。共享 React 组件可以按其接口复用，页面内实现需要核对业务耦合，参考 HTML 用于理解图形和交互。页面开发按目标组件需要读取材料；完整演示、报告和来源归档由相应任务进入。图表颜色以视觉规范 `#color` 为准，模板中的原项目注释与示例数据保留来源意义。
+
+## 规范索引
 
 1. [lighthouse-platform-visual-system.md](lighthouse-platform-visual-system.md)：产品 UI 与服务品牌 VI 的边界、事实源和治理。
 2. [lighthouse-classic-amber-visual-spec.html](lighthouse-classic-amber-visual-spec.html)：可在浏览器打开的视觉规范与交互状态示例。
@@ -27,6 +39,8 @@ V3 保留本心首页的品牌封面和灯塔原有导航框架。平台页面�
 5. [patterns.md](patterns.md)：跨页面模板、内容密度和响应式降级规则。
 6. [do-dont.md](do-dont.md)：新增或迁移界面时的边界检查。
 7. [classic-amber-page-migration-audit.md](classic-amber-page-migration-audit.md)：当前页面迁移记录与剩余风险。
+
+可视化选型可打开[开发用图表目录](visualizations/index.html#catalog)，先按[趋势](visualizations/index.html#trend)、[排名](visualizations/index.html#ranking)或[日历](visualizations/index.html#calendar)等用途看缩略图，再读所选模板。61 个当前图型和 2 个历史模板统一使用 Classic Amber。复用状态、颜色角色与实现入口见[图库说明](visualizations/README.md)和[图表制作指南](visualizations/guides/chart-workflow.md)。
 
 ## 活跃设计系统文件
 
@@ -39,6 +53,8 @@ V3 保留本心首页的品牌封面和灯塔原有导航框架。平台页面�
 | `patterns.md` | 本心、镜鉴、笃行、路引、搜索、反馈、后台与移动端页面模板。 |
 | `do-dont.md` | 视觉治理、组件复用、状态表达和清理旧原型的规则。 |
 | `hermit-authoritative-definition.md` | 路引的产品边界、知识文档阅读、文件上传和原型与实现的区别。 |
+| `visualizations/index.html` | 开发选型入口，按用途查看图表缩略图、适用场景、复用状态与对应预览。 |
+| `visualizations/README.md` | 图库的颜色角色、业务接入、离线资源、来源与维护说明。 |
 | `games-preview-covers.md` | 启航预览封面素材与页面使用说明。 |
 | `print-assets/` | 海报等输出物料；不定义产品 UI token。 |
 

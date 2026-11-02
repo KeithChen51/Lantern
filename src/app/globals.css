@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/brand/inter/InterVariable.woff2") format("woff2");
+  unicode-range: U+0000-024F, U+1E00-1EFF, U+20A0-20CF;
+}
+
+@font-face {
   font-family: "Source Han Serif SC";
   font-style: normal;
   font-weight: 200 900;
@@ -204,7 +213,7 @@
   --lh-form-content-action-gap: 1.5rem;
   --lh-form-legend-choice-gap: 0.5rem;
 
-  --font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-hei-stack: "Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif;
   --font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-sans-stack: var(--font-hei-stack);
@@ -414,7 +423,6 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
   font-kerning: normal;
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   overflow-x: clip;
   position: relative;
@@ -577,6 +585,42 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar] {
   transition-duration: var(--lh-motion-medium);
 }
 
+[data-lh-sidebar-attribution] {
+  display: none;
+}
+
+[data-lh-profile-attribution] {
+  display: flex;
+  justify-content: center;
+  padding-block: 1rem;
+}
+
+@media (height < 48rem) {
+  /* Scroll module links independently so the account control stays reachable. */
+  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] > [data-lh-nav-link] {
+    flex-shrink: 0;
+    outline-offset: -2px;
+  }
+}
+
+@media (min-width: 48rem) and (min-height: 48rem) {
+  [data-lh-sidebar-attribution] {
+    display: flex;
+    flex: none;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  [data-lh-main][data-sidebar-pinned="true"] [data-lh-profile-attribution] {
+    display: none;
+  }
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-mobile="true"] {
   padding-top: max(1.25rem, env(safe-area-inset-top));
   padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
@@ -672,11 +716,9 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-my-link] {
-  width: 100%;
-  min-height: 3rem;
-  justify-content: center;
-  justify-items: center;
-  padding: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-my-notification-dot] {
