@@ -107,7 +107,8 @@ export function VisitLineChart({ report }: { report: VisitTrend }) {
   if (!report.days.length) return <p className={styles.state}>尚无访问采集记录，启用采集后可查看趋势。</p>;
   const left = 48, right = 16, top = 20, bottom = 226, height = 264;
   const chartWidth = width - left - right;
-  const values = report.days.flatMap(day => [day.pv ?? 0, day.uv ?? 0]);
+  const series = (["pv", "uv"] as const).map(metric => ({ metric, segments: trendSegments(report.days, metric) }));
+  const values = series.flatMap(item => item.segments.flatMap(segment => segment.map(point => point.value)));
   const maximum = Math.max(1, ...values);
   const targetStep = Math.max(1, maximum / 4);
   const magnitude = 10 ** Math.floor(Math.log10(targetStep));
@@ -142,7 +143,7 @@ export function VisitLineChart({ report }: { report: VisitTrend }) {
     <div ref={frame} className={styles.chartFrame} role="group" tabIndex={0}
       aria-label="每日 PV 与 UV 折线图，左右方向键逐日查看，Home 和 End 跳到首尾"
       aria-describedby={descriptionId} onKeyDown={move}>
-      <svg viewBox={"0 0 " + width + " " + height} width="100%" height={height} role="img" aria-label="PV 实线与 UV 虚线的每日访问趋势"
+      <svg viewBox={"0 0 " + width + " " + height} width="100%" height={height} role="img" aria-label="PV 实线圆点与 UV 虚线方点的每日访问趋势"
         onPointerMove={event => { if (event.pointerType !== "touch" || event.buttons) selectFromPointer(event); }}
         onPointerDown={event => { frame.current?.focus({ preventScroll: true }); selectFromPointer(event); }}>
         {Array.from({ length: intervals + 1 }, (_, index) => {
@@ -155,20 +156,21 @@ export function VisitLineChart({ report }: { report: VisitTrend }) {
         })}
         {ticks.map(index => <text key={index} x={x(index)} y={height - 12} className={styles.axisLabel}
           textAnchor={index === 0 ? "start" : index === report.days.length - 1 ? "end" : "middle"}>{(showYear ? report.days[index].date : report.days[index].date.slice(5)).replaceAll("-", "/")}</text>)}
-        {(["pv", "uv"] as const).map(metric => <g key={metric} className={metric === "pv" ? styles.pvLine : styles.uvLine}>
-          {trendSegments(report.days, metric).map((segment, index) => segment.length === 1
-            ? <circle key={index} cx={x(segment[0].index)} cy={y(segment[0].value)} r={3} />
+        {series.map(({ metric, segments }) => <g key={metric} className={metric === "pv" ? styles.pvLine : styles.uvLine}>
+          {segments.map((segment, index) => segment.length === 1
+            ? metric === "pv" ? <circle key={index} cx={x(segment[0].index)} cy={y(segment[0].value)} r={3} />
+              : <rect key={index} x={x(segment[0].index) - 3} y={y(segment[0].value) - 3} width={6} height={6} />
             : <path key={index} d={segment.map((point, pointIndex) => (pointIndex ? "L" : "M") + x(point.index).toFixed(2) + "," + y(point.value).toFixed(2)).join(" ")} />)}
         </g>)}
         <line className={styles.crosshair} x1={x(currentIndex)} x2={x(currentIndex)} y1={top} y2={bottom} />
         {day.pv !== null && !["unavailable", "not_collected"].includes(day.pvStatus) && <circle className={styles.pvPoint} cx={x(currentIndex)} cy={y(day.pv)} r={4} />}
-        {day.uv !== null && !["unavailable", "not_collected"].includes(day.uvStatus) && <circle className={styles.uvPoint} cx={x(currentIndex)} cy={y(day.uv)} r={4} />}
+        {day.uv !== null && !["unavailable", "not_collected"].includes(day.uvStatus) && <rect className={styles.uvPoint} x={x(currentIndex) - 5} y={y(day.uv) - 5} width={10} height={10} />}
       </svg>
     </div>
     <div id={descriptionId} className={styles.readout} aria-live="polite" aria-atomic="true">
       <strong>{day.date.replaceAll("-", "/")}</strong>
-      <span>PV <b>{describeTrendValue(day.pv, day.pvStatus)}</b></span>
-      <span>UV <b>{describeTrendValue(day.uv, day.uvStatus)}</b></span>
+      <span className={styles.pvReadout}>PV <b>{describeTrendValue(day.pv, day.pvStatus)}</b></span>
+      <span className={styles.uvReadout}>UV <b>{describeTrendValue(day.uv, day.uvStatus)}</b></span>
     </div>
     <p className={styles.help}>悬停或点按查看日期，键盘方向键可逐日切换。{missing && " 缺少完整记录的日期留空。"}{partial && " 部分记录已在日期明细中标注。"}</p>
   </>;

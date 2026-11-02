@@ -21,7 +21,7 @@ export function VisitActivity({ heatmap }: { heatmap: UsageReport["heatmap"] }) 
       <div><h2 id="visit-activity-title">{view === "heatmap" ? "访问日历" : "访问趋势"}</h2>
         <p className={styles.caption}>{view === "heatmap" ? "过去 365 天 · 每格代表一天" : "每日 PV 与 UV · 北京时间"}</p></div>
       <div className={trendStyles.headerActions}>{controls}
-        {view === "heatmap" && observed.length > 0 && <p className={styles.heatmapTotal}>已记录 <strong>{new Intl.NumberFormat("zh-CN").format(total)}</strong> 次访问</p>}
+        {view === "heatmap" && observed.length > 0 && <p className={styles.heatmapTotal}>{heatmap.status === "partial" ? "至少已记录" : "已记录"} <strong>{new Intl.NumberFormat("zh-CN").format(total)}</strong> 次访问</p>}
       </div>
     </div>
     {view === "heatmap" ? <VisitHeatmap heatmap={heatmap} embedded /> : <>

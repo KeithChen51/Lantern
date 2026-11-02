@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { VisitTrend } from "@/modules/analytics/visit-trend";
 import { VisitActivity } from "./VisitActivity";
+import { heatmapLevel, heatmapScale, VisitHeatmap } from "./VisitHeatmap";
 import { describeTrendValue, readTrendResponse, trendSegments, VisitLineChart } from "./VisitTrend";
 
 const report: VisitTrend = {
@@ -51,14 +52,48 @@ describe("visit trend chart", () => {
     const html = renderToStaticMarkup(<VisitLineChart report={report} />);
     expect(html).toContain('tabindex="0"');
     expect(html).toContain("左右方向键逐日查看");
-    expect(html).toContain("PV 实线与 UV 虚线");
+    expect(html).toContain("PV 实线圆点与 UV 虚线方点");
     expect(html).toContain('aria-live="polite"');
     expect(html).toContain("2026/10/31");
     expect(html).toContain("3（部分记录）");
     expect(html).toContain("2（部分记录）");
     expect(html).toContain("缺少完整记录的日期留空");
     expect(html.match(/<path /g)).toHaveLength(2);
-    expect(html.match(/<circle /g)).toHaveLength(4);
+    expect(html.match(/<circle /g)).toHaveLength(2);
+    expect(html.match(/<rect /g)).toHaveLength(2);
+  });
+
+  it("labels only attainable heatmap intervals, including a single observed visit", () => {
+    for (const maximum of [0, 1, 2, 3, 5, 100]) {
+      const scale = heatmapScale(maximum);
+      const counts = scale.flatMap(bin => Array.from({ length: bin.maximum - bin.minimum + 1 }, (_, index) => {
+        const count = bin.minimum + index;
+        expect(heatmapLevel(count, maximum)).toBe(bin.level);
+        return count;
+      }));
+      expect(counts).toEqual(Array.from({ length: maximum + 1 }, (_, index) => index));
+    }
+    expect(heatmapScale(1)).toEqual([
+      { level: "zero", minimum: 0, maximum: 0 }, { level: "4", minimum: 1, maximum: 1 },
+    ]);
+    const html = renderToStaticMarkup(<VisitHeatmap heatmap={{
+      startDate: "2026-10-31", endDate: "2026-10-31", status: "partial", observedFrom: null, note: "",
+      days: [{ date: "2026-10-31", views: 1, status: "partial" }],
+    }} />);
+    expect(html).toContain('title="1 次已记录访问"');
+    expect(html).toContain("未采集／不可用");
+    expect(html).toContain("部分记录可能低于实际访问次数");
+  });
+
+  it("does not stretch the count axis for values marked unavailable", () => {
+    const html = renderToStaticMarkup(<VisitLineChart report={{ ...report,
+      startDate: "2026-10-30", days: [
+        { date: "2026-10-30", pv: 900, uv: 900, pvStatus: "unavailable", uvStatus: "unavailable" },
+        { date: "2026-10-31", pv: 1, uv: 1, pvStatus: "available", uvStatus: "available" },
+      ],
+    }} />);
+    expect(html).toContain('text-anchor="end">1</text>');
+    expect(html).not.toContain('text-anchor="end">900</text>');
   });
 
   it("shows an empty state when there has never been visit collection", () => {

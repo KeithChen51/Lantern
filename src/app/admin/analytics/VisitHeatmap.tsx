@@ -13,6 +13,16 @@ export function heatmapLevel(views: number | null, maximum: number) {
   return String(Math.max(1, Math.min(4, Math.ceil(views / Math.max(maximum, 1) * 4))));
 }
 
+export function heatmapScale(maximum: number) {
+  const levels = [{ level: "zero", minimum: 0, maximum: 0 }];
+  for (let level = 1; level <= 4; level++) {
+    const minimum = Math.floor((level - 1) * maximum / 4) + 1;
+    const upper = Math.floor(level * maximum / 4);
+    if (minimum <= upper) levels.push({ level: String(level), minimum, maximum: upper });
+  }
+  return levels;
+}
+
 export function calendarWeeks(days: HeatmapDay[]) {
   if (!days.length) return [];
   const first = new Date(days[0].date + "T00:00:00Z");
@@ -34,7 +44,7 @@ export function VisitHeatmap({ heatmap, embedded = false }: { heatmap: UsageRepo
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const [selected, setSelected] = useState(heatmap.days.length - 1);
   const weeks = calendarWeeks(heatmap.days);
-  const maximum = Math.max(1, ...heatmap.days.map(day => day.views ?? 0));
+  const maximum = Math.max(0, ...heatmap.days.map(day => day.views ?? 0));
   const observed = heatmap.days.filter(day => day.views !== null);
   const total = observed.reduce((sum, day) => sum + (day.views ?? 0), 0);
 
@@ -100,11 +110,17 @@ export function VisitHeatmap({ heatmap, embedded = false }: { heatmap: UsageRepo
       </div>
       <div className={styles.calendarFooter}>
         <p className={styles.dayDescription} aria-live="polite">{current ? describeDay(current) : "尚无访问记录"}</p>
-        <div className={styles.calendarLegend} aria-label="访问次数由浅至深">
-          <span>少</span>{["zero", "1", "2", "3", "4"].map(level => <i className={styles.legendSquare} data-level={level} key={level} aria-hidden="true" />)}<span>多</span>
-          <i className={styles.legendSquare} data-level="unknown" aria-hidden="true" /><span>未采集</span>
+        <div className={styles.calendarLegend} aria-label="每日已记录访问次数色阶">
+          {observed.length > 0 && heatmapScale(maximum).map(({ level, minimum, maximum: upper }) => {
+            const label = minimum === upper ? numberFormat.format(minimum) : `${numberFormat.format(minimum)}–${numberFormat.format(upper)}`;
+            return <span className={styles.legendItem} key={level} title={`${label} 次已记录访问`}>
+              <i className={styles.legendSquare} data-level={level} aria-hidden="true" /><span>{label}</span>
+            </span>;
+          })}
+          <span className={styles.legendItem} title="未采集或暂时无法读取，不能视为零次访问"><i className={styles.legendSquare} data-level="unknown" aria-hidden="true" /><span>未采集／不可用</span></span>
         </div>
       </div>
+      {observed.length > 0 && <p className={styles.calendarScaleNote}>色阶按本图已记录的单日最高值分档，单位为次。{heatmap.days.some(day => day.status === "partial") && " 部分记录可能低于实际访问次数。"}</p>}
       {heatmap.note && <p className={styles.note}>{heatmap.note}</p>}
     </>;
   return embedded ? content : <section className={styles.heatmapSection} aria-labelledby="visit-calendar-title">{content}</section>;
