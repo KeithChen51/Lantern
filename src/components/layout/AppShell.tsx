@@ -17,14 +17,33 @@ interface AppShellProps {
   session: WebSession;
   watermarkSdkUrl?: string | null;
   visitTrackingEnabled?: boolean;
+  loginArrivalPath?: string;
 }
 
-export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnabled = false }: AppShellProps) {
+export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnabled = false, loginArrivalPath }: AppShellProps) {
   const pathname = usePathname();
   const isHomeSurface = pathname === "/" || pathname === "/heart";
+  const [arrivalPath, setArrivalPath] = React.useState(loginArrivalPath);
+  const loginArrival = arrivalPath && arrivalPath === pathname ? (isHomeSurface ? "home" : "page") : undefined;
   const [isSidebarPinned, setIsSidebarPinned] = React.useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
   const closeMobileNav = React.useCallback(() => setIsMobileNavOpen(false), []);
+
+  React.useEffect(() => {
+    if (!arrivalPath) return;
+    const clearArrival = () => setArrivalPath(undefined);
+    // A preserved App Router layout must not replay a completed login on return.
+    const timeout = window.setTimeout(clearArrival, loginArrival === "home" ? 1400 : 650);
+    window.addEventListener("pagehide", clearArrival);
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("pagehide", clearArrival);
+    };
+  }, [arrivalPath, loginArrival]);
+
+  React.useEffect(() => {
+    if (arrivalPath && pathname !== arrivalPath) setArrivalPath(undefined);
+  }, [arrivalPath, pathname]);
 
   React.useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
@@ -47,6 +66,7 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
     <SessionProvider session={session}><EmployeeWatermark sdkUrl={watermarkSdkUrl} /><div
       data-lh-shell
       data-lh-home-shell={isHomeSurface ? "true" : undefined}
+      data-lh-login-arrival={loginArrival}
       className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink"
     >
       <Navigation
@@ -61,6 +81,10 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
         isMobileNavOpen={isMobileNavOpen}
         onOpenMobileNav={() => setIsMobileNavOpen(true)}
       />
+      {loginArrival && <div data-lh-login-curtain aria-hidden="true">
+        <div data-lh-login-cloud="near" />
+        <div data-lh-login-cloud="far" />
+      </div>}
 
       <main
         data-lh-main
