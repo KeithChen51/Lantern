@@ -5,6 +5,7 @@ const database = vi.hoisted(() => ({
   chatSession: { create: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
   chatMessage: { upsert: vi.fn(), findFirst: vi.fn() },
   retrievalTrace: { create: vi.fn() },
+  user: { findUnique: vi.fn() },
 }));
 vi.mock("@prisma/client", () => ({ ChatMessageRole: { USER: "USER", ASSISTANT: "ASSISTANT", SYSTEM: "SYSTEM" }, Prisma: { JsonNull: null } }));
 vi.mock("@/infrastructure/db", () => ({ prisma: database }));
@@ -21,6 +22,7 @@ const key = (sessionId: string, messageId: string) => JSON.stringify([sessionId,
 beforeEach(() => {
   vi.clearAllMocks();
   rows.clear(); sessions.clear();
+  database.user.findUnique.mockResolvedValue({ employeeNo: "E134001" });
   database.chatSession.create.mockImplementation(async ({data}: {data: Record<string, unknown>}) => {
     if (sessions.has(data.id as string)) throw { code: "P2002" };
     sessions.set(data.id as string, { ...data }); return data;
@@ -41,6 +43,34 @@ beforeEach(() => {
 });
 
 describe("Hermit persisted message immutability", () => {
+  it("captures trusted employee fields once and keeps an old session's missing snapshot missing", async () => {
+    const repository = new PrismaHermitChatRepository();
+    const identity = { account: "login.employee", organization: "合成服务中心 / 华东售后部" };
+    await repository.upsertSession({ ...participant, id: "snapshot", title: null, identity });
+    expect(sessions.get("snapshot")).toMatchObject({ identitySnapshotJson: {
+      version: 1, employeeNo: "E134001", account: "login.employee", organization: "合成服务中心 / 华东售后部",
+    } });
+    expect(sessions.get("snapshot")).not.toHaveProperty("identity");
+    database.user.findUnique.mockResolvedValue({ employeeNo: "E134002" });
+    await repository.upsertSession({ ...participant, id: "snapshot", title: null, identity: { ...identity, organization: "新组织" } });
+    expect(sessions.get("snapshot")).toMatchObject({ identitySnapshotJson: { employeeNo: "E134001", organization: "合成服务中心 / 华东售后部" } });
+    await repository.upsertSession({ ...participant, id: "legacy", title: null });
+    await repository.upsertSession({ ...participant, id: "legacy", title: null, identity });
+    expect(sessions.get("legacy")).not.toHaveProperty("identitySnapshotJson");
+  });
+
+  it("prefers explicit authenticated employee numbers and never adds an employee snapshot to guests", async () => {
+    const repository = new PrismaHermitChatRepository();
+    await repository.upsertSession({ ...participant, id: "explicit", title: null,
+      identity: { account: "000042", employeeNo: "000042", organization: "当前可信组织" } });
+    expect(sessions.get("explicit")).toMatchObject({ identitySnapshotJson: { employeeNo: "000042", account: "000042", organization: "当前可信组织" } });
+    database.user.findUnique.mockClear();
+    await repository.upsertSession({ ...participant, userId: null, guestId: "guest:134", id: "guest", title: null,
+      identity: { account: "forged", employeeNo: "forged" } });
+    expect(database.user.findUnique).not.toHaveBeenCalled();
+    expect(sessions.get("guest")).not.toHaveProperty("identitySnapshotJson");
+  });
+
   it("scopes history reads to employee ownership, bounds rows and uses date/id cursor ordering", async () => {
     const repository = new PrismaHermitChatRepository();
     const date = new Date("2026-10-27T01:00:00Z");

@@ -11,6 +11,8 @@ export type HermitChatParticipant = HermitChatOwner & {
   regionId: string | null;
   dealerId: string | null;
   storeId: string | null;
+  /** Server-authenticated profile only. Never read from the chat request body. */
+  identity?: { account: string; employeeNo?: string; organization?: string };
 };
 
 export type HermitChatSessionInput = HermitChatParticipant & {

@@ -683,6 +683,7 @@ model ChatSession {
   dealerId  String?  @map("dealer_id")
   storeId   String?  @map("store_id")
   title     String?
+  identitySnapshotJson Json? @map("identity_snapshot_json")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

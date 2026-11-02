@@ -5,12 +5,13 @@ import { prisma } from "@/infrastructure/db";
 import { AppError } from "@/shared/errors";
 import { dateStart } from "@/modules/analytics/report-period";
 import { restoreHistoryMessages } from "./history";
+import { readRecordIdentities, unavailableRecordIdentity, type HermitRecordIdentity } from "./record-identity";
 
 type Database = Pick<PrismaClient, "$queryRaw">;
-type Options = { database?: Database };
+type Options = { database?: Database; now?: Date; authority?: "portal" | "iam" | "iam-portal" };
 export type HermitRecordActor = "employee" | "guest" | "unknown";
 export type HermitRecordFilters = { start?: string; end?: string; actor?: HermitRecordActor; id?: string; cursor?: string };
-export type HermitRecordRow = { id: string; actor: HermitRecordActor; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number };
+export type HermitRecordRow = { id: string; actor: HermitRecordActor; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number; identity: HermitRecordIdentity };
 export type HermitRecordsResult = { rows: HermitRecordRow[]; nextCursor: string | null };
 export type HermitRecordDetail = { messages: Array<{ id: string; role: "user" | "assistant"; text: string }>; nextCursor: string | null; view?: "stored-attempts" };
 
@@ -45,7 +46,7 @@ function count(value: number | bigint | undefined): number {
   return parsed;
 }
 
-/** The inventory never reads names, titles, message text or guest identifiers. */
+/** Inventory reads metadata and bounded employee identity display fields. */
 export async function listHermitRecords(input: HermitRecordFilters = {}, options: Options = {}): Promise<HermitRecordsResult> {
   const checked = filtersSchema.safeParse(input);
   if (!checked.success) invalid("请选择有效的筛选条件。");
@@ -93,10 +94,12 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
     LIMIT ${LIST_PAGE_SIZE + 1}
   `);
   const selected = rows.slice(0, LIST_PAGE_SIZE);
+  const identities = await readRecordIdentities(selected.filter(row => row.actor === "employee").map(row => row.id), { ...options, database: options.database ?? prisma });
   const last = selected.at(-1);
   return {
     rows: selected.map(row => ({ id: row.id, actor: row.actor, createdAt: row.createdAt.toISOString(),
       lastQuestionAt: row.lastQuestionAt?.toISOString() ?? null, turns: count(row.turns),
+      identity: row.actor === "employee" ? identities.get(row.id) ?? { ...unavailableRecordIdentity } : { ...unavailableRecordIdentity },
       ...(hasPeriod ? { periodTurns: count(row.periodTurns) } : {}) })),
     nextCursor: rows.length > LIST_PAGE_SIZE && last ? encodeCursor({ filter: fingerprint, id: last.id,
       createdAt: last.createdAt.toISOString(), lastQuestionAt: last.lastQuestionAt?.toISOString() ?? null }) : null,

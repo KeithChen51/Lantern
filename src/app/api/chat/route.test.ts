@@ -25,6 +25,13 @@ const skillResource = () => ({ id: skill.resourceId, type: "skill", title: skill
   version: { id: skill.versionId, number: 1, publishedAt: "2026-10-27T00:00:00Z", markdown: "# SKILL_METHOD_BODY", citations: [],
     files: [{ path: "SKILL.md", mediaType: "text/markdown", contentBase64: Buffer.from("# SKILL_METHOD_BODY").toString("base64"), checksum: "skill" }] } });
 describe("DSH chat transport boundary", () => {
+  it("passes only the authenticated identity into a new conversation snapshot", async () => {
+    mocks.employee.mockResolvedValue({ ...principal, account: "000042", employeeNo: "000042", organization: "可信组织 / 服务中心" });
+    await (await POST(request({ messages: [question], identity: { account: "forged", employeeNo: "forged", organization: "forged" } }))).text();
+    expect(mocks.upsertSession).toHaveBeenCalled();
+    for (const [input] of mocks.upsertSession.mock.calls) expect(input.identity).toEqual({ account: "000042", employeeNo: "000042", organization: "可信组织 / 服务中心" });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.enabled = true;

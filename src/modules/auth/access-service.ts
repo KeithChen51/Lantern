@@ -35,6 +35,7 @@ export class AccessService {
   private secret(value: string) { if (!value || value.length > 8192) throw new AccessError("Invalid authorization credential", 401); }
   private identity(value: PortalIdentity) {
     if (!value || typeof value.account !== "string" || !value.account.trim() || value.account.length > 200 || typeof value.displayName !== "string" || !value.displayName.trim() || value.displayName.length > 200 || (value.expiresAt !== undefined && (!Number.isFinite(value.expiresAt) || value.expiresAt <= this.now()))) throw new AccessError("Invalid employee identity", 401);
+    if (value.employeeNo !== undefined && (typeof value.employeeNo !== "string" || !value.employeeNo || value.employeeNo.trim() !== value.employeeNo || value.employeeNo.length > 191 || /[\u0000-\u001f\u007f]/.test(value.employeeNo))) throw new AccessError("Invalid employee number", 401);
     return value;
   }
   private async verified(token: string) {
@@ -210,7 +211,7 @@ export class AccessService {
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
     const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
-    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
+    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, employeeNo: identity.employeeNo, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
     await tx.put(grant);
     await tx.put(this.record("session", key("session", token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
     await this.audit(tx, "login", identity.account, grantId);
@@ -257,6 +258,7 @@ export class AccessService {
       // reuse the winner, then recheck freshness and revocation below.
       if (identity && identityAt !== undefined && current.payload.identityAt === grant.payload.identityAt && identityAt > current.payload.identityAt) {
         current.payload.identityAt = identityAt;
+        current.payload.employeeNo = identity.employeeNo;
         // IAM verifies the account. The combined mode's profile belongs to
         // the independently refreshed portal response, even in refresh races.
         if (!usesIamPortalAuthorization(this.config)) current.payload.displayName = identity.displayName;
@@ -306,7 +308,11 @@ export class AccessService {
     });
   }
   private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, adminCapabilities: readonly Capability[] = []): Principal {
-    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account), ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
+    const employeeNo = grant.payload.employeeNo ?? (accessAuthority(this.config) !== "portal" ? grant.payload.account : undefined);
+    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account),
+      ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}),
+      ...(channel === "web" && employeeNo ? { employeeNo } : {}),
+      grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);

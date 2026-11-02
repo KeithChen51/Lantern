@@ -37,6 +37,17 @@ function fixture(overrides: Partial<AccessConfig> = {}) {
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((done) => { resolve = done; }); return { promise, resolve }; }
 
 describe("employee login and identity shadows", () => {
+  it("keeps a separately confirmed employee number and clears it after upstream removes the field", async () => {
+    const f = fixture();
+    f.identity.mockResolvedValue({ account: "000042", displayName: "Test employee", employeeNo: "000042" });
+    const login = await f.login();
+    expect(login.principal.employeeNo).toBe("000042");
+    expect(f.store.snapshot().find(row => row.kind === "grant")?.payload).toMatchObject({ employeeNo: "000042" });
+    f.identity.mockResolvedValue({ account: "000042", displayName: "Test employee" });
+    f.advance(300001);
+    expect((await f.service.webPrincipal(login.sessionToken)).employeeNo).toBeUndefined();
+  });
+
   it("keeps fresh concurrent page checks read-only, coalesces activity, and still observes logout", async () => {
     const f = fixture(), login = await f.login();
     const before = f.store.snapshot().filter(row => row.kind === "grant" || row.kind === "session");

@@ -3,25 +3,37 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { AppError } from "@/shared/errors";
 
 vi.mock("@/infrastructure/db", () => ({ prisma: {} }));
+vi.mock("./record-identity", async importOriginal => ({ ...await importOriginal<typeof import("./record-identity")>(), readRecordIdentities: vi.fn(async () => new Map()) }));
 import { listHermitRecords, readHermitRecord } from "./admin-records-data";
+import { readRecordIdentities } from "./record-identity";
 
 const query = vi.fn();
 const options = { database: { $queryRaw: query } as unknown as Pick<PrismaClient, "$queryRaw"> };
+const identity = { employeeNo: null, account: null, organization: null, source: "unavailable" };
 const record = (id: string, lastQuestionAt: Date | null = new Date("2026-11-02T03:00:00.000Z")) => ({
   id, actor: "employee", createdAt: new Date("2026-11-01T03:00:00.000Z"), lastQuestionAt, turns: BigInt(2),
 });
 const message = (id: string, role: string, turn: unknown = null) => ({ id: `db-${id}`, externalMessageId: id, role, turn });
 const contents = (ids: string[]) => ids.map(externalMessageId => ({ externalMessageId, text: `saved ${externalMessageId} [1]` }));
 
-beforeEach(() => { query.mockReset(); });
+beforeEach(() => { query.mockReset(); vi.mocked(readRecordIdentities).mockReset().mockResolvedValue(new Map()); });
 
 describe("administrator conversation inventory", () => {
+  it("adds trusted employee identity while keeping guest and unowned rows identity-free", async () => {
+    const employeeIdentity = { employeeNo: "E134001", account: "login.employee", organization: "服务 / 华东", source: "session-snapshot" as const };
+    query.mockResolvedValue([record("employee"), { ...record("guest"), actor: "guest" }, { ...record("unknown"), actor: "unknown" }]);
+    vi.mocked(readRecordIdentities).mockResolvedValue(new Map([["employee", employeeIdentity], ["guest", employeeIdentity], ["unknown", employeeIdentity]]));
+    const result = await listHermitRecords({}, options);
+    expect(readRecordIdentities).toHaveBeenCalledWith(["employee"], expect.any(Object));
+    expect(result.rows.map(row => row.identity)).toEqual([employeeIdentity, identity, identity]);
+  });
+
   it("fetches only inventory metadata, including empty and identity-unknown old sessions", async () => {
     query.mockResolvedValue([record("first"), { ...record("empty", null), actor: "unknown", turns: BigInt(0) }]);
     const result = await listHermitRecords({}, options);
     expect(result).toEqual({ rows: [
-      { id: "first", actor: "employee", createdAt: "2026-11-01T03:00:00.000Z", lastQuestionAt: "2026-11-02T03:00:00.000Z", turns: 2 },
-      { id: "empty", actor: "unknown", createdAt: "2026-11-01T03:00:00.000Z", lastQuestionAt: null, turns: 0 },
+      { id: "first", actor: "employee", createdAt: "2026-11-01T03:00:00.000Z", lastQuestionAt: "2026-11-02T03:00:00.000Z", turns: 2, identity },
+      { id: "empty", actor: "unknown", createdAt: "2026-11-01T03:00:00.000Z", lastQuestionAt: null, turns: 0, identity },
     ], nextCursor: null });
     const sql = query.mock.calls[0][0] as Prisma.Sql;
     expect(sql.sql).not.toMatch(/\b(title|content|metadata_json|display_name|account)\b/i);
@@ -49,7 +61,7 @@ describe("administrator conversation inventory", () => {
       createdAt: new Date("2026-01-01T00:00:00.000Z"), turns: BigInt(9), periodTurns: BigInt(2) }]);
     const result = await listHermitRecords({ start: "2026-11-01", end: "2026-11-02" }, options);
     expect(result.rows).toEqual([{ id: "resumed", actor: "employee", createdAt: "2026-01-01T00:00:00.000Z",
-      lastQuestionAt: "2026-11-04T01:00:00.000Z", turns: 9, periodTurns: 2 }]);
+      lastQuestionAt: "2026-11-04T01:00:00.000Z", turns: 9, periodTurns: 2, identity }]);
     const sql = query.mock.calls[0][0] as Prisma.Sql;
     expect(sql.sql).toContain("COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS periodTurns");
     expect(sql.sql).toContain("FROM chat_messages WHERE role = 'user'");
