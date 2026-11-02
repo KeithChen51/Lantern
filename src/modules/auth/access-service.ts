@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { equalSecret, hashToken, openToken, randomToken, safeReturnTo, sealToken } from "./access-crypto";
-import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
+import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type Capability, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
 import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
 import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
@@ -284,7 +284,13 @@ export class AccessService {
       if (this.now() - current.payload.identityAt >= this.duration(options?.adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, options?.adminWrite ? 60000 : 300000)) throw new AccessError("Employee verification is unavailable", 503);
       const roleFresh = this.duration(options?.adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, options?.adminWrite ? 60000 : 300000);
       const adminRoles = [this.config.adminRole, this.config.platformAdminRole].filter((role): role is string => Boolean(role));
-      const admin = this.now() - current.payload.rolesAt < roleFresh && adminRoles.some(role => current.payload.roles.includes(role));
+      const rolesFresh = this.now() - current.payload.rolesAt < roleFresh;
+      const admin = rolesFresh && adminRoles.some(role => current.payload.roles.includes(role));
+      // Existing knowledge access may have used a shared role mapping. Such a
+      // mapping cannot distinguish platform administrators and must not acquire
+      // access to usage statistics when this capability is introduced.
+      const platformRole = this.config.platformAdminRole;
+      const analytics = rolesFresh && Boolean(platformRole && platformRole !== this.config.adminRole && current.payload.roles.includes(platformRole));
       // A page loads many authenticated chunks concurrently. Keep fresh checks
       // read-only; a retry after a competing touch sees the committed timestamp.
       // Rounding activity down can expire idle sessions up to one minute early,
@@ -293,11 +299,14 @@ export class AccessService {
       if (this.now() - session.payload.lastUsedAt >= touchInterval) {
         session.payload.lastUsedAt = this.now(); await this.save(tx, session);
       }
-      return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, admin);
+      return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, [
+        ...(admin ? ["knowledge:manage" as const] : []),
+        ...(analytics ? ["analytics:summary" as const] : []),
+      ]);
     });
   }
-  private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, admin = false): Principal {
-    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account), ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...(admin ? ["knowledge:manage" as const] : [])] : [SCOPE], csrfToken, expiresAt };
+  private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, adminCapabilities: readonly Capability[] = []): Principal {
+    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account), ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);

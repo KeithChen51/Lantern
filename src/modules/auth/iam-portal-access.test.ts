@@ -61,12 +61,13 @@ describe("IAM identity with middle-platform roles", () => {
 
   it.each([
     ["lighthouse_user", false], ["lighthouse_knowledge_admin", true], ["lighthouse_admin", true],
-  ])("maps %s to the existing capability set", async (role, admin) => {
+  ])("maps %s to distinct knowledge and analytics capabilities", async (role, admin) => {
     const f = fixture();
     f.authorization.mockResolvedValue({ roles: [role as string, "unrelated_admin"] });
     const login = await f.login();
     expect(login.principal.capabilities).toContain("content:read");
     expect(login.principal.capabilities.includes("knowledge:manage")).toBe(admin);
+    expect(login.principal.capabilities.includes("analytics:summary")).toBe(role === "lighthouse_admin");
     expect(f.store.snapshot().find(row => row.kind === "grant")?.payload).toMatchObject({ roles: [role] });
     const tokens = await f.client(login.sessionToken);
     expect((await f.service.clientPrincipal(tokens.access_token, "mcp")).capabilities).toEqual(["knowledge:read"]);

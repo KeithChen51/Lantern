@@ -1,7 +1,7 @@
 import { AppError } from "@/shared/errors";
 import type { IamLoginConfig } from "./iam-config";
 
-export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage";
+export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage" | "analytics:summary";
 export type Principal = {
   kind?: "employee" | "guest";
   userId: string; account: string; displayName: string;

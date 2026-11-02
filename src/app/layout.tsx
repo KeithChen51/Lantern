@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { requireSiteVisitor } from "@/modules/auth/access";
 import { isPublicAuthPage, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 import { getWatermarkSdkUrl } from "@/modules/watermark/config";
+import { visitCoverageStart } from "@/modules/analytics/policy";
 
 export const metadata: Metadata = {
   title: "灯塔 丨 服务文化数字平台",
@@ -34,7 +35,7 @@ export default async function RootLayout({
     }
     // Public login HTML never renders or loads the business shell.
     const { AppShell } = await import("@/components/layout/AppShell");
-    content = <AppShell watermarkSdkUrl={principal.kind === "guest" ? null : getWatermarkSdkUrl()} session={{ kind: principal.kind, user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
+    content = <AppShell visitTrackingEnabled={Boolean(visitCoverageStart())} watermarkSdkUrl={principal.kind === "guest" ? null : getWatermarkSdkUrl()} session={{ kind: principal.kind, user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
   }
   return (
     <html

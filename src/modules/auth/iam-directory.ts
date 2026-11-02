@@ -5,7 +5,7 @@ import { AccessError } from "./access-types";
 export const IAM_ROLES = [
   { code: "lighthouse_user", name: "灯塔用户", description: "阅读灯塔内容和知识资料，使用路引与个人客户端授权" },
   { code: "lighthouse_knowledge_admin", name: "灯塔知识管理员", description: "灯塔用户能力及知识资料管理" },
-  { code: "lighthouse_admin", name: "灯塔管理员", description: "当前开放能力为灯塔用户能力及知识资料管理" },
+  { code: "lighthouse_admin", name: "灯塔管理员", description: "灯塔用户能力、知识资料管理及访问与使用汇总" },
 ] as const;
 const KNOWN_ROLES = new Set<string>(IAM_ROLES.map(role => role.code));
 const DURABLE_EXPIRY = 253402300799000;

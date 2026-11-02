@@ -21,7 +21,7 @@
 | --- | --- |
 | `lighthouse_user` | 员工浏览、知识读取、路引对话及已实现的员工功能 |
 | `lighthouse_knowledge_admin` | 员工能力与已有 `knowledge:manage` |
-| `lighthouse_admin` | 员工能力与已有 `knowledge:manage` |
+| `lighthouse_admin` | 员工能力、`knowledge:manage` 和 Web 汇总看板 `analytics:summary` |
 
 无角色或只有未知角色均拒绝登录与访问；未知角色本身不授予能力。固定角色不读取 `PORTAL_KNOWLEDGE_ADMIN_ROLE` / `PORTAL_PLATFORM_ADMIN_ROLE`，也不会产生未实现的平台管理功能。CLI/MCP 仍仅提供员工已有的知识读取能力，不因浏览器管理员身份增加客户端写权限。
 
