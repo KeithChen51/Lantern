@@ -1,0 +1,96 @@
+.curtain {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .curtain {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    overflow: hidden;
+    pointer-events: none;
+    animation: fogClear var(--lh-arrival-duration) step-end both;
+  }
+
+  /* Opaque on the first paint, including while the texture is decoding. */
+  .curtain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, #b4a294, #d6c3ac 55%, #f3e3ca);
+    animation: fogLift var(--lh-arrival-duration) linear both;
+  }
+
+  :global([data-lh-login-arrival="page"]) .curtain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #9b8169 url("/lighthouse-home-hero-bg-v2-realistic-shore.png") 86% center / cover;
+    animation: fogCoast var(--lh-arrival-duration) ease-out both;
+  }
+
+  .nearBank, .farBank, .lowMist {
+    position: absolute;
+    background: url("/images/sea-fog-bank.webp") 74% center / cover no-repeat;
+    will-change: transform;
+    animation: fogPart var(--lh-arrival-duration) cubic-bezier(.45, .03, .23, .95) both;
+  }
+
+  .nearBank {
+    top: -20%;
+    bottom: -28%;
+    left: -20%;
+    width: 130%;
+    --travel-x: -95%;
+    --travel-y: 7%;
+  }
+
+  .farBank {
+    top: -32%;
+    bottom: -18%;
+    right: -26%;
+    width: 116%;
+    --face-x: -1;
+    --face-y: -1;
+    --travel-x: 94%;
+    --travel-y: -8%;
+    animation-timing-function: cubic-bezier(.52, .02, .34, .98);
+  }
+
+  .lowMist {
+    inset: 40% -24% -27%;
+    opacity: .68;
+    background-size: 100% 100%;
+    mask-image: linear-gradient(transparent, #000 54%);
+    animation: fogDrift var(--lh-arrival-duration) ease-in-out both;
+  }
+}
+
+/* The banks keep their density as the gap opens. Their soft edges are baked
+   into the shared texture so playback only moves compositor layers. */
+@keyframes fogPart {
+  0%, 8% { transform: translate3d(0, 0, 0) scale(var(--face-x, 1), var(--face-y, 1)); }
+  100% { transform: translate3d(var(--travel-x), var(--travel-y), 0) scale(var(--face-x, 1), var(--face-y, 1)); }
+}
+
+@keyframes fogDrift {
+  0%, 16% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-18%, 97%, 0); opacity: 0; }
+}
+
+@keyframes fogLift {
+  0%, 12% { opacity: 1; }
+  45%, 100% { opacity: 0; }
+}
+
+@keyframes fogClear {
+  from { visibility: visible; }
+  to { visibility: hidden; }
+}
+
+@keyframes fogCoast {
+  0%, 54% { opacity: 1; }
+  to { opacity: 0; }
+}
