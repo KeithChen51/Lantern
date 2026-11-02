@@ -70,7 +70,7 @@ These are the runtime base. The design system should strengthen their semantics 
 
 ## 技术署名
 
-灯塔是产品名称，「Powered by SPACE AI Native」说明技术归属。1.6.0 视觉规范收录下面三款固定配色。两种构图均使用同一组配色，具体位置供产品接入时确认。[查看六个原尺寸样张](lighthouse-classic-amber-visual-spec.html#brand-attribution)
+灯塔是产品名称，「Powered by SPACE AI Native」说明技术归属。共享组件 `BrandAttribution` 提供两种构图、三款固定配色。登录页、展开侧栏和个人页在暖纸底上使用深墨款。[查看六个原尺寸样张](lighthouse-classic-amber-visual-spec.html#brand-attribution)
 
 | 款式 | 使用表面 | 固定用色 |
 | --- | --- | --- |
@@ -82,9 +82,9 @@ These are the runtime base. The design system should strengthen their semantics 
 
 | 灯塔场景 | 构图与位置 |
 | --- | --- |
-| 桌面展开侧栏（240px） | 标准竖向 `standard-stacked`，SPACE 宽 160px。建议放在侧栏次级工具之后，预留足够高度。 |
-| 侧栏收起（80px）、短屏容不下竖版或移动端 | 侧栏省略署名，改在「我的」页尾使用紧凑横向 `compact-horizontal`。SPACE 宽 108px，整组宽 243px。 |
-| 独立登录、账号确认或设备授权 | 横版放在面板主操作之后，按正常文档流收尾。 |
+| 桌面展开侧栏（240px） | 在「我的」入口下方留 24px，居中放置标准竖向 `standard-stacked`，SPACE 宽 160px。桌面视口宽、高均达到 48rem 时展示。 |
+| 侧栏收起（80px）、短屏或移动端 | 署名落在「我的」页尾，使用紧凑横向 `compact-horizontal`。SPACE 宽 108px，整组宽 243px。 |
+| 员工登录 | 紧凑横版在右栏底部沿表单中线居中。手机端跟随登录帮助进入文档流。 |
 
 同一产品视口最多一处，侧栏已展示时「我的」页尾省略。四周净空至少为 SPACE 字标高度的一半，且每侧至少 16px。可用宽度不足时另选容器，不缩放、裁切或抽取 SPACE 图形代替完整署名。本心封面、顶部标题、主导航项、业务卡片、对话消息与操作按钮组均不作署名位置。
 

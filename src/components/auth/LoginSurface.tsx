@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BrandAttribution } from "@/components/ui/BrandAttribution";
 import styles from "./login.module.css";
 
 /** A server-rendered entry: the native login form also works without JavaScript. */
@@ -27,7 +28,9 @@ export function LoginSurface({ children }: { children: ReactNode }) {
             {children}
             <p className={styles.help}>登录遇到问题，请联系平台维护人员（林子轩）。</p>
           </div>
-          <p className={styles.footer}>从理念到实践，让服务有据可循。</p>
+          <footer className={styles.footer}>
+            <BrandAttribution layout="compact-horizontal" />
+          </footer>
         </section>
       </div>
     </div>

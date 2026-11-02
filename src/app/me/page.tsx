@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
+import { BrandAttribution } from "@/components/ui/BrandAttribution";
 import { requireSiteVisitor } from "@/modules/auth/access";
 import { employeeDisplayName } from "@/modules/auth/employee-name";
 import { PageHeading } from "@/components/ui/PageHeading";
@@ -49,6 +50,9 @@ export default async function MyPage() {
           <LhButton type="submit">退出登录</LhButton>
         </form>
       </div>}
+      <footer data-lh-profile-attribution>
+        <BrandAttribution layout="compact-horizontal" />
+      </footer>
     </div>
   );
 }

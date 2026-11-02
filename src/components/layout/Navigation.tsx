@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
+import { BrandAttribution } from "@/components/ui/BrandAttribution";
 import { lighthouseIcons, type LighthouseIcon } from "@/components/ui/lighthouse-icons";
 import { useLhScrollProgress } from "@/hooks/use-lighthouse-motion";
 import { cn } from "@/lib/utils";
@@ -441,6 +442,11 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         <div data-lh-sidebar-utility-group className="mt-auto grid min-w-0 gap-2">
           <SessionLinks isExpanded={isExpanded} />
         </div>
+        {isExpanded && (
+          <div data-lh-sidebar-attribution>
+            <BrandAttribution layout="standard-stacked" />
+          </div>
+        )}
       </nav>
 
       <dialog

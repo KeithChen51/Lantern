@@ -51,8 +51,8 @@
 .storyTitle { font-family: var(--font-serif-stack); font-size: var(--title-page); font-weight: var(--weight-bold); line-height: 1.5; text-wrap: balance; }
 .values { margin-top: 1.5rem; font-size: var(--type-control); line-height: var(--leading-control); letter-spacing: 0.08em; }
 
-.entry { position: relative; display: grid; align-content: center; min-width: 0; padding: 5rem 3.5rem 7rem; }
-.entryContent { width: min(100%, 23rem); margin-inline: auto; }
+.entry { display: flex; flex-direction: column; align-items: center; gap: 2rem; min-width: 0; padding: 2.5rem 3.5rem; }
+.entryContent { width: min(100%, 23rem); margin-block: auto; }
 .eyebrow { margin-bottom: 1rem; font-size: var(--type-label); font-weight: var(--weight-bold); line-height: var(--leading-label); color: var(--color-primary-text); }
 .title { font-family: var(--font-serif-stack); font-size: var(--title-page); font-weight: var(--weight-bold); line-height: 1.4; text-wrap: balance; }
 .entryContent > p:not(.eyebrow):not(.help) { margin-top: 1.25rem; font-size: var(--type-body); line-height: var(--leading-body); color: var(--color-ink-soft); }
@@ -78,7 +78,7 @@
 .entryContent button:focus-visible { outline: 2px solid var(--lh-focus-outline); outline-offset: var(--lh-focus-offset); }
 .entryContent button:disabled { background: var(--color-surface-quiet); border-color: var(--color-line); color: var(--color-muted); cursor: not-allowed; }
 .help { margin-top: 1.25rem; font-size: var(--type-label); line-height: var(--leading-label); color: var(--color-muted); }
-.footer { position: absolute; bottom: 2.5rem; inset-inline: 1.5rem; text-align: center; font-size: var(--type-caption); line-height: var(--leading-caption); color: var(--color-muted); }
+.footer { display: grid; place-items: center; }
 
 @media (max-width: 63.99rem) {
   .entry { padding-inline: 2rem; }
@@ -97,10 +97,10 @@
   .storyCopy { padding-top: 2rem; }
   .storyTitle { font-size: var(--title-section); line-height: 1.4; }
   .values { margin-top: 0.75rem; font-size: var(--type-caption); letter-spacing: 0; }
-  .entry { padding: 2.25rem 0.5rem 1rem; align-content: start; }
+  .entry { padding: 2.25rem 0.5rem 1rem; gap: 3rem; }
+  .entryContent { margin-block: 0; }
   .eyebrow { margin-bottom: 0.75rem; }
   .entryContent form { margin-top: 1.5rem; }
-  .footer { position: static; margin-top: 3rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -16,6 +16,7 @@ describe("my navigation entry", () => {
     expect(html.match(/href="\/me"/g)).toHaveLength(2);
     expect(html.match(/aria-label="我的"/g)).toHaveLength(2);
     expect(html.match(/aria-current="page"/g)).toHaveLength(2);
+    expect(html.match(/aria-label="Powered by SPACE AI Native"/g) ?? []).toHaveLength(isPinned ? 1 : 0);
     expect(html).toContain("测试员工");
     expect(html).not.toContain('action="/api/auth/logout"');
     expect(html).not.toContain('href="/updates"');

@@ -577,6 +577,29 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar] {
   transition-duration: var(--lh-motion-medium);
 }
 
+[data-lh-sidebar-attribution] {
+  display: none;
+}
+
+[data-lh-profile-attribution] {
+  display: flex;
+  justify-content: center;
+  padding-block: 1rem;
+}
+
+@media (min-width: 48rem) and (min-height: 48rem) {
+  [data-lh-sidebar-attribution] {
+    display: flex;
+    flex: none;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  [data-lh-main][data-sidebar-pinned="true"] [data-lh-profile-attribution] {
+    display: none;
+  }
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-mobile="true"] {
   padding-top: max(1.25rem, env(safe-area-inset-top));
   padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
