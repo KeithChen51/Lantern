@@ -306,13 +306,13 @@ The access calendar and PV/UV trend share a chart card. Use the same slots in bo
 | --- | --- |
 | Header | Title and one-line caption on the left, persistent view switch on the right. Stack the switch below the title when the card's inner width is 32rem or less. |
 | Toolbar | The calendar total and trend range selector occupy the same leading slot. The legend occupies the trailing slot. At 48rem or less, both legends use a separate row with space for wrapped labels. |
-| Plot | Center both plots on a shared rail up to 58rem wide and reserve 12rem of height, including while loading, on failure and when empty. Keep calendar cells square and scroll the calendar locally when needed. |
+| Plot | Center both plots on a shared rail up to 68rem wide and reserve 14rem of height, including while loading, on failure and when empty. Keep calendar cells square and scroll the calendar locally when needed. |
 | Daily readout | Show the selected day, its measured values or collection status, and the displayed period. Use the same background and spacing in both views. Allow the period its own line on small screens. |
 | Help | Use a single disclosure below the readout for chart navigation, date boundaries and counting rules. |
 
 Keep the view switch mounted and focusable. Preserve the chosen range, day and calendar position when returning to a view. A switch or range request must leave the following report in place. Check at desktop, tablet and phone sizes, including delayed and failed chart requests.
 
-For the calendar, use soft paper and apricot tones for the two lower positive ranges. For the higher ranges, soften orange-gold and classic amber with 14% neutral gray at similar lightness. Use the same fills in the legend and cells. Give zero a quiet neutral fill and missing dates a diagonal hatch. A selected date has a light and dark inset edge that remains visible at either end of the scale. Check the steps at both the 14px desktop and 12px phone cell sizes.
+For the calendar, use soft paper and warm apricot tones for the two lower positive ranges. For the higher ranges, soften orange-gold and classic amber with 14% neutral gray at similar lightness. Use the same fills in the legend and cells. Give zero a quiet neutral fill and missing dates a diagonal hatch. A selected date has a light and dark inset edge that remains visible at either end of the scale. At the default text size, use 16px desktop and 14px phone cells with 4px corners and 4px gaps between rows and columns. Keep the 365-day calendar, month and weekday axes, and actual PV ranges in its legend; the rounded matrix reference informs spacing and color, not the data model.
 
 Use independent series on a shared zero-based count scale for daily PV and UV. Draw an amber PV outline over light daily stems with a faint fill to the baseline. On long ranges, thin the stems to fit the available width while retaining every observed value in the outline. Highlight the recorded peak with an amber stem and its count. Distinguish UV by its dash pattern and square selection marker. Show missing dates as gaps and measured zeros on the baseline.
 
