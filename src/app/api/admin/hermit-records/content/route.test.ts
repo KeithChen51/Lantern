@@ -77,6 +77,20 @@ describe("Hermit record content endpoint", () => {
     expect((await POST(duplicate)).status).toBe(400);
     expect(deps.audited).not.toHaveBeenCalled();
   });
+  it.each([
+    '{"id":"first","id":"second","purpose":"check reason"}',
+    '{"id":"first","\\u0069d":"second","purpose":"check reason"}',
+    '{"id":"first","purpose":"first reason","purpose":"second reason"}',
+  ])("rejects duplicated JSON selectors before auditing %s", async body => {
+    const duplicate = new Request("https://app.example/api/admin/hermit-records/content", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body,
+    });
+    expect((await POST(duplicate)).status).toBe(400);
+    expect(deps.audited).not.toHaveBeenCalled();
+  });
+  it("accepts escaped quotes and colons inside a reason without treating them as keys", async () => {
+    expect((await POST(request({ id: "session", purpose: '检查 "id": 对应的问题' }))).status).toBe(200);
+  });
   it.each(["user", "credential", "approval", "role"])("rechecks %s before returning any content", async change => {
     if (change === "user") deps.authorize.mockResolvedValueOnce(principal).mockResolvedValueOnce({ ...principal, userId: "other" });
     if (change === "credential") deps.authorize.mockResolvedValueOnce(principal).mockResolvedValueOnce({ ...principal, credentialId: "other" });
