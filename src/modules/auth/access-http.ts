@@ -4,6 +4,7 @@ import { readAccessConfig } from "./access-config";
 import { hashToken } from "./access-crypto";
 import { AccessError, OAuthError } from "./access-types";
 import { loginRetryHref } from "./login-return";
+import { createLoginArrival, loginArrivalCookie, LOGIN_ARRIVAL_MAX_AGE } from "./login-arrival";
 
 export const NO_STORE = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" };
 export function json(value: unknown, status = 200): Response { return Response.json(value, { status, headers: NO_STORE }); }
@@ -144,11 +145,15 @@ export const iamCallback = async (request: NextRequest): Promise<Response> => {
     returnTo = await service.loginReturnTo({ state, cookie });
     if (params.has("error") || params.getAll("code").length !== 1) throw new AccessError("登录回调无效。", 400);
     const result = await service.iamCallback({ code: params.get("code") || "", state, cookie });
-    return sessionResponse(result.sessionToken, result.returnTo, true);
+    const response = sessionResponse(result.sessionToken, result.returnTo, true);
+    setCookie(response, loginArrivalCookie(config.sessionCookie), createLoginArrival(config, result.sessionToken, result.returnTo), LOGIN_ARRIVAL_MAX_AGE);
+    return response;
   } catch {
     try {
       const response = redirect(loginRetryHref(returnTo, "callback"));
-      setCookie(response, readAccessConfig().transactionCookie, "", 0);
+      const config = readAccessConfig();
+      setCookie(response, config.transactionCookie, "", 0);
+      setCookie(response, loginArrivalCookie(config.sessionCookie), "", 0);
       return response;
     } catch { return new Response(null, { status: 303, headers: { ...NO_STORE, Location: "/login?error=unavailable" } }); }
   }
@@ -169,7 +174,7 @@ export function logout(all: boolean) { return route(async request => {
   await getAccessService().logout(principal, all);
   const config = readAccessConfig();
   const response = isForm(request) ? redirect(config.mode === "iam" ? "/login?loggedOut=1" : "/login") : empty();
-  for (const cookie of [config.sessionCookie, config.transactionCookie, config.pendingCookie]) setCookie(response, cookie, "", 0);
+  for (const cookie of [config.sessionCookie, config.transactionCookie, config.pendingCookie, loginArrivalCookie(config.sessionCookie)]) setCookie(response, cookie, "", 0);
   return response;
 }); }
 export const clients = route(async request => json({ items: await getAccessService().listClients(await requireEmployee(request)) }));
