@@ -58,17 +58,27 @@ function RecordsWorkspace({ expiresAt }: { expiresAt: number }) {
   const [selected, setSelected] = useState<{ row: RecordRow; returnFocus: HTMLElement } | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageCursors, setPageCursors] = useState<string[]>([""]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const listRequest = useRef<AbortController | null>(null);
   const tableScroll = useRef<HTMLDivElement>(null);
+  const readTarget = useRef<{ cursor?: string; filters: Filters; page: number }>({ filters: emptyFilters, page: 0 });
+  const needsRead = useRef(true);
+  const scheduledRead = useRef<number | undefined>(undefined);
+  const filterPanel = useRef<HTMLFormElement>(null);
+  const filterToggle = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async (cursor?: string, currentFilters = filters, page = 0) => {
+    readTarget.current = { cursor, filters: currentFilters, page };
     if (Date.now() >= expiresAt || document.visibilityState !== "visible") return;
+    if (scheduledRead.current !== undefined) window.clearTimeout(scheduledRead.current);
+    scheduledRead.current = undefined;
+    needsRead.current = false;
     setSelected(null);
     listRequest.current?.abort();
     const request = new AbortController();
     listRequest.current = request;
     setLoading(true); setError("");
-    if (!cursor) setResult({ rows: [], nextCursor: null });
+    setResult({ rows: [], nextCursor: null });
     try {
       const query = new URLSearchParams();
       for (const [name, value] of Object.entries(currentFilters)) if (value) query.set(name, value);
@@ -77,70 +87,125 @@ function RecordsWorkspace({ expiresAt }: { expiresAt: number }) {
       if (!response.ok) throw new Error("list unavailable");
       const data = await response.json() as RecordsResult;
       if (!Array.isArray(data.rows) || (data.nextCursor !== null && typeof data.nextCursor !== "string")) throw new Error("invalid records");
-      if (request.signal.aborted || Date.now() >= expiresAt) return;
+      if (request.signal.aborted || listRequest.current !== request || Date.now() >= expiresAt || document.visibilityState !== "visible") return;
       setResult(data);
       setPageIndex(page);
       setPageCursors(previous => [...previous.slice(0, page), cursor ?? ""]);
       if (tableScroll.current) tableScroll.current.scrollTop = 0;
     } catch {
-      if (!request.signal.aborted) setError("暂时无法读取路引记录，请重试。若权限已变化，请刷新页面。");
+      if (!request.signal.aborted) {
+        setResult({ rows: [], nextCursor: null });
+        setError("暂时无法读取路引记录，请重试。若权限已变化，请刷新页面。");
+      }
     } finally {
-      if (!request.signal.aborted) setLoading(false);
+      if (listRequest.current === request) {
+        listRequest.current = null;
+        if (!request.signal.aborted) setLoading(false);
+      }
     }
   }, [expiresAt, filters]);
 
   useEffect(() => {
-    const scheduled = window.setTimeout(() => { void load(undefined, filters); }, 0);
-    return () => { window.clearTimeout(scheduled); listRequest.current?.abort(); };
-  }, [filters, load]);
-
-  useEffect(() => {
-    function conceal() { flushSync(() => setSelected(null)); }
+    readTarget.current = { filters, page: 0 };
+    needsRead.current = true;
+    function cancelRead() {
+      if (scheduledRead.current !== undefined) window.clearTimeout(scheduledRead.current);
+      scheduledRead.current = undefined;
+      listRequest.current?.abort();
+      listRequest.current = null;
+    }
+    function conceal() {
+      cancelRead();
+      needsRead.current = true;
+      flushSync(() => {
+        setSelected(null); setResult({ rows: [], nextCursor: null }); setError(""); setLoading(true);
+      });
+    }
+    function schedule() {
+      if (document.visibilityState !== "visible" || Date.now() >= expiresAt || !needsRead.current || listRequest.current || scheduledRead.current !== undefined) return;
+      scheduledRead.current = window.setTimeout(() => {
+        scheduledRead.current = undefined;
+        const target = readTarget.current;
+        void load(target.cursor, target.filters, target.page);
+      }, 0);
+    }
     function visibility() {
       if (document.visibilityState !== "visible") conceal();
-      else void load();
+      else schedule();
+    }
+    function restore(event: PageTransitionEvent) {
+      if (!event.persisted) return;
+      conceal();
+      schedule();
     }
     let timeout: number;
     function checkExpiry() {
       const remaining = expiresAt - Date.now();
       if (remaining <= 0) {
-        listRequest.current?.abort();
+        cancelRead();
+        needsRead.current = false;
         setExpired(true); setSelected(null); setResult({ rows: [], nextCursor: null });
       } else timeout = window.setTimeout(checkExpiry, Math.min(remaining, 2_147_483_647));
     }
     checkExpiry();
+    schedule();
     window.addEventListener("pagehide", conceal);
-    window.addEventListener("pageshow", conceal);
+    window.addEventListener("pageshow", restore);
     document.addEventListener("visibilitychange", visibility);
     return () => {
       window.clearTimeout(timeout);
-      listRequest.current?.abort();
+      cancelRead();
       window.removeEventListener("pagehide", conceal);
-      window.removeEventListener("pageshow", conceal);
+      window.removeEventListener("pageshow", restore);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, [expiresAt, load]);
+  }, [expiresAt, filters, load]);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const scheduled = window.setTimeout(() => filterPanel.current?.querySelector<HTMLInputElement>("input")?.focus(), 0);
+    return () => window.clearTimeout(scheduled);
+  }, [filtersOpen]);
+
+  function closeFilters() {
+    setFiltersOpen(false);
+    filterToggle.current?.focus({ preventScroll: true });
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
     if (draft.start && draft.end && draft.start > draft.end) { setError("开始日期须早于或等于结束日期。"); return; }
     setSelected(null);
+    setResult({ rows: [], nextCursor: null }); setLoading(true);
     setPageIndex(0); setPageCursors([""]);
     setFilters({ ...draft, id: draft.id.trim() });
+    if (filtersOpen) closeFilters();
   }
   function open(row: RecordRow, control: HTMLElement) { setSelected({ row, returnFocus: control }); }
   const dateFiltered = Boolean(filters.start || filters.end);
   if (expired) return <p role="alert">登录已失效，请重新登录后查看路引记录。</p>;
   return <section className={styles.workspace} aria-label="路引会话记录">
-    <form className={styles.filters} onSubmit={submit} aria-label="筛选路引记录">
+    <div className={styles.filterRegion}>
+      <button ref={filterToggle} className={`${styles.secondary} ${styles.filterToggle}`} type="button" aria-expanded={filtersOpen} aria-controls="hermit-record-filters" onClick={() => setFiltersOpen(!filtersOpen)}>筛选条件</button>
+      {filtersOpen && <button className={styles.filterBackdrop} type="button" tabIndex={-1} aria-label="关闭筛选条件" onClick={closeFilters} />}
+    <form ref={filterPanel} id="hermit-record-filters" className={styles.filters} data-expanded={filtersOpen} onSubmit={submit} aria-label="筛选路引记录" onKeyDown={event => {
+      if (!filtersOpen) return;
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeFilters(); return; }
+      if (event.key !== "Tab" || !window.matchMedia("(max-height: 700px)").matches) return;
+      const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled)")).filter(control => control.getClientRects().length > 0);
+      const target = event.shiftKey ? controls.at(-1) : controls[0];
+      if (event.shiftKey && document.activeElement === controls[0] || !event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); target?.focus(); }
+    }}>
+      <div className={styles.filterPanelHeader}><strong>筛选条件</strong><button className={styles.secondary} type="button" onClick={closeFilters}>收起筛选</button></div>
       <label>开始日期<input type="date" value={draft.start} onChange={event => setDraft({ ...draft, start: event.target.value })} /></label>
       <label>结束日期<input type="date" value={draft.end} min={draft.start || undefined} onChange={event => setDraft({ ...draft, end: event.target.value })} /></label>
       <label>用户类型<select value={draft.actor} onChange={event => setDraft({ ...draft, actor: event.target.value })}><option value="">全部类型</option><option value="employee">员工</option><option value="guest">访客</option><option value="unknown">身份未明确</option></select></label>
       <label className={styles.identifier}>会话编号<input type="search" maxLength={191} placeholder="输入完整会话编号" value={draft.id} onChange={event => setDraft({ ...draft, id: event.target.value })} /></label>
       <button className={styles.primary} type="submit" disabled={loading}>筛选</button>
-      <button className={styles.secondary} type="button" disabled={loading} onClick={() => { setDraft(emptyFilters); setSelected(null); setPageIndex(0); setPageCursors([""]); setFilters({ ...emptyFilters }); }}>重置</button>
+      <button className={styles.secondary} type="button" disabled={loading} onClick={() => { setDraft(emptyFilters); setSelected(null); setResult({ rows: [], nextCursor: null }); setLoading(true); setPageIndex(0); setPageCursors([""]); setFilters({ ...emptyFilters }); }}>重置</button>
     </form>
-    {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => void load(pageCursors[pageIndex] || undefined, filters, pageIndex)}>重试读取</button></div>}
+    </div>
+    {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => { const target = readTarget.current; void load(target.cursor, target.filters, target.page); }}>重试读取</button></div>}
     <div ref={tableScroll} className={styles.tableScroll} aria-busy={loading} tabIndex={0} aria-label="路引记录表格，可滚动">
       <table className={styles.table}><thead><tr><th scope="col">会话编号</th><th scope="col">用户</th><th scope="col">所属组织</th><th scope="col">开始时间</th><th scope="col">最后提问</th><th scope="col">{dateFiltered ? "时段轮次" : "轮次"}</th></tr></thead>
         <tbody>{result.rows.map(row => <tr key={row.id} onClick={event => { if (!(event.target instanceof Element) || !event.target.closest("button")) open(row, event.currentTarget.querySelector("button")!); }}>

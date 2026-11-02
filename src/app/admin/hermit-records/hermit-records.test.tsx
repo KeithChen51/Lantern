@@ -100,6 +100,23 @@ describe("路引记录列表与正文边界", () => {
     expect(html).not.toContain("PRIVATE_");
     expect(harness.fetch).not.toHaveBeenCalled();
   });
+  it("exposes the compact filter toggle state and closes its panel with Escape", () => {
+    expect(button(list(), "筛选条件").props["aria-expanded"]).toBe(false);
+    click(button(list(), "筛选条件"));
+    expect(button(list(), "筛选条件").props["aria-expanded"]).toBe(true);
+    const focus = vi.fn();
+    harness.refs.list[6].current = { focus };
+    const form = nodes(list(), node => node.type === "form")[0];
+    (form.props.onKeyDown as (event: unknown) => void)({ key: "Escape", preventDefault() {}, stopPropagation() {} });
+    expect(button(list(), "筛选条件").props["aria-expanded"]).toBe(false);
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+  });
+  it("collapses the compact filter panel after submitting its conditions", () => {
+    click(button(list(), "筛选条件"));
+    const form = nodes(list(), node => node.type === "form")[0];
+    (form.props.onSubmit as (event: unknown) => void)({ preventDefault() {} });
+    expect(button(list(), "筛选条件").props["aria-expanded"]).toBe(false);
+  });
   it("loads list metadata and starts a content read only after opening the window", async () => {
     await loadedList();
     expect(harness.fetch).toHaveBeenCalledTimes(1);
@@ -247,7 +264,7 @@ describe("路引记录列表与正文边界", () => {
     expect(harness.fetch).not.toHaveBeenCalled();
     documentEvents.visibilityState = "visible";
     documentEvents.dispatchEvent(new Event("visibilitychange"));
-    await settle();
+    await vi.advanceTimersByTimeAsync(0);
     expect(harness.fetch).toHaveBeenCalledTimes(1);
   });
   it("clears already read text after a failed later page", async () => {
@@ -289,8 +306,78 @@ describe("路引记录列表与正文边界", () => {
   });
   it.each(["pagehide", "pageshow"])("discards selected content on %s", async event => {
     await loadedList(); openedModal();
-    page.dispatchEvent(new Event(event));
+    const transition = new Event(event);
+    Object.defineProperty(transition, "persisted", { value: true });
+    page.dispatchEvent(transition);
     expect(nodes(list(), node => typeof node.type === "function" && node.type.name === "ConversationWindow")).toHaveLength(0);
+  });
+  it("ignores ordinary initial pageshow without clearing a verified list or reading twice", async () => {
+    await loadedList();
+    page.dispatchEvent(new Event("pageshow"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(harness.fetch).toHaveBeenCalledTimes(1);
+    expect(renderToStaticMarkup(list())).toContain(row.id);
+  });
+  it("coalesces initial Strict Mode setup into one list read", async () => {
+    list();
+    const effect = harness.effects[0];
+    const firstCleanup = effect();
+    if (firstCleanup) firstCleanup();
+    const dispose = effect();
+    if (dispose) cleanup.push(dispose);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(harness.fetch).toHaveBeenCalledTimes(1);
+  });
+  it("clears identity fields immediately and merges restore events before revealing freshly verified rows", async () => {
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, identity: { employeeNo: "OLD_NUMBER", account: null, organization: "OLD_ORG", source: "current-profile" } }], nextCursor: null }));
+    await loadedList();
+    expect(renderToStaticMarkup(list())).toContain("OLD_NUMBER");
+    documentEvents.visibilityState = "hidden";
+    documentEvents.dispatchEvent(new Event("visibilitychange"));
+    expect(renderToStaticMarkup(list())).not.toContain("OLD_");
+    let resolve!: (response: Response) => void;
+    harness.fetch.mockReturnValueOnce(new Promise<Response>(done => { resolve = done; }));
+    documentEvents.visibilityState = "visible";
+    const restored = new Event("pageshow");
+    Object.defineProperty(restored, "persisted", { value: true });
+    page.dispatchEvent(restored);
+    documentEvents.dispatchEvent(new Event("visibilitychange"));
+    documentEvents.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(harness.fetch).toHaveBeenCalledTimes(2);
+    expect(renderToStaticMarkup(list())).not.toContain("OLD_");
+    resolve(Response.json({ rows: [{ ...row, identity: { employeeNo: "NEW_NUMBER", account: null, organization: "NEW_ORG", source: "current-profile" } }], nextCursor: null }));
+    await settle();
+    expect(renderToStaticMarkup(list())).toContain("NEW_NUMBER");
+    documentEvents.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(harness.fetch).toHaveBeenCalledTimes(2);
+  });
+  it("aborts an in-flight identity list on pagehide and rejects its late result", async () => {
+    let resolve!: (response: Response) => void;
+    harness.fetch.mockReturnValueOnce(new Promise<Response>(done => { resolve = done; }));
+    list();
+    for (const effect of harness.effects) { const dispose = effect(); if (dispose) cleanup.push(dispose); }
+    await vi.advanceTimersByTimeAsync(0);
+    const signal = harness.fetch.mock.calls[0][1].signal as AbortSignal;
+    page.dispatchEvent(new Event("pagehide"));
+    expect(signal.aborted).toBe(true);
+    resolve(Response.json({ rows: [{ ...row, identity: { employeeNo: "LATE_NUMBER", account: null, organization: "LATE_ORG", source: "current-profile" } }], nextCursor: null }));
+    await settle();
+    expect(renderToStaticMarkup(list())).not.toContain("LATE_");
+  });
+  it("clears old identity rows after a denied page read and retries that exact target page", async () => {
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, identity: { employeeNo: "OLD_NUMBER", account: null, organization: "OLD_ORG", source: "current-profile" } }], nextCursor: "second-page-cursor" }));
+    await loadedList();
+    harness.fetch.mockResolvedValueOnce(new Response(null, { status: 403 }));
+    click(button(list(), "下一页")); await settle();
+    expect(renderToStaticMarkup(list())).not.toContain("OLD_");
+    expect(renderToStaticMarkup(list())).toContain("重试读取");
+    harness.fetch.mockResolvedValueOnce(Response.json({ rows: [{ ...row, id: "page-two-verified" }], nextCursor: null }));
+    click(button(list(), "重试读取")); await settle();
+    expect(harness.fetch.mock.calls[2][0]).toContain("cursor=second-page-cursor");
+    expect(renderToStaticMarkup(list())).toContain("第 2 页");
+    expect(renderToStaticMarkup(list())).toContain("page-two-verified");
   });
   it("removes records and closes the window at session expiry", async () => {
     await loadedList(); openedModal();
