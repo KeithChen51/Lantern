@@ -1608,7 +1608,7 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
 @keyframes lh-heart-rise-in {
   from {
-    opacity: 0.92;
+    opacity: var(--lh-heart-rise-enter-opacity, 0.92);
     transform: translateY(0.35rem);
   }
   to {
@@ -1620,10 +1620,12 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 @keyframes lh-heart-soft-in {
   from {
     opacity: var(--lh-heart-copy-enter-opacity, 0.96);
+    filter: var(--lh-heart-copy-enter-filter, none);
     transform: translateY(0.25rem);
   }
   to {
     opacity: 1;
+    filter: none;
     transform: translateY(0);
   }
 }
@@ -1680,13 +1682,17 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
   /* Keep each original animation name so removing the arrival marker cannot replay it. */
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-copy] {
     --lh-heart-copy-enter-opacity: 0;
-    animation-duration: var(--lh-motion-medium);
-    animation-delay: calc(var(--lh-arrival-duration) * .76);
+    --lh-heart-copy-enter-filter: blur(2px);
+    animation-delay: calc(var(--lh-arrival-duration) * .46);
+    animation-duration: calc(var(--lh-arrival-duration) * .5);
+    animation-timing-function: ease-in-out;
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-path] {
-    animation-duration: var(--lh-motion-medium);
-    animation-delay: calc(var(--lh-arrival-duration) * .81);
+    --lh-heart-rise-enter-opacity: 0;
+    animation-delay: calc(var(--lh-arrival-duration) * .72);
+    animation-duration: calc(var(--lh-arrival-duration) * .27);
+    animation-timing-function: ease-in-out;
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-sidebar],
