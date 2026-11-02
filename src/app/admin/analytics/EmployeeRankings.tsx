@@ -1,103 +1,142 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { authFetch } from "@/components/auth/auth-fetch";
 import type { EmployeeRankingResult } from "@/modules/analytics/employee-rankings";
 import styles from "./employee-rankings.module.css";
 
-type Props = { period: { startDate: string; endDate: string }; canView: boolean };
+type Props = { period: { startDate: string; endDate: string } };
+type RankingState =
+  | { phase: "loading" }
+  | { phase: "hidden" }
+  | { phase: "expired" }
+  | { phase: "error"; message: string }
+  | { phase: "ready"; result: EmployeeRankingResult };
 const format = new Intl.NumberFormat("zh-CN");
 
-export function EmployeeRankings({ period, canView }: Props) {
+export function EmployeeRankings({ period }: Props) {
   const session = useEmployeeSession();
+  const canView = session && session.kind !== "guest"
+    && session.capabilities.includes("analytics:summary") && Number.isFinite(session.expiresAt) && session.expiresAt > 0;
   return (
     <section className={styles.section} aria-labelledby="employee-rankings-heading">
       <div className={styles.heading}>
         <h2 id="employee-rankings-heading">员工榜单</h2>
         <span>Top 10</span>
       </div>
-      {canView && session && session.kind !== "guest"
-        ? <RankingQuery key={`${session.user.id}:${period.startDate}:${period.endDate}`} period={period} expiresAt={session.expiresAt} />
-        : <p className={styles.description}>查看员工榜单需要平台负责人专项授权。</p>}
+      <p className={styles.description}>按上方所选时段展示员工使用情况。</p>
+      {canView
+        ? <RankingData key={`${session.user.id}:${session.expiresAt}:${period.startDate}:${period.endDate}`}
+            period={period} expiresAt={session.expiresAt} />
+        : <p className={styles.description}>请使用有效的平台管理员账号查看员工榜单。</p>}
     </section>
   );
 }
 
-function RankingQuery({ period, expiresAt }: Pick<Props, "period"> & { expiresAt: number }) {
-  const [purpose, setPurpose] = useState("");
-  const [result, setResult] = useState<EmployeeRankingResult | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const request = useRef<AbortController | null>(null);
+function RankingData({ period, expiresAt }: Props & { expiresAt: number }) {
+  const [state, setState] = useState<RankingState>({ phase: "loading" });
+  const retry = useRef<() => void>(() => undefined);
   useEffect(() => {
-    function clearResults() {
-      request.current?.abort();
-      setResult(null);
-      setPurpose("");
-      setError("");
-      setBusy(false);
+    let active = true;
+    let needsLoad = true;
+    let request: AbortController | null = null;
+    let scheduled: number | undefined;
+    let expiry: number | undefined;
+
+    function clearResults(phase: "hidden" | "expired") {
+      if (scheduled !== undefined) window.clearTimeout(scheduled);
+      scheduled = undefined;
+      request?.abort();
+      request = null;
+      needsLoad = true;
+      setState({ phase });
     }
+
+    async function load() {
+      scheduled = undefined;
+      if (!active || document.visibilityState !== "visible" || request || !needsLoad) return;
+      if (Date.now() >= expiresAt) { clearResults("expired"); return; }
+      const controller = new AbortController();
+      request = controller;
+      needsLoad = false;
+      setState({ phase: "loading" });
+      try {
+        const response = await authFetch("/api/admin/analytics/rankings", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ start: period.startDate, end: period.endDate }),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("员工榜单暂不可用。");
+        const result = await response.json() as EmployeeRankingResult;
+        if (result.period?.startDate !== period.startDate || result.period?.endDate !== period.endDate) {
+          throw new Error("员工榜单时段不匹配。");
+        }
+        if (active && !controller.signal.aborted && document.visibilityState === "visible" && Date.now() < expiresAt) {
+          setState({ phase: "ready", result });
+        }
+      } catch {
+        if (active && !controller.signal.aborted) {
+          setState({ phase: "error", message: "员工榜单加载失败，请重试。若权限已变化，请刷新页面。" });
+        }
+      } finally {
+        if (request === controller) request = null;
+      }
+    }
+
+    function scheduleLoad() {
+      if (Date.now() >= expiresAt) { clearResults("expired"); return; }
+      if (document.visibilityState === "visible" && needsLoad && scheduled === undefined && !request) {
+        // Coalesce initial mount, Strict Mode and restore events into one audited read.
+        scheduled = window.setTimeout(() => { void load(); }, 0);
+      }
+    }
+
     function onVisibilityChange() {
-      if (document.visibilityState === "hidden") clearResults();
+      if (document.visibilityState !== "visible") clearResults("hidden");
+      else scheduleLoad();
     }
-    function onPageHide() {
-      flushSync(clearResults);
-    }
+    function onPageHide() { flushSync(() => clearResults("hidden")); }
     function onPageShow(event: PageTransitionEvent) {
-      if (event.persisted) flushSync(clearResults);
+      if (event.persisted) {
+        flushSync(() => clearResults("hidden"));
+        scheduleLoad();
+      }
     }
+    function checkExpiry() {
+      const remaining = expiresAt - Date.now();
+      if (remaining <= 0) clearResults("expired");
+      else expiry = window.setTimeout(checkExpiry, Math.min(remaining, 2_147_483_647));
+    }
+
+    retry.current = () => { needsLoad = true; scheduleLoad(); };
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisibilityChange);
-    const expiry = window.setTimeout(clearResults, Math.max(0, Math.min(expiresAt - Date.now(), 2_147_483_647)));
+    checkExpiry();
+    scheduleLoad();
     return () => {
-      request.current?.abort();
-      window.clearTimeout(expiry);
+      active = false;
+      request?.abort();
+      if (scheduled !== undefined) window.clearTimeout(scheduled);
+      if (expiry !== undefined) window.clearTimeout(expiry);
+      retry.current = () => undefined;
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [expiresAt]);
+  }, [period.startDate, period.endDate, expiresAt]);
 
-  async function query(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    request.current?.abort();
-    const controller = new AbortController();
-    request.current = controller;
-    setResult(null);
-    setError("");
-    setBusy(true);
-    try {
-      const response = await authFetch("/api/admin/analytics/rankings", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start: period.startDate, end: period.endDate, purpose }),
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error("员工榜单暂不可用，请核对日期和查询事由后重试。");
-      const data = await response.json() as EmployeeRankingResult;
-      if (!controller.signal.aborted) setResult(data);
-    } catch {
-      if (!controller.signal.aborted) setError("员工榜单查询失败，请核对授权和查询事由后重试。");
-    } finally {
-      if (!controller.signal.aborted) setBusy(false);
-    }
-  }
-
-  return (
-    <>
-      <form className={styles.query} onSubmit={query}>
-        <label htmlFor="employee-ranking-purpose">查询事由</label>
-        <div className={styles.controls}>
-          <input id="employee-ranking-purpose" name="purpose" value={purpose} onChange={event => setPurpose(event.target.value)}
-            minLength={4} maxLength={256} required placeholder="例如核对本周推广使用情况" autoComplete="off" />
-          <button type="submit" disabled={busy || purpose.trim().length < 4}>{busy ? "正在查询…" : "查询员工榜单"}</button>
-        </div>
-        <p className={styles.description}>按上方所选时段查询，操作将留审计记录。</p>
-      </form>
-      {error && <p role="alert" className={styles.error}>{error}</p>}
-      {result && <div className={styles.tables}>
+  if (state.phase === "expired") return <p role="status" className={styles.description}>登录已失效，请重新登录后查看员工榜单。</p>;
+  if (state.phase === "hidden") return <p role="status" className={styles.description}>返回此页面后将更新员工榜单。</p>;
+  if (state.phase === "loading") return <p role="status" className={styles.loading}>正在加载员工榜单…</p>;
+  if (state.phase === "error") return <div className={styles.recovery}>
+    <p role="alert" className={styles.error}>{state.message}</p>
+    <button type="button" className={styles.retry} onClick={() => retry.current()}>重新加载员工榜单</button>
+  </div>;
+  const { result } = state;
+  return <div className={styles.tables}>
         <section aria-labelledby="employee-visit-top">
           <h3 id="employee-visit-top">访问最多的 Top 10 员工</h3>
           {result.visits.rows.length > 0 ? <table>
@@ -114,7 +153,5 @@ function RankingQuery({ period, expiresAt }: Pick<Props, "period"> & { expiresAt
           </table> : <p className={styles.empty}>所选时段暂无可展示的员工 AI 对话记录。</p>}
           <p className={styles.note}>{result.ai.note}</p>
         </section>
-      </div>}
-    </>
-  );
+      </div>;
 }

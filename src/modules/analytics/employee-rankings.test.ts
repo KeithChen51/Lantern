@@ -11,7 +11,7 @@ const execute = vi.fn();
 const query = vi.fn();
 const recheck = vi.fn();
 const database = { $executeRaw: execute, $queryRaw: query } as unknown as Pick<PrismaClient, "$queryRaw" | "$executeRaw">;
-const input = () => ({ principal, approvalRef: "APPROVAL-107", purpose: "核对本月推广使用情况", period, recheck });
+const input = () => ({ principal, period, recheck });
 beforeEach(() => {
   vi.stubEnv("LIGHTHOUSE_VISITS_START_AT", "2026-10-01T00:00:00.000Z");
   vi.clearAllMocks();
@@ -24,9 +24,13 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("audited employee rankings", () => {
-  it("audits before reading, rechecks current approval and records row counts before returning minimal labels", async () => {
+  it("audits the platform role and view action before reading and records completion before returning minimal labels", async () => {
     const result = await getAuditedEmployeeRankings(input(), { database, now });
     expect(execute.mock.invocationCallOrder[0]).toBeLessThan(query.mock.invocationCallOrder[0]);
+    expect(execute.mock.calls[0][0].values).toEqual([
+      expect.any(String), principal.userId, "role:platform-admin", "查看访问与使用员工榜单",
+      period.startDate, period.endDate, now,
+    ]);
     expect(query.mock.invocationCallOrder[1]).toBeLessThan(recheck.mock.invocationCallOrder[0]);
     expect(recheck.mock.invocationCallOrder[0]).toBeLessThan(execute.mock.invocationCallOrder[1]);
     expect(execute.mock.calls[1][0].sql).toContain("result_rows = ?");
@@ -65,8 +69,8 @@ describe("audited employee rankings", () => {
     await expect(getAuditedEmployeeRankings(input(), { database, now })).rejects.toThrow();
     expect(query).not.toHaveBeenCalled();
   });
-  it("records a failure and rejects if the role or approval changes during the query", async () => {
-    recheck.mockRejectedValue(new Error("approval revoked"));
+  it("records a failure and rejects if the role changes during the query", async () => {
+    recheck.mockRejectedValue(new Error("role revoked"));
     await expect(getAuditedEmployeeRankings(input(), { database, now })).rejects.toThrow("revoked");
     expect(execute.mock.calls.at(-1)![0].sql).toContain("'failed'");
     expect(execute.mock.calls.some(([sql]) => sql.sql.includes("'completed'"))).toBe(false);

@@ -5,7 +5,6 @@ import { LhCallout } from "@/components/ui/lighthouse-primitives";
 import { requireAnalyticsSummary } from "@/modules/auth/access";
 import { getUsageReport } from "@/modules/analytics/report";
 import { parseReportPeriod, shanghaiDate } from "@/modules/analytics/report-period";
-import { hasEmployeeRankingGrant } from "@/modules/analytics/employee-rank-access";
 import { PlatformAdminNav } from "../PlatformAdminNav";
 import { VisitActivity } from "./VisitActivity";
 import { ReportPeriodFilter } from "./ReportPeriodFilter";
@@ -56,7 +55,7 @@ export default async function AdminAnalyticsPage({ searchParams }: {
             <ReportPeriodFilter key={period.preset + period.startDate + period.endDate} period={period} today={shanghaiDate(now)} />
           </div>
           <UsageReportView report={report} />
-          <EmployeeRankings key={principal.userId + period.startDate + period.endDate} period={period} canView={hasEmployeeRankingGrant(principal)} />
+          <EmployeeRankings period={period} />
         </section>
         <p className={styles.updatedAt}>更新于 {new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", dateStyle: "short", timeStyle: "short" }).format(new Date(report.generatedAt))}</p>
       </> : <><LhCallout tone="warning">访问统计暂不可用，请重新加载页面。</LhCallout><a className={styles.recovery} href={`/admin/analytics?${params.toString()}`}>重新加载统计</a></>}

@@ -18,8 +18,8 @@ export function VisitTracker({ session }: { session: WebSession }) {
   // Only a search term changes the displayed page within the same pathname.
   // This temporary key is never sent to the collector or written to storage.
   const navigationKey = visitNavigationKey(pathname, params);
-  const noticeKey = `lighthouse-visit-notice:v1:${session.kind ?? "employee"}:${session.user.id}`;
-  const storageKey = `lighthouse-visit-notice:v1:${session.kind ?? "employee"}`;
+  const storageKey = session.kind === "guest" ? "lighthouse-visit-notice:v1:guest" : "lighthouse-visit-notice:v2:employee";
+  const noticeKey = `${storageKey}:${session.user.id}`;
   const [notice, setNotice] = useState<{ owner: string; acknowledged: boolean } | null>(null);
   const stored = useSyncExternalStore<boolean | null>(subscribeNotice, () => {
     try { return localStorage.getItem(storageKey) === session.user.id; } catch { return false; }
@@ -60,7 +60,7 @@ export function VisitTracker({ session }: { session: WebSession }) {
     <aside className={styles.notice} aria-label="访问记录说明">
       <div>
         <strong>访问记录说明</strong>
-        <p>灯塔记录业务页面访问，用于分析使用情况和改进内容。{session.kind === "guest" ? "访客按匿名标识统计，不进入员工或部门排行。" : "员工访问关联账号及身份源提供的部门，用于使用排行；实名员工榜由获专项授权的管理员填写事由后查询。"}访问明细保留 180 天，不含个人标识的日汇总保留 24 个月。如需了解记录或提出请求，请联系平台负责人。</p>
+        <p>灯塔记录业务页面访问，用于分析使用情况和改进内容。{session.kind === "guest" ? "访客按匿名标识统计，不进入员工或部门排行。" : "员工访问按账号和部门统计。所有平台管理员都能查看实名的员工访问和 AI 对话 Top 10，查看操作会留痕。"}访问明细保留 180 天，不含个人标识的日汇总保留 24 个月。如需了解记录或提出请求，请联系平台负责人。</p>
       </div>
       <button type="button" onClick={() => {
         try { localStorage.setItem(storageKey, session.user.id); } catch { /* Acknowledgment still applies in memory. */ }

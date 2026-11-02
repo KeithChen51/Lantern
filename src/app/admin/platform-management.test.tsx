@@ -2,16 +2,15 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { UsageReport } from "@/modules/analytics/report";
 
-const { knowledgeAdmin, analyticsAdmin, report, requestHeaders, rankingGrant } = vi.hoisted(() => ({
-  knowledgeAdmin: vi.fn(), analyticsAdmin: vi.fn(), report: vi.fn(), requestHeaders: vi.fn(), rankingGrant: vi.fn(),
+const { knowledgeAdmin, analyticsAdmin, report, requestHeaders } = vi.hoisted(() => ({
+  knowledgeAdmin: vi.fn(), analyticsAdmin: vi.fn(), report: vi.fn(), requestHeaders: vi.fn(),
 }));
 vi.mock("@/modules/auth/access", () => ({ requireKnowledgeAdmin: knowledgeAdmin, requireAnalyticsSummary: analyticsAdmin }));
 vi.mock("@/modules/analytics/report", () => ({ getUsageReport: report }));
-vi.mock("@/modules/analytics/employee-rank-access", () => ({ hasEmployeeRankingGrant: rankingGrant }));
 vi.mock("next/headers", () => ({ headers: requestHeaders }));
 vi.mock("./knowledge/AdminKnowledgeManager", () => ({ AdminKnowledgeManager: () => <p>知识文件工作区</p> }));
 vi.mock("./analytics/EmployeeRankings", () => ({
-  EmployeeRankings: ({ canView }: { canView: boolean }) => <section data-ranking-grant={canView}>员工榜单入口</section>,
+  EmployeeRankings: ({ period }: Pick<UsageReport, "period">) => <section data-ranking-start={period.startDate}>员工榜单</section>,
 }));
 
 import KnowledgePage from "./knowledge/page";
@@ -35,7 +34,6 @@ beforeEach(() => {
   requestHeaders.mockResolvedValue(new Headers({ cookie: "fixture" }));
   knowledgeAdmin.mockResolvedValue({ userId: "admin", capabilities: ["knowledge:manage"] });
   analyticsAdmin.mockResolvedValue({ userId: "admin", capabilities: ["knowledge:manage", "analytics:summary"] });
-  rankingGrant.mockReturnValue(false);
   report.mockImplementation(async period => ({ ...fixture, period }));
 });
 afterEach(() => vi.useRealTimers());
@@ -71,7 +69,7 @@ describe("platform management pages", () => {
     expect(html).toContain('role="alert"');
     expect(html).not.toContain("private authorization detail");
     expect(report).not.toHaveBeenCalled();
-    expect(rankingGrant).not.toHaveBeenCalled();
+    expect(html).not.toContain("员工榜单");
     expect(html).toContain('href="/"');
   });
 
@@ -86,7 +84,8 @@ describe("platform management pages", () => {
     expect(html).toContain('<h2 id="period-report-title">时段统计</h2>');
     const reportHeading = html.indexOf('<h2 id="period-report-title">');
     expect(html.indexOf("访问日历")).toBeLessThan(reportHeading);
-    expect(reportHeading).toBeLessThan(html.indexOf("员工榜单入口"));
+    expect(reportHeading).toBeLessThan(html.indexOf("员工榜单"));
+    expect(html).toContain(`data-ranking-start="${start}"`);
     expect(html).toContain('aria-label="统计时间范围"');
     expect(html).toContain("本周");
     expect(html).toContain("本月");
@@ -104,19 +103,12 @@ describe("platform management pages", () => {
     expect(report).not.toHaveBeenCalled();
   });
 
-  it("passes the independently checked ranking grant to the protected component", async () => {
-    rankingGrant.mockReturnValue(true);
-    const html = renderToStaticMarkup(await AnalyticsPage({ searchParams: Promise.resolve({}) }));
-    expect(rankingGrant).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ userId: "admin" }));
-    expect(html).toContain('data-ranking-grant="true"');
-  });
-
   it("keeps the report retry as a real reload and hides the underlying source error", async () => {
     report.mockRejectedValue(new Error("secret database connection string"));
     const html = renderToStaticMarkup(await AnalyticsPage({ searchParams: Promise.resolve({ preset: "month" }) }));
     expect(html).toContain("访问统计暂不可用");
     expect(html).toContain('href="/admin/analytics?preset=month"');
     expect(html).not.toContain("secret database connection string");
-    expect(html).not.toContain("员工榜单入口");
+    expect(html).not.toContain("员工榜单");
   });
 });

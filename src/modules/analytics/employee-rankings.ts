@@ -47,8 +47,6 @@ export function validateEmployeeRankingPurpose(value: unknown): string {
 /** An audit must commit both before reading and before disclosing named results. */
 export async function getAuditedEmployeeRankings(input: {
   principal: Principal;
-  approvalRef: string;
-  purpose: string;
   period: ReportPeriod;
   recheck: () => Promise<void>;
 }, options: { database?: Database; now?: Date } = {}): Promise<EmployeeRankingResult> {
@@ -57,12 +55,11 @@ export async function getAuditedEmployeeRankings(input: {
   const bounds = reportBounds(input.period, now);
   const detail = visitDetailWindow(input.period, now);
   const aiStart = new Date(Math.max(bounds.start.getTime(), now.getTime() - 180 * 86_400_000));
-  const purpose = validateEmployeeRankingPurpose(input.purpose);
   const auditId = randomUUID();
   const auditWritten = await database.$executeRaw(Prisma.sql`
     INSERT INTO analytics_person_audits
       (id, operator_id, approval_ref, purpose, start_day, end_day, status, created_at)
-    VALUES (${auditId}, ${input.principal.userId}, ${input.approvalRef}, ${purpose},
+    VALUES (${auditId}, ${input.principal.userId}, ${"role:platform-admin"}, ${"查看访问与使用员工榜单"},
       ${input.period.startDate}, ${input.period.endDate}, 'requested', ${now})
   `);
   if (auditWritten !== 1) throw new Error("Employee ranking audit was not recorded");
