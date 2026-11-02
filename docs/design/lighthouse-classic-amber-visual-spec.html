@@ -7,6 +7,39 @@
   <link rel="stylesheet" href="brand-attribution/masks.css" />
   <link rel="stylesheet" href="brand-attribution/specimen.css" />
   <style>
+    @font-face {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url("../../public/fonts/brand/inter/InterVariable.woff2") format("woff2");
+      unicode-range: U+0000-024F, U+1E00-1EFF, U+20A0-20CF;
+    }
+
+    @font-face {
+      font-family: "Source Han Sans SC";
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url("../../public/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf") format("opentype");
+    }
+
+    @font-face {
+      font-family: "Source Han Sans SC";
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+      src: url("../../public/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype");
+    }
+
+    @font-face {
+      font-family: "Source Han Sans SC";
+      font-style: normal;
+      font-weight: 700 900;
+      font-display: swap;
+      src: url("../../public/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype");
+    }
+
     :root {
       --lh-ink: #2c2c2c;
       --lh-ink-soft: color-mix(in srgb, #2c2c2c 74%, white);
@@ -90,7 +123,7 @@
       --weight-bold: 700;
       --weight-extrabold: 800;
       --weight-black: 900;
-      --font-hei: "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+      --font-hei: "Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif;
       --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
       --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
@@ -960,7 +993,8 @@
               <span>标题使用思源宋建立“手册、灯塔、价值文本”的编辑感。正文保持足够对比，不用过低透明度制造高级感。</span>
             </div>
             <ul class="spec-list">
-              <li><b>UI 字体</b><span><code>--font-hei</code>：苹方优先，用于导航、表单、按钮、后台表格和普通 UI 正文。</span></li>
+              <li><b>UI 字体</b><span>导航、表单和正文采用系统中文字体。Windows 使用微软雅黑 UI 或微软雅黑，iOS 和 macOS 使用苹方 SC，缺少这些字体时使用内置思源黑体。</span></li>
+              <li><b>英文与数字</b><span>Lighthouse、PDF、v1.6.1 与 09:48 使用内置 Inter。正文采用自然字宽，统计指标和数值列使用等宽数字。</span></li>
               <li><b>标题字体</b><span><code>--font-serif</code>：思源宋优先，用于页面主标题、价值阅读标题和编辑性段落。</span></li>
               <li><b>排版基准</b><span>正文从 15-16px 起步，控件 14px，说明文字 12-13px；页面标题只在真正的顶层场景使用 40-72px，不复制到模块标题。</span></li>
               <li><b>首页封面</b><span>首页/本心首屏可使用 64-100px 思源宋品牌主张，一整行横排优先；第二屏开始回到常规阅读层级。</span></li>
@@ -998,12 +1032,12 @@
               <div class="heading-row">
                 <span class="heading-role"><b>Card Title</b><code>--title-card</code></span>
                 <strong class="heading-sample heading-card">低阴影低噪声</strong>
-                <span class="heading-note">思源宋或苹方，20px，700，1.25。用于卡片、面板和表单小节标题。</span>
+                <span class="heading-note">思源宋或系统中文无衬线，20px，700，1.25。用于卡片、面板和表单小节标题。</span>
               </div>
               <div class="heading-row">
                 <span class="heading-role"><b>Kicker / Label</b><code>--title-kicker</code></span>
                 <strong class="heading-sample heading-kicker">07 / Iconography</strong>
-                <span class="heading-note">苹方，12px，900，0.12em 字距。只做结构定位，不承载正文信息。</span>
+                <span class="heading-note">系统无衬线，12px，900，0.12em 字距。只做结构定位，不承载正文信息。</span>
               </div>
             </div>
           </article>
@@ -1422,7 +1456,7 @@
       <section id="rules" class="section">
         <div class="section-header"><span class="section-kicker">16 / Guardrails</span><h2>使用边界</h2><p class="section-intro">经典琥珀版本要有效、雅致。有效意味着规范能直接落地；雅致意味着有足够秩序、留白和克制。</p></div>
         <div class="section-body rule-grid">
-          <article class="rule-card"><h3>Do</h3><ul><li>用苹方承载产品 UI，用思源宋承载少量价值表达。</li><li>用 12 列逻辑网格和固定间距控制页面秩序。</li><li>用真实 Solar 图标和 <code>lighthouseIcons</code> 入口。</li><li>用轻边框、暖纸色和低阴影表达层级。</li></ul></article>
+          <article class="rule-card"><h3>Do</h3><ul><li>产品 UI 中文用苹方或微软雅黑，英文与数字用 Inter，价值表达用思源宋。</li><li>用 12 列逻辑网格和固定间距控制页面秩序。</li><li>用真实 Solar 图标和 <code>lighthouseIcons</code> 入口。</li><li>用轻边框、暖纸色和低阴影表达层级。</li></ul></article>
           <article class="rule-card dont"><h3>Don't</h3><ul><li>不要混入探索版蓝绿色、印刷稿或对外品牌 VI 资产。</li><li>不要用字符、手绘图形或其他图标库替代 Solar。</li><li>不要为了“丰富”随机跨列、叠卡、加重阴影。</li><li>不要用低对比文字或过度透明制造所谓高级感。</li></ul></article>
         </div>
       </section>
