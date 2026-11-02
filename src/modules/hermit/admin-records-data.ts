@@ -10,7 +10,7 @@ type Database = Pick<PrismaClient, "$queryRaw">;
 type Options = { database?: Database };
 export type HermitRecordActor = "employee" | "guest" | "unknown";
 export type HermitRecordFilters = { start?: string; end?: string; actor?: HermitRecordActor; id?: string; cursor?: string };
-export type HermitRecordRow = { id: string; actor: HermitRecordActor; createdAt: string; lastQuestionAt: string | null; turns: number };
+export type HermitRecordRow = { id: string; actor: HermitRecordActor; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number };
 export type HermitRecordsResult = { rows: HermitRecordRow[]; nextCursor: string | null };
 export type HermitRecordDetail = { messages: Array<{ id: string; role: "user" | "assistant"; text: string }>; nextCursor: string | null; view?: "stored-attempts" };
 
@@ -37,7 +37,13 @@ function decodeCursor(value: string): unknown {
   catch { return invalid("分页标识无效，请重新查询。"); }
 }
 
-type RecordSqlRow = { id: string; actor: HermitRecordActor; createdAt: Date; lastQuestionAt: Date | null; turns: number | bigint };
+type RecordSqlRow = { id: string; actor: HermitRecordActor; createdAt: Date; lastQuestionAt: Date | null; turns: number | bigint; periodTurns?: number | bigint };
+
+function count(value: number | bigint | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) throw new Error("Invalid saved conversation count");
+  return parsed;
+}
 
 /** The inventory never reads names, titles, message text or guest identifiers. */
 export async function listHermitRecords(input: HermitRecordFilters = {}, options: Options = {}): Promise<HermitRecordsResult> {
@@ -46,9 +52,12 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
   const { start, end, actor, id, cursor } = checked.data;
   if (start && end && start > end) invalid("开始日期不能晚于结束日期。");
   const fingerprint = createHash("sha256").update(JSON.stringify([start ?? null, end ?? null, actor ?? null, id ?? null])).digest("hex");
+  const periodConditions: Prisma.Sql[] = [];
+  if (start) periodConditions.push(Prisma.sql`created_at >= ${dateStart(start)}`);
+  if (end) periodConditions.push(Prisma.sql`created_at < ${new Date(+dateStart(end) + 86_400_000)}`);
+  const hasPeriod = periodConditions.length > 0;
   const conditions: Prisma.Sql[] = [];
-  if (start) conditions.push(Prisma.sql`inventory.lastQuestionAt >= ${dateStart(start)}`);
-  if (end) conditions.push(Prisma.sql`inventory.lastQuestionAt < ${new Date(+dateStart(end) + 86_400_000)}`);
+  if (hasPeriod) conditions.push(Prisma.sql`inventory.periodTurns > 0`);
   if (actor) conditions.push(Prisma.sql`inventory.actor = ${actor}`);
   if (cursor !== undefined) {
     const parsed = listCursorSchema.safeParse(decodeCursor(cursor));
@@ -63,13 +72,16 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
   }
   const rows = await (options.database ?? prisma).$queryRaw<RecordSqlRow[]>(Prisma.sql`
     SELECT inventory.id, inventory.actor, inventory.createdAt, inventory.lastQuestionAt, inventory.turns
+      ${hasPeriod ? Prisma.sql`, inventory.periodTurns` : Prisma.empty}
     FROM (
       SELECT s.id, s.created_at AS createdAt,
         CASE WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL THEN 'employee'
           WHEN s.guest_id IS NOT NULL AND s.user_id IS NULL THEN 'guest' ELSE 'unknown' END AS actor,
         question.lastQuestionAt, COALESCE(question.turns, 0) AS turns
+        ${hasPeriod ? Prisma.sql`, question.periodTurns` : Prisma.empty}
       FROM chat_sessions s LEFT JOIN (
         SELECT session_id, MAX(created_at) AS lastQuestionAt, COUNT(*) AS turns
+          ${hasPeriod ? Prisma.sql`, COUNT(CASE WHEN ${Prisma.join(periodConditions, " AND ")} THEN 1 END) AS periodTurns` : Prisma.empty}
         FROM chat_messages WHERE role = 'user'
           ${id ? Prisma.sql`AND session_id = ${id}` : Prisma.empty}
         GROUP BY session_id
@@ -83,11 +95,9 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
   const selected = rows.slice(0, LIST_PAGE_SIZE);
   const last = selected.at(-1);
   return {
-    rows: selected.map(row => {
-      const turns = Number(row.turns);
-      if (!Number.isSafeInteger(turns) || turns < 0) throw new Error("Invalid saved conversation count");
-      return { id: row.id, actor: row.actor, createdAt: row.createdAt.toISOString(), lastQuestionAt: row.lastQuestionAt?.toISOString() ?? null, turns };
-    }),
+    rows: selected.map(row => ({ id: row.id, actor: row.actor, createdAt: row.createdAt.toISOString(),
+      lastQuestionAt: row.lastQuestionAt?.toISOString() ?? null, turns: count(row.turns),
+      ...(hasPeriod ? { periodTurns: count(row.periodTurns) } : {}) })),
     nextCursor: rows.length > LIST_PAGE_SIZE && last ? encodeCursor({ filter: fingerprint, id: last.id,
       createdAt: last.createdAt.toISOString(), lastQuestionAt: last.lastQuestionAt?.toISOString() ?? null }) : null,
   };

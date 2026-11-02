@@ -28,6 +28,7 @@ describe("administrator conversation inventory", () => {
     expect(sql.sql).toContain("MAX(created_at)");
     expect(sql.sql).toContain("LEFT JOIN");
     expect(sql.sql).toContain("BINARY inventory.id DESC");
+    expect(sql.sql).not.toContain("periodTurns");
     expect(sql.values).toEqual([21]);
   });
 
@@ -36,11 +37,42 @@ describe("administrator conversation inventory", () => {
     await listHermitRecords({ start: "2026-11-01", end: "2026-11-02", actor: "guest", id: "session' OR 1=1 --" }, options);
     const sql = query.mock.calls[0][0] as Prisma.Sql;
     expect(sql.values).toEqual([
-      ...Array(3).fill("session' OR 1=1 --"), new Date("2026-10-31T16:00:00.000Z"), new Date("2026-11-02T16:00:00.000Z"), "guest", 21,
+      new Date("2026-10-31T16:00:00.000Z"), new Date("2026-11-02T16:00:00.000Z"), ...Array(3).fill("session' OR 1=1 --"), "guest", 21,
     ]);
     expect(sql.sql).not.toContain("OR 1=1");
     expect(sql.sql).toContain("AND session_id = ?");
     expect(sql.sql).toContain("WHERE s.id = ? AND BINARY s.id = BINARY ?");
+  });
+
+  it("includes an older session resumed in the period even when its latest question is later", async () => {
+    query.mockResolvedValue([{ ...record("resumed", new Date("2026-11-04T01:00:00.000Z")),
+      createdAt: new Date("2026-01-01T00:00:00.000Z"), turns: BigInt(9), periodTurns: BigInt(2) }]);
+    const result = await listHermitRecords({ start: "2026-11-01", end: "2026-11-02" }, options);
+    expect(result.rows).toEqual([{ id: "resumed", actor: "employee", createdAt: "2026-01-01T00:00:00.000Z",
+      lastQuestionAt: "2026-11-04T01:00:00.000Z", turns: 9, periodTurns: 2 }]);
+    const sql = query.mock.calls[0][0] as Prisma.Sql;
+    expect(sql.sql).toContain("COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS periodTurns");
+    expect(sql.sql).toContain("FROM chat_messages WHERE role = 'user'");
+    expect(sql.sql).toContain("GROUP BY session_id");
+    expect(sql.sql).toContain("WHERE inventory.periodTurns > 0");
+    expect(sql.sql).not.toMatch(/inventory\.lastQuestionAt\s*(?:>=|<)\s*\?/);
+    expect(sql.sql).toContain("MAX(created_at) AS lastQuestionAt, COUNT(*) AS turns");
+    expect(sql.sql).not.toMatch(/\b(content|title|metadata_json)\b/);
+    expect(result.nextCursor).toBeNull();
+  });
+
+  it.each([
+    [{ start: "2026-11-01" }, "created_at >= ?", new Date("2026-10-31T16:00:00.000Z")],
+    [{ end: "2026-11-02" }, "created_at < ?", new Date("2026-11-02T16:00:00.000Z")],
+  ] as const)("counts only user questions within an optional single date bound %j", async (filters, expression, boundary) => {
+    query.mockResolvedValue([{ ...record("historical"), turns: BigInt(5), periodTurns: BigInt(1) }]);
+    const result = await listHermitRecords(filters, options);
+    expect(result.rows[0]).toMatchObject({ turns: 5, periodTurns: 1 });
+    const sql = query.mock.calls[0][0] as Prisma.Sql;
+    expect(sql.sql).toContain(`COUNT(CASE WHEN ${expression} THEN 1 END) AS periodTurns`);
+    expect(sql.values).toEqual([boundary, 21]);
+    expect(sql.sql).not.toContain("'assistant'");
+    expect(sql.sql).toContain("WHERE inventory.periodTurns > 0");
   });
 
   it("pages tied timestamps without losing the nullable tail and binds cursors to filters", async () => {
