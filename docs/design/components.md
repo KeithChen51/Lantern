@@ -70,15 +70,15 @@ These are the runtime base. The design system should strengthen their semantics 
 
 ## 技术署名
 
-灯塔是产品名称，「Powered by SPACE AI Native」说明技术归属。共享组件 `BrandAttribution` 提供两种构图、三款固定配色。登录页、展开侧栏和个人页在暖纸底上使用深墨款。[查看六个原尺寸样张](lighthouse-classic-amber-visual-spec.html#brand-attribution)
+灯塔是产品名称，「Powered by SPACE AI Native」说明技术归属。共享组件 `BrandAttribution` 提供两种构图、三款固定配色。登录页、展开侧栏和「我的」页尾统一使用琥珀强调款，在暖纸底上直接呈现浅暖灰字标与琥珀双轨道。[查看六个原尺寸样张](lighthouse-classic-amber-visual-spec.html#brand-attribution)
 
 | 款式 | 使用表面 | 固定用色 |
 | --- | --- | --- |
 | 深墨单色 | 暖纸 `#F3EFE0` 或暖白 `#FFFDF8`，日常默认 | 全部字形与双轨道使用深墨 `#2C2C2C`。 |
 | 纯白单色 | 深色表面，样张底色为 `#2C2C2C` | 全部字形与双轨道使用纯白 `#FFFFFF`。 |
-| 琥珀强调 | 暖白 `#FFFDF8`，需要强调技术归属时 | SPACE 字标（含 A）用浅暖灰 `#8D867B`，Powered by 与 NATIVE 小字用暖灰 `#726B61`。双轨道取颜色系统的主强调色 `--lh-classic-amber`（`#D97706`），AI 小字取文字色 `--lh-primary-text`（样张为 `#9B5C14`）。 |
+| 琥珀强调 | 暖白 `#FFFDF8`，以及上述三个暖纸署名位置 | SPACE 字标（含 A）用浅暖灰 `#8D867B`，Powered by 与 NATIVE 小字用暖灰 `#726B61`。双轨道取颜色系统的主强调色 `--lh-classic-amber`（`#D97706`），AI 小字取文字色 `--lh-primary-text`（样张为 `#9B5C14`）。 |
 
-三款都是透明底、平面材质。颜色由款式固定，页面仅选择适用款式。小字对比度至少 4.5:1，轨道至少 3:1。在暖白底上，主琥珀轨道的对比度为 3.13:1，AI 小字为 5.25:1。暖纸底使用深墨单色款。[查看主琥珀与文字色样](lighthouse-classic-amber-visual-spec.html#color)
+三款都是透明底、平面材质。颜色由款式固定，页面仅选择适用款式。小字对比度至少 4.5:1。暖白样张的轨道对比度为 3.13:1，AI 小字为 5.25:1。三个暖纸落点使用同一套原色，装饰轨道在暖纸上的对比度为 2.77:1，AI 小字为 4.63:1，其余小字为 4.57:1。[查看主琥珀与文字色样](lighthouse-classic-amber-visual-spec.html#color)
 
 | 灯塔场景 | 构图与位置 |
 | --- | --- |

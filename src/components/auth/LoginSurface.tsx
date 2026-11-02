@@ -29,7 +29,7 @@ export function LoginSurface({ children }: { children: ReactNode }) {
             <p className={styles.help}>登录遇到问题，请联系平台维护人员（林子轩）。</p>
           </div>
           <footer className={styles.footer}>
-            <BrandAttribution layout="compact-horizontal" />
+            <BrandAttribution layout="compact-horizontal" tone="amber" />
           </footer>
         </section>
       </div>

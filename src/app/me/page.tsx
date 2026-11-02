@@ -51,7 +51,7 @@ export default async function MyPage() {
         </form>
       </div>}
       <footer data-lh-profile-attribution>
-        <BrandAttribution layout="compact-horizontal" />
+        <BrandAttribution layout="compact-horizontal" tone="amber" />
       </footer>
     </div>
   );

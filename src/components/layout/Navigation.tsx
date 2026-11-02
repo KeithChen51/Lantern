@@ -444,7 +444,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         </div>
         {isExpanded && (
           <div data-lh-sidebar-attribution>
-            <BrandAttribution layout="standard-stacked" />
+            <BrandAttribution layout="standard-stacked" tone="amber" />
           </div>
         )}
       </nav>
