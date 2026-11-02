@@ -683,6 +683,7 @@ model ChatSession {
   dealerId  String?  @map("dealer_id")
   storeId   String?  @map("store_id")
   title     String?
+  identitySnapshotJson Json? @map("identity_snapshot_json")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -776,6 +777,7 @@ model AnalyticsVisitDay {
 
 model AnalyticsPersonAudit {
   id          String   @id @db.VarChar(36)
+  sessionId   String?  @map("session_id") @db.VarChar(191)
   operatorId  String   @map("operator_id") @db.VarChar(191)
   approvalRef String   @map("approval_ref") @db.VarChar(128)
   purpose     String   @db.VarChar(256)

@@ -2,23 +2,23 @@
 
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLhReducedMotion } from "@/hooks/use-lighthouse-motion";
 import { authFetch } from "@/components/auth/auth-fetch";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { ChatInput } from "./ChatInput";
 import { DocumentReader } from "./DocumentReader";
-import { MessageBubble } from "./MessageBubble";
 import { HermitIdentity } from "./HermitIdentity";
 import { ConversationHeader } from "./ConversationHeader";
+import { HermitConversationView } from "./HermitConversationView";
 import { ScenarioCards } from "./ScenarioCards";
 import { RunFeedback } from "./RunFeedback";
 import { createConversationId } from "./conversation-id";
 import { HistoryDrawer, readConversation, useConversationHistory } from "./ConversationHistory";
-import { ConversationReadScope, conversationTitle, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
+import { ConversationReadScope, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
 import { hermitUploadOwner } from "./upload-scope";
 import { useHermitAttachments } from "./useHermitAttachments";
-import { getDocumentRecommendations, getHermitApiError, getTextContent, type HermitDocumentRecommendation } from "./types";
+import { getHermitApiError, getTextContent, type HermitDocumentRecommendation } from "./types";
 import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
 import { contextRequest, messageContext, retryContext, sameContextResource, unrepresentedContext, type ContextRemoval } from "./message-context";
 import { MessageContext } from "./MessageContext";
@@ -226,7 +226,6 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
 
   const isLoading = status === "submitted" || status === "streaming";
   const hasMessages = messages.length > 0;
-  const title = conversationTitle(messages, initial?.title);
   const displayedError = requestError ?? (error ? "这次请求没有完成，请重试。" : null);
   const lastMessage = messages[messages.length - 1];
   const lastUser = messages.findLast(message => message.role === "user");
@@ -316,9 +315,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     documentContext: draftDocument, onSelectDocument: selectDraftDocument, onClearDocumentContext: () => selectDraftDocument(null),
     skillContext: draftSkill, onSelectSkill: setDraftSkill, onClearSkillContext: () => setDraftSkill(null) };
 
-  return <div className={styles.workspace}>
-    <div>
-    <ConversationHeader title={hasMessages ? title : undefined} onNew={onNew} onHistory={onHistory} />
+  const conversationNotices = <>
     {entryNotice && <aside className={styles.caseEntry} aria-label="镜鉴案例问题">
       <p>{entryPending ? `已从镜鉴带来《${entryNotice.title}》的问题，原对话和草稿已保留。` : `已带入《${entryNotice.title}》的问题，发送前可以继续补充现场情况。`}</p>
       {entryNotice.notice && <p>{entryNotice.notice}</p>}
@@ -327,8 +324,11 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
     </aside>}
     {isRestoringCase && <aside className={styles.caseEntry} role="status"><p>正在恢复案例引用，问题草稿已保留…</p><button type="button" onClick={() => selectDraftDocument(null)}>移除引用，继续编辑</button></aside>}
     {caseRestoreError && <aside className={styles.caseEntry} role="alert"><p>案例引用暂时无法恢复，可能已不可读取。你的问题草稿已保留。</p><div><button type="button" onClick={() => { setIsRestoringCase(true); setCaseRestoreError(false); setCaseRestoreAttempt(attempt => attempt + 1); }}>重试恢复引用</button><button type="button" onClick={() => selectDraftDocument(null)}>移除引用，继续提问</button></div></aside>}
-    </div>
-    {!hasMessages ? <section data-lh-hermit-start aria-labelledby="hermit-start-title">
+  </>;
+
+  if (!hasMessages) return <div className={styles.workspace}>
+    <div><ConversationHeader onNew={onNew} onHistory={onHistory} />{conversationNotices}</div>
+    <section data-lh-hermit-start aria-labelledby="hermit-start-title">
       <div data-lh-hermit-start-inner>
         <div className={styles.startCopy}>
           <div className={styles.startIdentity}><HermitIdentity size="sm" /><span>路引</span></div>
@@ -338,43 +338,51 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
         <div data-lh-hermit-start-input><ChatInput {...inputProps} /></div>
         {replacedDraft !== null && <p className={styles.draftUndo} role="status">已填入示例问题。<button type="button" onClick={() => { updateInput(replacedDraft); setReplacedDraft(null); setFocusKey(key => key + 1); }}>撤销替换</button></p>}
         <ScenarioCards onSelect={draft => { if (input !== draft) { setReplacedDraft(previous => previous ?? (input.trim() ? input : null)); updateInput(draft); } setFocusKey(key => key + 1); }} />
-        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。</p>
+        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。平台管理员可回看已保存的对话，系统会记录查看操作。</p>
       </div>
-    </section> : <div className={`${styles.chatLayout} ${readerDocument ? styles.chatLayoutWithReader : ""}`} data-lh-hermit-layout>
-      <section className={styles.conversation} data-lh-hermit-conversation aria-label="路引当前对话">
-        <div data-lh-hermit-main ref={scrollRef} tabIndex={0} role="region" aria-label="对话消息" onScroll={event => {
-          const element = event.currentTarget;
-          followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
-          if (followLatestRef.current) setHasUnreadMessages(false);
-          else if (isLoading) setHasUnreadMessages(true);
-        }}><div data-lh-chat-scroll-content>
-          {initial?.unavailableAttachments.length ? <p className={styles.expiredAttachments} role="status">部分历史附件已过期或不可用：{initial.unavailableAttachments.map(item => item.name).join("、")}。请重新上传后继续引用。</p> : null}
-          {initial?.unavailableSkillContext && <p className={styles.expiredAttachments} role="status">{initial.unavailableSkillContext.message}</p>}
-          {messages.map(message => {
-            const last = message.id === lastMessage?.id;
-            const state = messageRunState(message);
-            const visible = message.role !== "assistant" || getTextContent(message).trim() || getDocumentRecommendations(message).length;
-            return <Fragment key={message.id}>
-              {visible ? <MessageBubble message={message} onOpenDocument={openReader} activeContext={message.id === lastUser?.id ? activeContext : undefined} contextDisabled={isLoading} onRemoveContext={removeSentContext} showRecommendations={state !== "failed" && state !== "cancelled" && (!last || !isLoading && !displayedError)} /> : null}
-              {message.role === "assistant" && (!last || !isLoading) && <RunFeedback error={last ? displayedError ?? (state === "failed" ? "这条回答未完成，请重试。" : null) : state === "failed" ? "这条回答未完成。" : null} cancelled={state === "cancelled" || last && wasCancelled} onRetry={last && (displayedError || state === "failed" || state === "cancelled" || wasCancelled) ? handleRetry : undefined} />}
-            </Fragment>;
-          })}
-          {!!hasUnmappedContext && <section className={styles.followUpContext} aria-label="后续引用材料">
-            <span>后续引用</span>
-            <MessageContext context={unmappedContext} active={activeContext} disabled={isLoading} onOpenDocument={openReader} onRemove={removeSentContext} />
-          </section>}
-          {lastMessage?.role !== "assistant" && displayedError && <RunFeedback error={displayedError} onRetry={handleRetry} />}
-          {isLoading && <RunFeedback loading progress={progress} />}
-          {!isLoading && lastMessage?.role !== "assistant" && (lastState === "cancelled" || wasCancelled) && <RunFeedback cancelled onRetry={handleRetry} />}
-          {!isLoading && lastMessage?.role === "user" && !displayedError && !wasCancelled && lastState !== "cancelled" && <RunFeedback error="这条问题尚未完成回答，可以重试。" onRetry={handleRetry} />}
-        </div></div>
-        <footer data-lh-hermit-footer>
-          {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => { followLatestRef.current = true; setHasUnreadMessages(false); scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" }); }}>查看最新回复 ↓</button>}
-          <div data-lh-hermit-composer><ChatInput {...inputProps} /></div>
-        </footer>
-      </section>
-      {readerDocument && <DocumentReader document={readerDocument} onClose={closeReader} onUse={document => { selectDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
-      <p className={`${styles.startFootnote} ${styles.conversationFootnote}`}>回答供参考，请结合现场情况判断。</p>
-    </div>}
+    </section>
   </div>;
+
+  return <HermitConversationView
+    fallbackTitle={initial?.title} label="路引当前对话" messages={messages}
+    onNew={onNew} onHistory={onHistory} headerContent={conversationNotices}
+    scrollRef={scrollRef} onScroll={event => {
+      const element = event.currentTarget;
+      followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+      if (followLatestRef.current) setHasUnreadMessages(false);
+      else if (isLoading) setHasUnreadMessages(true);
+    }}
+    messageOptions={message => {
+      const last = message.id === lastMessage?.id;
+      const state = messageRunState(message);
+      return { onOpenDocument: openReader, activeContext: message.id === lastUser?.id ? activeContext : undefined,
+        contextDisabled: isLoading, onRemoveContext: removeSentContext,
+        showRecommendations: state !== "failed" && state !== "cancelled" && (!last || !isLoading && !displayedError) };
+    }}
+    afterMessage={message => {
+      const last = message.id === lastMessage?.id;
+      const state = messageRunState(message);
+      return message.role === "assistant" && (!last || !isLoading)
+        ? <RunFeedback error={last ? displayedError ?? (state === "failed" ? "这条回答未完成，请重试。" : null) : state === "failed" ? "这条回答未完成。" : null} cancelled={state === "cancelled" || last && wasCancelled} onRetry={last && (displayedError || state === "failed" || state === "cancelled" || wasCancelled) ? handleRetry : undefined} />
+        : null;
+    }}
+    beforeMessages={<>
+      {initial?.unavailableAttachments.length ? <p className={styles.expiredAttachments} role="status">部分历史附件已过期或不可用：{initial.unavailableAttachments.map(item => item.name).join("、")}。请重新上传后继续引用。</p> : null}
+      {initial?.unavailableSkillContext && <p className={styles.expiredAttachments} role="status">{initial.unavailableSkillContext.message}</p>}
+    </>}
+    footer={<>
+      {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => { followLatestRef.current = true; setHasUnreadMessages(false); scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" }); }}>查看最新回复 ↓</button>}
+      <div data-lh-hermit-composer><ChatInput {...inputProps} /></div>
+    </>}
+    reader={readerDocument && <DocumentReader document={readerDocument} onClose={closeReader} onUse={document => { selectDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
+  >
+      {!!hasUnmappedContext && <section className={styles.followUpContext} aria-label="后续引用材料">
+        <span>后续引用</span>
+        <MessageContext context={unmappedContext} active={activeContext} disabled={isLoading} onOpenDocument={openReader} onRemove={removeSentContext} />
+      </section>}
+      {lastMessage?.role !== "assistant" && displayedError && <RunFeedback error={displayedError} onRetry={handleRetry} />}
+      {isLoading && <RunFeedback loading progress={progress} />}
+      {!isLoading && lastMessage?.role !== "assistant" && (lastState === "cancelled" || wasCancelled) && <RunFeedback cancelled onRetry={handleRetry} />}
+      {!isLoading && lastMessage?.role === "user" && !displayedError && !wasCancelled && lastState !== "cancelled" && <RunFeedback error="这条问题尚未完成回答，可以重试。" onRetry={handleRetry} />}
+  </HermitConversationView>;
 }

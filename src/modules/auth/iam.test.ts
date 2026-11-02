@@ -40,7 +40,7 @@ describe("direct IAM OAuth contract", () => {
   });
   it("gets the exact loginName without numeric coercion or role inference", async () => {
     const fetcher = vi.fn<typeof fetch>(async () => reply({ loginName: "000071", displayName: "Untrusted name", spRoleList: ["lighthouse_admin"] }));
-    expect(await new IamIdentityClient(config, fetcher).identity("token&+value")).toEqual({ account: "000071", displayName: "000071" });
+    expect(await new IamIdentityClient(config, fetcher).identity("token&+value")).toEqual({ account: "000071", displayName: "000071", employeeNo: "000071" });
     const [url, init] = fetcher.mock.calls[0];
     const requestUrl = new URL(url as string);
     expect(requestUrl.pathname).toBe("/gateway/bam-protocol-service/oauth2/getUserInfo");

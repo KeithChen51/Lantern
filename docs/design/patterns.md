@@ -288,6 +288,7 @@ Admin surfaces are work tools. They should be denser, more neutral, and more exp
 Required patterns:
 
 - Table or list first, with filters visible.
+- 平台管理的三个页面共用顶部导航。当前标签以深琥珀文字和下划线标记，内容区直接进入工作区。路引记录使用独立的表格滚动区，标签、筛选、表头和分页在浏览记录时保持可见。
 - Status badges with semantic colors.
 - Row actions on hover or in a compact action column.
 - Bulk action toolbar when selection is active.

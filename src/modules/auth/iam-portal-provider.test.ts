@@ -54,7 +54,7 @@ describe("IAM and portal provider composition", () => {
     const exchange = await f.provider.exchange!("synthetic-code");
     expect(exchange).toEqual({ token: "synthetic-iam-token", expiresAt: now() + 900000 });
     const identity = await f.provider.identity(exchange.token);
-    expect(identity).toEqual({ account: "000042", displayName: "000042" });
+    expect(identity).toEqual({ account: "000042", displayName: "000042", employeeNo: "000042" });
     expect(await f.provider.authorization!(identity.account)).toEqual({ roles: ["lighthouse_user", "lighthouse_knowledge_admin"], organization: "售后/文化" });
     expect(await f.provider.roles(identity.account)).toEqual(["lighthouse_user", "lighthouse_knowledge_admin"]);
     expect(f.fetcher).toHaveBeenCalledTimes(4);
@@ -65,7 +65,7 @@ describe("IAM and portal provider composition", () => {
     const service = new AccessService(f.config, f.provider, new MemoryAccessStore(), now);
     const start = await service.startLogin("/me");
     const login = await service.iamCallback({ code: "synthetic-code", state: start.state, cookie: start.cookie });
-    expect(await service.webPrincipal(login.sessionToken)).toMatchObject({ account: "000042", displayName: "测试员工", organization: "售后/文化" });
+    expect(await service.webPrincipal(login.sessionToken)).toMatchObject({ account: "000042", employeeNo: "000042", displayName: "测试员工", organization: "售后/文化" });
     expect(f.fetcher).toHaveBeenCalledTimes(3);
     expect(f.fetcher.mock.calls.some(([url]) => String(url).includes("infoByToken"))).toBe(false);
   });

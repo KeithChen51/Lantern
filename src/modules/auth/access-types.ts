@@ -5,7 +5,7 @@ export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "he
 export type Principal = {
   kind?: "employee" | "guest";
   userId: string; account: string; displayName: string;
-  organization?: string; avatarUrl?: string;
+  organization?: string; employeeNo?: string; avatarUrl?: string;
   grantId: string; credentialId: string; channel: "web" | "cli" | "mcp";
   capabilities: readonly Capability[]; csrfToken?: string; expiresAt: number;
 };
@@ -18,7 +18,7 @@ export class AccessError extends AppError {
 export class OAuthError extends Error {
   constructor(public readonly error: string, public readonly status = 400) { super(error); }
 }
-export type PortalIdentity = { account: string; displayName: string; expiresAt?: number };
+export type PortalIdentity = { account: string; displayName: string; employeeNo?: string; expiresAt?: number };
 export type PortalAuthorization = { roles: readonly string[]; organization?: string; displayName?: string };
 export interface PortalAdapter {
   exchange?(code: string): Promise<{ token: string; expiresAt: number }>;

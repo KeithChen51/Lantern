@@ -70,7 +70,7 @@ describe("IAM login and synchronized authorization", () => {
     expect(url.searchParams.get("redirect_uri")).toBe(`${origin}/auth/iam/callback`);
     expect(url.searchParams.get("response_type")).toBe("code"); expect(url.searchParams.get("state")).toBe(login.start.state);
     expect(login.returnTo).toBe("/auth/device?user_code=ABC123");
-    expect(login.principal).toMatchObject({ userId: "existing-portal-user", account: "000042", displayName: "模拟员工", organization: "售后/服务", expiresAt: f.now() + 1500000 });
+    expect(login.principal).toMatchObject({ userId: "existing-portal-user", account: "000042", employeeNo: "000042", displayName: "模拟员工", organization: "售后/服务", expiresAt: f.now() + 1500000 });
     expect(f.roles).not.toHaveBeenCalled();
     expect(JSON.stringify(f.store.snapshot())).not.toContain("synthetic-upstream-token");
     await expect(f.service.iamCallback({ code: "single-use-code", state: login.start.state, cookie: login.start.cookie })).rejects.toMatchObject({ status: 401 });
