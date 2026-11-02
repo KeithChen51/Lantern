@@ -587,6 +587,19 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar] {
   padding-block: 1rem;
 }
 
+@media (height < 48rem) {
+  /* Scroll module links independently so the account control stays reachable. */
+  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] > [data-lh-nav-link] {
+    flex-shrink: 0;
+    outline-offset: -2px;
+  }
+}
+
 @media (min-width: 48rem) and (min-height: 48rem) {
   [data-lh-sidebar-attribution] {
     display: flex;
