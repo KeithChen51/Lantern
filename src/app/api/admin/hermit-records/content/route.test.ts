@@ -1,26 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const deps = vi.hoisted(() => ({ authorize: vi.fn(), mutation: vi.fn(), grant: vi.fn(), audited: vi.fn() }));
+const deps = vi.hoisted(() => ({ authorize: vi.fn(), mutation: vi.fn(), audited: vi.fn() }));
 vi.mock("@/modules/auth/access", async original => ({
   ...await original<typeof import("@/modules/auth/access")>(),
   requireAnalyticsSummary: deps.authorize, assertWebMutation: deps.mutation,
 }));
 vi.mock("@/modules/hermit/admin-records-access", async original => ({
   ...await original<typeof import("@/modules/hermit/admin-records-access")>(),
-  getHermitContentGrant: deps.grant, getAuditedHermitRecord: deps.audited,
+  getAuditedHermitRecord: deps.audited,
 }));
 vi.mock("@/modules/hermit/admin-records-data", () => ({ readHermitRecord: vi.fn() }));
 import { AccessError } from "@/modules/auth/access";
 import { AppError } from "@/shared/errors";
 import { GET, POST } from "./route";
 const principal = { userId: "admin", account: "007", credentialId: "credential" };
-const request = (input: unknown = { id: "session", purpose: "排查用户反馈" }, query = "") =>
+const request = (input: unknown = { id: "session" }, query = "") =>
   new Request("https://app.example/api/admin/hermit-records/content" + query, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input),
   });
 beforeEach(() => {
   vi.resetAllMocks();
   deps.authorize.mockResolvedValue(principal);
-  deps.grant.mockReturnValue("APPROVAL-134");
   deps.audited.mockImplementation(async input => { await input.recheck(); return { messages: [{ id: "m", role: "user", text: "private content" }], nextCursor: null }; });
 });
 describe("Hermit record content endpoint", () => {
@@ -38,54 +37,53 @@ describe("Hermit record content endpoint", () => {
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(await response.text()).not.toContain("private");
   });
-  it("requires both CSRF and a separate approved content grant", async () => {
+  it("requires CSRF before reading any content", async () => {
     deps.mutation.mockImplementationOnce(() => { throw new AccessError("CSRF rejected", 403); });
     expect((await POST(request())).status).toBe(403);
     expect(deps.audited).not.toHaveBeenCalled();
-    deps.grant.mockReturnValue(null);
-    expect((await POST(request())).status).toBe(403);
-    expect(deps.audited).not.toHaveBeenCalled();
   });
-  it("audits with server-approved authority and only the validated content selectors", async () => {
-    const response = await POST(request({ id: "session", purpose: "  排查用户反馈  ", cursor: "next_123" }));
+  it("allows every current platform administrator to view without an account list or reason", async () => {
+    const response = await POST(request());
     expect(response.status).toBe(200);
     expect(deps.audited).toHaveBeenCalledWith({
-      principal, approvalRef: "APPROVAL-134", id: "session", purpose: "排查用户反馈", cursor: "next_123", recheck: expect.any(Function),
+      principal, id: "session", cursor: undefined, recheck: expect.any(Function),
+    });
+  });
+  it("passes only the validated selectors to audited reads and rechecks current authority", async () => {
+    const response = await POST(request({ id: "session", cursor: "next_123" }));
+    expect(response.status).toBe(200);
+    expect(deps.audited).toHaveBeenCalledWith({
+      principal, id: "session", cursor: "next_123", recheck: expect.any(Function),
     });
     expect(deps.authorize).toHaveBeenCalledTimes(2);
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(response.headers.get("vary")).toBe("Cookie");
   });
   it.each([
-    {}, { id: "session" }, { id: "session", purpose: "a" }, { id: "session", purpose: "bad\nreason" },
-    { id: "session", purpose: "check reason", account: "other" }, { id: "session", purpose: "check reason", approvalRef: "spoofed" },
-    { id: "session", purpose: "check reason", cursor: "" },
+    {}, { id: "" }, { id: "session", purpose: "check reason" },
+    { id: "session", account: "other" }, { id: "session", approvalRef: "spoofed" },
+    { id: "session", cursor: "" },
   ])("rejects malformed inputs and authority overrides %j", async input => {
     expect((await POST(request(input))).status).toBe(400);
     expect(deps.audited).not.toHaveBeenCalled();
   });
   it("refuses URL selectors and overlarge input before auditing", async () => {
     expect((await POST(request(undefined, "?id=another"))).status).toBe(400);
-    expect((await POST(request({ id: "session", purpose: "a".repeat(17_000) }))).status).toBe(400);
+    expect((await POST(request({ id: "a".repeat(17_000) }))).status).toBe(400);
     expect(deps.audited).not.toHaveBeenCalled();
-  });
-  it("allows a reason containing quoted field names and punctuation", async () => {
-    const purpose = '核对反馈中的 "id": "备注" 和 "id": "编号"';
-    expect((await POST(request({ id: "session", purpose }))).status).toBe(200);
-    expect(deps.audited).toHaveBeenCalledWith(expect.objectContaining({ purpose }));
   });
   it("rejects duplicate form fields", async () => {
     const duplicate = new Request("https://app.example/api/admin/hermit-records/content", {
       method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "id=first&id=second&purpose=check+reason",
+      body: "id=first&id=second",
     });
     expect((await POST(duplicate)).status).toBe(400);
     expect(deps.audited).not.toHaveBeenCalled();
   });
   it.each([
-    '{"id":"first","id":"second","purpose":"check reason"}',
-    '{"id":"first","\\u0069d":"second","purpose":"check reason"}',
-    '{"id":"first","purpose":"first reason","purpose":"second reason"}',
+    '{"id":"first","id":"second"}',
+    '{"id":"first","\\u0069d":"second"}',
+    '{"id":"first","cursor":"first","cursor":"second"}',
   ])("rejects duplicated JSON selectors before auditing %s", async body => {
     const duplicate = new Request("https://app.example/api/admin/hermit-records/content", {
       method: "POST", headers: { "Content-Type": "application/json" }, body,
@@ -93,13 +91,14 @@ describe("Hermit record content endpoint", () => {
     expect((await POST(duplicate)).status).toBe(400);
     expect(deps.audited).not.toHaveBeenCalled();
   });
-  it("accepts escaped quotes and colons inside a reason without treating them as keys", async () => {
-    expect((await POST(request({ id: "session", purpose: '检查 "id": 对应的问题' }))).status).toBe(200);
+  it("preserves printable quoted identifiers without treating their contents as keys", async () => {
+    const id = 'legacy "id": "comment"';
+    expect((await POST(request({ id }))).status).toBe(200);
+    expect(deps.audited).toHaveBeenCalledWith(expect.objectContaining({ id }));
   });
-  it.each(["user", "credential", "approval", "role"])("rechecks %s before returning any content", async change => {
+  it.each(["user", "credential", "role"])("rechecks %s before returning any content", async change => {
     if (change === "user") deps.authorize.mockResolvedValueOnce(principal).mockResolvedValueOnce({ ...principal, userId: "other" });
     if (change === "credential") deps.authorize.mockResolvedValueOnce(principal).mockResolvedValueOnce({ ...principal, credentialId: "other" });
-    if (change === "approval") deps.grant.mockReturnValueOnce("APPROVAL-134").mockReturnValueOnce(null);
     if (change === "role") deps.authorize.mockResolvedValueOnce(principal).mockRejectedValueOnce(new AccessError("revoked", 403));
     const response = await POST(request());
     expect(response.status).toBe(403);

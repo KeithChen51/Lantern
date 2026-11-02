@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type { Principal } from "@/modules/auth/access";
 import { AppError } from "@/shared/errors";
 vi.mock("@/modules/hermit/admin-records-data", () => ({ readHermitRecord: vi.fn() }));
-import { getAuditedHermitRecord, getHermitContentGrant, validateHermitRecordCursor,
-  validateHermitRecordId, validateHermitRecordPurpose } from "./admin-records-access";
+import { getAuditedHermitRecord, validateHermitRecordCursor,
+  validateHermitRecordId } from "./admin-records-access";
 
 const principal: Principal = {
   userId: "admin", account: "007", displayName: "Admin", grantId: "grant", credentialId: "credential",
@@ -15,37 +15,11 @@ const execute = vi.fn();
 const readRecord = vi.fn();
 const recheck = vi.fn();
 const database = { $executeRaw: execute } as unknown as Pick<PrismaClient, "$executeRaw">;
-const input = () => ({ principal, approvalRef: "APPROVAL-134", id: "session-1", purpose: "排查用户反馈", recheck });
+const input = () => ({ principal, id: "session-1", recheck });
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date("2026-11-02T10:00:00Z"));
-  vi.stubEnv("LIGHTHOUSE_HERMIT_CONTENT_GRANTS", '{"007":"APPROVAL-134"}');
   execute.mockResolvedValue(1);
   readRecord.mockResolvedValue({ messages: [{ id: "m1", role: "user", text: "private conversation" }], nextCursor: null });
-});
-afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
-
-describe("Hermit content authorization", () => {
-  it("uses only the trusted account and returns the exact recorded approval", () => {
-    expect(getHermitContentGrant(principal)).toBe("APPROVAL-134");
-    expect(getHermitContentGrant({ ...principal, account: "other", displayName: "007" })).toBeNull();
-  });
-  it.each([
-    undefined, "", "broken", "null", "[]", '{"007":true}', '{"007":""}',
-    '{"007":" x"}', '{"007":"approval","other":null}', '{"007":"bad\\nvalue"}',
-    JSON.stringify({ "007": "a".repeat(129) }),
-  ])("fails closed for invalid approval configuration %j", value => {
-    vi.stubEnv("LIGHTHOUSE_HERMIT_CONTENT_GRANTS", value);
-    expect(getHermitContentGrant(principal)).toBeNull();
-  });
-  it.each([
-    { kind: "guest" as const }, { channel: "cli" as const }, { channel: "mcp" as const },
-    { capabilities: [] }, { capabilities: ["knowledge:manage"] as const }, { expiresAt: Number.NaN },
-    { expiresAt: Date.now() },
-  ])("cannot make an approval replace platform web authorization %j", change => {
-    expect(getHermitContentGrant({ ...principal, ...change })).toBeNull();
-  });
 });
 
 describe("audited Hermit content reads", () => {
@@ -61,7 +35,7 @@ describe("audited Hermit content reads", () => {
     expect(events).toEqual(["attempt", "read", "recheck", "completion"]);
     const audit = execute.mock.calls[0][0] as Prisma.Sql;
     expect(audit.sql).toContain("session_id");
-    expect(audit.values).toEqual([expect.any(String), "admin", "APPROVAL-134", "排查用户反馈",
+    expect(audit.values).toEqual([expect.any(String), "admin", "role:platform-admin", "查看路引对话记录",
       "2026-11-03", "2026-11-03", now, "session-1"]);
     expect(audit.sql).not.toMatch(/content|metadata|messages|title/);
     expect(JSON.stringify(execute.mock.calls)).not.toContain("private conversation");
@@ -99,9 +73,6 @@ describe("audited Hermit content reads", () => {
   });
   it.each(["", " abc ", "a".repeat(192), "ab\ncd", undefined])("rejects an invalid id before auditing %j", value => {
     expect(() => validateHermitRecordId(value)).toThrow();
-  });
-  it.each(["", "abc", "a".repeat(257), "check\nreason", undefined])("rejects an invalid purpose %j", value => {
-    expect(() => validateHermitRecordPurpose(value)).toThrow();
   });
   it.each(["", "a".repeat(1601), "cursor/unsafe", null])("rejects an invalid cursor %j", value => {
     expect(() => validateHermitRecordCursor(value)).toThrow();
