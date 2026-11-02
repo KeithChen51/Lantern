@@ -59,7 +59,8 @@
 .space-signature__focus { --mask: var(--space-mark-parametric-focus); }
 .space-signature__orbit-front { --mask: var(--space-mark-parametric-orbit-front); }
 .space-signature[data-tone="light"] { color: #fff; }
-.space-signature[data-tone="amber"] { color: #666158; }
+.space-signature[data-tone="amber"] { color: #726b61; }
+.space-signature[data-tone="amber"] .space-signature__mark { color: #8d867b; }
 .space-signature[data-tone="amber"] .space-signature__orbit-back,
 .space-signature[data-tone="amber"] .space-signature__orbit-front { background: #a65d12; }
 .space-signature[data-tone="amber"] .space-signature__descriptor::before { background: #8a4a0c; }
