@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { VisitTrend } from "@/modules/analytics/visit-trend";
 import { VisitActivity } from "./VisitActivity";
 import { heatmapLevel, heatmapScale, VisitHeatmap } from "./VisitHeatmap";
-import { describeTrendValue, readTrendResponse, trendSegments, VisitLineChart } from "./VisitTrend";
+import { describeTrendValue, readTrendResponse, trendSegments, VisitLineChart, VisitTrendPanel } from "./VisitTrend";
 
 const report: VisitTrend = {
   range: "7", startDate: "2026-10-27", endDate: "2026-10-31",
@@ -25,7 +25,7 @@ describe("visit trend chart", () => {
     expect(html).toContain("访问日历");
     expect(html).toContain('aria-label="访问图表视图"');
     expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*>热力图<\/button>/);
-    expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*>折线图<\/button>/);
+    expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*>趋势图<\/button>/);
     expect(html).not.toContain("正在加载访问趋势");
   });
 
@@ -52,15 +52,57 @@ describe("visit trend chart", () => {
     const html = renderToStaticMarkup(<VisitLineChart report={report} />);
     expect(html).toContain('tabindex="0"');
     expect(html).toContain("左右方向键逐日查看");
-    expect(html).toContain("PV 实线圆点与 UV 虚线方点");
+    expect(html).toContain("PV 浅琥珀面积与实线圆点、UV 虚线方点");
+    expect(html).toContain("每日 PV 与 UV 趋势图");
     expect(html).toContain('aria-live="polite"');
     expect(html).toContain("2026/10/31");
     expect(html).toContain("3（部分记录）");
     expect(html).toContain("2（部分记录）");
     expect(html).toContain("缺少完整记录的日期留空");
-    expect(html.match(/<path /g)).toHaveLength(2);
-    expect(html.match(/<circle /g)).toHaveLength(2);
-    expect(html.match(/<rect /g)).toHaveLength(2);
+    expect(html.match(/data-mark="pv-area"/g)).toHaveLength(1);
+    expect(html.match(/data-mark="pv-line"/g)).toHaveLength(1);
+    expect(html.match(/data-mark="uv-line"/g)).toHaveLength(1);
+    expect(html).toContain('data-mark="pv-peak"');
+    expect(html).toContain("已记录最高 4");
+    expect(html).toMatch(/<rect[^>]*width="10"[^>]*height="10"/);
+  });
+
+  it("closes each PV area at zero without spanning missing days or filling UV", () => {
+    const html = renderToStaticMarkup(<VisitLineChart report={{ ...report, startDate: "2026-10-26",
+      days: [{ ...report.days[0], date: "2026-10-26" }, ...report.days],
+    }} />);
+    const fills = [...html.matchAll(/<path[^>]*data-mark="pv-area"[^>]*d="([^"]*)"/g)];
+    expect(fills).toHaveLength(1);
+    expect(fills[0][1]).toMatch(/^M42,156 L/);
+    expect(fills[0][1]).toMatch(/ L[^ ]+,156 Z$/);
+    expect(html).not.toContain('data-mark="uv-area"');
+  });
+
+  it("keeps the same two direct layout slots while loading, empty and ready", () => {
+    for (const html of [
+      renderToStaticMarkup(<VisitTrendPanel range="7" />),
+      renderToStaticMarkup(<VisitLineChart report={{ ...report, days: [] }} />),
+      renderToStaticMarkup(<VisitLineChart report={report} />),
+    ]) {
+      expect(html).toMatch(/^<div[^>]*data-visit-plot="true"/);
+      expect(html.match(/data-visit-plot="true"/g)).toHaveLength(1);
+      expect(html.match(/data-visit-readout="true"/g)).toHaveLength(1);
+      expect(html).toMatch(/<\/div><div[^>]*data-visit-readout="true"/);
+    }
+  });
+
+  it("draws separate zero-based areas around a missing date and marks only recorded PV", () => {
+    const days = [
+      { date: "2026-10-26", pv: 2, uv: 1, pvStatus: "available" as const, uvStatus: "available" as const },
+      { date: "2026-10-27", pv: 0, uv: 0, pvStatus: "available" as const, uvStatus: "available" as const },
+      { date: "2026-10-28", pv: null, uv: 1, pvStatus: "unavailable" as const, uvStatus: "available" as const },
+      { date: "2026-10-29", pv: 3, uv: null, pvStatus: "partial" as const, uvStatus: "not_collected" as const },
+      { date: "2026-10-30", pv: 1, uv: 1, pvStatus: "available" as const, uvStatus: "available" as const },
+    ];
+    const html = renderToStaticMarkup(<VisitLineChart report={{ ...report, startDate: days[0].date, endDate: days[4].date, days }} />);
+    expect(html.match(/data-mark="pv-area"/g)).toHaveLength(2);
+    expect(html.match(/data-mark="uv-line"/g)).toHaveLength(1);
+    expect(html).toContain("已记录最高 3");
   });
 
   it("labels only attainable heatmap intervals, including a single observed visit", () => {
