@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { PageHeading } from "@/components/ui/PageHeading";
 import { LhCallout } from "@/components/ui/lighthouse-primitives";
 import { requireAnalyticsSummary } from "@/modules/auth/access";
 import { getUsageReport } from "@/modules/analytics/report";
@@ -9,7 +8,6 @@ import { PlatformAdminNav } from "../PlatformAdminNav";
 import { VisitActivity } from "./VisitActivity";
 import { ReportPeriodFilter } from "./ReportPeriodFilter";
 import { UsageReportView } from "./UsageReportView";
-import { UsageOverview } from "./UsageOverview";
 import { EmployeeRankings } from "./EmployeeRankings";
 import styles from "../platform-admin.module.css";
 
@@ -33,7 +31,7 @@ export default async function AdminAnalyticsPage({ searchParams }: {
   let period;
   try { period = parseReportPeriod(params, now); } catch {
     return <><PlatformAdminNav active="analytics" canViewAnalytics /><div className={styles.page}>
-      <PageHeading title="访问与使用" /><LhCallout tone="warning">请选择有效的统计日期。自定义范围须从开始日期至结束日期，最多 24 个月，且截止今天。</LhCallout>
+      <LhCallout tone="warning">请选择有效的统计日期。自定义范围须从开始日期至结束日期，最多 24 个月，且截止今天。</LhCallout>
       <Link className={styles.recovery} href="/admin/analytics?preset=week">查看本周统计</Link>
     </div></>;
   }
@@ -43,7 +41,6 @@ export default async function AdminAnalyticsPage({ searchParams }: {
   return <>
     <PlatformAdminNav active="analytics" canViewAnalytics />
     <div className={styles.page}>
-      <PageHeading title="访问与使用" description={report && <UsageOverview report={report} />} />
       {report ? <>
         <VisitActivity key={principal.userId} heatmap={report.heatmap} />
         <section className={styles.periodReport} aria-labelledby="period-report-title">

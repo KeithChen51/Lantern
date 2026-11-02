@@ -9,9 +9,8 @@ vi.mock("@/modules/auth/access", () => ({ requireKnowledgeAdmin: knowledgeAdmin,
 vi.mock("@/modules/analytics/report", () => ({ getUsageReport: report }));
 vi.mock("next/headers", () => ({ headers: requestHeaders }));
 vi.mock("./knowledge/AdminKnowledgeManager", () => ({ AdminKnowledgeManager: () => <p>知识文件工作区</p> }));
-vi.mock("@/modules/hermit/admin-records-access", () => ({ getHermitContentGrant: () => null }));
 vi.mock("./hermit-records/HermitRecords", () => ({
-  HermitRecords: ({ canReadContent }: { canReadContent: boolean }) => <section data-can-read-content={canReadContent}>会话列表</section>,
+  HermitRecords: () => <section>会话列表</section>,
 }));
 vi.mock("./analytics/EmployeeRankings", () => ({
   EmployeeRankings: ({ period }: Pick<UsageReport, "period">) => <section data-ranking-start={period.startDate}>员工榜单</section>,
@@ -62,10 +61,11 @@ describe("platform management pages", () => {
     expect(html).toContain('href="/admin/hermit-records"');
   });
 
-  it("allows listing without a transcript grant and marks the active tab", async () => {
+  it("opens records for a platform administrator and marks the active tab", async () => {
     const html = renderToStaticMarkup(await HermitRecordsPage());
     expect(html).toMatch(/<a (?=[^>]*href="\/admin\/hermit-records")(?=[^>]*aria-current="page")[^>]*>/);
-    expect(html).toContain('data-can-read-content="false"');
+    expect(html).toContain("会话列表");
+    expect(html).not.toContain("data-lh-page-heading");
   });
 
   it("does not mount the records client for a knowledge-only administrator", async () => {
