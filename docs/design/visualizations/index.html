@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="zh-CN" id="top">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UI 开发 · 可视化目录 | 灯塔设计系统</title>
+  <meta name="description" content="按用途浏览灯塔图表预览、核对可复用实现，并打开灯塔演示与整页报告样稿。">
+  <link rel="icon" href="data:,"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="catalog.css">
+  <script defer src="catalog.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#catalog">跳到选图目录</a>
+  <div class="page">
+    <header class="mast"><a href="../lighthouse-classic-amber-visual-spec.html#visualizations">← 灯塔设计规范</a><span>UI 开发参考</span></header>
+    <div class="intro"><p class="eyebrow">LIGHTHOUSE DESIGN SYSTEM</p><h1>可视化开发目录</h1>
+      <p>按用途选图，查看真实图形与复用状态。样稿仅使用演示数据。</p>
+      <nav class="jump" aria-label="开发资源"><a href="#catalog">图表目录</a><a href="lantern/presentation.html">灯塔演示报告 ↗</a><a href="lantern/report.html">灯塔整页报告 ↗</a><a href="#implementation">实现与规范</a><a href="#reference">完整参考库</a></nav>
+    </div>
+    <main>
+      <section id="catalog" aria-label="开发选图目录" tabindex="-1">
+    <!-- synced catalog:start -->
+    <nav class="task-nav" aria-label="按图表用途筛选"><a href="#catalog" data-view="catalog">常用</a><a href="#trend" data-view="trend">趋势</a><a href="#calendar" data-view="calendar">日历与热力</a><a href="#ranking" data-view="ranking">排名与对比</a><a href="#composition" data-view="composition">构成与进度</a><a href="#distribution" data-view="distribution">分布</a><a href="#relations" data-view="relations">关系与流向</a><a href="#maps" data-view="maps">地图</a><a href="#legacy" data-view="legacy">历史参考</a><a href="#all" data-view="all">全部</a></nav>
+    <div class="result-title"><h2 id="selection-title">按用途选图</h2><p id="selection-note" aria-live="polite">查看图形、数据形状与实现状态。点击缩略图可查看完整交互。</p></div>
+    <div class="catalog-content" id="all">
+      <section class="task-group" id="trend" aria-labelledby="title-trend">
+        <div class="group-heading"><h2 id="title-trend">趋势</h2><p>比较连续时间里的变化。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="F2" data-family="basics" data-favorite>
+            <span class="anchor" id="basics"></span><a class="preset-link" href="gallery/basics-gallery.html#F2">
+              <img class="chart-preview" src="previews/F2.webp" alt="" width="520" height="280" loading="eager">
+              <div class="card-text"><span class="card-number">F2</span><h3>逐日折线</h3><p>逐日观察访问量，可据此设计 PV、UV 双线趋势。</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span><a href="#implementation" title="灯塔 1.6.0 的 VisitTrend 展示每日 PV 和 UV。">1.6.0 页面实现</a></div>
+          </article>
+          <article class="preset" id="F3" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F3">
+              <img class="chart-preview" src="previews/F3.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F3</span><h3>日序列面积图</h3><p>日序列（30–60 天，看形态）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G17" data-family="glance">
+            <span class="anchor" id="glance"></span><a class="preset-link" href="gallery/glance-gallery.html#G17">
+              <img class="chart-preview" src="previews/G17.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G17</span><h3>实时趋势</h3><p>实时滚动序列</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G18" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G18">
+              <img class="chart-preview" src="previews/G18.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G18</span><h3>累计曲线</h3><p>累计增长（一条线+一个大数）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L3" data-family="lupi">
+            <span class="anchor" id="lupi"></span><a class="preset-link" href="gallery/lupi-gallery.html#L3">
+              <img class="chart-preview" src="previews/L3.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L3</span><h3>日序列棒棒糖图</h3><p>每天一个读数的日序列（90 天级）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F17" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F17">
+              <img class="chart-preview" src="previews/F17.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F17</span><h3>蜡烛图</h3><p>OHLC 四值时间序列，空心=涨、实心=跌</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L9" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L9">
+              <img class="chart-preview" src="previews/L9.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L9</span><h3>气泡年鉴</h3><p>分类×年份+量+状态，大跨度（手绘 blob）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L11" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L11">
+              <img class="chart-preview" src="previews/L11.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L11</span><h3>功能沿革图</h3><p>事件序列生命史（首发/重做/休眠/存活）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L1" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L1">
+              <img class="chart-preview" src="previews/L1.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L1</span><h3>发布扇形图</h3><p>多实体各带出生时间+当前规模</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G5" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G5">
+              <img class="chart-preview" src="previews/G5.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G5</span><h3>象形条形图</h3><p>逐年计数（一个符号=固定数量）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G8" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G8">
+              <img class="chart-preview" src="previews/G8.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G8</span><h3>双序列面积图</h3><p>双序列因果（投入 vs 产出）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="calendar" aria-labelledby="title-calendar">
+        <div class="group-heading"><h2 id="title-calendar">日历与热力</h2><p>按实际日期或两个维度寻找集中出现的时段。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="L17" data-family="lupi" data-favorite>
+            <a class="preset-link" href="gallery/lupi-gallery.html#L17">
+              <img class="chart-preview" src="previews/L17.webp" alt="" width="520" height="280" loading="eager">
+              <div class="card-text"><span class="card-number">L17</span><h3>日历热力图</h3><p>把一年内逐日的访问次数排成方格，比较活跃日期。</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span><a href="#implementation" title="灯塔 1.6.0 的 VisitHeatmap 展示过去 365 天的访问次数。">1.6.0 页面实现</a></div>
+          </article>
+          <article class="preset" id="F10" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F10">
+              <img class="chart-preview" src="previews/F10.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F10</span><h3>点阵热力图</h3><p>星期×小时×量（小热力）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G14" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G14">
+              <img class="chart-preview" src="previews/G14.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G14</span><h3>单轴点阵</h3><p>星期×小时×量（punch card 数据）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G20" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G20">
+              <img class="chart-preview" src="previews/G20.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G20</span><h3>矩阵热力快览</h3><p>两个离散维度 × 数值，≤60 格，每格直接读数</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L16" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L16">
+              <img class="chart-preview" src="previews/L16.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L16</span><h3>矩阵热力图</h3><p>两个离散维度 × 数值，≤100 格，保留矩阵结构与重点格</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L4" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L4">
+              <img class="chart-preview" src="previews/L4.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L4</span><h3>弧形矩阵</h3><p>分类×分类+量，小数据（≤100 格）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="ranking" aria-labelledby="title-ranking">
+        <div class="group-heading"><h2 id="title-ranking">排名与对比</h2><p>比较谁更高、相差多少，或名次如何变化。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="F5" data-family="basics" data-favorite>
+            <a class="preset-link" href="gallery/basics-gallery.html#F5">
+              <img class="chart-preview" src="previews/F5.webp" alt="" width="520" height="280" loading="eager">
+              <div class="card-text"><span class="card-number">F5</span><h3>单位刻度条</h3><p>用同一刻度比较少量模块或部门的访问量。</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G3" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G3">
+              <img class="chart-preview" src="previews/G3.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G3</span><h3>圆角柱状图</h3><p>少类目排名比较（≤6）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F1" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F1">
+              <img class="chart-preview" src="previews/F1.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F1</span><h3>单位阶梯柱</h3><p>少类目比较（≤8），单位可数</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G10" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G10">
+              <img class="chart-preview" src="previews/G10.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G10</span><h3>正负条形图</h3><p>有正负的分类数值</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F6" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F6">
+              <img class="chart-preview" src="previews/F6.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F6</span><h3>成对阶梯柱</h3><p>分组对比（每类 2 系列，如今昔）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F12" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F12">
+              <img class="chart-preview" src="previews/F12.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F12</span><h3>哑铃对比</h3><p>类目级前后对比（≤6 类，串珠=真单位）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L2" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L2">
+              <img class="chart-preview" src="previews/L2.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L2</span><h3>点阵排行</h3><p>排名比较，可数单位（unit chart）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L7" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L7">
+              <img class="chart-preview" src="previews/L7.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L7</span><h3>品牌双极量表</h3><p>双极量表（两端都是合法位置）+ 竞品对照</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G16" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G16">
+              <img class="chart-preview" src="previews/G16.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G16</span><h3>动态排名</h3><p>排名随时间演变</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G21" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G21">
+              <img class="chart-preview" src="previews/G21.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G21</span><h3>排名轨迹图</h3><p>多实体排名随离散时间变化，适合静态印刷</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="composition" aria-labelledby="title-composition">
+        <div class="group-heading"><h2 id="title-composition">构成与进度</h2><p>查看整体中每部分的占比，以及阶段之间的增减。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="G4" data-family="glance" data-favorite>
+            <a class="preset-link" href="gallery/glance-gallery.html#G4">
+              <img class="chart-preview" src="previews/G4.webp" alt="" width="520" height="280" loading="eager">
+              <div class="card-text"><span class="card-number">G4</span><h3>百点构成图</h3><p>看不同入口各占总访问量的多少。</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F4" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F4">
+              <img class="chart-preview" src="previews/F4.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F4</span><h3>刻度环图</h3><p>100% 构成（≤6 段）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L14" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L14">
+              <img class="chart-preview" src="previews/L14.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L14</span><h3>百人点阵</h3><p>100% 构成（占比），≤6 类小数据</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F7" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F7">
+              <img class="chart-preview" src="previews/F7.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F7</span><h3>堆叠阶梯柱</h3><p>堆叠构成（≤4 类 × ≤3 段）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F11" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F11">
+              <img class="chart-preview" src="previews/F11.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F11</span><h3>刻度仪表</h3><p>单值进度（0–100%）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F9" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F9">
+              <img class="chart-preview" src="previews/F9.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F9</span><h3>阶梯瀑布图</h3><p>瀑布 / 增减分解（≤6 级）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L13" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L13">
+              <img class="chart-preview" src="previews/L13.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L13</span><h3>漏斗流向图</h3><p>分阶段递减人数（漏斗）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G13" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G13">
+              <img class="chart-preview" src="previews/G13.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G13</span><h3>双编码扇形图</h3><p>双编码：占比(角)×强度(径)</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F13" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F13">
+              <img class="chart-preview" src="previews/F13.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F13</span><h3>嵌套矩形树图</h3><p>两层层级 + 正数权重，矩形面积=数值</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F16" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F16">
+              <img class="chart-preview" src="previews/F16.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F16</span><h3>流带图</h3><p>2–5 个系列的构成随连续时间变化，同时看总量</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L15" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L15">
+              <img class="chart-preview" src="previews/L15.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L15</span><h3>多选刻度图</h3><p>多选题百分比（各项独立 0–100），≤6 项</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="distribution" aria-labelledby="title-distribution">
+        <div class="group-heading"><h2 id="title-distribution">分布</h2><p>比较分组、频次、区间和异常值。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="F14" data-family="basics" data-favorite>
+            <a class="preset-link" href="gallery/basics-gallery.html#F14">
+              <img class="chart-preview" src="previews/F14.webp" alt="" width="520" height="280" loading="eager">
+              <div class="card-text"><span class="card-number">F14</span><h3>刻度直方图</h3><p>按响应时长等连续值分箱，观察分布。</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F15" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F15">
+              <img class="chart-preview" src="previews/F15.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F15</span><h3>刻度箱线图</h3><p>分组五数概括 + 异常值，原始分布可被汇总</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G19" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G19">
+              <img class="chart-preview" src="previews/G19.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G19</span><h3>小提琴图</h3><p>分组连续分布的密度轮廓 + 中位数</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G15" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G15">
+              <img class="chart-preview" src="previews/G15.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G15</span><h3>抖动散点</h3><p>分组分布，逐条记录（几百点）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L19" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L19">
+              <img class="chart-preview" src="previews/L19.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L19</span><h3>山脊分布图</h3><p>3–8 组连续分布的密度形状比较</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="F8" data-family="basics">
+            <a class="preset-link" href="gallery/basics-gallery.html#F8">
+              <img class="chart-preview" src="previews/F8.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">F8</span><h3>铅垂散点</h3><p>二维散点（≤20 点）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G12" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G12">
+              <img class="chart-preview" src="previews/G12.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G12</span><h3>错峰柱状图</h3><p>多类目分布（30–60 根）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L10" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L10">
+              <img class="chart-preview" src="previews/L10.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L10</span><h3>径向叠加图</h3><p>逐事件叠加：时刻(角)×规模(径)，透明度=密度</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L8" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L8">
+              <img class="chart-preview" src="previews/L8.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L8</span><h3>等距点阵</h3><p>多组×网格×量，等距堆叠</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="relations" aria-labelledby="title-relations">
+        <div class="group-heading"><h2 id="title-relations">关系与流向</h2><p>查看实体之间的归属、连线、流量和多维关系。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="G22" data-family="glance" data-favorite>
+            <a class="preset-link" href="gallery/glance-gallery.html#G22">
+              <img class="chart-preview" src="previews/G22.webp" alt="" width="520" height="280" loading="eager">
+              <div class="card-text"><span class="card-number">G22</span><h3>聚合桑基图</h3><p>按起点、终点汇总流量，观察模块之间的去向。</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="B3" data-family="interactive">
+            <span class="anchor" id="interactive"></span><a class="preset-link" href="gallery/big-threads.html#B3">
+              <img class="chart-preview" src="previews/B3.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">B3</span><h3>数据流向</h3><p>三段路径 100+ 条丝线</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G7" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G7">
+              <img class="chart-preview" src="previews/G7.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G7</span><h3>横向能力树</h3><p>层级结构（2–3 层）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L12" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L12">
+              <img class="chart-preview" src="previews/L12.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L12</span><h3>归属关系图</h3><p>多对一归属+逐条名单（≤50 条）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G6" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G6">
+              <img class="chart-preview" src="previews/G6.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G6</span><h3>小型环形网络</h3><p>网络，≤12 节点</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G11" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G11">
+              <img class="chart-preview" src="previews/G11.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G11</span><h3>小型力导向网络</h3><p>中心+卫星网络，≤15 节点</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L6" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L6">
+              <img class="chart-preview" src="previews/L6.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L6</span><h3>贡献者网络</h3><p>中心+卫星网络，海报版</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="B1" data-family="interactive">
+            <a class="preset-link" href="gallery/big-circular.html#B1">
+              <img class="chart-preview" src="previews/B1.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">B1</span><h3>环形网络</h3><p>网络 60 节点环形弦膜</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="B2" data-family="interactive">
+            <a class="preset-link" href="gallery/big-force.html#B2">
+              <img class="chart-preview" src="previews/B2.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">B2</span><h3>力导向网络</h3><p>网络 180 节点力导向星系</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L5" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L5">
+              <img class="chart-preview" src="previews/L5.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L5</span><h3>径向归类图</h3><p>多对一归属，不丢明细（≤60 条）</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="L20" data-family="lupi">
+            <a class="preset-link" href="gallery/lupi-gallery.html#L20">
+              <img class="chart-preview" src="previews/L20.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">L20</span><h3>平行坐标图</h3><p>同一实体集跨 3–6 个连续维度，一线一实体</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="G9" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G9">
+              <img class="chart-preview" src="previews/G9.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G9</span><h3>多视图切换</h3><p>同一实体集的三个维度轮播</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="maps" aria-labelledby="title-maps">
+        <div class="group-heading"><h2 id="title-maps">地图</h2><p>比较有真实地理边界的区域数值。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="M1" data-family="maps">
+            <a class="preset-link" href="gallery/maps-gallery.html#M1">
+              <img class="chart-preview" src="previews/M1.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">M1</span><h3>美国州级分布图</h3><p>美国州级区域 + 非负数值，明度=数值</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+          <article class="preset" id="M2" data-family="maps">
+            <a class="preset-link" href="gallery/maps-gallery.html#M2">
+              <img class="chart-preview" src="previews/M2.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">M2</span><h3>世界国家分布图</h3><p>世界国家级区域 + 非负数值，明度=数值</p></div>
+            </a>
+            <div class="card-status"><span>HTML 参考示例</span></div>
+          </article>
+        </div>
+      </section>
+      <section class="task-group" id="legacy" aria-labelledby="title-legacy">
+        <div class="group-heading"><h2 id="title-legacy">历史参考</h2><p>为已有设计稿和旧链接保留的两个图型。</p></div>
+        <div class="preset-grid">
+          <article class="preset" id="G1" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G1">
+              <img class="chart-preview" src="previews/G1.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G1</span><h3>区间柱</h3><p>每天一个区间（min–max）的日序列</p></div>
+            </a>
+            <div class="card-status"><span>历史 HTML 示例</span></div>
+          </article>
+          <article class="preset" id="G2" data-family="glance">
+            <a class="preset-link" href="gallery/glance-gallery.html#G2">
+              <img class="chart-preview" src="previews/G2.webp" alt="" width="520" height="280" loading="lazy">
+              <div class="card-text"><span class="card-number">G2</span><h3>花瓣玫瑰图</h3><p>单变量分类计数，≤8 类且近似等分</p></div>
+            </a>
+            <div class="card-status"><span>历史 HTML 示例</span></div>
+          </article>
+        </div>
+      </section>
+    </div>
+    <!-- synced catalog:end -->
+      </section>
+      <section class="resource" id="lantern-templates"><div class="section-lead"><p class="eyebrow">LANTERN ORIGINALS</p><h2>灯塔报告样稿</h2><p>同一份访问与使用样例，分别用于会议讲解和独立阅读。</p></div>
+        <div class="resource-grid"><article id="presentations"><p class="card-number">01 / 演示报告</p><h3><a href="lantern/presentation.html">访问与使用周报 · 演示版 →</a></h3><p>逐页说明访问规模、趋势、模块分布与 AI 使用，支持键盘翻页。</p></article>
+        <article id="reports"><p class="card-number">02 / 整页报告</p><h3><a href="lantern/report.html">访问与使用周报 · 整页版 →</a></h3><p>在同一张报告中查看结论、逐日数据、图例与统计口径，可打印归档。</p></article></div>
+      </section>
+      <section class="resource" id="implementation"><div class="section-lead"><h2>实现与规范</h2><p>做产品 UI，先查项目组件；选中图型后再打开对应样例。</p></div>
+        <div class="resource-grid"><article><h3>可以直接复用</h3><p>指标卡 <code>LhMetricTile</code> 和表格容器 <code>LhDataTableShell</code> 已从共享组件库导出。图库卡片中的 HTML 示例用于参考绘制和交互。</p><a href="../../../src/components/ui/lighthouse-primitives.tsx">查看共享组件源码 →</a></article>
+        <article><h3>1.6.0 · 访问与使用</h3><p><a href="../../../src/app/admin/analytics/VisitHeatmap.tsx">访问日历</a>按北京时间逐日统计访问次数。<a href="../../../src/app/admin/analytics/VisitTrend.tsx">访问趋势</a>展示每日 PV、UV，<a href="../../../src/app/admin/analytics/EmployeeRankings.tsx">员工榜单</a>按查询权限展示。</p><a href="guides/chart-workflow.md">查看选型与接入说明 →</a></article>
+        <article id="colors"><h3>Classic Amber 配色</h3><p>暖纸底色、墨色正文、琥珀主数据、黄铜辅助序列。小字号使用对应的深色文字角色。</p><a href="../lighthouse-classic-amber-visual-spec.html#color">查看规范中的颜色角色 →</a></article></div>
+      </section>
+      <section class="resource" id="reference"><div class="section-lead"><h2>完整参考库</h2><p>Lieflat 源项目的演示、报告和案例，供研究布局与图表叙事。</p></div>
+        <div class="ref-links"><a href="presentations/index.html">演示参考 · 19 页</a><a href="reports/index.html">整页报告参考 · 12 套</a><a id="examples" href="examples/lenny-2026-survey.html">调查图表专题</a><a href="presentations/lenny-2026-survey.zh.html">调查演示示例</a><a href="reports/r04-financial-report.zh.html">财务报告示例</a></div>
+        <div class="ref-links auxiliary"><a href="guides/presentation-catalog.md">演示版式指南</a><a href="guides/presentation.md">演示打印指南</a><a href="guides/report-catalog.md">报告版式指南</a><a href="manifest.json">图型清单</a><a href="source/catalog.md">上游目录</a></div>
+      </section>
+    </main>
+    <footer>灯塔设计系统 · 可离线浏览<a href="#top">回到页首 ↑</a></footer>
+  </div>
+</body>
+</html>

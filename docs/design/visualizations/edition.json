@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2,
+  "theme": "Classic Amber V3",
+  "sourceRevision": "ed436ba56b3cbeee20b9b9966b38a9a9689e239c",
+  "portals": {
+    "presentations": "presentations/index.html",
+    "reports": "reports/index.html"
+  },
+  "lanternTemplates": [
+    {
+      "kind": "presentation",
+      "title": "灯塔访问与使用周报 · 演示报告",
+      "preview": "lantern/presentation.html"
+    },
+    {
+      "kind": "report",
+      "title": "灯塔访问与使用周报 · 整页报告",
+      "preview": "lantern/report.html"
+    }
+  ],
+  "presentations": [
+    {
+      "id": "classic-amber",
+      "title": "灯塔经典琥珀演示",
+      "preview": "presentations/presentation.zh.html"
+    }
+  ],
+  "reports": [
+    {
+      "id": "R01",
+      "title": "发布的真相 — 灯塔报告模板 · 侧栏研究简报",
+      "preview": "reports/report-01.zh.html"
+    },
+    {
+      "id": "R02",
+      "title": "年度里程碑 — 灯塔报告模板 · 年度里程碑",
+      "preview": "reports/report-02.zh.html"
+    },
+    {
+      "id": "R03",
+      "title": "年度数据 — 灯塔报告模板 · 书脊数据海报",
+      "preview": "reports/report-03.zh.html"
+    },
+    {
+      "id": "R04",
+      "title": "七月运营月报 — 灯塔报告模板 · 运营月报",
+      "preview": "reports/report-04.zh.html"
+    },
+    {
+      "id": "R05",
+      "title": "把回答写在明处 — 灯塔报告模板 · 重点叙事",
+      "preview": "reports/report-05.zh.html"
+    },
+    {
+      "id": "R06",
+      "title": "产品八年年鉴 — 灯塔报告模板 · 长期年鉴",
+      "preview": "reports/report-06.zh.html"
+    },
+    {
+      "id": "R07",
+      "title": "AI 编程文化调研 — 灯塔报告模板 · 调研拼贴",
+      "preview": "reports/report-07.zh.html"
+    },
+    {
+      "id": "R08",
+      "title": "小团队的全球一题 — 灯塔报告模板 · 百点场",
+      "preview": "reports/report-08.zh.html"
+    },
+    {
+      "id": "R09",
+      "title": "把一套图表，变成一页可读的分析 — 灯塔报告模板 · 数据总览",
+      "preview": "reports/report-09.zh.html"
+    },
+    {
+      "id": "R10",
+      "title": "东京五日手记 — 灯塔报告模板 · 旅行手记",
+      "preview": "reports/report-10.zh.html"
+    },
+    {
+      "id": "R11",
+      "title": "定尺研究简报 · Lieflat Charts",
+      "preview": "reports/report-11.zh.html"
+    },
+    {
+      "id": "R12",
+      "title": "周报速览 — 灯塔报告模板 · 周报速览",
+      "preview": "reports/report-12.zh.html"
+    }
+  ],
+  "examples": [
+    {
+      "id": "survey",
+      "kind": "chart",
+      "title": "科技从业者调查 · 图表专题",
+      "preview": "examples/lenny-2026-survey.html"
+    },
+    {
+      "id": "survey-slides",
+      "kind": "presentation",
+      "title": "科技从业者调查 · 19 页演示",
+      "preview": "presentations/lenny-2026-survey.zh.html"
+    },
+    {
+      "id": "financial",
+      "kind": "report",
+      "title": "财务经营简报 · 完整报告",
+      "preview": "reports/r04-financial-report.zh.html"
+    }
+  ],
+  "guides": [
+    {
+      "title": "图表选型与制作",
+      "preview": "guides/chart-workflow.md"
+    },
+    {
+      "title": "演示版式目录",
+      "preview": "guides/presentation-catalog.md"
+    },
+    {
+      "title": "演示制作与打印",
+      "preview": "guides/presentation.md"
+    },
+    {
+      "title": "报告场景与模板",
+      "preview": "guides/report-catalog.md"
+    }
+  ]
+}

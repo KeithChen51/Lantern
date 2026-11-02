@@ -1,0 +1,127 @@
+{
+  "module": "reports",
+  "locale": "zh-CN",
+  "sourceRevision": "ed436ba56b3cbeee20b9b9966b38a9a9689e239c",
+  "templates": [
+    {
+      "id": "R01",
+      "file": "report-01.zh.html",
+      "title": "发布的真相 — 灯塔报告模板 · 侧栏研究简报",
+      "source": "templates/reports/report-01.zh.html",
+      "sourceSha256": "5ded8952f905a1aad50269374603f521760eec9f4bc34aca51334d5a2783d9a2",
+      "preview": "assets/report-01.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R02",
+      "file": "report-02.zh.html",
+      "title": "年度里程碑 — 灯塔报告模板 · 年度里程碑",
+      "source": "templates/reports/report-02.zh.html",
+      "sourceSha256": "2adca5f97993560386955ed75412149e93ad30b68832d2c6746d6badbdfae0c1",
+      "preview": "assets/report-02.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R03",
+      "file": "report-03.zh.html",
+      "title": "年度数据 — 灯塔报告模板 · 书脊数据海报",
+      "source": "templates/reports/report-03.zh.html",
+      "sourceSha256": "91e5b10a8d10e747b88682b3d0d82e9a09a4aacd20c68c68694377d49cde3289",
+      "preview": "assets/report-03.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R04",
+      "file": "report-04.zh.html",
+      "title": "七月运营月报 — 灯塔报告模板 · 运营月报",
+      "source": "templates/reports/report-04.zh.html",
+      "sourceSha256": "cf96246f4ec7407cc176f7f4b5b5929f63b70c560f5875c719cca68b4452ed4b",
+      "preview": "assets/report-04.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R05",
+      "file": "report-05.zh.html",
+      "title": "把回答写在明处 — 灯塔报告模板 · 重点叙事",
+      "source": "templates/reports/report-05.zh.html",
+      "sourceSha256": "bdf03b3edaba2a0464e1ac578f0d1fa3988c0ada0f74429344f5005670e64689",
+      "preview": "assets/report-05.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R06",
+      "file": "report-06.zh.html",
+      "title": "产品八年年鉴 — 灯塔报告模板 · 长期年鉴",
+      "source": "templates/reports/report-06.zh.html",
+      "sourceSha256": "9bb41ad60db4e3d52db2a9013198ceb5fbbfbe69709144e7fff45ae75b982aa2",
+      "preview": "assets/report-06.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R07",
+      "file": "report-07.zh.html",
+      "title": "AI 编程文化调研 — 灯塔报告模板 · 调研拼贴",
+      "source": "templates/reports/report-07.zh.html",
+      "sourceSha256": "736f81d6fadade9b0a61ec018103f62c2418ef0e149909f2ed0aa6096f7bebdb",
+      "preview": "assets/report-07.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R08",
+      "file": "report-08.zh.html",
+      "title": "小团队的全球一题 — 灯塔报告模板 · 百点场",
+      "source": "templates/reports/report-08.zh.html",
+      "sourceSha256": "d0c23d871fe98bb2406a313b9eeb906ba2367e19051c7ca175dae31df8a239c7",
+      "preview": "assets/report-08.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R09",
+      "file": "report-09.zh.html",
+      "title": "把一套图表，变成一页可读的分析 — 灯塔报告模板 · 数据总览",
+      "source": "templates/reports/report-09.zh.html",
+      "sourceSha256": "49dde207c8c16231e261f25703c734b6580df47ff5f470035bf4a4ab3bda54b7",
+      "preview": "assets/report-09.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R10",
+      "file": "report-10.zh.html",
+      "title": "东京五日手记 — 灯塔报告模板 · 旅行手记",
+      "source": "templates/reports/report-10.zh.html",
+      "sourceSha256": "5c1b28109e4027f77ae62ede733a8586c83cab8ea53cfba07358f4ed1af6c9d5",
+      "preview": "assets/report-10.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R11",
+      "file": "report-11.zh.html",
+      "title": "定尺研究简报 · Lieflat Charts",
+      "source": "templates/reports/report-11.zh.html",
+      "sourceSha256": "05384f08d8efa3ca295bde63fa42892d7fbdb9fad016bfd13a865e1134c6270d",
+      "preview": "assets/report-11.png",
+      "theme": "Classic Amber V3"
+    },
+    {
+      "id": "R12",
+      "file": "report-12.zh.html",
+      "title": "周报速览 — 灯塔报告模板 · 周报速览",
+      "source": "templates/reports/report-12.zh.html",
+      "sourceSha256": "b857265d9479ddbaea09b4f3072b110bbc20ff4b6aea4ff020170cb06a8d4cbe",
+      "preview": "assets/report-12.png",
+      "theme": "Classic Amber V3"
+    }
+  ],
+  "examples": [
+    {
+      "id": "R04-financial",
+      "file": "r04-financial-report.zh.html",
+      "title": "七月经营财报",
+      "source": "examples/reports/r04-financial-report.zh.html",
+      "sourceSha256": "33459359e3eda924e12fef784c7ec54e8ddcc7a195e0495a38dc64a6cc45de12",
+      "theme": "Classic Amber V3"
+    }
+  ],
+  "digestAlgorithm": "SHA-256 of upstream Git blob contents",
+  "theme": "Classic Amber V3"
+}

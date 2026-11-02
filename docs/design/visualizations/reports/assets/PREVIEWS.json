@@ -1,0 +1,79 @@
+{
+  "theme": "Classic Amber V3",
+  "tokensSha256": "05a482c1648a954e94c189bcf74c4bbc38fdb47aae44278adce0ca59fb635532",
+  "command": "node scripts/design-visualizations/reports.mjs --render-previews",
+  "previews": [
+    {
+      "file": "assets/report-01.png",
+      "report": "report-01.zh.html",
+      "sourceSha256": "f84f4b8370b3b694ba7f3358949b72c46e7905ff60c76b45afa6d82e53977dbc",
+      "sha256": "175ba9c2a69c03c742fc98936b9152b9532b410f28dd4efb1c529816704a4f72"
+    },
+    {
+      "file": "assets/report-02.png",
+      "report": "report-02.zh.html",
+      "sourceSha256": "b238c99f8d67470191ae761a448fb504d5dfe9bf4906598df53e0d77eb751c79",
+      "sha256": "64072caa34ef263fec19c05415b917b41c7cb283fbbb88df50542c8f93f3a5b3"
+    },
+    {
+      "file": "assets/report-03.png",
+      "report": "report-03.zh.html",
+      "sourceSha256": "046267b2f9bb13b61e7224d2ac32d6849d422429db65a0c967fc832c8e35cc8a",
+      "sha256": "618e7e650e1721d6d1284054c142e6ad0728ff51dea67ee595be53ee5e3e4234"
+    },
+    {
+      "file": "assets/report-04.png",
+      "report": "report-04.zh.html",
+      "sourceSha256": "1c75ccd8e2c00c66ff48ce8bcc83b304aa61d5e2635dcc51f6a97f7bb748bee0",
+      "sha256": "60ca5a1756ab9fb8be175340cc60ab57ecd30b429c5b8d79ca14c39703b65849"
+    },
+    {
+      "file": "assets/report-05.png",
+      "report": "report-05.zh.html",
+      "sourceSha256": "7bfd0e9f3d7d563a516b9e494f289d945de2e23e21a7086fb63159a05a178502",
+      "sha256": "c9e7f9699d1883bc472b0c59fc338053639d5055b86189696afad80bd0697c6a"
+    },
+    {
+      "file": "assets/report-06.png",
+      "report": "report-06.zh.html",
+      "sourceSha256": "c8e98a41fc0e40a2efb09d3bc0f3a1840e92a19e938119794342586ee35a0da4",
+      "sha256": "bedf3408f03d9d67a1856675c2f3b7681be5d3a8b01ff94936f82b19bac2b01d"
+    },
+    {
+      "file": "assets/report-07.png",
+      "report": "report-07.zh.html",
+      "sourceSha256": "8416804ba68ab2d2d3a3e97e7e22692ab2f50ce0cbfa2dd85d23cfcfab43afbb",
+      "sha256": "1f03989c0c20adf32738a110b9df12dc74b8e18c58e81b94d17792db135b2643"
+    },
+    {
+      "file": "assets/report-08.png",
+      "report": "report-08.zh.html",
+      "sourceSha256": "9ed83d8fff0f4e350c35383d950c08731f09575fee1eb241153a24190ae88e23",
+      "sha256": "daa1abd1def6d2045d48eda42002cf2d28b17f3a62f8f0e35acccda633def50a"
+    },
+    {
+      "file": "assets/report-09.png",
+      "report": "report-09.zh.html",
+      "sourceSha256": "3b95f6dfdad2d0a1ffdd11a824fb75f95e9fd922615cb75fc798fa53a8c86d8d",
+      "sha256": "59a5fad724b201b4ad11e789a51b3567bb2dceb0f66df356a43bcbcbf163271a"
+    },
+    {
+      "file": "assets/report-10.png",
+      "report": "report-10.zh.html",
+      "sourceSha256": "02c6be0f7eebc1bd37e4ba367714db8a1c5c54afdc0b8e9009afc205d91c5f16",
+      "sha256": "39a4f2ed771855e75aeca09e0f83175206ea8f67dda367a76a0af88843e0dcb1"
+    },
+    {
+      "file": "assets/report-11.png",
+      "report": "report-11.zh.html",
+      "sourceSha256": "415566c562598d711ce9ed640d7d247d4bd1adf0c5e00f799587ce1a33b17559",
+      "sha256": "22ce4b3f0fc4fe28a30ddd666afbc18615c17f4c5c2a048c6f62fd520ea8058a"
+    },
+    {
+      "file": "assets/report-12.png",
+      "report": "report-12.zh.html",
+      "sourceSha256": "1dc6cb4c9356372bb3bfcaa97129a282ca1df4f4df4206c17a699cdf11de14b7",
+      "sha256": "aaba1dfe452fdf7dbfc336e083f51a5a95c2bd90a4385732958cfc7f8b8b79e7"
+    }
+  ]
+}

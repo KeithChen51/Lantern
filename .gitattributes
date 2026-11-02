@@ -11,3 +11,10 @@ deploy/offline/** -text
 public/fonts/** -text
 # Preserve upstream license bytes, including upstream trailing spaces.
 public/fonts/**/LICENSE.txt whitespace=-blank-at-eol
+
+# Preserve imported bundles, source metadata and original license notices byte for byte.
+docs/design/visualizations/runtime/** -text -diff
+docs/design/visualizations/maps/*.js -text -diff
+docs/design/visualizations/maps/*.txt -text whitespace=-blank-at-eol,-blank-at-eof
+docs/design/visualizations/licenses/** -text whitespace=-blank-at-eol,-blank-at-eof
+docs/design/visualizations/source/** -text

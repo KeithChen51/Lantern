@@ -793,6 +793,7 @@
         <a href="#icon">图标</a>
         <a href="#brand-attribution">品牌署名</a>
         <a href="#components">组件</a>
+        <a href="#visualizations">数据可视化</a>
         <a href="#accessibility">可访问性</a>
         <a href="#states">交互状态</a>
         <a href="#anatomy">组件结构</a>
@@ -808,7 +809,7 @@
       <section id="v3-baseline" class="section">
         <div class="section-header"><span class="section-kicker">V3 / Current Baseline</span><h2>跨页面视觉系统</h2><p class="section-intro">V3 保留本心首页与灯塔原有导航框架；其余页面共享同一页头、栅格、卡片、表单、阅读和状态规则。Figma 完整系统：<a href="https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-983">node 121:983</a>。</p></div>
         <div class="token-grid">
-          <article class="card"><h3>Canonical palette</h3><p><code>#F3EFE0</code> paper · <code>#FFFDF8</code> warm white · <code>#F7F4EC</code> quiet · <code>#DED9CD</code> line · <code>#2C2C2C</code> ink · <code>#666158</code> secondary · <code>#A65D12</code> amber action · <code>#F3E5CE</code> selected.</p></article>
+          <article class="card"><h3>Canonical palette</h3><p><code>#F3EFE0</code> paper · <code>#2C2C2C</code> ink · <code>#D97706</code> amber · <code>#9B5C14</code> small amber text · <code>#9B7A4C</code> brass · <code>#806744</code> small brass text. <a href="#color">颜色角色以颜色系统为准。</a></p></article>
           <article class="card"><h3>Shared rhythm</h3><p>Page title <code>44/56</code> desktop and <code>32/44</code> mobile; body <code>16/28</code>; controls <code>14/22</code>; metadata <code>12/20</code>; cards <code>16px</code>; controls <code>8px</code>; Hermit composer <code>18px</code>.</p></article>
           <article class="card"><h3>Page frame</h3><p>Desktop content starts at <code>x=128px</code>, keeps a <code>32px</code> right gutter, begins below the <code>64px</code> header, and is constrained to <code>1280px</code>. Mobile uses <code>20px</code> padding and one column.</p></article>
         </div>
@@ -1223,6 +1224,28 @@
           <article class="card"><h3>Form</h3><p><code>LhTextField</code>、<code>LhTextArea</code>、<code>LhFieldGroup</code> 与 <code>LhChoiceGroup</code> 共享同一套排版和垂直节奏合同。</p><div class="form-grid" style="margin-top:16px"><div class="field"><label for="scenario">场景名称</label><input id="scenario" value="客户等待时间过长" /><span class="helper">输入应对应真实服务现场，不使用抽象口号。</span></div><div class="field"><label for="owner">提交角色</label><input id="owner" value="服务顾问" /><span class="helper">字段高度与按钮保持同一视觉节奏。</span></div><div class="field" style="grid-column:1 / -1"><label for="note">处理建议</label><textarea id="note">先确认客户的等待感受，再说明当前进度与下一步可选择方案。</textarea></div></div><div class="form-rhythm-grid"><span class="form-rhythm-item"><code>--lh-form-label-control-gap</code><b>8px · label → control</b></span><span class="form-rhythm-item"><code>--lh-form-field-gap</code><b>20px · field → field</b></span><span class="form-rhythm-item"><code>--lh-form-content-action-gap</code><b>24px · content → action</b></span><span class="form-rhythm-item"><code>--lh-form-control-message-gap</code><b>8px · control → message</b></span><span class="form-rhythm-item"><code>--lh-form-message-gap</code><b>8px · helper → error</b></span><span class="form-rhythm-item"><code>--lh-form-legend-choice-gap</code><b>8px · legend → choices</b></span></div></article>
           <article class="callout"><span class="callout-icon"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2s10 4.477 10 10" opacity=".5"/><path fill="currentColor" d="M12 17.75a.75.75 0 0 0 .75-.75v-6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75M12 7a1 1 0 1 1 0 2a1 1 0 0 1 0-2"/></svg></span><span><strong>Classic Amber 的 callout 用于当前页面内的提示，不用于全局装饰。</strong><p>如果一个区块只是为了好看而加提示框，应改为普通段落或区域说明。</p></span></article>
           <div class="table-wrap"><table><thead><tr><th>Component</th><th>Token</th><th>Rule</th><th>Usage</th></tr></thead><tbody><tr><td>Card / Panel</td><td><code>--lh-card-radius</code></td><td>16px + light border + soft surface</td><td>案例卡、数据区、内容面板</td></tr><tr><td>Button / Input</td><td><code>--lh-control-radius</code></td><td>8px + consistent height rhythm</td><td>操作按钮、搜索、输入控件</td></tr><tr><td>Data table</td><td><code>--grid-table-min</code></td><td>720px minimum, 13px 16px cell padding</td><td>后台列表、审核队列、统计表</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="visualizations" class="section">
+        <div class="section-header">
+          <span class="section-kicker">Data Visualization</span>
+          <h2>数据可视化</h2>
+          <p class="section-intro">供开发者与编程 AI 为灯塔 UI 选图和查找实现。按趋势、排名、日历等用途看缩略图，再核对复用状态与所选示例。</p>
+        </div>
+        <div class="section-body">
+          <p><strong>1.6.0 · 访问与使用</strong>　后台已接入全年访问日历、每日 PV/UV 趋势与排行。<a href="visualizations/index.html#implementation">查看页面实现</a> · <a href="../analytics-examples/pv-uv-trend.png">查看访问趋势样张</a></p>
+          <p><a href="../analytics-examples/visit-calendar.png">访问日历大格预览</a>（365 天合成数据，1.6.1 页面布局）</p>
+          <p><a href="visualizations/index.html"><strong>打开 UI 开发图表目录 →</strong></a></p>
+          <p><a href="visualizations/index.html#trend">趋势</a> · <a href="visualizations/index.html#ranking">排名</a> · <a href="visualizations/index.html#calendar">日历</a> · <a href="visualizations/guides/chart-workflow.md">开发与 AI 阅读指南</a></p>
+          <p>普通页面先查平台 token、组件和页面模式。图表任务先读制作指南与选型目录，再读选中编号的一个示例。当前分支中的组件导出与接口决定能否直接复用，独立 HTML 图型标为参考示例。</p>
+          <p>需要汇报输出时，可从<a href="visualizations/lantern/presentation.html">灯塔演示</a>与<a href="visualizations/lantern/report.html">灯塔周报</a>进入，使用其虚构聚合样例核对版式。第三方<a href="visualizations/presentations/index.html">19 页演示参考</a>、<a href="visualizations/reports/index.html">12 套报告参考</a>和<a href="visualizations/index.html#examples">完整示例</a>用于扩展选型。</p>
+          <p>颜色来自本规范的<a href="#color">颜色系统</a>。暖纸与墨色构成页面和文字，琥珀用于主要数据，黄铜用于辅助序列。浅色和深色图使用同一组角色，并按背景校准明度。风险与错误采用对应语义颜色，价值标签辅助色用于其内容分类。</p>
+          <p>多序列通过名称、位置、点形或实虚线共同区分。正文和小标签至少达到 4.5∶1 对比度，大字与关键数据边界至少达到 3∶1，较浅的填充配合清楚的边界和精确读数。制作方法见<a href="visualizations/guides/chart-workflow.md">灯塔图表制作指南</a>。</p>
+          <ul>
+            <li>61 个当前图型与 2 个历史模板保留编号，按用途选择后可进入完整绘图与交互预览。</li>
+            <li>图库颜色遵守本页规范；原项目的配色注释、演示数字与来源文档按参考材料读取。</li>
+          </ul>
         </div>
       </section>
 
