@@ -1,4 +1,9 @@
 /* Shared approved signature artwork for the product and documentation. */
+:root {
+  /* Capture the Classic Amber lettering before page themes override the UI text token. */
+  --lh-signature-amber-text: var(--lh-primary-text);
+}
+
 .space-signature {
   color: #2c2c2c;
   display: inline-grid;
@@ -34,7 +39,7 @@
 .space-signature[data-tone="amber"] .space-signature__mark { color: #8d867b; }
 .space-signature[data-tone="amber"] .space-signature__orbit-back,
 .space-signature[data-tone="amber"] .space-signature__orbit-front { background: var(--lh-classic-amber); }
-.space-signature[data-tone="amber"] .space-signature__descriptor::before { background: var(--lh-primary-text); }
+.space-signature[data-tone="amber"] .space-signature__descriptor::before { background: var(--lh-signature-amber-text); }
 .space-signature__descriptor {
   grid-area: descriptor;
   display: flex;
