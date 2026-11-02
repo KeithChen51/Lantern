@@ -9,11 +9,16 @@ vi.mock("@/modules/auth/access", () => ({ requireKnowledgeAdmin: knowledgeAdmin,
 vi.mock("@/modules/analytics/report", () => ({ getUsageReport: report }));
 vi.mock("next/headers", () => ({ headers: requestHeaders }));
 vi.mock("./knowledge/AdminKnowledgeManager", () => ({ AdminKnowledgeManager: () => <p>知识文件工作区</p> }));
+vi.mock("@/modules/hermit/admin-records-access", () => ({ getHermitContentGrant: () => null }));
+vi.mock("./hermit-records/HermitRecords", () => ({
+  HermitRecords: ({ canReadContent }: { canReadContent: boolean }) => <section data-can-read-content={canReadContent}>会话列表</section>,
+}));
 vi.mock("./analytics/EmployeeRankings", () => ({
   EmployeeRankings: ({ period }: Pick<UsageReport, "period">) => <section data-ranking-start={period.startDate}>员工榜单</section>,
 }));
 
 import KnowledgePage from "./knowledge/page";
+import HermitRecordsPage from "./hermit-records/page";
 import AnalyticsPage from "./analytics/page";
 
 const coverage = { status: "available" as const, observedFrom: null, note: "" };
@@ -45,14 +50,29 @@ describe("platform management pages", () => {
     expect(html).toContain('aria-label="平台管理页面"');
     expect(html).toMatch(/<a (?=[^>]*href="\/admin\/knowledge")(?=[^>]*aria-current="page")[^>]*>/);
     expect(html).not.toContain("/admin/analytics");
+    expect(html).not.toContain("/admin/hermit-records");
     expect(report).not.toHaveBeenCalled();
   });
 
-  it("shows both management pages to a platform administrator", async () => {
+  it("links all three management pages for a platform administrator", async () => {
     knowledgeAdmin.mockResolvedValue({ capabilities: ["knowledge:manage", "analytics:summary"] });
     const html = renderToStaticMarkup(await KnowledgePage());
     expect(html).toContain('href="/admin/knowledge"');
     expect(html).toContain('href="/admin/analytics"');
+    expect(html).toContain('href="/admin/hermit-records"');
+  });
+
+  it("allows listing without a transcript grant and marks the active tab", async () => {
+    const html = renderToStaticMarkup(await HermitRecordsPage());
+    expect(html).toMatch(/<a (?=[^>]*href="\/admin\/hermit-records")(?=[^>]*aria-current="page")[^>]*>/);
+    expect(html).toContain('data-can-read-content="false"');
+  });
+
+  it("does not mount the records client for a knowledge-only administrator", async () => {
+    analyticsAdmin.mockRejectedValue({ status: 403 });
+    const html = renderToStaticMarkup(await HermitRecordsPage());
+    expect(html).toContain("当前账号没有查看路引记录的权限");
+    expect(html).not.toContain("会话列表");
   });
 
   it.each([401, 403, 503])("rejects knowledge requests before loading the workspace (%s)", async status => {

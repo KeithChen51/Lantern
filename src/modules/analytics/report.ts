@@ -130,7 +130,7 @@ export async function getUsageReport(period: ReportPeriod, options: Options = {}
       return {
         status: "available", observedFrom: start.toISOString(),
         conversations: safeCount(counts.conversations), rounds: safeCount(counts.rounds),
-        note: "统计所选时间内已保存的用户消息。每条用户消息计 1 轮，有用户消息的会话计 1 次；历史补传与内容清理会影响覆盖。",
+        note: "按提问首次保存的时间统计，包含访问采集开始前已保存的对话。同一时段内每段会话计 1 次，每条用户提问计 1 轮。历史补传和内容清理会影响覆盖范围。",
       };
     } catch { return { ...failed(), conversations: null, rounds: null }; }
   };

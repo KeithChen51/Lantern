@@ -28,7 +28,8 @@ async function contentBody(request: Request): Promise<Record<string, unknown>> {
     if (!input || typeof input !== "object" || Array.isArray(input) ||
         Object.values(input).some(value => typeof value !== "string")) throw new Error("Expected string fields");
     // Decode key escapes before comparing so "id" and "\u0069d" are the same selector.
-    const keys = [...text.matchAll(/"(?:\\.|[^"\\])*"\s*(?=:)/g)].map(match => JSON.parse(match[0].trim()) as string);
+    const strings = text.match(/"(?:\\.|[^"\\])*"/g) ?? [];
+    const keys = strings.filter((_, index) => index % 2 === 0).map(key => JSON.parse(key) as string);
     if (new Set(keys).size !== keys.length) throw new Error("Duplicate fields");
     return input as Record<string, unknown>;
   } catch {

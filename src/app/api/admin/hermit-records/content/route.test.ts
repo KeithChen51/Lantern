@@ -69,6 +69,11 @@ describe("Hermit record content endpoint", () => {
     expect((await POST(request({ id: "session", purpose: "a".repeat(17_000) }))).status).toBe(400);
     expect(deps.audited).not.toHaveBeenCalled();
   });
+  it("allows a reason containing quoted field names and punctuation", async () => {
+    const purpose = '核对反馈中的 "id": "备注" 和 "id": "编号"';
+    expect((await POST(request({ id: "session", purpose }))).status).toBe(200);
+    expect(deps.audited).toHaveBeenCalledWith(expect.objectContaining({ purpose }));
+  });
   it("rejects duplicate form fields", async () => {
     const duplicate = new Request("https://app.example/api/admin/hermit-records/content", {
       method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },

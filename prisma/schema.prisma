@@ -776,6 +776,7 @@ model AnalyticsVisitDay {
 
 model AnalyticsPersonAudit {
   id          String   @id @db.VarChar(36)
+  sessionId   String?  @map("session_id") @db.VarChar(191)
   operatorId  String   @map("operator_id") @db.VarChar(191)
   approvalRef String   @map("approval_ref") @db.VarChar(128)
   purpose     String   @db.VarChar(256)

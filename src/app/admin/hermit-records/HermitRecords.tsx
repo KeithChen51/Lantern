@@ -9,7 +9,7 @@ import { authFetch } from "@/components/auth/auth-fetch";
 import { LhMessageAvatar, LhMessageBubble, LhMessageRow } from "@/components/ui/lighthouse-primitives";
 import styles from "./hermit-records.module.css";
 
-type RecordRow = { id: string; actor: "employee" | "guest" | "unknown"; createdAt: string; lastQuestionAt: string | null; turns: number };
+type RecordRow = { id: string; actor: "employee" | "guest" | "unknown"; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number };
 type Message = { id: string; role: "user" | "assistant"; text: string };
 type Filters = { start: string; end: string; actor: string; id: string };
 type RecordsResult = { rows: RecordRow[]; nextCursor: string | null };
@@ -100,6 +100,7 @@ function RecordsWorkspace({ canReadContent, expiresAt }: { canReadContent: boole
     setFilters({ ...draft, id: draft.id.trim() });
   }
   function open(row: RecordRow, control: HTMLElement) { setSelected({ row, returnFocus: control }); }
+  const dateFiltered = Boolean(filters.start || filters.end);
   if (expired) return <p role="alert">登录已失效，请重新登录后查看路引记录。</p>;
   return <section className={styles.workspace} aria-label="路引会话记录">
     <form className={styles.filters} onSubmit={submit} aria-label="筛选路引记录">
@@ -110,12 +111,12 @@ function RecordsWorkspace({ canReadContent, expiresAt }: { canReadContent: boole
       <button className={styles.primary} type="submit" disabled={loading}>筛选</button>
       <button className={styles.secondary} type="button" disabled={loading} onClick={() => { setDraft(emptyFilters); setSelected(null); setFilters({ ...emptyFilters }); }}>重置</button>
     </form>
-    <p className={styles.hint}>按最后提问时间倒序排列，日期按北京时间筛选。点击一条会话可打开对话回看窗口。</p>
+    <p className={styles.hint}>选择日期可查看该时段内提问过的会话与轮次（北京时间）。点开一条记录可回看完整对话。</p>
     {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => void load()}>重试读取</button></div>}
     <div className={styles.tableScroll} aria-busy={loading}>
-      <table className={styles.table}><thead><tr><th scope="col">会话编号</th><th scope="col">用户类型</th><th scope="col">开始时间</th><th scope="col">最后提问</th><th scope="col">轮次</th></tr></thead>
+      <table className={styles.table}><thead><tr><th scope="col">会话编号</th><th scope="col">用户类型</th><th scope="col">开始时间</th><th scope="col">最后提问</th><th scope="col">{dateFiltered ? "时段轮次" : "轮次"}</th></tr></thead>
         <tbody>{result.rows.map(row => <tr key={row.id} onClick={event => { if (!(event.target instanceof Element) || !event.target.closest("button")) open(row, event.currentTarget.querySelector("button")!); }}>
-          <th scope="row"><button type="button" className={styles.recordLink} onClick={event => open(row, event.currentTarget)} aria-label={`回看会话 ${row.id}`}>{row.id}</button></th><td>{actors[row.actor]}</td><td>{dateLabel(row.createdAt)}</td><td>{dateLabel(row.lastQuestionAt)}</td><td>{row.turns}</td>
+          <th scope="row"><button type="button" className={styles.recordLink} onClick={event => open(row, event.currentTarget)} aria-label={`回看会话 ${row.id}`}>{row.id}</button></th><td>{actors[row.actor]}</td><td>{dateLabel(row.createdAt)}</td><td>{dateLabel(row.lastQuestionAt)}</td><td>{dateFiltered ? row.periodTurns : row.turns}</td>
         </tr>)}</tbody>
       </table>
     </div>
@@ -173,9 +174,22 @@ function ConversationWindow({ row, canReadContent, expiresAt, onClose, returnFoc
     }
   }
 
-  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="hermit-record-window-title" onCancel={event => { event.preventDefault(); onClose(); }} onClose={onClose} onClick={event => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
+  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="hermit-record-window-title"
+    onCancel={event => { event.preventDefault(); onClose(); }}
+    onClose={event => { if (!event.currentTarget.open) onClose(); }}
+    onClick={event => {
+      if (event.target !== event.currentTarget) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
+    }}>
     <header className={styles.dialogHeader}><div><p className={styles.eyebrow}>路引记录 · 只读回看</p><h2 id="hermit-record-window-title">对话回看</h2></div><button className={styles.secondary} type="button" onClick={onClose} autoFocus aria-label="关闭对话回看">关闭</button></header>
-    <dl className={styles.metadata}><div><dt>会话编号</dt><dd>{row.id}</dd></div><div><dt>用户类型</dt><dd>{actors[row.actor]}</dd></div><div><dt>开始时间</dt><dd>{dateLabel(row.createdAt)}</dd></div><div><dt>最后提问</dt><dd>{dateLabel(row.lastQuestionAt)}</dd></div><div><dt>对话轮次</dt><dd>{row.turns}</dd></div></dl>
+    <dl className={styles.metadata}>
+      {!content && <div className={styles.recordId}><dt>会话编号</dt><dd>{row.id}</dd></div>}
+      {!content && <div><dt>用户类型</dt><dd>{actors[row.actor]}</dd></div>}
+      <div><dt>开始时间</dt><dd>{dateLabel(row.createdAt)}</dd></div>
+      {!content && <div><dt>最后提问</dt><dd>{dateLabel(row.lastQuestionAt)}</dd></div>}
+      <div><dt>对话轮次</dt><dd>{row.turns}</dd></div>
+    </dl>
     <div className={styles.dialogBody}>
       {!canReadContent ? <p className={styles.state}>当前账号可查看会话信息。查看对话正文需由平台负责人授予专项权限。</p> : <>
         {!content && <form className={styles.purposeForm} onSubmit={event => { event.preventDefault(); void read(); }}>
