@@ -89,7 +89,7 @@
   min-height: 752px;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
-  row-gap: 8px;
+  row-gap: 4px;
   align-items: stretch;
 }
 
@@ -254,7 +254,7 @@
   display: grid;
   width: min(752px, 100%);
   max-width: none;
-  gap: 20px;
+  gap: 16px;
   margin-inline: auto;
   padding: 0;
 }
@@ -702,7 +702,7 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   min-height: 24px;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-meta]::before {
@@ -725,14 +725,14 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-prose] {
   min-width: 0;
-  max-width: 728px;
+  max-width: 56rem;
   color: var(--hermit-ink);
   font-size: 16px;
   line-height: 28px;
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-prose] p {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-prose] p:last-child,
@@ -742,7 +742,7 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 }
 
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-prose] :is(h1, h2, h3, h4) {
-  margin: 24px 0 8px;
+  margin: 16px 0 8px;
   color: var(--hermit-ink);
   font-family: var(--font-noto-stack, "Noto Serif SC", serif);
   font-size: 22px;
@@ -753,7 +753,7 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-prose] :is(ul, ol) {
   display: grid;
   gap: 4px;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   padding-left: 24px;
 }
 
@@ -1285,6 +1285,20 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
     gap: 8px;
   }
 
+  /* On phones the avatar and author share one line above a full-width answer. */
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-bubble][data-variant="assistant"] {
+    display: contents;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-meta] {
+    align-self: center;
+    margin-bottom: 0;
+  }
+
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-bubble][data-variant="assistant"] > :not([data-lh-message-meta]) {
+    grid-column: 1 / -1;
+  }
+
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-message-avatar] {
     width: 28px;
     height: 28px;
@@ -1331,7 +1345,16 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  /* Keep the shared V3 shell padding; only constrain its height. */
+}
+/* An active chat can use the shell gutters above and below ordinary pages. */
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-main][data-lh-v3]):has(.page .conversationSurface) {
+  padding-top: clamp(1rem, 3dvh, 1.75rem);
+  padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
+}
+@media (max-width: 767px) {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main][data-lh-v3]):has(.page .conversationSurface) {
+    padding-top: 5rem; /* Clear the fixed mobile navigation. */
+  }
 }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main-frame]):has(> .page) {
   height: 100%;
@@ -1482,11 +1505,11 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 .attachmentTile > .attachmentRetry { position: absolute; right: 3px; bottom: 4px; width: 22px; height: 22px; color: var(--hermit-danger); }
 .attachmentTile[data-status="error"] { border-color: var(--hermit-danger); }
 .attachmentTile[data-status="error"] > .attachmentState { color: var(--hermit-danger); }
-:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface { padding: 12px 16px 0; }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface { padding: 8px 16px 0; }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-chat-scroll-content],
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] { width: min(1040px, 100%); }
-:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-hermit-main] { padding-bottom: 28px; }
-:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer] { padding: 12px 0 0; }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface [data-lh-hermit-main] { padding-bottom: 12px; }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer] { padding: 8px 0 0; }
 /* The conversation gives space to answers; the centered start keeps its larger composer. */
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-input] { padding: 12px 16px; }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-textarea] { min-height: 28px; padding: 0; }
@@ -1527,7 +1550,7 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   .scenarioCard > svg { grid-row: span 2; }
   .scenarioCard strong { font-size: 14px; }
   .scenarioCard > span { grid-column: 2; font-size: 12px; }
-  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface { padding: 12px 0 0; }
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .conversationSurface { padding: 8px 0 0; }
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-input] { padding: 16px; }
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit] { width: 36px; min-width: 36px; padding-inline: 0; }
   .historyDrawer { padding: 24px 20px; }
