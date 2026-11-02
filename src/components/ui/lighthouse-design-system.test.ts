@@ -432,7 +432,11 @@ describe("lighthouse design system contract", () => {
     expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype")');
     expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype")');
     expect(globals).toContain('url("/fonts/brand/smiley-sans/SmileySans-Oblique.woff2") format("woff2")');
-    expect(globals).toContain('--font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;');
+    const uiFonts = '"Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif';
+    expect(globals).toContain(`--font-hei-stack: ${uiFonts};`);
+    expect(readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html")).toContain(`--font-hei: ${uiFonts};`);
+    expect(globals).toContain('url("/fonts/brand/inter/InterVariable.woff2") format("woff2")');
+    expect(extractCssBlock(globals, "body", "font-kerning")).not.toContain("tabular-nums");
     expect(globals).toContain('--font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;');
     expect(globals).toContain('--font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;');
     expect(globals).toContain("--font-sans-stack: var(--font-hei-stack);");

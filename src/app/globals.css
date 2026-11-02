@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/brand/inter/InterVariable.woff2") format("woff2");
+  unicode-range: U+0000-024F, U+1E00-1EFF, U+20A0-20CF;
+}
+
+@font-face {
   font-family: "Source Han Serif SC";
   font-style: normal;
   font-weight: 200 900;
@@ -204,7 +213,7 @@
   --lh-form-content-action-gap: 1.5rem;
   --lh-form-legend-choice-gap: 0.5rem;
 
-  --font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-hei-stack: "Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif;
   --font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-sans-stack: var(--font-hei-stack);
@@ -414,7 +423,6 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
   font-kerning: normal;
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   overflow-x: clip;
   position: relative;

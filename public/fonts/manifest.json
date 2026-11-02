@@ -1,6 +1,12 @@
 {
   "sources": [
     {
+      "family": "Inter",
+      "version": "4.1",
+      "url": "https://github.com/rsms/inter/tree/v4.1",
+      "license": "SIL Open Font License 1.1"
+    },
+    {
       "family": "Source Han Serif SC",
       "version": "2.003R",
       "url": "https://github.com/adobe-fonts/source-han-serif/tree/2.003R/Variable/WOFF2/OTF",
@@ -18,6 +24,16 @@
     }
   ],
   "files": [
+    {
+      "path": "fonts/brand/inter/InterVariable.woff2",
+      "bytes": 352240,
+      "sha256": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3"
+    },
+    {
+      "path": "fonts/brand/inter/LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
     {
       "path": "fonts/brand/smiley-sans/LICENSE.txt",
       "bytes": 4422,

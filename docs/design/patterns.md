@@ -370,7 +370,7 @@ Mobile is part of the V3 acceptance gate. It keeps the same information order wh
 
 The visual spec controls code through typography tokens, not page-by-page font choices.
 
-- Product chrome, navigation, controls, forms, data tables, and admin flows use PingFang SC through `--font-sans-stack`.
+- Product chrome, navigation, controls, forms, data tables, and admin flows use `--font-sans-stack` for platform Chinese fonts and bundled Inter for Latin text and digits.
 - Page display titles and explicit editorial moments use Source Han Serif SC through `--font-serif-stack`; they do not turn the surrounding controls into serif UI.
 - Reusable primitives and navigation consume `--type-*`, `--title-*`, `--leading-*`, and `--weight-*`; page-local exceptions are migration debt and should not be copied into new components.
 - When the type scale changes, update `tokens.md`, the HTML visual spec, `globals.css`, shared primitives, navigation, and design-system tests together.
