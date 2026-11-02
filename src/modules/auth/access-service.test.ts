@@ -140,16 +140,43 @@ describe("employee login and identity shadows", () => {
     expect((await f.service.webPrincipal(session.sessionToken)).account).toBe("000042");
     await expect(f.service.confirmPending(result.pendingToken, pending.csrfToken)).rejects.toMatchObject({ status: 401 });
   });
-  it("maps only the explicitly configured platform admin role to existing knowledge management", async () => {
+  it("maps only the distinct configured platform admin role to knowledge management and usage summaries", async () => {
     const f = fixture({ platformAdminRole: "lighthouse_admin" });
     f.roles.mockResolvedValue(["lighthouse_admin"]);
     const login = await f.login();
-    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage"]);
+    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage", "analytics:summary"]);
     f.roles.mockResolvedValue(["lighthouse_admin_other", "LIGHTHOUSE_ADMIN"]);
     f.advance(300001);
     expect((await f.service.webPrincipal(login.sessionToken)).capabilities).toEqual(EMPLOYEE_CAPABILITIES);
     const unmapped = fixture(); unmapped.roles.mockResolvedValue(["lighthouse_admin"]);
     expect((await unmapped.login()).principal.capabilities).toEqual(EMPLOYEE_CAPABILITIES);
+  });
+  it("keeps knowledge administrators and ambiguous shared role mappings out of analytics", async () => {
+    for (const platformAdminRole of [undefined, "KNOWLEDGE_ADMIN", "PLATFORM_ADMIN"]) {
+      const f = fixture({ platformAdminRole });
+      f.roles.mockResolvedValue(["KNOWLEDGE_ADMIN"]);
+      expect((await f.login()).principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage"]);
+    }
+  });
+  it("rechecks analytics permissions at the short admin window and drops stale cached roles on failure", async () => {
+    const f = fixture({ platformAdminRole: "PLATFORM_ADMIN" });
+    f.roles.mockResolvedValue(["PLATFORM_ADMIN"]);
+    const login = await f.login();
+    f.advance(config.adminWriteFreshMs + 1);
+    f.roles.mockRejectedValue(new Error("roles unavailable"));
+    const unavailable = await f.service.webPrincipal(login.sessionToken, { adminWrite: true });
+    expect(unavailable.capabilities).toEqual(EMPLOYEE_CAPABILITIES);
+    f.roles.mockResolvedValue(["KNOWLEDGE_ADMIN"]);
+    const demoted = await f.service.webPrincipal(login.sessionToken, { adminWrite: true });
+    expect(demoted.capabilities).toContain("knowledge:manage");
+    expect(demoted.capabilities).not.toContain("analytics:summary");
+  });
+  it("limits platform administrators' CLI and MCP tokens to their explicitly granted knowledge scope", async () => {
+    const f = fixture({ platformAdminRole: "PLATFORM_ADMIN" });
+    f.roles.mockResolvedValue(["PLATFORM_ADMIN"]);
+    const login = await f.login(), client = await f.client(login.principal);
+    expect(client.principal.capabilities).toEqual(["knowledge:read"]);
+    expect((await f.service.clientPrincipal(client.tokens.access_token, "mcp")).capabilities).toEqual(["knowledge:read"]);
   });
   it("grants ordinary employee capabilities with empty roles and preserves account leading zeros", async () => {
     const f = fixture(), login = await f.login();

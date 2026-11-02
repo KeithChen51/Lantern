@@ -7,7 +7,7 @@ vi.mock("./access-config", () => ({ readAccessConfig: () => ({ origin: "https://
 vi.mock("./access-service", () => ({ AccessService: class { webPrincipal = webPrincipal; clientPrincipal = clientPrincipal; } }));
 vi.mock("./access-store", () => ({ PrismaAccessStore: class {} }));
 vi.mock("./portal", () => ({ HttpPortalAdapter: class {} }));
-import { assertWebMutation, authErrorResponse, readAccessCookie, requireEmployee, requireKnowledgeAdmin, requireKnowledgeClient } from "./access";
+import { assertWebMutation, authErrorResponse, readAccessCookie, requireAnalyticsSummary, requireEmployee, requireKnowledgeAdmin, requireKnowledgeClient } from "./access";
 
 const opaque = "a".repeat(43);
 const principal: Principal = { userId: "employee", account: "000123", displayName: "Fixture", grantId: "grant", credentialId: "session", channel: "web", capabilities: ["knowledge:read"], csrfToken: "csrf-nonce", expiresAt: Date.now() + 1000 };
@@ -43,6 +43,26 @@ describe("transport authentication boundary", () => {
     await requireKnowledgeAdmin(write, { write: true });
     expect(webPrincipal).toHaveBeenLastCalledWith(opaque, { adminWrite: true });
     await expect(requireKnowledgeAdmin(request(), { write: true })).rejects.toMatchObject({ status: 403 });
+  });
+  it("requires an independent usage-summary capability with a fresh web employee authorization", async () => {
+    for (const capabilities of [["knowledge:read"], ["knowledge:manage"]]) {
+      webPrincipal.mockResolvedValue({ ...principal, capabilities });
+      await expect(requireAnalyticsSummary(request())).rejects.toMatchObject({ status: 403 });
+    }
+    const admin = { ...principal, capabilities: ["knowledge:manage", "analytics:summary"] };
+    webPrincipal.mockResolvedValue(admin);
+    expect(await requireAnalyticsSummary(request())).toEqual(admin);
+    expect(webPrincipal).toHaveBeenLastCalledWith(opaque, { adminWrite: true });
+    for (const extra of [{ kind: "guest" }, { channel: "cli" }, { channel: "mcp" }]) {
+      webPrincipal.mockResolvedValue({ ...admin, ...extra });
+      await expect(requireAnalyticsSummary(request())).rejects.toMatchObject({ status: 403 });
+    }
+  });
+  it("does not authorize analytics from a preview cookie or a client bearer credential", async () => {
+    await expect(requireAnalyticsSummary(new Request("https://app.example.invalid/api/admin/analytics", {
+      headers: { cookie: "lighthouse_preview_user_id=admin-demo", authorization: `Bearer ${opaque}` },
+    }))).rejects.toMatchObject({ status: 401 });
+    expect(webPrincipal).not.toHaveBeenCalled();
   });
   it.each<Record<string, string>>([
     {},

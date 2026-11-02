@@ -1,0 +1,40 @@
+.chartFrame { position: relative; width: 100%; height: 100%; min-width: 0; border-radius: .375rem; }
+.chartFrame:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.chartFrame svg { display: block; width: 100%; height: 100%; overflow: hidden; touch-action: pan-y; }
+.axis line { stroke: var(--color-line); stroke-width: 1; opacity: .5; }
+.axis text, .axisLabel { fill: var(--color-muted); font-family: inherit; font-size: 11px; font-variant-numeric: tabular-nums; }
+.pvArea { fill: var(--visit-pv-fill); }
+.pvStems { stroke: var(--color-muted); stroke-width: 1; opacity: .42; }
+.activeBar { fill: var(--visit-pv-stroke); opacity: .15; }
+.pvLine, .uvLine { fill: none; stroke: var(--visit-pv-stroke); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.uvLine { stroke: var(--color-brass); stroke-dasharray: 5 4; }
+.pvLine circle { fill: var(--visit-pv-stroke); stroke: var(--color-surface); stroke-width: 1; }
+.uvLine rect { fill: none; stroke: var(--color-brass); stroke-width: 1.75; }
+.crosshair { stroke: var(--color-muted); stroke-width: 1; stroke-dasharray: 2 4; opacity: .7; }
+.pvPoint, .peak circle { fill: var(--visit-pv-stroke); stroke: var(--color-surface); stroke-width: 2; }
+.uvPoint { fill: none; stroke: var(--color-brass); stroke-width: 1.75; }
+.peak line { stroke: var(--visit-pv-stroke); stroke-width: 1; opacity: .75; }
+.peak text { fill: var(--color-ink); font-family: inherit; font-size: 11px; font-weight: var(--weight-bold); paint-order: stroke; stroke: var(--color-surface); stroke-width: 4px; stroke-linejoin: round; }
+.average line { stroke: var(--color-muted); stroke-width: 1; stroke-dasharray: 1 5; }
+.average text { fill: var(--color-muted); font-family: inherit; font-size: 10px; paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px; }
+.tooltip { position: absolute; z-index: 2; box-sizing: border-box; width: min(13rem, calc(100% - 1rem)); max-height: calc(100% - 1rem); overflow: hidden; padding: .5rem .625rem; border: 1px solid var(--color-line); border-radius: .5rem; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 2px 8px color-mix(in srgb, var(--color-ink) 10%, transparent); font-size: 12px; line-height: 1.4; font-variant-numeric: tabular-nums; pointer-events: none; }
+.tooltipHeading { display: block; color: var(--color-ink-soft); font-size: 12px; }
+.tooltipValues { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin: .25rem 0; }
+.tooltipValues div { min-width: 0; }
+.tooltipValues dt { color: var(--color-muted); font-size: 11px; }
+.tooltipValues dd { margin: 0; }
+.tooltipValues dd b { display: block; font-size: 1rem; font-weight: var(--weight-bold); line-height: 1.25; overflow-wrap: anywhere; }
+.tooltipValues dd span { display: block; font-size: 11px; color: var(--color-muted); }
+.tooltip[data-wide-values] .tooltipValues { grid-template-columns: 1fr; gap: .125rem; }
+.tooltip[data-wide-values] .tooltipValues div { display: flex; align-items: baseline; gap: .25rem; }
+.tooltip[data-wide-values] .tooltipValues dd b { font-size: 12px; }
+.tooltip p { margin: .375rem 0 0; padding-top: .25rem; border-top: 1px solid var(--color-line); }
+.tooltip small { display: block; margin-top: .25rem; color: var(--color-muted); font-size: 10px; }
+.pvReadout, .uvReadout { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pvReadout b, .uvReadout b { margin-left: .375rem; }
+.pvReadout::before, .uvReadout::before { content: ""; display: inline-block; width: .5rem; height: .5rem; margin-right: .375rem; border: 2px solid var(--color-primary-deep); border-radius: 50%; }
+.uvReadout::before { border-color: var(--color-brass); border-radius: 0; }
+.state { display: grid; width: 100%; height: 100%; margin: 0; padding: 1rem; place-items: center; color: var(--color-muted); font-size: var(--type-control); line-height: var(--leading-control); text-align: center; }
+.retry { display: inline-flex; align-items: center; min-height: 2rem; padding: 0; border: 0; background: transparent; color: var(--color-primary-deep); font-size: var(--type-caption); text-decoration: underline; text-underline-offset: .2em; cursor: pointer; white-space: nowrap; }
+.retry:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
