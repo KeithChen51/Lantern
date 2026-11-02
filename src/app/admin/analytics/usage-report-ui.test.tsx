@@ -82,4 +82,62 @@ describe("access calendar and period report", () => {
     expect(html).toContain("<dd>—<span>个</span></dd>");
     expect(html).toContain("已记录范围自 2026/10/30 08:00 起（北京时间）");
   });
+
+  it("uses recorded period PV for module shares and preserves partial coverage", () => {
+    const html = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visits: { ...report.visits, total: 100, status: "partial", note: "仅包含已采集的日期", modules: [
+        { module: "mirror", label: "镜鉴", views: 30 },
+        { module: "hermit", label: "路引", views: 60 },
+      ] },
+    }} />);
+    expect(html).toContain('aria-label="占已记录访问 60%"');
+    expect(html).toContain('aria-label="占已记录访问 30%"');
+    expect(html).toContain('style="width:60%"');
+    expect(html).not.toContain("66.7%");
+    expect(html.indexOf("路引")).toBeLessThan(html.indexOf("镜鉴"));
+    expect(html).toContain("仅包含已采集的日期");
+    expect(html).toContain("占比仅反映这部分记录");
+  });
+
+  it("keeps unavailable denominators and positive tiny shares distinct from zero", () => {
+    const unknown = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visits: { ...report.visits, total: null },
+    }} />);
+    expect(unknown).toContain('aria-label="占比暂不可用"');
+    expect(unknown).not.toContain('aria-label="占已记录访问 0%"');
+    const small = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visits: { ...report.visits, total: 100_000, modules: [{ module: "hermit", label: "路引", views: 1 }] },
+    }} />);
+    expect(small).toContain('aria-label="占已记录访问 &lt;0.1%"');
+    expect(small).not.toContain('aria-label="占已记录访问 0%"');
+    const zero = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visits: { ...report.visits, total: 0, modules: [{ module: "hermit", label: "路引", views: 0 }] },
+    }} />);
+    expect(zero).toContain('style="width:0%"');
+    expect(zero).toContain('aria-label="占比暂不可用"');
+    expect(zero).not.toMatch(/NaN|Infinity/);
+  });
+
+  it("compares departments to their largest observed count and preserves missing organization notes", () => {
+    const html = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      departments: { ...report.departments, status: "partial", note: "达到样本门槛的部门才会展示", unknownOrganizationVisits: 9, items: [
+        { department: "服务 B", views: 5 }, { department: "服务 A", views: 20 },
+      ] },
+    }} />);
+    expect(html.indexOf("服务 A")).toBeLessThan(html.indexOf("服务 B"));
+    expect(html).toContain('style="width:25%"');
+    expect(html).toContain("达到样本门槛的部门才会展示");
+    expect(html).toContain("另有 9 次员工访问未提供部门");
+  });
+
+  it("does not draw source values when the source is unavailable", () => {
+    const html = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visits: { ...report.visits, total: null, status: "unavailable", note: "访问数据读取失败" },
+      departments: { ...report.departments, status: "unavailable", note: "部门数据读取失败" },
+    }} />);
+    expect(html).toContain("访问数据读取失败");
+    expect(html).toContain("部门数据读取失败");
+    expect(html).not.toContain('aria-label="占已记录访问');
+    expect(html).not.toContain("售后服务 / 华南");
+  });
 });
