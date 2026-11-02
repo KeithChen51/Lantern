@@ -11,6 +11,7 @@ import { DocumentReader } from "./DocumentReader";
 import { MessageBubble } from "./MessageBubble";
 import { HermitIdentity } from "./HermitIdentity";
 import { ConversationHeader } from "./ConversationHeader";
+import { ConversationSurface } from "./ConversationSurface";
 import { ScenarioCards } from "./ScenarioCards";
 import { RunFeedback } from "./RunFeedback";
 import { createConversationId } from "./conversation-id";
@@ -341,7 +342,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
         <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。平台管理员可回看已保存的对话，系统会记录查看操作。</p>
       </div>
     </section> : <div className={`${styles.chatLayout} ${readerDocument ? styles.chatLayoutWithReader : ""}`} data-lh-hermit-layout>
-      <section className={styles.conversation} data-lh-hermit-conversation aria-label="路引当前对话">
+      <ConversationSurface label="路引当前对话">
         <div data-lh-hermit-main ref={scrollRef} tabIndex={0} role="region" aria-label="对话消息" onScroll={event => {
           const element = event.currentTarget;
           followLatestRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
@@ -372,7 +373,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
           {hasUnreadMessages && <button type="button" className={styles.newMessages} onClick={() => { followLatestRef.current = true; setHasUnreadMessages(false); scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" }); }}>查看最新回复 ↓</button>}
           <div data-lh-hermit-composer><ChatInput {...inputProps} /></div>
         </footer>
-      </section>
+      </ConversationSurface>
       {readerDocument && <DocumentReader document={readerDocument} onClose={closeReader} onUse={document => { selectDraftDocument(document); setReaderDocument(null); setFocusKey(key => key + 1); }} />}
       <p className={`${styles.startFootnote} ${styles.conversationFootnote}`}>回答供参考，请结合现场情况判断。</p>
     </div>}

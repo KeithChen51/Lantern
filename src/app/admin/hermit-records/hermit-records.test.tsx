@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ConversationHeader } from "@/components/hermit/ConversationHeader";
 
 const harness = vi.hoisted(() => ({
   owner: "list", slot: 0, refSlot: 0,
@@ -197,7 +198,8 @@ describe("路引记录列表与正文边界", () => {
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "a", role: "assistant", text: "|列|值|\n|---|---|\n|A|B|\n\n[1](#hermit-citation-1) [外链](https://private.invalid) ![图片](https://tracker.invalid/pixel) <script>bad()</script>" }], nextCursor: null }));
     await readAutomatically();
     const html = renderToStaticMarkup(modal());
-    expect(html).toContain("<table>");
+    expect(html).toContain("data-lh-message-table");
+    expect(html).toContain("data-lh-hermit-identity");
     expect(html).toContain("外链");
     expect(html).toContain("[1]");
     expect(html).not.toContain("<a ");
@@ -292,7 +294,8 @@ describe("路引记录列表与正文边界", () => {
     const scroll = { scrollTop: 280 };
     harness.refs.list[1].current = scroll;
     const tree = openedModal();
-    click(button(tree, "关闭"));
+    const header = nodes(tree, node => node.type === ConversationHeader)[0];
+    (header.props.onClose as () => void)();
     cleanup.pop()!();
     expect(scroll.scrollTop).toBe(280);
     expect(trigger.focus).toHaveBeenCalledWith({ preventScroll: true });

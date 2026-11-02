@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { flushSync } from "react-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { authFetch } from "@/components/auth/auth-fetch";
-import { LhMessageAvatar, LhMessageBubble, LhMessageRow } from "@/components/ui/lighthouse-primitives";
+import { ConversationHeader } from "@/components/hermit/ConversationHeader";
+import { ConversationSurface } from "@/components/hermit/ConversationSurface";
+import { MessageBubble } from "@/components/hermit/MessageBubble";
+import hermitStyles from "@/components/hermit/hermit-v3.module.css";
 import styles from "./hermit-records.module.css";
 
 type RecordRow = {
@@ -271,7 +272,7 @@ function ConversationWindow({ row, expiresAt, onClose, returnFocus }: {
     };
   }, [read, returnFocus]);
 
-  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="hermit-record-window-title"
+  return <dialog ref={dialog} className={[styles.dialog, hermitStyles.conversationTheme].join(" ")} aria-labelledby="hermit-record-window-title"
     onCancel={event => { event.preventDefault(); onClose(); }}
     onClose={event => { if (!event.currentTarget.open) onClose(); }}
     onClick={event => {
@@ -279,37 +280,32 @@ function ConversationWindow({ row, expiresAt, onClose, returnFocus }: {
       const rect = event.currentTarget.getBoundingClientRect();
       if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
     }}>
-    <header className={styles.dialogHeader}><div><p className={styles.eyebrow}>路引记录 · 只读回看</p><h2 id="hermit-record-window-title">对话回看</h2></div><button className={styles.secondary} type="button" onClick={onClose} autoFocus aria-label="关闭对话回看">关闭</button></header>
-    <dl className={styles.metadata}>
-      {!content && <div className={styles.recordId}><dt>会话编号</dt><dd>{row.id}</dd></div>}
-      <div><dt>{row.actor === "employee" ? "员工" : "用户类型"}</dt><dd>{employeeLabel(row)}</dd></div>
-      {row.actor === "employee" && <div><dt>所属组织</dt><dd>{organizationLabel(row)}</dd></div>}
-      <div><dt>开始时间</dt><dd>{dateLabel(row.createdAt)}</dd></div>
-      {!content && <div><dt>最后提问</dt><dd>{dateLabel(row.lastQuestionAt)}</dd></div>}
-      <div><dt>对话轮次</dt><dd>{row.turns}</dd></div>
-      {row.actor === "employee" && <div className={styles.sourceNote}><dt>资料来源</dt><dd>{identitySource(row)}{row.identity?.source === "current-profile" && "，不代表会话发生时的工号与组织"}</dd></div>}
-    </dl>
-    <div className={styles.dialogBody}>
-        {loading && !content && <p role="status" className={styles.state}>正在读取对话…</p>}
-        {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => void read()}>重试读取对话</button></div>}
-        {content && <div data-lh-hermit-conversation className={styles.transcript} aria-label="已保存的对话内容">
-          {content.view === "stored-attempts" && <p className={styles.hint}>会话较长，按保存顺序显示全部问答记录，包含重试回答。</p>}
-          {content.messages.length ? content.messages.map(message => <TranscriptMessage key={message.id} message={message} />) : <p role="status" className={styles.state}>这段会话暂无已保存的提问或回复。</p>}
-          {content.nextCursor && <button className={styles.secondary} type="button" disabled={loading} onClick={() => void read(content.nextCursor!)}>{loading ? "正在读取…" : "继续读取后续对话"}</button>}
-          {!content.nextCursor && content.messages.length > 0 && <p className={styles.end}>已到这段对话的末尾</p>}
-        </div>}
-    </div>
+    <ConversationHeader mode="read-only" title="对话回看" titleId="hermit-record-window-title" onClose={onClose} />
+    <ConversationSurface readOnly label="已保存的对话内容">
+      <div data-lh-hermit-main className={styles.dialogBody} tabIndex={0} role="region" aria-label="对话消息">
+        <div data-lh-chat-scroll-content>
+          <details className={styles.metadataPanel}>
+            <summary>会话信息 · {employeeLabel(row)}</summary>
+            <dl className={styles.metadata}>
+              <div className={styles.recordId}><dt>会话编号</dt><dd>{row.id}</dd></div>
+              <div><dt>{row.actor === "employee" ? "员工" : "用户类型"}</dt><dd>{employeeLabel(row)}</dd></div>
+              {row.actor === "employee" && <div><dt>所属组织</dt><dd>{organizationLabel(row)}</dd></div>}
+              <div><dt>开始时间</dt><dd>{dateLabel(row.createdAt)}</dd></div>
+              <div><dt>最后提问</dt><dd>{dateLabel(row.lastQuestionAt)}</dd></div>
+              <div><dt>对话轮次</dt><dd>{row.turns}</dd></div>
+              {row.actor === "employee" && <div className={styles.sourceNote}><dt>资料来源</dt><dd>{identitySource(row)}{row.identity?.source === "current-profile" && "，不代表会话发生时的工号与组织"}</dd></div>}
+            </dl>
+          </details>
+          {loading && !content && <p role="status" className={styles.state}>正在读取对话…</p>}
+          {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => void read()}>重试读取对话</button></div>}
+          {content?.view === "stored-attempts" && <p className={styles.hint}>会话较长，按保存顺序显示全部问答记录，包含重试回答。</p>}
+          {content && (content.messages.length ? content.messages.map(message => <MessageBubble key={message.id} readOnly message={{
+            id: message.id, role: message.role, parts: [{ type: "text", text: message.text || "（空消息）" }],
+          }} />) : <p role="status" className={styles.state}>这段会话暂无已保存的提问或回复。</p>)}
+          {content?.nextCursor && <button className={styles.secondary} type="button" disabled={loading} onClick={() => void read(content.nextCursor!)}>{loading ? "正在读取…" : "继续读取后续对话"}</button>}
+          {content && !content.nextCursor && content.messages.length > 0 && <p className={styles.end}>已到这段对话的末尾</p>}
+        </div>
+      </div>
+    </ConversationSurface>
   </dialog>;
-}
-
-function TranscriptMessage({ message }: { message: Message }) {
-  return <LhMessageRow messageRole={message.role} className={styles.message} aria-label={message.role === "user" ? "用户提问" : "路引回复"}>
-    {message.role === "assistant" && <LhMessageAvatar aria-hidden="true">引</LhMessageAvatar>}
-    <LhMessageBubble variant={message.role}><p className={styles.author}>{message.role === "user" ? "用户" : "路引"}</p>
-      {message.role === "user" ? <p className={styles.userText}>{message.text || "（空消息）"}</p> : <div data-lh-message-prose className={styles.prose}><ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml components={{
-        a: ({ children, href }) => <span>{href?.match(/^#hermit-citation-\d+$/) ? <>[{children}]</> : children}</span>,
-        img: ({ alt }) => <span>{alt ? `［图片：${alt}］` : "［图片］"}</span>,
-      }}>{message.text || "（空消息）"}</ReactMarkdown></div>}
-    </LhMessageBubble>
-  </LhMessageRow>;
 }
