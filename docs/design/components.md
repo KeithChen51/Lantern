@@ -66,6 +66,32 @@ Existing primitives:
 
 These are the runtime base. The design system should strengthen their semantics before adding many new primitives.
 
+<a id="brand-attribution"></a>
+
+## 技术署名
+
+灯塔是产品名称，「Powered by SPACE AI Native」说明技术归属。1.6.0 视觉规范收录下面三款固定配色。两种构图均使用同一组配色，具体位置供产品接入时确认。[查看六个原尺寸样张](lighthouse-classic-amber-visual-spec.html#brand-attribution)
+
+| 款式 | 使用表面 | 固定用色 |
+| --- | --- | --- |
+| 深墨单色 | 暖纸 `#F3EFE0` 或暖白 `#FFFDF8`，日常默认 | 全部字形与双轨道使用深墨 `#2C2C2C`。 |
+| 纯白单色 | 深色表面，样张底色为 `#2C2C2C` | 全部字形与双轨道使用纯白 `#FFFFFF`。 |
+| 琥珀强调 | 暖纸或暖白，需要明确技术归属时 | 双轨道使用 V3 琥珀 `#A65D12`，AI 小字使用 V3 深琥珀 `#8A4A0C`，其余字形（含 SPACE 的 A）为 `#666158`。 |
+
+三款都是透明底、平面材质。颜色由款式固定，页面仅选择适用款式。小字对比度至少 4.5:1，轨道至少 3:1。琥珀版把较亮的主题色留给轨道，AI 的小字采用更深的同色系以保持清晰。
+
+| 灯塔场景 | 构图与位置 |
+| --- | --- |
+| 桌面展开侧栏（240px） | 标准竖向 `standard-stacked`，SPACE 宽 160px。建议放在侧栏次级工具之后，预留足够高度。 |
+| 侧栏收起（80px）、短屏容不下竖版或移动端 | 侧栏省略署名，改在「我的」页尾使用紧凑横向 `compact-horizontal`。SPACE 宽 108px，整组宽 243px。 |
+| 独立登录、账号确认或设备授权 | 横版放在面板主操作之后，按正常文档流收尾。 |
+
+同一产品视口最多一处，侧栏已展示时「我的」页尾省略。四周净空至少为 SPACE 字标高度的一半，且每侧至少 16px。可用宽度不足时另选容器，不缩放、裁切或抽取 SPACE 图形代替完整署名。本心封面、顶部标题、主导航项、业务卡片、对话消息与操作按钮组均不作署名位置。
+
+署名作为一幅静态图呈现，只有一个可读名称 `Powered by SPACE AI Native`。内部字形对辅助技术隐藏，整体不占键盘焦点。正式 SVG 的轮廓、比例、间距和轨道前后关系必须保留。SPACE 的叠放顺序为后轨道、S/P/C/E、A、前轨道，两版各有专用的 Powered by、AI、NATIVE 三张字形蒙版。
+
+**资产出处。** 上游为《通用设计组件与skill》的 `design-consultant/templates/component-library.html#brand-attribution` 与 `references/brand-attribution-placement.md`，本次核对的源码版本为 `bc60ea6f8b61`。样张随仓库携带十张正式 SVG 蒙版的离线编码。更新时从仓库根目录运行 `node docs/design/brand-attribution/sync-masks.mjs <design-consultant目录> --check` 比对原件；经确认更新资产时去掉 `--check` 重新生成。
+
 ## Component Principles
 
 - One component should encode one meaning. Do not make one generic badge carry status, role, filter, code, and metric semantics.

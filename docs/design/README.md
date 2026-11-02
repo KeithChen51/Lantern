@@ -12,6 +12,7 @@
 - [路引标准组件](hermit-components.md)
 - [Figma 生效组件扫描与替代记录](figma-component-audit-2026-10-27.md)
 - [平台边界与事实源](lighthouse-platform-visual-system.md)
+- [技术署名样张 · 深墨、纯白、琥珀](lighthouse-classic-amber-visual-spec.html#brand-attribution) · [颜色、尺寸与落位规则](components.md#brand-attribution)
 
 V3 保留本心首页的品牌封面和灯塔原有导航框架。平台页面共享颜色、栅格、卡片、表单、阅读和状态规则。标准页面标题为桌面端 `44/56`、移动端 `32/44`；路引采用用户确认的居中起步与紧凑会话栏，具体见路引权威定义。背景使用 `#F3EFE0`，主要表面使用 `#FFFDF8`，边框使用 `#DED9CD`，正文使用 `#2C2C2C`，主要行动使用 `#A65D12`。
 

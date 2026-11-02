@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>灯塔平台 Classic Amber V3 视觉规范</title>
+  <link rel="stylesheet" href="brand-attribution/masks.css" />
+  <link rel="stylesheet" href="brand-attribution/specimen.css" />
   <style>
     :root {
       --lh-ink: #2c2c2c;
@@ -179,7 +181,7 @@
 
     .nav a:hover,
     .nav a.is-active { background: rgba(217, 119, 6, 0.08); color: var(--lh-primary-text); }
-    .main { display: grid; gap: 30px; min-width: 0; padding-bottom: 56px; }
+    .main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; min-width: 0; padding-bottom: 56px; }
     .hero { padding: var(--space-6) var(--space-2) 18px; }
 
     .eyebrow,
@@ -789,6 +791,7 @@
         <a href="#grid">网格</a>
         <a href="#shadow">阴影</a>
         <a href="#icon">图标</a>
+        <a href="#brand-attribution">品牌署名</a>
         <a href="#components">组件</a>
         <a href="#accessibility">可访问性</a>
         <a href="#states">交互状态</a>
@@ -1129,6 +1132,86 @@
             <article class="icon-tile"><span class="icon-glyph"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M17.47 15.53a.75.75 0 0 0 1.28-.53V6a.75.75 0 0 0-.75-.75H9a.75.75 0 0 0-.53 1.28z" clip-rule="evenodd"/><path fill="currentColor" d="M5.47 17.47a.75.75 0 1 0 1.06 1.06l6.97-6.97l-1.06-1.06z" opacity=".5"/></svg></span><b>操作</b><span><code>lighthouseIcons.edit</code>、<code>publish</code>、<code>refresh</code>、<code>more</code> 等操作统一 20x20 Solar 图标，不混入其他图标库。</span></article>
           </div>
           <div class="table-wrap"><table><thead><tr><th>Icon Role</th><th>Runtime Source</th><th>Size</th><th>Color Rule</th></tr></thead><tbody><tr><td>Navigation</td><td><code>lighthouseIcons.heart</code> etc.</td><td>20px glyph in 24px track</td><td>Active amber, inactive deck icon color. Duotone secondary layer uses current color opacity.</td></tr><tr><td>Icon button</td><td><code>LhIconButton</code> + <code>lighthouseIcons.*</code></td><td>36px or 44px button, 20px glyph</td><td>Inherit button variant color and focus ring.</td></tr><tr><td>Status</td><td><code>lighthouseIcons.status</code> etc.</td><td>16px to 20px</td><td>Use success, warning, danger, info tokens only.</td></tr><tr><td>Brand mark</td><td><code>lighthouseIcons.logo</code></td><td>20px glyph in 40px mark</td><td>Amber with low glow; do not redraw official VI marks.</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="brand-attribution" class="section" aria-labelledby="brand-attribution-title">
+        <div class="section-header">
+          <span class="section-kicker">Classic Amber / 技术归属</span>
+          <h2 id="brand-attribution-title">品牌署名</h2>
+          <p class="section-intro">灯塔标识产品身份。「Powered by SPACE AI Native」说明技术提供方。下列样张均为正式字形，上为标准竖向，下为紧凑横向。</p>
+        </div>
+        <div class="section-body">
+          <div class="signature-specimens">
+            <figure>
+              <div class="signature-stage">
+                <span class="space-signature" data-tone="dark" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+                <span class="space-signature space-signature--compact" data-tone="dark" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+              </div>
+              <figcaption><strong>深墨单色</strong>用于暖纸与暖白表面，全部字形和轨道均为深墨色。</figcaption>
+            </figure>
+            <figure>
+              <div class="signature-stage signature-stage--ink">
+                <span class="space-signature" data-tone="light" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+                <span class="space-signature space-signature--compact" data-tone="light" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+              </div>
+              <figcaption><strong>纯白单色</strong>用于深色表面，全部字形和轨道反白。</figcaption>
+            </figure>
+            <figure>
+              <div class="signature-stage signature-stage--warm-white">
+                <span class="space-signature" data-tone="amber" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+                <span class="space-signature space-signature--compact" data-tone="amber" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+              </div>
+              <figcaption><strong>琥珀强调</strong>用于浅色表面，双轨道用琥珀色，AI 小字用深琥珀。</figcaption>
+            </figure>
+          </div>
+          <div class="signature-placement">
+            <h3>尺寸与落位</h3>
+            <p>竖版 SPACE 宽 160px，适合 240px 展开侧栏的次级工具下方。横版 SPACE 宽 108px，整组宽 243px，适合「我的」、登录或授权流程的页尾。</p>
+            <p>侧栏收至 80px 或进入手机布局时，将署名留给「我的」页尾。同一产品视口最多一处。四周净空至少为 SPACE 字标高度的一半，且不小于 16px。</p>
+          </div>
         </div>
       </section>
 
