@@ -672,11 +672,9 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-my-link] {
-  width: 100%;
-  min-height: 3rem;
-  justify-content: center;
-  justify-items: center;
-  padding: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-my-notification-dot] {
