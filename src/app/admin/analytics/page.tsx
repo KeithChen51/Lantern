@@ -10,6 +10,7 @@ import { PlatformAdminNav } from "../PlatformAdminNav";
 import { VisitActivity } from "./VisitActivity";
 import { ReportPeriodFilter } from "./ReportPeriodFilter";
 import { UsageReportView } from "./UsageReportView";
+import { UsageOverview } from "./UsageOverview";
 import { EmployeeRankings } from "./EmployeeRankings";
 import styles from "../platform-admin.module.css";
 
@@ -43,7 +44,7 @@ export default async function AdminAnalyticsPage({ searchParams }: {
   return <>
     <PlatformAdminNav active="analytics" canViewAnalytics />
     <div className={styles.page}>
-      <PageHeading title="访问与使用" />
+      <PageHeading title="访问与使用" description={report && <UsageOverview report={report} />} />
       {report ? <>
         <VisitActivity key={principal.userId} heatmap={report.heatmap} />
         <section className={styles.periodReport} aria-labelledby="period-report-title">

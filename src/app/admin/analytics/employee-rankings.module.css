@@ -1,4 +1,4 @@
-.section { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-line); border-radius: var(--lh-panel-radius); background: var(--color-surface); }
+.section { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-line); border-radius: var(--lh-card-radius); background: var(--color-surface); }
 .heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .heading h2 { color: var(--color-ink); font-size: var(--title-card); font-weight: var(--weight-bold); }
 .heading span, .description, .note { color: var(--color-muted); font-size: var(--type-caption); line-height: var(--leading-caption); }
@@ -17,7 +17,9 @@
 .tables th, .tables td { padding: .75rem .375rem; border-bottom: 1px solid var(--color-line); text-align: left; overflow-wrap: anywhere; }
 .tables thead th { color: var(--color-muted); font-weight: var(--weight-medium); }
 .tables tbody th { font-weight: var(--weight-medium); }
-.tables td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.tables :is(th, td):first-child { width: 2.75rem; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.tables :is(th, td):nth-child(n + 3) { text-align: right; font-variant-numeric: tabular-nums; }
+.tables tbody td:nth-child(n + 3) { color: var(--color-ink); }
 .note, .empty { margin-top: .75rem; color: var(--color-muted); font-size: var(--type-caption); line-height: var(--leading-caption); }
 .error { margin-top: 1rem; color: var(--color-danger); }
 @media (max-width: 800px) { .tables { grid-template-columns: minmax(0, 1fr); } }

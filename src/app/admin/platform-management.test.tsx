@@ -83,8 +83,10 @@ describe("platform management pages", () => {
     const html = renderToStaticMarkup(await AnalyticsPage({ searchParams: Promise.resolve(query) }));
     expect(report).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ preset, startDate: start }), { now: new Date("2026-10-31T08:30:00.000Z") });
     expect(html.indexOf('aria-label="平台管理页面"')).toBeLessThan(html.indexOf("访问日历"));
-    expect(html.indexOf("访问日历")).toBeLessThan(html.indexOf("时段统计"));
-    expect(html.indexOf("时段统计")).toBeLessThan(html.indexOf("员工榜单入口"));
+    expect(html).toContain('<h2 id="period-report-title">时段统计</h2>');
+    const reportHeading = html.indexOf('<h2 id="period-report-title">');
+    expect(html.indexOf("访问日历")).toBeLessThan(reportHeading);
+    expect(reportHeading).toBeLessThan(html.indexOf("员工榜单入口"));
     expect(html).toContain('aria-label="统计时间范围"');
     expect(html).toContain("本周");
     expect(html).toContain("本月");

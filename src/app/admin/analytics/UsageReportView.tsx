@@ -68,15 +68,16 @@ export function UsageReportView({ report }: { report: UsageReport }) {
             <div className={reportStyles.moduleTrack} aria-hidden="true"><span style={{ width: `${share ?? 0}%` }} /></div>
           </li>;
         })}</ol> : <p className={styles.empty}>{total === 0 && moduleSourceAvailable ? "所选时段暂无模块访问。" : sourceNote(report.visits.status, report.visits.note)}</p>}
-        {report.visits.status === "partial" && modules.length > 0 && <p className={reportStyles.sourceNote}>{coverageText(report.visits)}。占比仅反映这部分记录。</p>}
+        {report.visits.status === "partial" && modules.length > 0 && <p className={reportStyles.sourceNote}>模块占比仅反映已记录范围。</p>}
       </section>
       <section className={reportStyles.panel} aria-labelledby="department-visits-title">
         <div className={reportStyles.panelHeading}><h3 id="department-visits-title">访问最多的 Top 10 部门</h3><span>访问次数</span></div>
         <p className={reportStyles.panelDescription}>条长按最高部门对比，只展示符合统计条件的部门。</p>
         {departments.length > 0 ? <ol className={reportStyles.departmentList}>{departments.map((item, index) => <li key={item.department}>
           <span className={reportStyles.rank}>{index + 1}</span>
-          <div className={reportStyles.departmentLabel}><span>{item.department}</span><div className={reportStyles.departmentTrack} aria-hidden="true"><span style={{ width: `${departmentMaximum ? item.views / departmentMaximum * 100 : 0}%` }} /></div></div>
+          <span className={reportStyles.departmentLabel}>{item.department}</span>
           <strong>{numberFormat.format(item.views)}<small> 次</small></strong>
+          <div className={reportStyles.departmentTrack} aria-hidden="true"><span style={{ width: `${departmentMaximum ? item.views / departmentMaximum * 100 : 0}%` }} /></div>
         </li>)}</ol> : <p className={styles.empty}>{sourceNote(report.departments.status, report.departments.note) || "所选时段暂无符合统计条件的部门。"}</p>}
         {report.departments.unknownOrganizationVisits !== null && report.departments.unknownOrganizationVisits > 0 && <p className={reportStyles.sourceNote}>另有 {numberFormat.format(report.departments.unknownOrganizationVisits)} 次员工访问未提供部门。</p>}
         {report.departments.note && departments.length > 0 && <p className={reportStyles.sourceNote}>{coverageText(report.departments)}</p>}

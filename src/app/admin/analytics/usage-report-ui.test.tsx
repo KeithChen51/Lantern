@@ -4,6 +4,7 @@ import type { UsageReport } from "@/modules/analytics/report";
 import { calendarWeeks, heatmapLevel, VisitHeatmap } from "./VisitHeatmap";
 import { ReportPeriodFilter } from "./ReportPeriodFilter";
 import { UsageReportView } from "./UsageReportView";
+import { UsageOverview } from "./UsageOverview";
 
 const source = { status: "available" as const, observedFrom: "2026-10-01T00:00:00.000Z", note: "" };
 const report: UsageReport = {
@@ -21,6 +22,28 @@ const report: UsageReport = {
 };
 
 describe("access calendar and period report", () => {
+  it("uses period UV and identifies tied leaders in the heading", () => {
+    const html = renderToStaticMarkup(<UsageOverview report={{ ...report,
+      visits: { ...report.visits, total: 8, modules: [...report.visits.modules, { module: "mirror", label: "镜鉴", views: 4 }] },
+    }} />);
+    expect(html).toContain('href="#period-report-title"');
+    expect(html).toContain("本月概览");
+    expect(html).toContain("去重访问 <strong>3</strong>");
+    expect(html).toContain("路引、镜鉴");
+    expect(html).toContain("并列访问最多，各 4 次");
+  });
+
+  it("distinguishes uncollected UV and recorded zero from partial positive rankings", () => {
+    const html = renderToStaticMarkup(<UsageOverview report={{ ...report,
+      visitors: { ...report.visitors, status: "not_collected", employees: null, guests: null },
+      visits: { ...report.visits, total: 0, modules: [] },
+    }} />);
+    expect(html).toContain("去重访问尚未采集");
+    expect(html).toContain("已记录的模块访问为零");
+    expect(html).not.toContain("访问最多");
+    const partial = renderToStaticMarkup(<UsageOverview report={{ ...report, visits: { ...report.visits, status: "partial" } }} />);
+    expect(partial).toContain("部分记录");
+  });
   it("distinguishes missing days and measured zero, including focusable daily labels", () => {
     const html = renderToStaticMarkup(<VisitHeatmap heatmap={report.heatmap} />);
     expect(html).toContain('aria-label="2026/10/29，尚未采集"');
@@ -96,7 +119,7 @@ describe("access calendar and period report", () => {
     expect(html).not.toContain("66.7%");
     expect(html.indexOf("路引")).toBeLessThan(html.indexOf("镜鉴"));
     expect(html).toContain("仅包含已采集的日期");
-    expect(html).toContain("占比仅反映这部分记录");
+    expect(html).toContain("模块占比仅反映已记录范围");
   });
 
   it("keeps unavailable denominators and positive tiny shares distinct from zero", () => {

@@ -13,7 +13,7 @@
 .metricGroup dd span { margin-left: .375rem; color: var(--color-muted); font-size: var(--type-caption); font-weight: var(--weight-medium); }
 .metricGroup dl p { margin: .375rem 0 0; color: var(--color-muted); font-size: var(--type-caption); line-height: var(--leading-caption); }
 .aiGroup { background: var(--color-surface-quiet); }
-.panels { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-top: 1rem; }
+.panels { display: grid; align-items: start; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-top: 1rem; }
 .panel { min-width: 0; padding: 1.25rem; border: 1px solid var(--color-line); border-radius: var(--lh-card-radius); background: var(--color-surface); }
 .panelHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; }
 .panelHeading h3 { margin: 0; color: var(--color-ink); font-size: var(--type-body); font-weight: var(--weight-bold); line-height: var(--leading-body); }
@@ -22,7 +22,7 @@
 .sourceNote { margin: .875rem 0 0; }
 .moduleList, .departmentList { list-style: none; margin: 1.25rem 0 0; padding: 0; }
 .moduleList { display: grid; gap: 1.125rem; }
-.moduleReadout { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto 3.75rem; align-items: baseline; gap: .625rem; color: var(--color-ink-soft); font-size: var(--type-control); line-height: var(--leading-control); }
+.moduleReadout { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto 3.75rem; align-items: baseline; column-gap: .625rem; row-gap: .25rem; color: var(--color-ink-soft); font-size: var(--type-control); line-height: var(--leading-control); }
 .moduleName { overflow-wrap: anywhere; }
 .rank { color: var(--color-muted); font-size: var(--type-caption); font-variant-numeric: tabular-nums; }
 .moduleReadout strong, .departmentList strong { color: var(--color-ink); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -31,13 +31,13 @@
 .moduleTrack, .departmentTrack { height: .375rem; overflow: hidden; border-radius: .1875rem; background: var(--color-surface-quiet); }
 .moduleTrack { margin: .375rem 0 0 1.625rem; }
 .moduleTrack > span, .departmentTrack > span { display: block; height: 100%; border-radius: .1875rem; }
-.moduleTrack > span { background: var(--color-primary); }
-.departmentTrack > span { background: var(--color-signal, var(--color-primary-deep)); }
-.departmentList { display: grid; gap: .875rem; }
-.departmentList li { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: baseline; gap: .625rem; color: var(--color-ink-soft); font-size: var(--type-control); line-height: var(--leading-control); }
-.departmentLabel { min-width: 0; }
-.departmentLabel > span { overflow-wrap: anywhere; }
-.departmentTrack { margin-top: .375rem; height: .25rem; }
+.moduleTrack > span { background: var(--lh-classic-amber); }
+.departmentTrack > span { background: var(--color-brass); }
+.departmentList { display: grid; gap: .625rem; }
+.departmentList li { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: baseline; column-gap: .625rem; row-gap: .25rem; color: var(--color-ink-soft); font-size: var(--type-control); line-height: var(--leading-control); }
+.departmentLabel { min-width: 0; overflow-wrap: anywhere; }
+
+.departmentTrack { grid-column: 2 / -1; height: .25rem; }
 @media (max-width: 1050px) { .metrics, .panels { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) {
   .metricGroup, .panel { padding: 1rem; }
