@@ -18,7 +18,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(110deg, #708085, #a7aeaa 55%, #c3bba9);
+    background: linear-gradient(110deg, #b4a294, #d6c3ac 55%, #f3e3ca);
     animation: fogLift var(--lh-arrival-duration) linear both;
   }
 
@@ -27,7 +27,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: #354043 url("/lighthouse-home-hero-bg-v2-realistic-shore.png") 86% center / cover;
+    background: #9b8169 url("/lighthouse-home-hero-bg-v2-realistic-shore.png") 86% center / cover;
     animation: fogCoast var(--lh-arrival-duration) ease-out both;
   }
 
