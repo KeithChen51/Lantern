@@ -64,7 +64,7 @@ describe("Hermit persisted message immutability", () => {
     await repository.upsertSession({ ...participant, id: "explicit", title: null,
       identity: { account: "000042", employeeNo: "000042", organization: "当前可信组织" } });
     expect(sessions.get("explicit")).toMatchObject({ identitySnapshotJson: { employeeNo: "000042", account: "000042", organization: "当前可信组织" } });
-    database.user.findUnique.mockClear();
+    expect(database.user.findUnique).not.toHaveBeenCalled();
     await repository.upsertSession({ ...participant, userId: null, guestId: "guest:134", id: "guest", title: null,
       identity: { account: "forged", employeeNo: "forged" } });
     expect(database.user.findUnique).not.toHaveBeenCalled();
