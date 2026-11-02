@@ -35,9 +35,12 @@ describe("administrator conversation inventory", () => {
     query.mockResolvedValue([]);
     await listHermitRecords({ start: "2026-11-01", end: "2026-11-02", actor: "guest", id: "session' OR 1=1 --" }, options);
     const sql = query.mock.calls[0][0] as Prisma.Sql;
-    expect(sql.values).toEqual([new Date("2026-10-31T16:00:00.000Z"), new Date("2026-11-02T16:00:00.000Z"), "guest", "session' OR 1=1 --", 21]);
+    expect(sql.values).toEqual([
+      ...Array(4).fill("session' OR 1=1 --"), new Date("2026-10-31T16:00:00.000Z"), new Date("2026-11-02T16:00:00.000Z"), "guest", 21,
+    ]);
     expect(sql.sql).not.toContain("OR 1=1");
-    expect(sql.sql).toContain("BINARY inventory.id = BINARY ?");
+    expect(sql.sql).toContain("AND session_id = ? AND BINARY session_id = BINARY ?");
+    expect(sql.sql).toContain("WHERE s.id = ? AND BINARY s.id = BINARY ?");
   });
 
   it("pages tied timestamps without losing the nullable tail and binds cursors to filters", async () => {
@@ -89,6 +92,9 @@ describe("audited conversation transcript repository", () => {
       { id: "u2", role: "user", text: "saved u2 [1]" }, { id: "a2", role: "assistant", text: "saved a2 [1]" },
     ], nextCursor: null });
     const descriptorQuery = query.mock.calls[1][0] as Prisma.Sql;
+    expect((query.mock.calls[0][0] as Prisma.Sql).sql).toContain("WHERE id = ? AND BINARY id = BINARY ?");
+    expect(descriptorQuery.sql).toContain("WHERE session_id = ?");
+    expect(descriptorQuery.sql).not.toContain("WHERE BINARY session_id");
     expect(descriptorQuery.sql).not.toMatch(/\b(content|user_id|guest_id|title)\b/);
     expect(descriptorQuery.sql).toContain("JSON_EXTRACT(metadata_json, '$.hermitTurn')");
     const textQuery = query.mock.calls[2][0] as Prisma.Sql;
@@ -150,6 +156,7 @@ describe("audited conversation transcript repository", () => {
       .mockResolvedValueOnce(Array.from({ length: 10_001 }, (_, index) => message(`u-${index}`, "USER")))
       .mockResolvedValueOnce(stored)
       .mockResolvedValueOnce([{ id: "huge" }])
+      .mockResolvedValueOnce([{ id: "threshold-message" }])
       .mockResolvedValueOnce(stored.slice(50));
     const first = await readHermitRecord("huge", undefined, options);
     expect(first.view).toBe("stored-attempts");
@@ -158,9 +165,22 @@ describe("audited conversation transcript repository", () => {
     expect(second.messages).toEqual([{ id: "u-50", role: "user", text: "Question 50" }]);
     expect(second.view).toBe("stored-attempts");
     expect(second.nextCursor).toBeNull();
-    expect(query).toHaveBeenCalledTimes(5);
-    const page = query.mock.calls[4][0] as Prisma.Sql;
+    expect(query).toHaveBeenCalledTimes(6);
+    const threshold = query.mock.calls[4][0] as Prisma.Sql;
+    expect(threshold.sql).toContain("LIMIT 1 OFFSET ?");
+    expect(threshold.values).toEqual(["huge", 10000]);
+    expect(threshold.sql).not.toMatch(/\b(content|metadata_json)\b/);
+    const page = query.mock.calls[5][0] as Prisma.Sql;
+    expect(page.sql).toContain("WHERE session_id = ?");
     expect(page.sql).toContain("BINARY id > BINARY ?");
     expect(page.values).toContain("db-u-49");
+  });
+
+  it("rejects a forged stored-attempts cursor for a short or shrunk session before reading any reply", async () => {
+    const cursor = Buffer.from(JSON.stringify({ session: "short", mode: "stored-attempts", createdAt: "2026-11-02T00:00:00.000Z", id: "old" })).toString("base64url");
+    query.mockResolvedValueOnce([{ id: "short" }]).mockResolvedValueOnce([]);
+    await expect(readHermitRecord("short", cursor, options)).rejects.toMatchObject({ status: 400 });
+    expect(query).toHaveBeenCalledTimes(2);
+    for (const [sql] of query.mock.calls as [Prisma.Sql][]) expect(sql.sql).not.toMatch(/\b(content|metadata_json)\b/);
   });
 });

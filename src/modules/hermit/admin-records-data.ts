@@ -50,7 +50,6 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
   if (start) conditions.push(Prisma.sql`inventory.lastQuestionAt >= ${dateStart(start)}`);
   if (end) conditions.push(Prisma.sql`inventory.lastQuestionAt < ${new Date(+dateStart(end) + 86_400_000)}`);
   if (actor) conditions.push(Prisma.sql`inventory.actor = ${actor}`);
-  if (id) conditions.push(Prisma.sql`BINARY inventory.id = BINARY ${id}`);
   if (cursor !== undefined) {
     const parsed = listCursorSchema.safeParse(decodeCursor(cursor));
     if (!parsed.success || parsed.data.filter !== fingerprint) invalid("分页标识与当前筛选不一致，请重新查询。");
@@ -71,8 +70,11 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
         question.lastQuestionAt, COALESCE(question.turns, 0) AS turns
       FROM chat_sessions s LEFT JOIN (
         SELECT session_id, MAX(created_at) AS lastQuestionAt, COUNT(*) AS turns
-        FROM chat_messages WHERE role = 'user' GROUP BY session_id
+        FROM chat_messages WHERE role = 'user'
+          ${id ? Prisma.sql`AND session_id = ${id} AND BINARY session_id = BINARY ${id}` : Prisma.empty}
+        GROUP BY session_id
       ) question ON question.session_id = s.id
+      ${id ? Prisma.sql`WHERE s.id = ${id} AND BINARY s.id = BINARY ${id}` : Prisma.empty}
     ) inventory
     ${conditions.length ? Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}` : Prisma.empty}
     ORDER BY inventory.lastQuestionAt IS NULL ASC, inventory.lastQuestionAt DESC, inventory.createdAt DESC, BINARY inventory.id DESC
@@ -97,7 +99,7 @@ type StoredBoundary = { createdAt: Date; id: string };
 async function readStoredAttempts(database: Database, id: string, boundary?: StoredBoundary): Promise<HermitRecordDetail> {
   const rows = await database.$queryRaw<Array<{ id: string; externalMessageId: string; role: string; text: string; createdAt: Date }>>(Prisma.sql`
     SELECT id, external_message_id AS externalMessageId, role, content AS text, created_at AS createdAt
-    FROM chat_messages WHERE BINARY session_id = BINARY ${id} AND role IN ('user', 'assistant')
+    FROM chat_messages WHERE session_id = ${id} AND role IN ('user', 'assistant')
       ${boundary ? Prisma.sql`AND (created_at > ${boundary.createdAt} OR
         (created_at = ${boundary.createdAt} AND BINARY id > BINARY ${boundary.id}))` : Prisma.empty}
     ORDER BY created_at ASC, BINARY id ASC LIMIT ${MESSAGE_PAGE_SIZE + 1}
@@ -123,15 +125,24 @@ export async function readHermitRecord(id: string, cursor?: string, options: Opt
     else after = parsed.data.after;
   }
   const database = options.database ?? prisma;
-  const exists = await database.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT id FROM chat_sessions WHERE BINARY id = BINARY ${id} LIMIT 1`);
+  const exists = await database.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT id FROM chat_sessions WHERE id = ${id} AND BINARY id = BINARY ${id} LIMIT 1`);
   if (!exists.length) throw new AppError("not_found", "该会话已不存在。", 404);
-  if (storedBoundary) return readStoredAttempts(database, id, storedBoundary);
+  if (storedBoundary) {
+    // Cursor fields are client-controlled. Only the current saved length can
+    // authorize the alternate view that also includes superseded attempts.
+    const oversized = await database.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT id FROM chat_messages WHERE session_id = ${id} AND role IN ('user', 'assistant')
+      LIMIT 1 OFFSET ${MAX_MESSAGE_DESCRIPTORS}
+    `);
+    if (!oversized.length) invalid("会话记录已变化，请重新打开。");
+    return readStoredAttempts(database, id, storedBoundary);
+  }
   // Retry answers can finish after later turns. Resolve their safe descriptors
   // together before paging so page boundaries cannot show an obsolete attempt.
   const descriptors = await database.$queryRaw<Descriptor[]>(Prisma.sql`
     SELECT id, external_message_id AS externalMessageId, role,
       JSON_EXTRACT(metadata_json, '$.hermitTurn') AS turn
-    FROM chat_messages WHERE BINARY session_id = BINARY ${id} AND role IN ('user', 'assistant')
+    FROM chat_messages WHERE session_id = ${id} AND role IN ('user', 'assistant')
     ORDER BY created_at ASC, BINARY id ASC LIMIT ${MAX_MESSAGE_DESCRIPTORS + 1}
   `);
   if (descriptors.length > MAX_MESSAGE_DESCRIPTORS) {
@@ -148,7 +159,7 @@ export async function readHermitRecord(id: string, cursor?: string, options: Opt
   const selected = restored.slice(anchor + 1, anchor + 1 + MESSAGE_PAGE_SIZE);
   const content = selected.length ? await database.$queryRaw<Array<{ externalMessageId: string; text: string }>>(Prisma.sql`
     SELECT external_message_id AS externalMessageId, content AS text FROM chat_messages
-    WHERE BINARY session_id = BINARY ${id} AND external_message_id IN (${Prisma.join(selected.map(message => message.id))})
+    WHERE session_id = ${id} AND external_message_id IN (${Prisma.join(selected.map(message => message.id))})
       AND role IN ('user', 'assistant')
   `) : [];
   const text = new Map(content.map(row => [row.externalMessageId, row.text]));
