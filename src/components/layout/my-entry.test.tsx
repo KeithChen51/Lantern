@@ -69,7 +69,7 @@ describe("my navigation entry", () => {
   it.each([{ capabilities: ["knowledge:manage"] }, { capabilities: ["knowledge:manage", "analytics:summary"] }])("shows the shared platform entry in desktop and mobile navigation for $capabilities", ({ capabilities }) => {
     const html = renderToStaticMarkup(<SessionProvider session={{ ...session, capabilities }}><Navigation isPinned onTogglePin={() => {}} isMobileOpen onMobileClose={() => {}} /></SessionProvider>);
     expect(html.match(/href="\/admin"/g)).toHaveLength(2);
-    expect(html.match(/aria-label="平台管理"/g)).toHaveLength(2);
+    expect(html.match(/aria-label="管理"/g)).toHaveLength(2);
     expect(html).not.toContain('href="/admin/knowledge"');
     expect(html).not.toContain('href="/admin/analytics"');
   });
