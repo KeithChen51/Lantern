@@ -42,10 +42,12 @@ export async function readRecordIdentities(ids: string[], options: IdentityOptio
   if (!ids.length) return new Map();
   const now = options.now ?? new Date();
   const authority = options.authority ?? currentAuthority();
+  // MySQL 5.7 may null the entire JSON_OBJECT when CASE reads an absent JSON
+  // member. Choose its known employee-number path while constructing SQL.
   const rows = await options.database.$queryRaw<IdentityRow[]>(Prisma.sql`
     SELECT profile.id, profile.snapshot, profile.employeeNo, profile.account, profile.accountCount,
-      (SELECT JSON_OBJECT('employeeNo', CASE WHEN JSON_UNQUOTE(JSON_EXTRACT(r.payload, '$.authority')) IN ('iam', 'iam-portal')
-          THEN JSON_EXTRACT(r.payload, '$.account') ELSE JSON_EXTRACT(r.payload, '$.employeeNo') END,
+      (SELECT JSON_OBJECT('employeeNo', ${authority === "iam" || authority === "iam-portal"
+          ? Prisma.sql`JSON_EXTRACT(r.payload, '$.account')` : Prisma.sql`JSON_EXTRACT(r.payload, '$.employeeNo')`},
         'organization', JSON_EXTRACT(r.payload, '$.organization'))
        FROM access_records r WHERE r.kind = 'grant' AND r.subjectId = profile.account AND profile.profileStatus = 'active'
          AND r.expiresAt > ${now} AND JSON_EXTRACT(r.payload, '$.active') = true

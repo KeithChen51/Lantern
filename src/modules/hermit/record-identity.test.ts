@@ -45,7 +45,19 @@ describe("administrator conversation identity", () => {
     query.mockResolvedValue([{ id: "legacy", snapshot: null, employeeNo: "old-local-number", account: "000042", accountCount: 1,
       currentProfile: { employeeNo: "000042", organization: "当前可信组织" } }]);
     expect((await readRecordIdentities(["legacy"], options)).get("legacy")).toEqual({ employeeNo: "000042", account: "000042", organization: "当前可信组织", source: "current-profile" });
-    expect((query.mock.calls[0][0] as Prisma.Sql).sql).toContain("IN ('iam', 'iam-portal')");
+    expect((query.mock.calls[0][0] as Prisma.Sql).sql).toContain("JSON_EXTRACT(r.payload, '$.account')");
+    expect((query.mock.calls[0][0] as Prisma.Sql).sql).not.toContain("CASE WHEN");
+  });
+
+  it("keeps portal organization available when its grant has no explicit employee number", async () => {
+    query.mockResolvedValue([{ id: "legacy", snapshot: null, employeeNo: "E134001", account: "login.employee", accountCount: 1,
+      currentProfile: { employeeNo: null, organization: "服务中心 / 售后部" } }]);
+    expect((await readRecordIdentities(["legacy"], { ...options, authority: "portal" })).get("legacy"))
+      .toEqual({ employeeNo: "E134001", account: "login.employee", organization: "服务中心 / 售后部", source: "current-profile" });
+    const sql = query.mock.calls[0][0] as Prisma.Sql;
+    expect(sql.sql).toContain("JSON_OBJECT('employeeNo', JSON_EXTRACT(r.payload, '$.employeeNo')");
+    expect(sql.sql).not.toContain("CASE WHEN");
+    expect(query).toHaveBeenCalledTimes(1);
   });
 
   it("keeps missing profile fields missing and refuses an ambiguous or removed account association", async () => {
