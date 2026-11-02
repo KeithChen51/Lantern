@@ -49,7 +49,7 @@ describe("IAM identity with middle-platform roles", () => {
     const f = fixture();
     f.store.seedEmployee({ id: "existing-user", account: "000042", displayName: "old profile", active: true, employee: true });
     const login = await f.login();
-    expect(login.principal).toMatchObject({ userId: "existing-user", account: "000042", displayName: "姓名暂未获取", organization: "售后/服务", expiresAt: f.now() + 1500000 });
+    expect(login.principal).toMatchObject({ userId: "existing-user", account: "000042", employeeNo: "000042", displayName: "姓名暂未获取", organization: "售后/服务", expiresAt: f.now() + 1500000 });
     expect(login.returnTo).toBe("/me");
     expect(new URL(login.start.redirectUrl).hostname).toBe("iam.example.invalid");
     expect(f.identity).toHaveBeenCalledWith("synthetic-iam-token");

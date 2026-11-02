@@ -19,8 +19,9 @@ import { messageContext, type ContextRemoval } from "./message-context";
 import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
 import { getDocumentRecommendations, getHermitCitationFromHref, getHermitCitations, getTextContent, type HermitCitation, type HermitDocumentRecommendation } from "./types";
 
-interface MessageBubbleProps {
+export interface MessageBubbleProps {
   message: UIMessage;
+  readOnly?: boolean;
   onOpenDocument?: (document: HermitDocumentRecommendation) => void;
   showRecommendations?: boolean;
   activeContext?: HermitMessageContext;
@@ -128,11 +129,11 @@ function UserAvatar() {
   );
 }
 
-export function MessageBubble({ message, onOpenDocument, showRecommendations = true, activeContext, contextDisabled, onRemoveContext }: MessageBubbleProps) {
+export function MessageBubble({ message, readOnly = false, onOpenDocument, showRecommendations = true, activeContext, contextDisabled, onRemoveContext }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const text = getTextContent(message);
   const citations = getHermitCitations(message);
-  const documents = showRecommendations ? getDocumentRecommendations(message) : [];
+  const documents = !readOnly && showRecommendations ? getDocumentRecommendations(message) : [];
 
   if (isUser) {
     return (
@@ -143,7 +144,7 @@ export function MessageBubble({ message, onOpenDocument, showRecommendations = t
             <p className="whitespace-pre-wrap">{text}</p>
           </LhMessageBubbleFrame>
         </div>
-        <MessageContext context={messageContext(message)} active={activeContext} disabled={contextDisabled} onOpenDocument={onOpenDocument} onRemove={onRemoveContext} />
+        {!readOnly && <MessageContext context={messageContext(message)} active={activeContext} disabled={contextDisabled} onOpenDocument={onOpenDocument} onRemove={onRemoveContext} />}
         <UserAvatar />
       </LhMessageRow>
     );
@@ -160,9 +161,17 @@ export function MessageBubble({ message, onOpenDocument, showRecommendations = t
         <div data-lh-message-prose>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
+            skipHtml={readOnly}
             components={{
               ...markdownComponents,
-              a: ({ href, children }) => <CitationAnchor href={href} citations={citations} onOpenDocument={onOpenDocument}>{children}</CitationAnchor>,
+              a: ({ href, children }) => {
+                if (readOnly) {
+                  const citation = href?.match(/^#hermit-citation-(\d+)$/);
+                  return <span>{citation ? `[${citation[1]}]` : children}</span>;
+                }
+                return <CitationAnchor href={href} citations={citations} onOpenDocument={onOpenDocument}>{children}</CitationAnchor>;
+              },
+              ...(readOnly ? { img: ({ alt }: { alt?: string }) => <span>{alt ? `［图片：${alt}］` : "［图片］"}</span> } : {}),
             }}
           >
             {normalizeMarkdownTableSeparators(text)}

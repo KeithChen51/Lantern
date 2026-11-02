@@ -2,6 +2,7 @@ import { ChatMessageRole as PrismaChatMessageRole, Prisma } from "@prisma/client
 import { prisma } from "@/infrastructure/db";
 import { AppError } from "@/shared/errors";
 import { historyCursor } from "./history";
+import { identityText, type HermitIdentitySnapshot } from "./record-identity";
 import type {
   HermitChatRepository,
   HermitChatOwner,
@@ -35,10 +36,24 @@ function ownerColumns(owner: HermitChatOwner): { userId: string | null; guestId:
 export class PrismaHermitChatRepository implements HermitChatRepository {
   async upsertSession(input: HermitChatSessionInput) {
     const owner = ownerColumns(input);
+    const { identity, ...session } = input;
+    let snapshot: HermitIdentitySnapshot | undefined;
+    if (owner.userId && identity) {
+      let employeeNo = identityText(identity.employeeNo, 191);
+      if (!employeeNo) {
+        const profile = await prisma.user.findUnique({ where: { id: owner.userId }, select: { employeeNo: true } });
+        employeeNo = identityText(profile?.employeeNo, 191);
+      }
+      snapshot = {
+        version: 1, employeeNo,
+        account: identityText(identity.account, 191), organization: identityText(identity.organization, 1000),
+      };
+    }
     // A single INSERT lets the primary key arbitrate simultaneous claimants.
     // Never update an existing row's owner or adopt an anonymous legacy session.
     try {
-      await prisma.chatSession.create({ data: { ...input, ...owner } });
+      await prisma.chatSession.create({ data: { ...session, ...owner,
+        ...(snapshot ? { identitySnapshotJson: snapshot } : {}) } });
     } catch (error) {
       if (!(error && typeof error === "object" && "code" in error && error.code === "P2002")) throw error;
       const session = await prisma.chatSession.findUnique({ where: { id: input.id }, select: { userId: true, guestId: true } });

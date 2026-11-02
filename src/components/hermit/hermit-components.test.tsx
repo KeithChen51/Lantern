@@ -4,8 +4,44 @@ import { ChatInput } from "./ChatInput";
 import { AttachmentContext } from "./AttachmentContext";
 import { ScenarioCards, HERMIT_SCENARIOS } from "./ScenarioCards";
 import { RunFeedback } from "./RunFeedback";
+import { ConversationHeader } from "./ConversationHeader";
+import { ConversationSurface } from "./ConversationSurface";
+import { HermitConversationView } from "./HermitConversationView";
 
 describe("Hermit accessible composer components", () => {
+  it("shares the conversation surface and identity header with saved read-only conversations", () => {
+    const html = renderToStaticMarkup(<ConversationSurface readOnly label="历史问答">
+      <ConversationHeader mode="read-only" title="对话回看" titleId="record-title" onClose={vi.fn()} />
+    </ConversationSurface>);
+    expect(html).toContain('data-read-only="true"');
+    expect(html).toContain("data-lh-hermit-identity");
+    expect(html).toContain('<h2 id="record-title"');
+    expect(html).toContain("只读");
+    expect(html).toContain('aria-label="关闭对话回看"');
+    expect(html).not.toContain("新对话");
+    expect(html).not.toContain("历史对话");
+    expect(renderToStaticMarkup(<ConversationHeader title="当前会话" onNew={vi.fn()} onHistory={vi.fn()} />)).toContain("新对话");
+  });
+  it("owns the full conversation page in both live and read-only modes", () => {
+    const messages = [{ id: "u", role: "user" as const, parts: [{ type: "text" as const, text: "保存的提问" }] }];
+    const saved = renderToStaticMarkup(<HermitConversationView mode="read-only" fallbackTitle="对话回看" titleId="saved-title" onClose={vi.fn()} label="已保存的对话" messages={messages}
+      beforeMessages={<details><summary>会话信息</summary>员工资料</details>}
+      footer={<textarea aria-label="不应显示的输入" />} reader={<aside>不应显示的阅读器</aside>} />);
+    expect(saved).toContain("data-lh-hermit-layout");
+    expect(saved).toContain("data-lh-hermit-main");
+    expect(saved).toContain("data-lh-chat-scroll-content");
+    expect(saved).toContain("保存的提问");
+    expect(saved).toContain("会话信息");
+    expect(saved).toContain("回答供参考");
+    expect(saved).not.toContain("不应显示");
+    const live = renderToStaticMarkup(<HermitConversationView fallbackTitle="路引" label="当前对话" onNew={vi.fn()} onHistory={vi.fn()} messages={messages}
+      footer={<textarea aria-label="继续提问" />} reader={<aside>已打开的文档</aside>} />);
+    expect(live).toContain("data-lh-hermit-footer");
+    expect(live).toContain("继续提问");
+    expect(live).toContain("已打开的文档");
+    expect(live).toContain('<h1 title="保存的提问">保存的提问</h1>');
+    expect(saved).toContain('<h2 id="saved-title" title="保存的提问">保存的提问</h2>');
+  });
   it("keeps the next draft editable while generation exposes only stop", () => {
     const html = renderToStaticMarkup(<ChatInput value="下一句草稿" onChange={vi.fn()} onSubmit={vi.fn()} onStop={vi.fn()} isLoading isUploading={false} attachments={[]} onFilesSelected={vi.fn()} onRemoveAttachment={vi.fn()} onRetryAttachment={vi.fn()} onClearDocumentContext={vi.fn()} />);
     expect(html).toContain("下一句草稿");

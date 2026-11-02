@@ -15,8 +15,12 @@ const reply = (value: unknown) => Response.json(value);
 describe("portal integration contract", () => {
   it("preserves leading zeros and ignores roles carried on identity responses", async () => {
     const fetcher = vi.fn(async () => reply({ ret: 200, data: { account: "0007", empNo: "0007", name: "Fixture employee", roles: ["highest_admin"] } }));
-    expect(await new HttpPortalAdapter(config, fetcher).identity("fixture-token")).toEqual({ account: "0007", displayName: "Fixture employee" });
+    expect(await new HttpPortalAdapter(config, fetcher).identity("fixture-token")).toEqual({ account: "0007", employeeNo: "0007", displayName: "Fixture employee" });
     expect(fetcher.mock.calls[0]).toBeDefined();
+  });
+  it("does not invent an employee number from a login account", async () => {
+    const adapter = new HttpPortalAdapter(config, async () => reply({ ret: 200, data: { account: "login.user", name: "Fixture employee" } }));
+    expect(await adapter.identity("fixture-token")).toEqual({ account: "login.user", displayName: "Fixture employee" });
   });
   it.each([
     { ret: 500, data: { account: "0007" } },

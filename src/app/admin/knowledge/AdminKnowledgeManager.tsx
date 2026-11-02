@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 import { Icon } from "@iconify/react";
 import { LhButton, LhCallout, LhChip, LhIconButton, LhLoadingGlyph } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { PageHeading } from "@/components/ui/PageHeading";
 import { resourceLabels } from "@/components/knowledge/ResourceView";
 import styles from "./knowledge-manager.module.css";
 import { mergeUploadSelection, settleUploadBatch } from "./upload-queue";
@@ -821,13 +820,6 @@ export function AdminKnowledgeManager() {
 
   return (
     <div className={styles.managerPage}>
-      <PageHeading
-        title="知识文件管理"
-        description="像整理桌面文件夹一样维护灯塔知识：拖拽归档，批量导入，预览草稿后再发布。"
-      >
-        <LhButton type="button" variant="secondary" icon={icon("admin")} onClick={() => { if (!hasPendingUploads || window.confirm("还有未完成的上传，离开后待导入文件不会保留。确定离开吗？")) router.push("/search"); }}>返回知识资源</LhButton>
-      </PageHeading>
-
       {(error || message) && <LhCallout tone={error ? "danger" : "success"} icon={icon(error ? "warning" : "status")} className={styles.topNotice}>{error || message}</LhCallout>}
 
       <section className={styles.workspace} aria-label="知识文件工作区">
@@ -861,6 +853,7 @@ export function AdminKnowledgeManager() {
               {view.kind === "trash" ? <><span aria-hidden="true">/</span><strong>回收站</strong></> : activeBreadcrumb.map((folder) => <React.Fragment key={folder.id}><span aria-hidden="true">/</span><button type="button" onClick={() => setCurrentView({ kind: "folder", folderId: folder.id })}>{folder.name}</button></React.Fragment>)}
             </div>
             <div className={styles.toolbarActions}>
+              <LhButton type="button" size="sm" variant="quiet" onClick={() => { if (!hasPendingUploads || window.confirm("还有未完成的上传，离开后待导入文件不会保留。确定离开吗？")) router.push("/search"); }}>返回知识资源</LhButton>
               <LhButton type="button" size="sm" variant="secondary" icon={icon("add")} onClick={() => { setDialog({ kind: "createFolder", parentId: view.kind === "folder" ? view.folderId : null }); setDialogValue(""); }}>新建文件夹</LhButton>
               {selectedItems.length > 0 && !isTrash && <>
                 {selectedItems.length === 1 && <LhButton type="button" size="sm" variant="quiet" icon={icon("edit")} onClick={() => { const item = selectedItems[0]; setError(""); setDialog({ kind: "rename", item }); setDialogValue((item.kind === "folder" ? folders : resources).find((entry) => entry.id === item.id)?.name ?? ""); }}>重命名</LhButton>}

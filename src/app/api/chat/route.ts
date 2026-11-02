@@ -74,7 +74,10 @@ function readSessionId(value: unknown): string {
 
 function chatParticipant(principal: Principal): HermitChatParticipant {
   const owner: HermitChatOwner = principal.kind === "guest" ? { userId: null, guestId: principal.userId } : { userId: principal.userId, guestId: null };
-  return { ...owner, brandId: null, regionId: null, dealerId: null, storeId: null };
+  return { ...owner, brandId: null, regionId: null, dealerId: null, storeId: null,
+    ...(principal.kind !== "guest" ? { identity: { account: principal.account,
+      ...(principal.employeeNo ? { employeeNo: principal.employeeNo } : {}),
+      ...(principal.organization ? { organization: principal.organization } : {}) } } : {}) };
 }
 
 function errorResponse(error: unknown) {
