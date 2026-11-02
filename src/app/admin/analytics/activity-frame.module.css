@@ -1,5 +1,5 @@
 .card {
-  --activity-plot-height: 12rem;
+  --activity-plot-height: 14rem;
   --visit-pv-stroke: color-mix(in srgb, var(--lh-classic-amber) 90%, var(--color-ink));
   --visit-pv-fill: color-mix(in srgb, var(--lh-classic-amber) 5%, transparent);
   display: grid;
@@ -36,8 +36,8 @@
   box-sizing: border-box;
   display: grid;
   align-items: center;
-  width: min(100%, 58rem);
-  height: var(--activity-plot-height, 12rem);
+  width: min(100%, 68rem);
+  height: var(--activity-plot-height, 14rem);
   min-width: 0;
   margin-inline: auto;
 }
