@@ -1628,28 +1628,9 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
   }
 }
 
-[data-lh-login-curtain] {
-  display: none;
-}
-
 @keyframes lh-login-camera {
-  0%, 15% { transform: translate3d(0, 4svh, 0) scale(2.8); }
+  0%, 34% { transform: translate3d(0, 4svh, 0) scale(2.8); }
   to { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes lh-login-cloud-near {
-  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1.08); }
-  to { opacity: 0; transform: translate3d(-24%, 8%, 0) scale(1.3); }
-}
-
-@keyframes lh-login-cloud-far {
-  from { opacity: 0.98; transform: translate3d(0, 0, 0) scale(1.08); }
-  to { opacity: 0; transform: translate3d(24%, -6%, 0) scale(1.25); }
-}
-
-@keyframes lh-login-curtain-out {
-  0%, 20% { opacity: 1; visibility: visible; }
-  100% { opacity: 0; visibility: hidden; }
 }
 
 @keyframes lh-login-chrome-in {
@@ -1691,69 +1672,26 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
     animation-delay: 300ms;
   }
 
-  html[data-lighthouse-interface="classic"] [data-lh-login-arrival] > [data-lh-login-curtain] {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    overflow: hidden;
-    pointer-events: none;
-    animation: lh-login-curtain-out calc(var(--lh-motion-slow) * 2) var(--lh-ease-out) both;
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-login-cloud] {
-    position: absolute;
-    inset: -15%;
-    filter: blur(14px);
-    will-change: transform, opacity;
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-login-cloud="near"] {
-    background:
-      radial-gradient(ellipse 52% 12% at 23% 47%, rgba(185, 192, 183, 0.68), transparent 84%),
-      radial-gradient(ellipse 45% 9% at 69% 63%, rgba(178, 182, 166, 0.55), transparent 82%),
-      radial-gradient(ellipse at 12% 60%, #8d9797 0%, #667375 27%, transparent 60%),
-      radial-gradient(ellipse at 35% 90%, #a4a8a1 0%, #7a8582 25%, transparent 60%),
-      linear-gradient(100deg, #465356 5%, rgba(103, 116, 115, 0.76) 48%, transparent 82%);
-    animation: lh-login-cloud-near calc(var(--lh-motion-slow) * 2) var(--lh-ease-out) both;
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-login-cloud="far"] {
-    background:
-      radial-gradient(ellipse at 90% 28%, #b5ac94 0%, #8f9286 25%, transparent 60%),
-      radial-gradient(ellipse at 68% 7%, #798783 0%, rgba(141, 150, 136, 0.8) 28%, transparent 65%);
-    animation: lh-login-cloud-far calc(var(--lh-motion-slow) * 2) var(--lh-ease-out) both;
-  }
-
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-scene] {
     transform-origin: right 34%;
-    animation: lh-login-camera calc(var(--lh-motion-slow) * 2) cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: lh-login-camera var(--lh-arrival-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 
   /* Keep each original animation name so removing the arrival marker cannot replay it. */
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-copy] {
     --lh-heart-copy-enter-opacity: 0;
     animation-duration: var(--lh-motion-medium);
-    animation-delay: calc(var(--lh-motion-slow) + var(--lh-motion-medium));
+    animation-delay: calc(var(--lh-arrival-duration) * .76);
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-path] {
     animation-duration: var(--lh-motion-medium);
-    animation-delay: calc(var(--lh-motion-slow) + var(--lh-motion-medium));
+    animation-delay: calc(var(--lh-arrival-duration) * .81);
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-sidebar],
   html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-header] {
-    animation: lh-login-chrome-in var(--lh-motion-medium) var(--lh-ease-out) calc(var(--lh-motion-slow) + var(--lh-motion-medium)) both;
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="page"] > [data-lh-login-curtain] {
-    background: #263234 url("/lighthouse-home-hero-bg-v2-realistic-shore.png") right center / cover;
-    animation-duration: var(--lh-motion-slow);
-  }
-
-  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="page"] [data-lh-login-cloud] {
-    animation-duration: var(--lh-motion-slow);
+    animation: lh-login-chrome-in var(--lh-motion-medium) var(--lh-ease-out) calc(var(--lh-arrival-duration) * .81) both;
   }
 }
 

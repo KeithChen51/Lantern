@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Navigation } from "@/components/layout/Navigation";
 import { cn } from "@/lib/utils";
 import { SessionProvider } from "@/components/auth/SessionContext";
+import { LoginFog } from "@/components/auth/LoginFog";
 import type { WebSession } from "@/components/auth/auth-fetch";
 import { EmployeeWatermark } from "@/components/watermark/EmployeeWatermark";
 import { VisitTracker } from "@/components/analytics/VisitTracker";
@@ -25,6 +26,7 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
   const isHomeSurface = pathname === "/" || pathname === "/heart";
   const [arrivalPath, setArrivalPath] = React.useState(loginArrivalPath);
   const loginArrival = arrivalPath && arrivalPath === pathname ? (isHomeSurface ? "home" : "page") : undefined;
+  const arrivalDuration = loginArrival === "home" ? 2300 : 780;
   const [isSidebarPinned, setIsSidebarPinned] = React.useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
   const closeMobileNav = React.useCallback(() => setIsMobileNavOpen(false), []);
@@ -33,13 +35,13 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
     if (!arrivalPath) return;
     const clearArrival = () => setArrivalPath(undefined);
     // A preserved App Router layout must not replay a completed login on return.
-    const timeout = window.setTimeout(clearArrival, loginArrival === "home" ? 1400 : 650);
+    const timeout = window.setTimeout(clearArrival, arrivalDuration + 180);
     window.addEventListener("pagehide", clearArrival);
     return () => {
       window.clearTimeout(timeout);
       window.removeEventListener("pagehide", clearArrival);
     };
-  }, [arrivalPath, loginArrival]);
+  }, [arrivalPath, arrivalDuration]);
 
   React.useEffect(() => {
     if (arrivalPath && pathname !== arrivalPath) setArrivalPath(undefined);
@@ -67,6 +69,7 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
       data-lh-shell
       data-lh-home-shell={isHomeSurface ? "true" : undefined}
       data-lh-login-arrival={loginArrival}
+      style={loginArrival ? { "--lh-arrival-duration": `${arrivalDuration}ms` } as React.CSSProperties : undefined}
       className="min-h-screen bg-transparent text-ink font-sans selection:bg-primary-soft selection:text-ink"
     >
       <Navigation
@@ -81,10 +84,7 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
         isMobileNavOpen={isMobileNavOpen}
         onOpenMobileNav={() => setIsMobileNavOpen(true)}
       />
-      {loginArrival && <div data-lh-login-curtain aria-hidden="true">
-        <div data-lh-login-cloud="near" />
-        <div data-lh-login-cloud="far" />
-      </div>}
+      {loginArrival && <LoginFog />}
 
       <main
         data-lh-main
