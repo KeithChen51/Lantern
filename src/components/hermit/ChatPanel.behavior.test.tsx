@@ -31,6 +31,7 @@ import { ChatInput } from "./ChatInput";
 import { RunFeedback } from "./RunFeedback";
 import { ScenarioCards } from "./ScenarioCards";
 import { MessageBubble } from "./MessageBubble";
+import { HermitConversationView } from "./HermitConversationView";
 import type { HermitDocumentRecommendation } from "./types";
 import type { ContextRemoval } from "./message-context";
 import { MessageContext } from "./MessageContext";
@@ -42,8 +43,9 @@ import { LhChatInputShell, LhChatSubmitButton } from "@/components/ui/lighthouse
 function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>>[] {
   if (Array.isArray(node)) return node.flatMap(child => find(child, type));
   if (!node || typeof node !== "object" || !("type" in node)) return [];
-  const element = node as ReactElement<{ children?: ReactNode }>;
-  return [...(element.type === type ? [element as ReactElement<Record<string, unknown>>] : []), ...find(element.props.children, type)];
+  const element = node as ReactElement<{ children?: ReactNode; footer?: ReactNode }>;
+  if (element.type === HermitConversationView) return find(HermitConversationView(element.props as Parameters<typeof HermitConversationView>[0]), type);
+  return [...(element.type === type ? [element as ReactElement<Record<string, unknown>>] : []), ...find(element.props.children, type), ...find(element.props.footer, type)];
 }
 let incomingEntry: HermitCaseEntry | undefined;
 let incomingDraft = "";

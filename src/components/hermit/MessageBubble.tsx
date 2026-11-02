@@ -19,7 +19,7 @@ import { messageContext, type ContextRemoval } from "./message-context";
 import type { HermitMessageContext } from "@/lib/hermit/conversation-contract";
 import { getDocumentRecommendations, getHermitCitationFromHref, getHermitCitations, getTextContent, type HermitCitation, type HermitDocumentRecommendation } from "./types";
 
-interface MessageBubbleProps {
+export interface MessageBubbleProps {
   message: UIMessage;
   readOnly?: boolean;
   onOpenDocument?: (document: HermitDocumentRecommendation) => void;

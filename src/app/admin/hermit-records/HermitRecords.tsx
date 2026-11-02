@@ -4,9 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { flushSync } from "react-dom";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { authFetch } from "@/components/auth/auth-fetch";
-import { ConversationHeader } from "@/components/hermit/ConversationHeader";
-import { ConversationSurface } from "@/components/hermit/ConversationSurface";
-import { MessageBubble } from "@/components/hermit/MessageBubble";
+import { HermitConversationView } from "@/components/hermit/HermitConversationView";
 import hermitStyles from "@/components/hermit/hermit-v3.module.css";
 import styles from "./hermit-records.module.css";
 
@@ -280,32 +278,33 @@ function ConversationWindow({ row, expiresAt, onClose, returnFocus }: {
       const rect = event.currentTarget.getBoundingClientRect();
       if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
     }}>
-    <ConversationHeader mode="read-only" title="对话回看" titleId="hermit-record-window-title" onClose={onClose} />
-    <ConversationSurface readOnly label="已保存的对话内容">
-      <div data-lh-hermit-main className={styles.dialogBody} tabIndex={0} role="region" aria-label="对话消息">
-        <div data-lh-chat-scroll-content>
-          <details className={styles.metadataPanel}>
-            <summary>会话信息 · {employeeLabel(row)}</summary>
-            <dl className={styles.metadata}>
-              <div className={styles.recordId}><dt>会话编号</dt><dd>{row.id}</dd></div>
-              <div><dt>{row.actor === "employee" ? "员工" : "用户类型"}</dt><dd>{employeeLabel(row)}</dd></div>
-              {row.actor === "employee" && <div><dt>所属组织</dt><dd>{organizationLabel(row)}</dd></div>}
-              <div><dt>开始时间</dt><dd>{dateLabel(row.createdAt)}</dd></div>
-              <div><dt>最后提问</dt><dd>{dateLabel(row.lastQuestionAt)}</dd></div>
-              <div><dt>对话轮次</dt><dd>{row.turns}</dd></div>
-              {row.actor === "employee" && <div className={styles.sourceNote}><dt>资料来源</dt><dd>{identitySource(row)}{row.identity?.source === "current-profile" && "，不代表会话发生时的工号与组织"}</dd></div>}
-            </dl>
-          </details>
-          {loading && !content && <p role="status" className={styles.state}>正在读取对话…</p>}
-          {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => void read()}>重试读取对话</button></div>}
-          {content?.view === "stored-attempts" && <p className={styles.hint}>会话较长，按保存顺序显示全部问答记录，包含重试回答。</p>}
-          {content && (content.messages.length ? content.messages.map(message => <MessageBubble key={message.id} readOnly message={{
-            id: message.id, role: message.role, parts: [{ type: "text", text: message.text || "（空消息）" }],
-          }} />) : <p role="status" className={styles.state}>这段会话暂无已保存的提问或回复。</p>)}
-          {content?.nextCursor && <button className={styles.secondary} type="button" disabled={loading} onClick={() => void read(content.nextCursor!)}>{loading ? "正在读取…" : "继续读取后续对话"}</button>}
-          {content && !content.nextCursor && content.messages.length > 0 && <p className={styles.end}>已到这段对话的末尾</p>}
-        </div>
-      </div>
-    </ConversationSurface>
+    <HermitConversationView
+      mode="read-only" title="对话回看" titleId="hermit-record-window-title" onClose={onClose}
+      label="已保存的对话内容"
+      messages={content?.messages.map(message => ({
+        id: message.id, role: message.role, parts: [{ type: "text" as const, text: message.text || "（空消息）" }],
+      })) ?? []}
+      beforeMessages={<>
+        <details className={styles.metadataPanel}>
+          <summary>会话信息 · {employeeLabel(row)}</summary>
+          <dl className={styles.metadata}>
+            <div className={styles.recordId}><dt>会话编号</dt><dd>{row.id}</dd></div>
+            <div><dt>{row.actor === "employee" ? "员工" : "用户类型"}</dt><dd>{employeeLabel(row)}</dd></div>
+            {row.actor === "employee" && <div><dt>所属组织</dt><dd>{organizationLabel(row)}</dd></div>}
+            <div><dt>开始时间</dt><dd>{dateLabel(row.createdAt)}</dd></div>
+            <div><dt>最后提问</dt><dd>{dateLabel(row.lastQuestionAt)}</dd></div>
+            <div><dt>对话轮次</dt><dd>{row.turns}</dd></div>
+            {row.actor === "employee" && <div className={styles.sourceNote}><dt>资料来源</dt><dd>{identitySource(row)}{row.identity?.source === "current-profile" && "，不代表会话发生时的工号与组织"}</dd></div>}
+          </dl>
+        </details>
+        {loading && !content && <p role="status" className={styles.state}>正在读取对话…</p>}
+        {error && <div role="alert" className={styles.error}><p>{error}</p><button className={styles.secondary} type="button" onClick={() => void read()}>重试读取对话</button></div>}
+        {content?.view === "stored-attempts" && <p className={styles.hint}>会话较长，按保存顺序显示全部问答记录，包含重试回答。</p>}
+      </>}
+    >
+      {content && !content.messages.length && <p role="status" className={styles.state}>这段会话暂无已保存的提问或回复。</p>}
+        {content?.nextCursor && <button className={styles.secondary} type="button" disabled={loading} onClick={() => void read(content.nextCursor!)}>{loading ? "正在读取…" : "继续读取后续对话"}</button>}
+        {content && !content.nextCursor && content.messages.length > 0 && <p className={styles.end}>已到这段对话的末尾</p>}
+    </HermitConversationView>
   </dialog>;
 }

@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { HermitConversationView } from "@/components/hermit/HermitConversationView";
 import { ConversationHeader } from "@/components/hermit/ConversationHeader";
 
 const harness = vi.hoisted(() => ({
@@ -34,6 +35,7 @@ function nodes(node: ReactNode, predicate: (node: Element) => boolean): Element[
   if (Array.isArray(node)) return node.flatMap(child => nodes(child, predicate));
   if (!node || typeof node !== "object" || !("props" in node)) return [];
   const element = node as Element;
+  if (element.type === HermitConversationView) return nodes(HermitConversationView(element.props as Parameters<typeof HermitConversationView>[0]), predicate);
   return [...(predicate(element) ? [element] : []), ...nodes(element.props.children, predicate)];
 }
 function text(node: ReactNode): string {
@@ -123,7 +125,7 @@ describe("路引记录列表与正文边界", () => {
     expect(harness.fetch).toHaveBeenCalledTimes(1);
     const tree = openedModal();
     expect(harness.fetch).toHaveBeenCalledTimes(1);
-    expect(text(tree)).toContain("正在读取对话");
+    expect(renderToStaticMarkup(tree)).toContain("正在读取对话");
     expect(nodes(tree, node => node.type === "textarea")).toHaveLength(0);
     await readAutomatically();
     expect(harness.fetch).toHaveBeenCalledTimes(2);
@@ -229,7 +231,7 @@ describe("路引记录列表与正文边界", () => {
     await loadedList(); openedModal();
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [], nextCursor: null, view: "stored-attempts" }));
     await readAutomatically();
-    expect(text(modal())).toContain("包含重试回答");
+    expect(renderToStaticMarkup(modal())).toContain("包含重试回答");
   });
   it("coalesces Strict Mode setup into one content read and ignores an obsolete native close", async () => {
     await loadedList();
