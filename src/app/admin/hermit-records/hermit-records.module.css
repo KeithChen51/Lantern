@@ -64,3 +64,8 @@
 .metadataPanel { border: 1px solid var(--hermit-line); border-radius: var(--lh-control-radius); color: var(--hermit-secondary); font-size: var(--type-caption); line-height: var(--leading-caption); }
 .metadataPanel summary { padding: .75rem 1rem; cursor: pointer; }
 .metadataPanel summary:focus-visible { outline: 2px solid var(--hermit-accent); outline-offset: 3px; }
+@media (max-height: 440px) and (orientation: landscape) {
+  .filterRegion { position: absolute; top: 0; right: 0; }
+  .workspace { gap: .375rem; }
+  .table th, .table td { padding-block: .375rem; }
+}

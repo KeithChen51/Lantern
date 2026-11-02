@@ -15,7 +15,7 @@ import { ScenarioCards } from "./ScenarioCards";
 import { RunFeedback } from "./RunFeedback";
 import { createConversationId } from "./conversation-id";
 import { HistoryDrawer, readConversation, useConversationHistory } from "./ConversationHistory";
-import { ConversationReadScope, conversationTitle, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
+import { ConversationReadScope, messageRunState, restoredContext, markTerminalState, type ConversationDetail } from "./conversation-state";
 import { hermitUploadOwner } from "./upload-scope";
 import { useHermitAttachments } from "./useHermitAttachments";
 import { getHermitApiError, getTextContent, type HermitDocumentRecommendation } from "./types";
@@ -226,7 +226,6 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
 
   const isLoading = status === "submitted" || status === "streaming";
   const hasMessages = messages.length > 0;
-  const title = conversationTitle(messages, initial?.title);
   const displayedError = requestError ?? (error ? "这次请求没有完成，请重试。" : null);
   const lastMessage = messages[messages.length - 1];
   const lastUser = messages.findLast(message => message.role === "user");
@@ -345,7 +344,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
   </div>;
 
   return <HermitConversationView
-    title={title} label="路引当前对话" messages={messages}
+    fallbackTitle={initial?.title} label="路引当前对话" messages={messages}
     onNew={onNew} onHistory={onHistory} headerContent={conversationNotices}
     scrollRef={scrollRef} onScroll={event => {
       const element = event.currentTarget;

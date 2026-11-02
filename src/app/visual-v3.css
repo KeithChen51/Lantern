@@ -131,6 +131,17 @@ body:has([data-lh-records-workspace]) { min-height: 100dvh; }
 [data-lh-main]:has([data-lh-records-workspace]) { height: 100dvh; min-height: 0; }
 [data-lh-main-frame]:has(> [data-lh-records-workspace]) { height: 100%; }
 
+@media (max-height: 440px) and (orientation: landscape) {
+  html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-v3][data-sidebar-pinned]:has([data-lh-records-workspace]) {
+    padding-block: .5rem;
+  }
+}
+@media (max-height: 440px) and (max-width: 767px) and (orientation: landscape) {
+  html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-v3][data-sidebar-pinned]:has([data-lh-records-workspace]) {
+    padding-top: 4.5rem;
+  }
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-v3] [data-lh-page-archetype="cultural-reading"]:not([data-lh-resource]) {
   max-width: none;
   margin-inline: 0;

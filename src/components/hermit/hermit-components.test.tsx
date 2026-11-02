@@ -24,7 +24,7 @@ describe("Hermit accessible composer components", () => {
   });
   it("owns the full conversation page in both live and read-only modes", () => {
     const messages = [{ id: "u", role: "user" as const, parts: [{ type: "text" as const, text: "保存的提问" }] }];
-    const saved = renderToStaticMarkup(<HermitConversationView mode="read-only" title="对话回看" titleId="saved-title" onClose={vi.fn()} label="已保存的对话" messages={messages}
+    const saved = renderToStaticMarkup(<HermitConversationView mode="read-only" fallbackTitle="对话回看" titleId="saved-title" onClose={vi.fn()} label="已保存的对话" messages={messages}
       beforeMessages={<details><summary>会话信息</summary>员工资料</details>}
       footer={<textarea aria-label="不应显示的输入" />} reader={<aside>不应显示的阅读器</aside>} />);
     expect(saved).toContain("data-lh-hermit-layout");
@@ -34,12 +34,13 @@ describe("Hermit accessible composer components", () => {
     expect(saved).toContain("会话信息");
     expect(saved).toContain("回答供参考");
     expect(saved).not.toContain("不应显示");
-    const live = renderToStaticMarkup(<HermitConversationView title="路引" label="当前对话" onNew={vi.fn()} onHistory={vi.fn()} messages={messages}
+    const live = renderToStaticMarkup(<HermitConversationView fallbackTitle="路引" label="当前对话" onNew={vi.fn()} onHistory={vi.fn()} messages={messages}
       footer={<textarea aria-label="继续提问" />} reader={<aside>已打开的文档</aside>} />);
     expect(live).toContain("data-lh-hermit-footer");
     expect(live).toContain("继续提问");
     expect(live).toContain("已打开的文档");
-    expect(live).toContain("保存的提问");
+    expect(live).toContain('<h1 title="保存的提问">保存的提问</h1>');
+    expect(saved).toContain('<h2 id="saved-title" title="保存的提问">保存的提问</h2>');
   });
   it("keeps the next draft editable while generation exposes only stop", () => {
     const html = renderToStaticMarkup(<ChatInput value="下一句草稿" onChange={vi.fn()} onSubmit={vi.fn()} onStop={vi.fn()} isLoading isUploading={false} attachments={[]} onFilesSelected={vi.fn()} onRemoveAttachment={vi.fn()} onRetryAttachment={vi.fn()} onClearDocumentContext={vi.fn()} />);

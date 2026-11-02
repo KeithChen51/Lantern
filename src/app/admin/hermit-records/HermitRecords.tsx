@@ -279,7 +279,7 @@ function ConversationWindow({ row, expiresAt, onClose, returnFocus }: {
       if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
     }}>
     <HermitConversationView
-      mode="read-only" title="对话回看" titleId="hermit-record-window-title" onClose={onClose}
+      mode="read-only" fallbackTitle="对话回看" titleId="hermit-record-window-title" onClose={onClose}
       label="已保存的对话内容"
       messages={content?.messages.map(message => ({
         id: message.id, role: message.role, parts: [{ type: "text" as const, text: message.text || "（空消息）" }],

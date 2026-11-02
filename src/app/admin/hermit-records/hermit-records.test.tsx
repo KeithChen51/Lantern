@@ -217,7 +217,7 @@ describe("路引记录列表与正文边界", () => {
     harness.fetch.mockResolvedValueOnce(Response.json({ messages: [{ id: "u1", role: "user", text: "FIRST" }, { id: "a1", role: "assistant", text: "SECOND" }], nextCursor: null }));
     click(button(modal(), "继续读取后续对话")); await settle();
     const html = renderToStaticMarkup(modal());
-    expect(html.match(/FIRST/g)).toHaveLength(1);
+    expect(html.match(/<p\b[^>]*>FIRST<\/p>/g)).toHaveLength(1);
     expect(html).toContain("SECOND");
     expect(JSON.parse(harness.fetch.mock.calls[2][1].body).cursor).toBe("next");
   });

@@ -3,13 +3,14 @@
 import { Fragment, type ReactNode, type Ref, type UIEventHandler } from "react";
 import type { UIMessage } from "ai";
 import { ConversationHeader } from "./ConversationHeader";
+import { conversationTitle } from "./conversation-state";
 import { ConversationSurface } from "./ConversationSurface";
 import { MessageBubble, type MessageBubbleProps } from "./MessageBubble";
 import { getDocumentRecommendations, getTextContent } from "./types";
 import styles from "./hermit-v3.module.css";
 
 type Props = {
-  title?: string;
+  fallbackTitle?: string;
   label: string;
   messages: UIMessage[];
   headerContent?: ReactNode;
@@ -29,11 +30,12 @@ type Props = {
 /** The conversation page is shared by live chat and administrator playback. */
 export function HermitConversationView(props: Props) {
   const readOnly = props.mode === "read-only";
+  const title = conversationTitle(props.messages, props.fallbackTitle);
   return <div className={`${styles.workspace} ${styles.conversationTheme}`}>
     <div>
       {props.mode === "read-only"
-        ? <ConversationHeader mode="read-only" title={props.title} titleId={props.titleId} onClose={props.onClose} />
-        : <ConversationHeader title={props.title} onNew={props.onNew} onHistory={props.onHistory} />}
+        ? <ConversationHeader mode="read-only" title={title} titleId={props.titleId} onClose={props.onClose} />
+        : <ConversationHeader title={title} onNew={props.onNew} onHistory={props.onHistory} />}
       {props.headerContent}
     </div>
     <div className={`${styles.chatLayout} ${props.reader ? styles.chatLayoutWithReader : ""}`} data-lh-hermit-layout>
