@@ -312,7 +312,7 @@ The access calendar and PV/UV trend share a chart card. Use the same slots in bo
 
 Keep the view switch mounted and focusable. Preserve the chosen range, day and calendar position when returning to a view. A switch or range request must leave the following report in place. Check at desktop, tablet and phone sizes, including delayed and failed chart requests.
 
-For the calendar, use four ordered fills from pale amber to deep amber for positive counts. Use the same fills in the legend and cells. Give zero a quiet neutral fill and missing dates a diagonal hatch. A selected date has a light and dark inset edge that remains visible at either end of the scale. Check the steps at both the 14px desktop and 12px phone cell sizes.
+For the calendar, use soft paper and apricot tones for the two lower positive ranges, then orange-gold and the brand's classic amber for the two higher ranges. Use the same fills in the legend and cells. Give zero a quiet neutral fill and missing dates a diagonal hatch. A selected date has a light and dark inset edge that remains visible at either end of the scale. Check the steps at both the 14px desktop and 12px phone cell sizes.
 
 Use independent series on a shared zero-based count scale for daily PV and UV. Draw an amber PV outline over light daily stems with a faint fill to the baseline. On long ranges, thin the stems to fit the available width while retaining every observed value in the outline. Highlight the recorded peak with an amber stem and its count. Distinguish UV by its dash pattern and square selection marker. Show missing dates as gaps and measured zeros on the baseline.
 
