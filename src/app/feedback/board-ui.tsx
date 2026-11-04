@@ -33,5 +33,5 @@ export function BoardLoading() {
 }
 
 export function EmployeeNotice() {
-  return <div className={styles.page}><PageHeading title="建议反馈" /><LhStateNotice title="仅员工可查看与参与" action={<LhBackLink href="/me">前往我的</LhBackLink>}>请使用员工账号登录后再打开建议看板。访客模式无法查看建议和讨论。</LhStateNotice></div>;
+  return <div className={styles.page}><PageHeading title="建议广场" /><LhStateNotice title="仅员工可查看与参与" action={<LhBackLink href="/me">前往我的</LhBackLink>}>请使用员工账号登录后再打开建议广场。访客模式无法查看建议和讨论。</LhStateNotice></div>;
 }

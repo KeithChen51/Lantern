@@ -12,7 +12,7 @@ vi.mock("react", async (original) => ({ ...await original<typeof import("react")
   useRef: (initial: unknown) => hooks.refs[hooks.refSlot++] ??= { current: initial },
 }));
 vi.mock("./board-client", async (original) => ({ ...await original<typeof import("./board-client")>(), useBoardResource: vi.fn(), boardRequest: vi.fn(), markBoardNotificationsRead: vi.fn() }));
-import { FeedbackBoard } from "./FeedbackBoard";
+import { FeedbackBoard, SuggestionFeedCard, ComposerDialog, PublishSuggestion } from "./FeedbackBoard";
 import { ManageSuggestion } from "./SuggestionDetailView";
 import { BoardRequestError, boardRequest, markBoardNotificationsRead, useBoardResource } from "./board-client";
 import { BoardError, BoardSelect } from "./board-ui";
@@ -22,7 +22,7 @@ const viewer = { userId: "employee", displayName: "员工", csrfToken: "csrf", c
 const initial: SuggestionDetail = {
   id: "idea", title: "建议", content: "内容", category: "platform", status: "pending", author: { id: "author", name: "作者" },
   createdAt: "2026-11-04T01:00:00Z", updatedAt: "2026-11-04T01:00:00Z", likeCount: 0, commentCount: 0, likedByMe: false,
-  comments: [], nextCommentCursor: null, events: [], relatedSuggestion: null,
+  excerpt: "内容摘要", latestResponse: null, comments: [], nextCommentCursor: null, events: [], relatedSuggestion: null,
 };
 function render(component: () => ReactNode): ReactNode {
   let tree: ReactNode;
@@ -138,5 +138,78 @@ describe("loaded notification actions", () => {
     click(button(render(component), "更多通知")); await flush();
     expect(boardRequest).toHaveBeenLastCalledWith("/api/feedback/notifications?cursor=refreshed-first-page-cursor", undefined, viewer.userId);
     expect(button(render(component), "更多通知")).toBeUndefined();
+  });
+});
+
+
+describe("community feed participation and likes", () => {
+  function setupFeed() {
+    let data = { items: [initial], total: 1, page: 1, pageSize: 20 };
+    const reload = vi.fn();
+    const update = vi.fn((next: unknown) => { data = typeof next === "function" ? (next as (current: typeof data) => typeof data)(data) : next as typeof data; });
+    vi.mocked(useBoardResource).mockImplementation((url) => url.includes("notifications") ? { data: { items: [], unreadCount: 0, nextCursor: null }, loading: false, error: undefined, reload: vi.fn(), update: vi.fn() } : { data, loading: false, error: undefined, reload, update });
+    return { reload, update };
+  }
+  const nativeButton = (tree: ReactNode, label: string) => find(tree, "button").find((item) => text(item.props.children as ReactNode) === label)!;
+
+  it("uses participated for the personal view and preserves category filtering", () => {
+    setupFeed();
+    const component = () => FeedbackBoard({ viewer });
+    click(nativeButton(render(component), "我参与的"));
+    click(nativeButton(render(component), "服务文化"));
+    render(component);
+    const url = vi.mocked(useBoardResource).mock.calls.filter(([url]) => !url.includes("notifications")).at(-1)![0];
+    expect(new URL(url, "https://example.invalid").searchParams.get("participated")).toBe("true");
+    expect(new URL(url, "https://example.invalid").searchParams.get("category")).toBe("culture");
+    expect(new URL(url, "https://example.invalid").searchParams.get("mine")).toBeNull();
+  });
+
+  it("deduplicates immediate likes, uses the server count and refreshes participation/order", async () => {
+    const feed = setupFeed();
+    const component = () => FeedbackBoard({ viewer });
+    let resolve!: (value: unknown) => void;
+    vi.mocked(boardRequest).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    const action = find(render(component), SuggestionFeedCard)[0].props.onLike as () => void;
+    action(); action();
+    expect(boardRequest).toHaveBeenCalledTimes(1);
+    expect(find(render(component), SuggestionFeedCard)[0].props.busy).toBe(true);
+    resolve({ liked: true, likeCount: 9 }); await flush();
+    expect(find(render(component), SuggestionFeedCard)[0].props.item).toMatchObject({ likedByMe: true, likeCount: 9 });
+    expect(feed.reload).toHaveBeenCalledTimes(1);
+    expect(boardRequest).toHaveBeenCalledWith("/api/feedback/idea/like", expect.objectContaining({ body: { liked: true }, csrfToken: "csrf" }), "employee");
+  });
+
+  it("does not apply an old result after switching views and returning", async () => {
+    const feed = setupFeed();
+    const component = () => FeedbackBoard({ viewer });
+    let resolve!: (value: unknown) => void;
+    vi.mocked(boardRequest).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    (find(render(component), SuggestionFeedCard)[0].props.onLike as () => void)();
+    click(nativeButton(render(component), "热门")); render(component);
+    click(nativeButton(render(component), "最新")); render(component);
+    resolve({ liked: true, likeCount: 90 }); await flush();
+    expect(feed.update).not.toHaveBeenCalled();
+    expect(feed.reload).not.toHaveBeenCalled();
+  });
+
+  it("keeps failed likes unchanged, exposes retry guidance and unlocks the action", async () => {
+    setupFeed();
+    const component = () => FeedbackBoard({ viewer });
+    vi.mocked(boardRequest).mockRejectedValueOnce(new Error("网络断开，请重试"));
+    (find(render(component), SuggestionFeedCard)[0].props.onLike as () => void)(); await flush();
+    const card = find(render(component), SuggestionFeedCard)[0];
+    expect(card.props.error).toBe("网络断开，请重试");
+    expect(card.props.busy).toBe(false);
+    expect(card.props.item).toMatchObject({ likedByMe: false, likeCount: 0 });
+  });
+
+  it("opens a named composer without placing its fields in the feed", () => {
+    setupFeed();
+    const component = () => FeedbackBoard({ viewer });
+    expect(find(render(component), ComposerDialog)).toHaveLength(0);
+    const entry = find(render(component), "button").find((item) => item.props["aria-haspopup"] === "dialog")!;
+    click(entry);
+    expect(find(render(component), ComposerDialog)).toHaveLength(1);
+    expect(find(render(component), PublishSuggestion)).toHaveLength(0);
   });
 });

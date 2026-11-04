@@ -74,7 +74,7 @@ export function SuggestionDetailView({ id, viewer }: { id: string; viewer: Board
 
   const events = item ? [...item.events].sort((a, b) => b.createdAt.localeCompare(a.createdAt)) : [];
   return <div className={`${styles.page} ${styles.stack}`} data-lh-page="feedback-detail">
-    <div><LhBackLink href="/feedback">返回建议看板</LhBackLink></div>
+    <div><LhBackLink href="/feedback">返回建议广场</LhBackLink></div>
     {resource.loading && <>{!item && <PageHeading title="建议详情" />}<BoardLoading /></>}
     {resource.error && <>{!item && <PageHeading title="建议详情" />}<BoardError message={resource.error} retry={resource.reload} /></>}
     {item && <>
@@ -87,14 +87,14 @@ export function SuggestionDetailView({ id, viewer }: { id: string; viewer: Board
       </LhPanel>
       {error && <BoardError message={error} />}
       <LhPanel className={`${styles.panel} ${styles.stack}`} aria-label="管理员回应">
-        <h2 className={styles.sectionTitle}>管理员回应</h2>
+        <h2 className={styles.sectionTitle}>处理进展</h2>
         {events.length === 0 ? <p className={styles.meta}>建议已收到，等待管理员回应。</p> : <>
           <EventResponse event={events[0]} latest />
           {events.length > 1 && <details className={styles.history}><summary>查看 {events.length - 1} 条历史回应</summary><ol className={styles.feed}>{events.slice(1).map((event) => <li key={event.id}><EventResponse event={event} /></li>)}</ol></details>}
         </>}
       </LhPanel>
-      {viewer.canManage && <LhPanel className={styles.panel}><ManageSuggestion key={item.id} item={item} viewer={viewer} disabled={locked} onUpdated={resource.update} onRefresh={resource.reload} onBusyChange={setBusy} /></LhPanel>}
-      <LhPanel className={`${styles.panel} ${styles.stack}`} aria-label="评论与回复">
+
+      <LhPanel id="discussion" className={`${styles.panel} ${styles.stack} ${styles.discussion}`} aria-label="评论与回复">
         <h2 className={styles.sectionTitle}>评论与回复 · {item.commentCount}</h2>
         <form className={styles.form} onSubmit={submitComment} noValidate aria-label="发表评论">
           {replyTo && <LhStateNotice action={<LhButton type="button" disabled={commentBusy} onClick={() => { setReplyTo(null); commentInput.current?.focus(); }}>取消回复</LhButton>}>正在回复 {replyTo.author.name}</LhStateNotice>}
@@ -111,6 +111,7 @@ export function SuggestionDetailView({ id, viewer }: { id: string; viewer: Board
         {moreError && <BoardError message={moreError} />}
         {item.nextCommentCursor && <LhButton type="button" disabled={locked} onClick={() => void loadComments()}>{moreBusy ? "加载中…" : "加载更多评论"}</LhButton>}
       </LhPanel>
+      {viewer.canManage && <details className={styles.managerArea}><summary>管理员处理 · 更新进展与回应</summary><LhPanel className={styles.panel}><ManageSuggestion key={item.id} item={item} viewer={viewer} disabled={locked} onUpdated={resource.update} onRefresh={resource.reload} onBusyChange={setBusy} /></LhPanel></details>}
     </>}
   </div>;
 }

@@ -45,7 +45,7 @@ export default async function MyPage() {
           <span aria-hidden="true" className="text-primary-text">→</span>
         </Link>
         {!isGuest && <Link href="/feedback" className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-8">
-          <span><span className="flex flex-wrap items-center gap-2 text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈<FeedbackUnreadBadge key={principal.userId} /></span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">提出想法、参与讨论、查看处理进展</span></span>
+          <span><span className="flex flex-wrap items-center gap-2 text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议广场<FeedbackUnreadBadge key={principal.userId} /></span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">提出想法、参与讨论、查看处理进展</span></span>
           <span aria-hidden="true" className="text-primary-text">→</span>
         </Link>}
       </LhPanel>
