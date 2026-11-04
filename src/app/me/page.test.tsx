@@ -58,10 +58,10 @@ describe("my employee page", () => {
     const html = renderToStaticMarkup(await MyPage());
     expect(html).toMatch(/<h1[^>]*>访客<\/h1>/);
     expect(html).toContain("访客模式");
-    expect(html).toContain("即将开放");
+    expect(html).not.toContain("建议反馈");
     expect(html).toContain("路引 AI 问答");
     expect(html).toContain('href="/updates"');
-    expect(html).toContain('href="/feedback"');
+    expect(html).not.toContain('href="/feedback"');
     expect(html).not.toContain("must-not-render-");
     expect(html).not.toContain("opaque-guest-id");
     for (const text of ["姓名", "工号", "组织架构", "已登录", "退出登录", "工具授权", "/admin", "/api/auth/logout"]) expect(html).not.toContain(text);

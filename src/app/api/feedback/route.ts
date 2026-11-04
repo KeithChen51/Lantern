@@ -1,2 +1,3 @@
 export const dynamic = "force-dynamic";
-export { retired as POST } from "@/app/api/_retired";
+export const runtime = "nodejs";
+export { listSuggestions as GET, createSuggestion as POST } from "@/modules/feedback/board-http";

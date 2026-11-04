@@ -7,7 +7,7 @@ vi.mock("./access-config", () => ({ readAccessConfig: () => ({ origin: "https://
 vi.mock("./access-service", () => ({ AccessService: class { webPrincipal = webPrincipal; clientPrincipal = clientPrincipal; } }));
 vi.mock("./access-store", () => ({ PrismaAccessStore: class {} }));
 vi.mock("./portal", () => ({ HttpPortalAdapter: class {} }));
-import { assertWebMutation, authErrorResponse, readAccessCookie, requireAnalyticsSummary, requireEmployee, requireKnowledgeAdmin, requireKnowledgeClient } from "./access";
+import { assertWebMutation, authErrorResponse, readAccessCookie, requireAnalyticsSummary, requireEmployee, requireFeedbackManager, requireKnowledgeAdmin, requireKnowledgeClient } from "./access";
 
 const opaque = "a".repeat(43);
 const principal: Principal = { userId: "employee", account: "000123", displayName: "Fixture", grantId: "grant", credentialId: "session", channel: "web", capabilities: ["knowledge:read"], csrfToken: "csrf-nonce", expiresAt: Date.now() + 1000 };
@@ -17,6 +17,26 @@ function request(extra: Record<string, string> = {}) {
 beforeEach(() => { vi.resetAllMocks(); webPrincipal.mockResolvedValue(principal); clientPrincipal.mockResolvedValue({ ...principal, channel: "cli" }); });
 
 describe("transport authentication boundary", () => {
+  it("requires distinct feedback management authority, refreshing roles before decisions", async () => {
+    for (const capabilities of [["knowledge:read"], ["knowledge:manage"], ["analytics:summary"]]) {
+      webPrincipal.mockResolvedValue({ ...principal, capabilities });
+      await expect(requireFeedbackManager(request())).rejects.toMatchObject({ status: 403 });
+    }
+    webPrincipal.mockResolvedValue({ ...principal, capabilities: ["feedback:manage"] });
+    await expect(requireFeedbackManager(request())).resolves.toMatchObject({ userId: "employee" });
+    expect(webPrincipal).toHaveBeenLastCalledWith(opaque, { adminWrite: true });
+    for (const extra of [{ kind: "guest" }, { channel: "cli" }, { channel: "mcp" }]) {
+      webPrincipal.mockResolvedValue({ ...principal, capabilities: ["feedback:manage"], ...extra });
+      await expect(requireFeedbackManager(request())).rejects.toMatchObject({ status: 403 });
+    }
+  });
+  it("denies feedback management in guest mode before reading an old employee session", async () => {
+    vi.stubEnv("AUTH_MODE", "guest");
+    try {
+      await expect(requireFeedbackManager(request())).rejects.toMatchObject({ status: 403 });
+      expect(webPrincipal).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
+  });
   it("accepts exactly one correctly formed host session cookie", async () => {
     expect(await requireEmployee(request())).toEqual(principal);
     expect(webPrincipal).toHaveBeenCalledWith(opaque);

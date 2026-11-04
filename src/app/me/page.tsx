@@ -8,6 +8,7 @@ import { LhButton, LhPanel, LhStatusBadge } from "@/components/ui/lighthouse-pri
 import { currentVersion } from "@/lib/releases";
 import { EmployeeAvatar } from "./EmployeeAvatar";
 import { ReleaseUnreadBadge } from "./ReleaseUnreadBadge";
+import { FeedbackUnreadBadge } from "./FeedbackUnreadBadge";
 
 export const metadata: Metadata = { title: "我的 | 灯塔" };
 
@@ -43,10 +44,10 @@ export default async function MyPage() {
           </span>
           <span aria-hidden="true" className="text-primary-text">→</span>
         </Link>
-        <Link href="/feedback" className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-8">
-          <span><span className="block text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈</span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">使用问题与改进建议</span></span>
-          <LhStatusBadge tone="neutral">即将开放</LhStatusBadge>
-        </Link>
+        {!isGuest && <Link href="/feedback" className="flex min-h-20 items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-8">
+          <span><span className="flex flex-wrap items-center gap-2 text-[length:var(--type-lead)] font-[var(--weight-bold)] text-ink">建议反馈<FeedbackUnreadBadge key={principal.userId} /></span><span className="mt-1 block text-[length:var(--type-caption)] text-muted">提出想法、参与讨论、查看处理进展</span></span>
+          <span aria-hidden="true" className="text-primary-text">→</span>
+        </Link>}
       </LhPanel>
       {!isGuest && <div className="flex flex-wrap items-center justify-between gap-4">
         <Link href="/auth/tools" className="inline-flex min-h-11 items-center rounded-[var(--lh-control-radius)] px-3 text-[length:var(--type-control)] font-[var(--weight-bold)] text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">工具授权</Link>

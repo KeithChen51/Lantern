@@ -303,7 +303,7 @@ export class AccessService {
       }
       return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, [
         ...(admin ? ["knowledge:manage" as const] : []),
-        ...(analytics ? ["analytics:summary" as const] : []),
+        ...(analytics ? ["analytics:summary" as const, "feedback:manage" as const] : []),
       ]);
     });
   }
