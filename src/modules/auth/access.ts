@@ -77,6 +77,17 @@ export async function requireAnalyticsSummary(request: Request | Headers): Promi
   }
   return principal;
 }
+/** Suggestion decisions belong to the independently authorized platform admin. */
+export async function requireFeedbackManager(request: Request | Headers): Promise<Principal> {
+  denyGuestEmployeeAccess();
+  const token = readAccessCookie(requestHeaders(request), readAccessConfig().sessionCookie);
+  if (!token) throw new AccessError("请先使用员工账号登录。", 401);
+  const principal = await getAccessService().webPrincipal(token, { adminWrite: true });
+  if (principal.kind === "guest" || principal.channel !== "web" || !principal.capabilities.includes("feedback:manage")) {
+    throw new AccessError("仅平台管理员可处理建议。", 403);
+  }
+  return principal;
+}
 export async function requireKnowledgeClient(request: Request): Promise<Principal> {
   denyGuestEmployeeAccess();
   const authorization = request.headers.get("authorization");

@@ -155,7 +155,7 @@ describe("employee login and identity shadows", () => {
     const f = fixture({ platformAdminRole: "lighthouse_admin" });
     f.roles.mockResolvedValue(["lighthouse_admin"]);
     const login = await f.login();
-    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage", "analytics:summary"]);
+    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage", "analytics:summary", "feedback:manage"]);
     f.roles.mockResolvedValue(["lighthouse_admin_other", "LIGHTHOUSE_ADMIN"]);
     f.advance(300001);
     expect((await f.service.webPrincipal(login.sessionToken)).capabilities).toEqual(EMPLOYEE_CAPABILITIES);
@@ -181,6 +181,7 @@ describe("employee login and identity shadows", () => {
     const demoted = await f.service.webPrincipal(login.sessionToken, { adminWrite: true });
     expect(demoted.capabilities).toContain("knowledge:manage");
     expect(demoted.capabilities).not.toContain("analytics:summary");
+    expect(demoted.capabilities).not.toContain("feedback:manage");
   });
   it("limits platform administrators' CLI and MCP tokens to their explicitly granted knowledge scope", async () => {
     const f = fixture({ platformAdminRole: "PLATFORM_ADMIN" });
