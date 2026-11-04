@@ -11,6 +11,13 @@ function privateScope(owner: string): PrivateScope {
   return scope;
 }
 
+/** A pending write cannot refresh or restore resources after any authorization denial. */
+export function captureBoardAuthorization(owner: string): () => boolean {
+  const scope = privateScope(owner);
+  const revision = scope.revision;
+  return () => scope.revision === revision;
+}
+
 export class BoardRequestError extends Error {
   constructor(message: string, public readonly status: number) { super(message); }
 }

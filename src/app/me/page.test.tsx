@@ -28,7 +28,7 @@ describe("my employee page", () => {
     expect(html).toContain('href="/updates"');
     expect(html).toContain("版本消息");
     expect(html).toContain('href="/feedback"');
-    expect(html).toContain("建议反馈");
+    expect(html).toContain("建议广场");
     expect(html).toContain('href="/auth/tools"');
     expect(html).toContain('action="/api/auth/logout"');
     expect(html).toContain('method="post"');
@@ -58,7 +58,7 @@ describe("my employee page", () => {
     const html = renderToStaticMarkup(await MyPage());
     expect(html).toMatch(/<h1[^>]*>访客<\/h1>/);
     expect(html).toContain("访客模式");
-    expect(html).not.toContain("建议反馈");
+    expect(html).not.toContain("建议广场");
     expect(html).toContain("路引 AI 问答");
     expect(html).toContain('href="/updates"');
     expect(html).not.toContain('href="/feedback"');
