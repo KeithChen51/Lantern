@@ -28,7 +28,7 @@ describe("suggestion board rendered states", () => {
   it("shows the feed first with author, category, status, counts and pagination", () => {
     vi.mocked(useBoardResource).mockImplementation((url) => url.includes("notifications") ? resource({ items: [], unreadCount: 4, nextCursor: null }) : resource({ items: [detail], total: 26, page: 1, pageSize: 20 }));
     const html = renderToStaticMarkup(<FeedbackBoard viewer={viewer} />);
-    for (const text of ["员工甲", "内容与知识", "评估中", "已赞同", "评论", "只看我发起的", "最新", "热门", "我参与的", "建议摘要 &lt;script&gt;纯文本&lt;/script&gt;", "最新处理摘要", "下一页", "4 条未读"]) expect(html).toContain(text);
+    for (const text of ["员工甲", "内容与知识", "评估中", "取消赞同", "评论", "只看我发起的", "最新", "热门", "我参与的", "建议摘要 &lt;script&gt;纯文本&lt;/script&gt;", "最新处理摘要", "下一页", "4 条未读"]) expect(html).toContain(text);
     expect(html).toContain('href="/feedback/idea-1"');
     expect(html).not.toContain("private-token");
     expect(html).not.toContain("确认发布");

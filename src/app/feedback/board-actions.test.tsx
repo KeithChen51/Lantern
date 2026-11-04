@@ -240,7 +240,7 @@ describe("community feed participation and likes", () => {
     setupFeed();
     const component = () => FeedbackBoard({ viewer });
     expect(find(render(component), ComposerDialog)).toHaveLength(0);
-    const entry = find(render(component), "button").find((item) => item.props["aria-haspopup"] === "dialog")!;
+    const entry = find(render(component), LhButton).find((item) => item.props["aria-haspopup"] === "dialog")!;
     click(entry);
     expect(find(render(component), ComposerDialog)).toHaveLength(1);
     expect(find(render(component), PublishSuggestion)).toHaveLength(0);

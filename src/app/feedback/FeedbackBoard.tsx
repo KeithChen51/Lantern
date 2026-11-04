@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeading } from "@/components/ui/PageHeading";
 import { Heart, MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { LhButton, LhCard, LhEmptyState, LhPanel, LhStateNotice, LhTextArea, LhTextField } from "@/components/ui/lighthouse-primitives";
@@ -97,15 +98,11 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
   }
 
   return <div className={styles.stack}>
-    <div className={styles.communityBar}>
-      <span className={styles.meta}>员工之间的想法与讨论</span>
-      <LhButton type="button" variant="ghost" disabled={notificationBusy} aria-pressed={tab === "notifications"} onClick={() => { setTab("notifications"); notifications.reload(); }}>我的通知{(notifications.data?.unreadCount ?? 0) > 0 && <span className={styles.badge} aria-label={`${notifications.data!.unreadCount} 条未读`}>{notifications.data!.unreadCount}</span>}</LhButton>
-    </div>
-    {tab === "feed" && <button ref={publishButton} type="button" className={styles.composeEntry} aria-haspopup="dialog" onClick={() => setComposing(true)}><span className={styles.avatar} aria-hidden="true">{Array.from(viewer.displayName)[0]}</span><span>有什么值得改进的地方？</span><strong>提建议</strong></button>}
+    <div className={styles.feedHeading}><PageHeading title="建议广场"><LhButton type="button" variant="ghost" disabled={notificationBusy} aria-pressed={tab === "notifications"} onClick={() => { setTab("notifications"); notifications.reload(); }}>我的通知{(notifications.data?.unreadCount ?? 0) > 0 && <span className={styles.badge} aria-label={`${notifications.data!.unreadCount} 条未读`}>{notifications.data!.unreadCount}</span>}</LhButton><LhButton ref={publishButton} type="button" variant="primary" aria-haspopup="dialog" onClick={() => setComposing(true)}>提建议</LhButton></PageHeading></div>
     {composing && <ComposerDialog viewer={viewer} onCancel={closeComposer} onPublished={(item) => { setPublished(item); closeComposer(); setTab("feed"); setView("latest"); setCategory(""); setStatus(""); setMine(false); setPage(1); feed.reload(); }} />}
     {published && !feed.error && <LhStateNotice tone="success">建议已发布。<Link className={styles.link} href={`/feedback/${encodeURIComponent(published.id)}`}>查看“{published.title}”</Link></LhStateNotice>}
     {tab === "feed" ? <>
-      <div className={styles.browseRow}>
+      <div className={styles.feedNavigation}><div className={styles.browseRow}>
         <div className={styles.feedTabs} role="group" aria-label="浏览建议">
           {([{ value: "latest", label: "最新" }, { value: "popular", label: "热门" }, { value: "participated", label: "我参与的" }] as const).map((option) => <button key={option.value} type="button" aria-pressed={view === option.value} onClick={() => { setView(option.value); setPage(1); }}>{option.label}</button>)}
         </div>
@@ -116,6 +113,7 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
         </div></details>
       </div>
       <div className={styles.categoryRow} role="group" aria-label="建议分类"><button type="button" aria-pressed={!category} onClick={() => { setCategory(""); setPage(1); }}>全部</button>{SUGGESTION_CATEGORIES.map((option) => <button type="button" key={option.value} aria-pressed={category === option.value} onClick={() => { setCategory(option.value); setPage(1); }}>{option.label}</button>)}</div>
+      </div>
       {view === "participated" && <p className={styles.meta}>你发起、赞同或评论过的建议都在这里。</p>}
       {feed.loading && <BoardLoading />}
       {feed.error && <BoardError message={feed.error} retry={feed.reload} />}
@@ -138,13 +136,16 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
 export function SuggestionFeedCard({ item, busy, error, onLike }: { item: SuggestionSummary; busy: boolean; error?: string; onLike: () => void }) {
   const href = `/feedback/${encodeURIComponent(item.id)}`;
   return <LhCard className={`${styles.panel} ${styles.feedCard}`}>
-    <div className={styles.authorLine}><span className={styles.avatar} aria-hidden="true">{Array.from(item.author.name)[0]}</span><div><strong>{item.author.name}</strong><div className={styles.meta}><BoardTime value={item.createdAt} /></div></div></div>
-    <h2 className={styles.title}><Link href={href}>{item.title}</Link></h2>
-    <p className={styles.excerpt}>{item.excerpt}</p>
-    <div className={styles.postLabels}><span>{categoryLabel(item.category)}</span><StatusBadge status={item.status} /></div>
-    {item.latestResponse && <Link href={href} className={styles.latestResponse}><strong>最新回应 · {item.latestResponse.actor.name}</strong><span>{item.latestResponse.note}</span></Link>}
-    <div className={styles.postActions}><button type="button" disabled={busy} aria-pressed={item.likedByMe} aria-busy={busy} aria-label={`${item.likedByMe ? "取消赞同" : "赞同"}「${item.title}」`} onClick={onLike}><Heart aria-hidden="true" fill={item.likedByMe ? "currentColor" : "none"} />{item.likedByMe ? "已赞同" : "赞同"}<span>{item.likeCount}</span></button><Link href={`${href}#discussion`}><MessageCircle aria-hidden="true" />评论<span>{item.commentCount}</span></Link></div>
-    {error && <BoardError message={error} />}
+    <Link href={href} className={styles.cardMain} aria-label={`查看建议：${item.title}`}>
+      <span className={styles.avatar} aria-hidden="true">{Array.from(item.author.name)[0]}</span>
+      <div className={styles.cardCopy}>
+        <h2 className={styles.title}>{item.title}</h2>
+        <p className={styles.excerpt}>{item.excerpt}</p>
+        <div className={styles.cardMeta}><span>{item.author.name}</span><BoardTime value={item.createdAt} /><span>{categoryLabel(item.category)}</span><StatusBadge status={item.status} />{item.latestResponse && <span className={styles.responseHint} title={`${item.latestResponse.actor.name}：${item.latestResponse.note}`}>最新回应 · {item.latestResponse.note}</span>}</div>
+      </div>
+    </Link>
+    <div className={styles.postActions}><button type="button" disabled={busy} aria-pressed={item.likedByMe} aria-busy={busy} aria-label={`${item.likedByMe ? "取消赞同" : "赞同"}「${item.title}」`} onClick={onLike}><Heart aria-hidden="true" fill={item.likedByMe ? "currentColor" : "none"} /><span>{item.likeCount}</span></button><Link href={`${href}#discussion`} aria-label={`评论「${item.title}」，${item.commentCount} 条评论`}><MessageCircle aria-hidden="true" /><span>{item.commentCount}</span></Link></div>
+    {error && <div className={styles.cardError}><BoardError message={error} /></div>}
   </LhCard>;
 }
 
