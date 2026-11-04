@@ -152,8 +152,15 @@ export function SuggestionFeedCard({ item, busy, error, onLike }: { item: Sugges
 export function ComposerDialog({ viewer, onPublished, onCancel }: { viewer: BoardViewer; onPublished: (item: SuggestionDetail) => void; onCancel: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close(); }, []);
-  return <dialog ref={dialog} className={styles.composerDialog} aria-labelledby="publish-heading" onCancel={(event) => { event.preventDefault(); if (!busy) onCancel(); }}><PublishSuggestion viewer={viewer} onPublished={onPublished} onCancel={onCancel} onBusyChange={setBusy} /></dialog>;
+  useEffect(() => {
+    const element = dialog.current;
+    element?.showModal();
+    element?.querySelector<HTMLInputElement>("#suggestion-title")?.focus();
+    return () => element?.close();
+  }, []);
+  function close() { dialog.current?.close(); onCancel(); }
+  function published(item: SuggestionDetail) { dialog.current?.close(); onPublished(item); }
+  return <dialog ref={dialog} className={styles.composerDialog} aria-labelledby="publish-heading" onCancel={(event) => { event.preventDefault(); if (!busy) close(); }}><PublishSuggestion viewer={viewer} onPublished={published} onCancel={close} onBusyChange={setBusy} /></dialog>;
 }
 
 export function PublishSuggestion({ viewer, onPublished, onCancel, onBusyChange }: { viewer: BoardViewer; onPublished: (item: SuggestionDetail) => void; onCancel: () => void; onBusyChange?: (busy: boolean) => void }) {
@@ -178,7 +185,7 @@ export function PublishSuggestion({ viewer, onPublished, onCancel, onBusyChange 
     <p className={styles.meta}>以 {viewer.displayName} 的身份发布。所有内容仅员工可见。</p>
     <fieldset disabled={busy}>
       <BoardSelect label="建议分类" value={category} required onChange={(event) => setCategory(event.target.value as SuggestionCategory)}>{SUGGESTION_CATEGORIES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</BoardSelect>
-      <LhTextField ref={titleInput} autoFocus id="suggestion-title" label="建议标题" required maxLength={SUGGESTION_LIMITS.title} value={title} onChange={(event) => setTitle(event.target.value)} helperText={`用一句话说明建议，最多 ${SUGGESTION_LIMITS.title} 字。`} />
+      <LhTextField ref={titleInput} id="suggestion-title" label="建议标题" required maxLength={SUGGESTION_LIMITS.title} value={title} onChange={(event) => setTitle(event.target.value)} helperText={`用一句话说明建议，最多 ${SUGGESTION_LIMITS.title} 字。`} />
       <LhTextArea ref={contentInput} id="suggestion-content" label="建议内容" required rows={6} maxLength={SUGGESTION_LIMITS.content} value={content} onChange={(event) => setContent(event.target.value)} helperText={`描述当前问题和希望的改进，仅支持文字，最多 ${SUGGESTION_LIMITS.content} 字。`} />
     </fieldset>
     {error && <BoardError message={error} />}

@@ -246,3 +246,29 @@ describe("community feed participation and likes", () => {
     expect(find(render(component), PublishSuggestion)).toHaveLength(0);
   });
 });
+
+
+describe("native composer focus lifecycle", () => {
+  it("focuses the title after opening, and closes the modal before restoring trigger focus", () => {
+    const order: string[] = [];
+    const onCancel = vi.fn(() => order.push("restore-trigger"));
+    const component = () => ComposerDialog({ viewer, onCancel, onPublished: vi.fn() });
+    render(component);
+    hooks.refs[0].current = { showModal: () => order.push("show-modal"), close: () => order.push("close-modal"), querySelector: vi.fn((selector: string) => { expect(selector).toBe("#suggestion-title"); return { focus: () => order.push("focus-title") }; }) };
+    const tree = render(component);
+    expect(order).toEqual(["show-modal", "focus-title"]);
+    expect(find(tree, "dialog")[0].props["aria-labelledby"]).toBe("publish-heading");
+    (find(tree, "dialog")[0].props.onCancel as (event: { preventDefault: () => void }) => void)({ preventDefault: vi.fn() });
+    expect(order.slice(-2)).toEqual(["close-modal", "restore-trigger"]);
+  });
+
+  it("closes the modal before the published callback restores the trigger", () => {
+    const order: string[] = [];
+    const component = () => ComposerDialog({ viewer, onCancel: vi.fn(), onPublished: () => order.push("published-restore-trigger") });
+    render(component);
+    hooks.refs[0].current = { showModal: vi.fn(), close: () => order.push("close-modal"), querySelector: () => null };
+    const tree = render(component);
+    (find(tree, PublishSuggestion)[0].props.onPublished as (item: SuggestionDetail) => void)(initial);
+    expect(order).toEqual(["close-modal", "published-restore-trigger"]);
+  });
+});
