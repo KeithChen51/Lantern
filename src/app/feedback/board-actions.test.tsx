@@ -2,13 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement, ReactNode } from "react";
 import type { BoardNotificationResult, SuggestionDetail } from "@/modules/feedback/board-types";
 
-const hooks = vi.hoisted(() => ({ slot: 0, refSlot: 0, dirty: false, states: [] as unknown[], refs: [] as Array<{ current: unknown }> }));
+const hooks = vi.hoisted(() => ({ slot: 0, refSlot: 0, dirty: false, states: [] as unknown[], refs: [] as Array<{ current: unknown }>, cleanups: [] as Array<() => void> }));
 vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(),
   useState: (initial: unknown) => {
     const slot = hooks.slot++;
     if (!(slot in hooks.states)) hooks.states[slot] = typeof initial === "function" ? initial() : initial;
     return [hooks.states[slot], (next: unknown) => { hooks.states[slot] = typeof next === "function" ? next(hooks.states[slot]) : next; hooks.dirty = true; }];
   },
+  useEffect: (setup: () => (() => void) | void) => { const cleanup = setup(); if (cleanup) hooks.cleanups.push(cleanup); },
   useRef: (initial: unknown) => hooks.refs[hooks.refSlot++] ??= { current: initial },
 }));
 vi.mock("./board-client", async (original) => ({ ...await original<typeof import("./board-client")>(), useBoardResource: vi.fn(), boardRequest: vi.fn(), markBoardNotificationsRead: vi.fn() }));
@@ -48,7 +49,7 @@ function click(element: ReactElement<Record<string, unknown>>) { return (element
 function submit(tree: ReactNode) { return (find(tree, "form")[0].props.onSubmit as (event: { preventDefault: () => void }) => Promise<void>)({ preventDefault: vi.fn() }); }
 const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
 beforeEach(() => {
-  vi.clearAllMocks(); hooks.states = []; hooks.refs = [];
+  vi.clearAllMocks(); hooks.states = []; hooks.refs = []; hooks.cleanups = [];
   vi.mocked(useBoardResource).mockReturnValue({ data: { items: [], total: 0, page: 1, pageSize: 20 }, loading: false, error: undefined, reload: vi.fn(), update: vi.fn() });
   vi.stubGlobal("window", { dispatchEvent: vi.fn() });
 });
@@ -179,17 +180,49 @@ describe("community feed participation and likes", () => {
     expect(boardRequest).toHaveBeenCalledWith("/api/feedback/idea/like", expect.objectContaining({ body: { liked: true }, csrfToken: "csrf" }), "employee");
   });
 
-  it("does not apply an old result after switching views and returning", async () => {
+  it("refreshes the latest feed after switching views and returning without applying the old snapshot", async () => {
     const feed = setupFeed();
     const component = () => FeedbackBoard({ viewer });
     let resolve!: (value: unknown) => void;
     vi.mocked(boardRequest).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
     (find(render(component), SuggestionFeedCard)[0].props.onLike as () => void)();
     click(nativeButton(render(component), "热门")); render(component);
-    click(nativeButton(render(component), "最新")); render(component);
+    click(nativeButton(render(component), "最新"));
+    const reloadLatest = vi.fn();
+    const previousResource = vi.mocked(useBoardResource).getMockImplementation()!;
+    vi.mocked(useBoardResource).mockImplementation((url, owner) => ({ ...previousResource(url, owner), reload: reloadLatest }));
+    render(component);
     resolve({ liked: true, likeCount: 90 }); await flush();
     expect(feed.update).not.toHaveBeenCalled();
     expect(feed.reload).not.toHaveBeenCalled();
+    expect(reloadLatest).toHaveBeenCalledTimes(1);
+    const newestRequest = vi.mocked(useBoardResource).mock.calls.filter(([url]) => !url.includes("notifications")).at(-1)![0];
+    expect(new URL(newestRequest, "https://example.invalid").searchParams.get("sort")).toBe("latest");
+  });
+
+  it("does not refresh after the feed has unmounted", async () => {
+    const feed = setupFeed();
+    const component = () => FeedbackBoard({ viewer });
+    let resolve!: (value: unknown) => void;
+    vi.mocked(boardRequest).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    (find(render(component), SuggestionFeedCard)[0].props.onLike as () => void)();
+    for (const cleanup of hooks.cleanups) cleanup();
+    resolve({ liked: true, likeCount: 9 }); await flush();
+    expect(feed.reload).not.toHaveBeenCalled();
+    expect(feed.update).not.toHaveBeenCalled();
+  });
+
+  it("does not refresh a different employee's feed", async () => {
+    const feed = setupFeed();
+    let owner = viewer;
+    const component = () => FeedbackBoard({ viewer: owner });
+    let resolve!: (value: unknown) => void;
+    vi.mocked(boardRequest).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    (find(render(component), SuggestionFeedCard)[0].props.onLike as () => void)();
+    owner = { ...viewer, userId: "other-employee" }; render(component);
+    resolve({ liked: true, likeCount: 9 }); await flush();
+    expect(feed.reload).not.toHaveBeenCalled();
+    expect(feed.update).not.toHaveBeenCalled();
   });
 
   it("keeps failed likes unchanged, exposes retry guidance and unlocks the action", async () => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { boardRequest, markBoardNotificationsRead } from "./board-client";
+import { boardRequest, captureBoardAuthorization, markBoardNotificationsRead } from "./board-client";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -58,4 +58,16 @@ describe("suggestion board HTTP boundary", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
     expect(completed).toEqual([ids.slice(0, 50)]);
   });
+});
+
+
+it.each([401, 403])("invalidates pending write guards for the denied employee on %s", async (status) => {
+  const owner = `guard-owner-${status}`;
+  const pending = captureBoardAuthorization(owner);
+  const otherEmployee = captureBoardAuthorization(`other-${status}`);
+  expect(pending()).toBe(true);
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ error: { message: "denied" } }, { status })));
+  await expect(boardRequest("/api/feedback", undefined, owner)).rejects.toThrow();
+  expect(pending()).toBe(false);
+  expect(otherEmployee()).toBe(true);
 });

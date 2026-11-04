@@ -5,7 +5,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { LhButton, LhCard, LhEmptyState, LhPanel, LhStateNotice, LhTextArea, LhTextField } from "@/components/ui/lighthouse-primitives";
 import { SUGGESTION_CATEGORIES, SUGGESTION_STATUSES, SUGGESTION_LIMITS, type BoardViewer, type BoardNotificationResult, type SuggestionCategory, type SuggestionDetail, type SuggestionListResult, type SuggestionSummary } from "@/modules/feedback/board-types";
-import { boardRequest, markBoardNotificationsRead, useBoardResource } from "./board-client";
+import { boardRequest, captureBoardAuthorization, markBoardNotificationsRead, useBoardResource } from "./board-client";
 import { BoardError, BoardLoading, BoardSelect, BoardTime, StatusBadge, categoryLabel } from "./board-ui";
 import styles from "./board.module.css";
 
@@ -31,6 +31,10 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
   if (currentFeed.current.key !== feedKey) currentFeed.current = { key: feedKey, revision: currentFeed.current.revision + 1 };
   const feed = useBoardResource<SuggestionListResult>(`/api/feedback?${query}`, viewer.userId);
   const notifications = useBoardResource<BoardNotificationResult>("/api/feedback/notifications", viewer.userId);
+  const latestFeed = useRef({ owner: viewer.userId, reload: feed.reload });
+  latestFeed.current = { owner: viewer.userId, reload: feed.reload };
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [notificationBusy, setNotificationBusy] = useState(false);
   const [notificationError, setNotificationError] = useState("");
   const totalPages = feed.data ? Math.max(1, Math.ceil(feed.data.total / feed.data.pageSize)) : 1;
@@ -75,17 +79,20 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
     if (pendingLikes.current.has(item.id)) return;
     pendingLikes.current.add(item.id);
     const requestRevision = currentFeed.current.revision;
+    const requestOwner = viewer.userId;
+    const authorized = captureBoardAuthorization(requestOwner);
+    const canApply = () => mounted.current && latestFeed.current.owner === requestOwner && authorized();
     setLikeStates((previous) => ({ ...previous, [item.id]: { busy: true } }));
     try {
       const result = await boardRequest<{ liked: boolean; likeCount: number }>(`/api/feedback/${encodeURIComponent(item.id)}/like`, { method: "PUT", body: { liked: !item.likedByMe }, csrfToken: viewer.csrfToken }, viewer.userId);
-      if (currentFeed.current.revision !== requestRevision) return;
-      feed.update((data) => data ? { ...data, items: data.items.map((entry) => entry.id === item.id ? { ...entry, likedByMe: result.liked, likeCount: result.likeCount } : entry) } : data);
-      feed.reload();
+      if (!canApply()) return;
+      if (currentFeed.current.revision === requestRevision) feed.update((data) => data ? { ...data, items: data.items.map((entry) => entry.id === item.id ? { ...entry, likedByMe: result.liked, likeCount: result.likeCount } : entry) } : data);
+      latestFeed.current.reload();
     } catch (error) {
-      if (currentFeed.current.revision === requestRevision) setLikeStates((previous) => ({ ...previous, [item.id]: { busy: false, error: error instanceof Error ? error.message : "赞同未完成，请重试。" } }));
+      if (canApply() && currentFeed.current.revision === requestRevision) setLikeStates((previous) => ({ ...previous, [item.id]: { busy: false, error: error instanceof Error ? error.message : "赞同未完成，请重试。" } }));
     } finally {
       pendingLikes.current.delete(item.id);
-      setLikeStates((previous) => ({ ...previous, [item.id]: { ...previous[item.id], busy: false } }));
+      if (mounted.current && latestFeed.current.owner === requestOwner) setLikeStates((previous) => ({ ...previous, [item.id]: { ...previous[item.id], busy: false } }));
     }
   }
 
