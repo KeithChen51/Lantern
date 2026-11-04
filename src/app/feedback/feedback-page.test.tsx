@@ -40,4 +40,18 @@ describe("employee suggestion board page guards", () => {
     expect(html).toContain("employee-detail");
     expect(renderDetail).toHaveBeenCalledWith({ id: "suggestion-42", viewer: { ...viewer, canManage: true } });
   });
+
+  it("gives refreshed clients a distinct React identity for another account or suggestion", async () => {
+    requirePage.mockResolvedValue(viewer);
+    const firstBoard = await FeedbackPage();
+    const firstDetail = await FeedbackDetailPage({ params: Promise.resolve({ id: "suggestion-42" }) });
+    requirePage.mockResolvedValue({ ...viewer, userId: "another-employee" });
+    const nextBoard = await FeedbackPage();
+    const nextDetail = await FeedbackDetailPage({ params: Promise.resolve({ id: "suggestion-42" }) });
+    const anotherDetail = await FeedbackDetailPage({ params: Promise.resolve({ id: "suggestion-43" }) });
+    expect(firstBoard.props.children[1].key).toBe(viewer.userId);
+    expect(nextBoard.props.children[1].key).toBe("another-employee");
+    expect(firstDetail.key).not.toBe(nextDetail.key);
+    expect(nextDetail.key).not.toBe(anotherDetail.key);
+  });
 });

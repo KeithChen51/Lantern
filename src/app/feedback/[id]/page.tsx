@@ -10,5 +10,5 @@ export default async function FeedbackDetailPage({ params }: { params: Promise<{
   let viewer;
   try { viewer = await requireFeedbackPage(); } catch { return <EmployeeNotice />; }
   const { id } = await params;
-  return <SuggestionDetailView id={id} viewer={viewer} />;
+  return <SuggestionDetailView key={`${viewer.userId}:${id}`} id={id} viewer={viewer} />;
 }

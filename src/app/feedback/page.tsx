@@ -13,6 +13,6 @@ export default async function FeedbackPage() {
   try { viewer = await requireFeedbackPage(); } catch { return <EmployeeNotice />; }
   return <div className={styles.page} data-lh-page="feedback">
     <PageHeading title="建议反馈" description="一起改进灯塔，记录想法、讨论与每一步回应。" />
-    <FeedbackBoard viewer={viewer} />
+    <FeedbackBoard key={viewer.userId} viewer={viewer} />
   </div>;
 }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { boardRequest } from "./board-client";
+import { boardRequest, markBoardNotificationsRead } from "./board-client";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -35,5 +35,27 @@ describe("suggestion board HTTP boundary", () => {
     await expect(boardRequest("/api/feedback")).rejects.toThrow("标题超过上限");
     await expect(boardRequest("/api/feedback")).rejects.toThrow("无法读取返回内容");
     await expect(boardRequest("/api/feedback")).rejects.toThrow("操作未完成");
+  });
+
+  it("marks 121 loaded notifications in sequential batches of at most 50", async () => {
+    const ids = Array.from({ length: 121 }, (_, index) => `notification-${index}`);
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(Response.json({ data: { updated: true } })));
+    vi.stubGlobal("fetch", fetcher);
+    const completed: string[][] = [];
+    await markBoardNotificationsRead([...ids, ids[0]], "employee-csrf", "batch-employee", (batch) => completed.push(batch));
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(completed.map((batch) => batch.length)).toEqual([50, 50, 21]);
+    expect(completed.flat()).toEqual(ids);
+    for (const [index, [, options]] of fetcher.mock.calls.entries()) expect(JSON.parse(options.body).ids).toEqual(completed[index]);
+  });
+
+  it("retains only the successful batch when the next mark-read request fails and stops", async () => {
+    const ids = Array.from({ length: 121 }, (_, index) => `notification-${index}`);
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ data: { updated: true } })).mockResolvedValueOnce(Response.json({ error: { message: "暂时无法标记" } }, { status: 500 }));
+    vi.stubGlobal("fetch", fetcher);
+    const completed: string[][] = [];
+    await expect(markBoardNotificationsRead(ids, "employee-csrf", "partial-batch-employee", (batch) => completed.push(batch))).rejects.toThrow("暂时无法标记");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(completed).toEqual([ids.slice(0, 50)]);
   });
 });

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { LhButton, LhCard, LhEmptyState, LhPanel, LhStateNotice, LhTextArea, LhTextField } from "@/components/ui/lighthouse-primitives";
 import { SUGGESTION_CATEGORIES, SUGGESTION_STATUSES, SUGGESTION_LIMITS, type BoardViewer, type BoardNotificationResult, type SuggestionCategory, type SuggestionDetail, type SuggestionListResult } from "@/modules/feedback/board-types";
-import { boardRequest, useBoardResource } from "./board-client";
+import { boardRequest, markBoardNotificationsRead, useBoardResource } from "./board-client";
 import { BoardError, BoardLoading, BoardSelect, BoardTime, SuggestionMeta } from "./board-ui";
 import styles from "./board.module.css";
 
@@ -22,9 +22,8 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
   if (category) query.set("category", category);
   if (status) query.set("status", status);
   if (mine) query.set("mine", "true");
-  const feed = useBoardResource<SuggestionListResult>(`/api/feedback?${query}`);
-  const notifications = useBoardResource<BoardNotificationResult>("/api/feedback/notifications");
-  const [notificationCursor, setNotificationCursor] = useState<string | null>(null);
+  const feed = useBoardResource<SuggestionListResult>(`/api/feedback?${query}`, viewer.userId);
+  const notifications = useBoardResource<BoardNotificationResult>("/api/feedback/notifications", viewer.userId);
   const [notificationBusy, setNotificationBusy] = useState(false);
   const [notificationError, setNotificationError] = useState("");
   const totalPages = feed.data ? Math.max(1, Math.ceil(feed.data.total / feed.data.pageSize)) : 1;
@@ -33,26 +32,30 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
     setNotificationBusy(true);
     setNotificationError("");
     try {
-      await boardRequest("/api/feedback/notifications", { method: "PATCH", body: { ids }, csrfToken: viewer.csrfToken });
-      window.dispatchEvent(new CustomEvent("lighthouse:feedback-notifications-read"));
-      const data = notifications.data;
-      if (data) {
-        const newlyRead = data.items.filter((item) => ids.includes(item.id) && !item.readAt).length;
-        notifications.update({ ...data, unreadCount: Math.max(0, data.unreadCount - newlyRead), items: data.items.map((item) => ids.includes(item.id) ? { ...item, readAt: item.readAt ?? new Date().toISOString() } : item) });
-      }
+      await markBoardNotificationsRead(ids, viewer.csrfToken, viewer.userId, (batch) => {
+        notifications.update((data) => {
+          if (!data) return data;
+          const newlyRead = data.items.filter((item) => batch.includes(item.id) && !item.readAt).length;
+          return { ...data, unreadCount: Math.max(0, data.unreadCount - newlyRead), items: data.items.map((item) => batch.includes(item.id) ? { ...item, readAt: item.readAt ?? new Date().toISOString() } : item) };
+        });
+        window.dispatchEvent(new CustomEvent("lighthouse:feedback-notifications-read"));
+      });
     } catch (error) { setNotificationError(error instanceof Error ? error.message : "标记未完成，请重试。"); }
     finally { setNotificationBusy(false); }
   }
 
   async function moreNotifications() {
-    const cursor = notificationCursor ?? notifications.data?.nextCursor;
+    const cursor = notifications.data?.nextCursor;
     if (!cursor || !notifications.data) return;
     setNotificationBusy(true);
     setNotificationError("");
     try {
-      const next = await boardRequest<BoardNotificationResult>(`/api/feedback/notifications?cursor=${encodeURIComponent(cursor)}`);
-      notifications.update({ ...next, items: [...notifications.data.items, ...next.items] });
-      setNotificationCursor(next.nextCursor);
+      const next = await boardRequest<BoardNotificationResult>(`/api/feedback/notifications?cursor=${encodeURIComponent(cursor)}`, undefined, viewer.userId);
+      notifications.update((data) => {
+        if (!data) return data;
+        const seen = new Set(data.items.map((item) => item.id));
+        return { ...next, items: [...data.items, ...next.items.filter((item) => !seen.has(item.id))] };
+      });
     } catch (error) { setNotificationError(error instanceof Error ? error.message : "加载失败，请重试。"); }
     finally { setNotificationBusy(false); }
   }
@@ -63,7 +66,7 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
     <div className={styles.toolbar}>
       <div className={styles.tabs} role="group" aria-label="建议看板视图">
         <LhButton type="button" aria-pressed={tab === "feed"} variant={tab === "feed" ? "primary" : "secondary"} onClick={() => setTab("feed")}>建议看板</LhButton>
-        <LhButton type="button" aria-pressed={tab === "notifications"} variant={tab === "notifications" ? "primary" : "secondary"} onClick={() => { setTab("notifications"); notifications.reload(); setNotificationCursor(null); }}>我的通知{(notifications.data?.unreadCount ?? 0) > 0 && <span className={styles.badge} aria-label={`${notifications.data!.unreadCount} 条未读`}>{notifications.data!.unreadCount}</span>}</LhButton>
+        <LhButton type="button" disabled={notificationBusy} aria-pressed={tab === "notifications"} variant={tab === "notifications" ? "primary" : "secondary"} onClick={() => { setTab("notifications"); notifications.reload(); }}>我的通知{(notifications.data?.unreadCount ?? 0) > 0 && <span className={styles.badge} aria-label={`${notifications.data!.unreadCount} 条未读`}>{notifications.data!.unreadCount}</span>}</LhButton>
       </div>
       <LhButton ref={publishButton} type="button" variant="primary" aria-expanded={composing} aria-controls="publish-suggestion" onClick={() => { setComposing((value) => !value); setTab("feed"); }}>发布建议</LhButton>
     </div>
@@ -86,13 +89,13 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
         {totalPages > 1 && <nav className={styles.toolbar} aria-label="建议分页"><LhButton type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>上一页</LhButton><span aria-live="polite">第 {page} / {totalPages} 页</span><LhButton type="button" disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)}>下一页</LhButton></nav>}
       </>}
     </> : <section className={styles.stack} aria-label="我的通知">
-      <div className={styles.toolbar}><h2 className={styles.sectionTitle}>我的通知</h2><LhButton type="button" disabled={notificationBusy || !notifications.data?.items.some((item) => !item.readAt)} onClick={() => void markRead(notifications.data!.items.filter((item) => !item.readAt).map((item) => item.id))}>本页全部已读</LhButton></div>
+      <div className={styles.toolbar}><h2 className={styles.sectionTitle}>我的通知</h2><LhButton type="button" disabled={notificationBusy || notifications.loading || !notifications.data?.items.some((item) => !item.readAt)} onClick={() => void markRead(notifications.data!.items.filter((item) => !item.readAt).map((item) => item.id))}>将已加载通知标为已读</LhButton></div>
       {notifications.loading && <BoardLoading />}
       {notifications.error && <BoardError message={notifications.error} retry={notifications.reload} />}
       {notificationError && <BoardError message={notificationError} />}
       {notifications.data?.items.length === 0 && <LhEmptyState title="暂无通知" description="建议有新回应或收到回复时，会在这里提醒你。" />}
-      <ul className={styles.feed}>{notifications.data?.items.map((item) => <li key={item.id}><LhPanel className={`${styles.panel} ${styles.notification} ${!item.readAt ? styles.unread : ""}`}><div className={styles.meta}>{!item.readAt && <span>未读</span>}<BoardTime value={item.createdAt} /></div><Link className={styles.link} href={`/feedback/${encodeURIComponent(item.suggestionId)}`}>{item.title}</Link><p className={styles.plain}>{item.message}</p>{!item.readAt && <div><LhButton type="button" disabled={notificationBusy} onClick={() => void markRead([item.id])}>标为已读</LhButton></div>}</LhPanel></li>)}</ul>
-      {notifications.data?.nextCursor && <LhButton type="button" disabled={notificationBusy} onClick={() => void moreNotifications()}>{notificationBusy ? "加载中…" : "更多通知"}</LhButton>}
+      <ul className={styles.feed}>{notifications.data?.items.map((item) => <li key={item.id}><LhPanel className={`${styles.panel} ${styles.notification} ${!item.readAt ? styles.unread : ""}`}><div className={styles.meta}>{!item.readAt && <span>未读</span>}<BoardTime value={item.createdAt} /></div><Link className={styles.link} href={`/feedback/${encodeURIComponent(item.suggestionId)}`}>{item.title}</Link><p className={styles.plain}>{item.message}</p>{!item.readAt && <div><LhButton type="button" disabled={notificationBusy || notifications.loading} onClick={() => void markRead([item.id])}>标为已读</LhButton></div>}</LhPanel></li>)}</ul>
+      {notifications.data?.nextCursor && <LhButton type="button" disabled={notificationBusy || notifications.loading} onClick={() => void moreNotifications()}>{notificationBusy ? "加载中…" : "更多通知"}</LhButton>}
     </section>}
   </div>;
 }
@@ -110,7 +113,7 @@ export function PublishSuggestion({ viewer, onPublished, onCancel }: { viewer: B
     if (!title.trim()) { setError("请填写建议标题。"); titleInput.current?.focus(); return; }
     if (!content.trim()) { setError("请填写建议内容。"); contentInput.current?.focus(); return; }
     setBusy(true); setError("");
-    try { onPublished(await boardRequest<SuggestionDetail>("/api/feedback", { method: "POST", body: { category, title: title.trim(), content: content.trim() }, csrfToken: viewer.csrfToken })); }
+    try { onPublished(await boardRequest<SuggestionDetail>("/api/feedback", { method: "POST", body: { category, title: title.trim(), content: content.trim() }, csrfToken: viewer.csrfToken }, viewer.userId)); }
     catch (error) { setError(error instanceof Error ? error.message : "发布失败，请重试。"); }
     finally { setBusy(false); }
   }
