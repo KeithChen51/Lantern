@@ -338,7 +338,7 @@ export function ConversationWorkspace({ id, owner, initial, focusOnMount, focusR
         <div data-lh-hermit-start-input><ChatInput {...inputProps} /></div>
         {replacedDraft !== null && <p className={styles.draftUndo} role="status">已填入示例问题。<button type="button" onClick={() => { updateInput(replacedDraft); setReplacedDraft(null); setFocusKey(key => key + 1); }}>撤销替换</button></p>}
         <ScenarioCards onSelect={draft => { if (input !== draft) { setReplacedDraft(previous => previous ?? (input.trim() ? input : null)); updateInput(draft); } setFocusKey(key => key + 1); }} />
-        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。平台管理员可回看已保存的对话，系统会记录查看操作。</p>
+        <p className={styles.startFootnote}>回答供参考，请结合现场情况判断。对话会保存在平台，便于后续查看历史记录。</p>
       </div>
     </section>
   </div>;

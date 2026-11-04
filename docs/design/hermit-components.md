@@ -52,7 +52,7 @@
 
 ## 布局与维护
 
-路引当前对话、用户恢复的历史对话和平台管理员的「对话回看」直接使用同一个会话页面组件 `HermitConversationView`。它统一组合 `ConversationHeader`、`ConversationSurface` 和 `MessageBubble`。调整会话布局、头像、提问气泡、回复排版或 Markdown 表格时，在共用页面和组件内修改，用同一段历史问答核对两个入口。回看窗口使用只读模式，保留管理员的会话资料、分页和访问审计。
+路引当前对话与用户恢复的历史对话使用同一个会话页面组件 `HermitConversationView`。它统一组合 `ConversationHeader`、`ConversationSurface` 和 `MessageBubble`。调整会话布局、头像、提问气泡、回复排版或 Markdown 表格时，在共用页面和组件内修改，用同一段问答核对当前对话与历史恢复。管理员「路引记录」当前暂停开放；其原有只读回看实现继续复用该组件，保留代码不代表入口可用，关闭范围见 [平台管理](../platform-management.md#路引记录)。
 
 固定顶部、消息与底部输入的容器关系，消息和文档独立滚动。窄屏快捷卡纵排、历史抽屉占满可用宽度；尊重 `prefers-reduced-motion`。本心首页、全局导航和其他页面不属于这次组件改造范围。
 

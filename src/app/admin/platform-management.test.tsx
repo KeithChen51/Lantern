@@ -53,26 +53,18 @@ describe("platform management pages", () => {
     expect(report).not.toHaveBeenCalled();
   });
 
-  it("links all three management pages for a platform administrator", async () => {
+  it("keeps knowledge and analytics but hides records for a platform administrator", async () => {
     knowledgeAdmin.mockResolvedValue({ capabilities: ["knowledge:manage", "analytics:summary"] });
     const html = renderToStaticMarkup(await KnowledgePage());
     expect(html).toContain('href="/admin/knowledge"');
     expect(html).toContain('href="/admin/analytics"');
-    expect(html).toContain('href="/admin/hermit-records"');
+    expect(html).not.toContain("/admin/hermit-records");
   });
 
-  it("opens records for a platform administrator and marks the active tab", async () => {
-    const html = renderToStaticMarkup(await HermitRecordsPage());
-    expect(html).toMatch(/<a (?=[^>]*href="\/admin\/hermit-records")(?=[^>]*aria-current="page")[^>]*>/);
-    expect(html).toContain("会话列表");
-    expect(html).not.toContain("data-lh-page-heading");
-  });
-
-  it("does not mount the records client for a knowledge-only administrator", async () => {
-    analyticsAdmin.mockRejectedValue({ status: 403 });
-    const html = renderToStaticMarkup(await HermitRecordsPage());
-    expect(html).toContain("当前账号没有查看路引记录的权限");
-    expect(html).not.toContain("会话列表");
+  it("returns not found on the direct records URL even with administrator authorization", async () => {
+    await expect(HermitRecordsPage()).rejects.toMatchObject({ digest: "NEXT_HTTP_ERROR_FALLBACK;404" });
+    expect(analyticsAdmin).not.toHaveBeenCalled();
+    expect(requestHeaders).not.toHaveBeenCalled();
   });
 
   it.each([401, 403, 503])("rejects knowledge requests before loading the workspace (%s)", async status => {
@@ -106,6 +98,7 @@ describe("platform management pages", () => {
     expect(html.indexOf("访问日历")).toBeLessThan(reportHeading);
     expect(reportHeading).toBeLessThan(html.indexOf("员工榜单"));
     expect(html).toContain(`data-ranking-start="${start}"`);
+    expect(html).not.toContain("/admin/hermit-records");
     expect(html).toContain('aria-label="统计时间范围"');
     expect(html).toContain("本周");
     expect(html).toContain("本月");
