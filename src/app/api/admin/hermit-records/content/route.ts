@@ -2,6 +2,7 @@ import { AccessError, assertWebMutation, requireAnalyticsSummary } from "@/modul
 import { getAuditedHermitRecord, validateHermitRecordCursor,
   validateHermitRecordId } from "@/modules/hermit/admin-records-access";
 import { AppError } from "@/shared/errors";
+import { isHermitRecordsEnabled } from "@/config/features";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,12 +40,18 @@ async function contentBody(request: Request): Promise<Record<string, unknown>> {
 }
 
 export function GET() {
+  if (!isHermitRecordsEnabled()) {
+    return Response.json({ error: { message: "路引记录已关闭。" } }, { status: 404, headers: PRIVATE });
+  }
   return Response.json({ error: { message: "请从路引记录页面打开对话。" } }, {
     status: 405, headers: { ...PRIVATE, Allow: "POST" },
   });
 }
 
 export async function POST(request: Request) {
+  if (!isHermitRecordsEnabled()) {
+    return Response.json({ error: { message: "路引记录已关闭。" } }, { status: 404, headers: PRIVATE });
+  }
   try {
     const principal = await requireAnalyticsSummary(request);
     assertWebMutation(request, principal);

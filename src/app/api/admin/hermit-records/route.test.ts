@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const deps = vi.hoisted(() => ({ authorize: vi.fn(), auditedList: vi.fn() }));
+const deps = vi.hoisted(() => ({ authorize: vi.fn(), auditedList: vi.fn(), enabled: vi.fn() }));
+vi.mock("@/config/features", () => ({ isHermitRecordsEnabled: deps.enabled }));
 vi.mock("@/modules/auth/access", async original => ({
   ...await original<typeof import("@/modules/auth/access")>(), requireAnalyticsSummary: deps.authorize,
 }));
@@ -14,6 +15,8 @@ const request = (query = "") => new Request("https://app.example/api/admin/hermi
 const principal = { userId: "admin", credentialId: "credential" };
 beforeEach(() => {
   vi.resetAllMocks();
+  // Preserve the dormant handler's authorization and audit regression coverage.
+  deps.enabled.mockReturnValue(true);
   deps.authorize.mockResolvedValue(principal);
   deps.auditedList.mockImplementation(async input => {
     await input.recheck();
@@ -22,6 +25,16 @@ beforeEach(() => {
   });
 });
 describe("Hermit record listing", () => {
+  it("closes listing and pagination before authorization or data access", async () => {
+    deps.enabled.mockReturnValue(false);
+    const response = await GET(request("?start=2026-11-01&end=2026-11-02&actor=employee&id=session&cursor=page_2"));
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: { message: "路引记录已关闭。" } });
+    expect(deps.authorize).not.toHaveBeenCalled();
+    expect(deps.auditedList).not.toHaveBeenCalled();
+  });
+
   it("returns an audited identity-bearing page with all filters and a current-session recheck", async () => {
     const response = await GET(request("?start=2026-11-01&end=2026-11-02&actor=guest&id=session&cursor=abc_1"));
     expect(response.status).toBe(200);

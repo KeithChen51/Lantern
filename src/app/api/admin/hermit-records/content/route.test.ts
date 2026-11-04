@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const deps = vi.hoisted(() => ({ authorize: vi.fn(), mutation: vi.fn(), audited: vi.fn() }));
+const deps = vi.hoisted(() => ({ authorize: vi.fn(), mutation: vi.fn(), audited: vi.fn(), enabled: vi.fn() }));
+vi.mock("@/config/features", () => ({ isHermitRecordsEnabled: deps.enabled }));
 vi.mock("@/modules/auth/access", async original => ({
   ...await original<typeof import("@/modules/auth/access")>(),
   requireAnalyticsSummary: deps.authorize, assertWebMutation: deps.mutation,
@@ -19,10 +20,35 @@ const request = (input: unknown = { id: "session" }, query = "") =>
   });
 beforeEach(() => {
   vi.resetAllMocks();
+  // Preserve the dormant handler's authorization and audit regression coverage.
+  deps.enabled.mockReturnValue(true);
   deps.authorize.mockResolvedValue(principal);
   deps.audited.mockImplementation(async input => { await input.recheck(); return { messages: [{ id: "m", role: "user", text: "private content" }], nextCursor: null }; });
 });
 describe("Hermit record content endpoint", () => {
+  it("closes GET and prefetch without reading records", async () => {
+    deps.enabled.mockReturnValue(false);
+    const response = GET();
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: { message: "路引记录已关闭。" } });
+    expect(deps.authorize).not.toHaveBeenCalled();
+    expect(deps.audited).not.toHaveBeenCalled();
+  });
+
+  it.each([{ id: "session" }, { id: "session", cursor: "page_2" }])("closes existing clients' content requests before reading the body: %j", async input => {
+    deps.enabled.mockReturnValue(false);
+    const req = request(input);
+    const response = await POST(req);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: { message: "路引记录已关闭。" } });
+    expect(req.bodyUsed).toBe(false);
+    expect(deps.authorize).not.toHaveBeenCalled();
+    expect(deps.mutation).not.toHaveBeenCalled();
+    expect(deps.audited).not.toHaveBeenCalled();
+  });
+
   it("does not disclose content on GET or prefetch", async () => {
     const response = GET();
     expect(response.status).toBe(405);

@@ -1,12 +1,16 @@
 import { AccessError, requireAnalyticsSummary } from "@/modules/auth/access";
 import { getAuditedHermitRecords, validateHermitRecordCursor, validateHermitRecordId } from "@/modules/hermit/admin-records-access";
 import { AppError } from "@/shared/errors";
+import { isHermitRecordsEnabled } from "@/config/features";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const PRIVATE = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", Vary: "Cookie" };
 
 export async function GET(request: Request) {
+  if (!isHermitRecordsEnabled()) {
+    return Response.json({ error: { message: "路引记录已关闭。" } }, { status: 404, headers: PRIVATE });
+  }
   try {
     const principal = await requireAnalyticsSummary(request);
     const params = new URL(request.url).searchParams;
