@@ -141,7 +141,7 @@ export function SuggestionFeedCard({ item, busy, error, onLike }: { item: Sugges
       <div className={styles.cardCopy}>
         <h2 className={styles.title}>{item.title}</h2>
         <p className={styles.excerpt}>{item.excerpt}</p>
-        <div className={styles.cardMeta}><span>{item.author.name}</span><BoardTime value={item.createdAt} /><span>{categoryLabel(item.category)}</span><StatusBadge status={item.status} />{item.latestResponse && <span className={styles.responseHint} title={`${item.latestResponse.actor.name}：${item.latestResponse.note}`}>最新回应 · {item.latestResponse.note}</span>}</div>
+        <div className={styles.cardMeta}><span className={styles.cardAuthor} title={item.author.name}>{item.author.name}</span><span className={styles.cardTime}><BoardTime value={item.createdAt} /></span><span className={styles.cardCategory} title={categoryLabel(item.category)}>{categoryLabel(item.category)}</span><span className={styles.cardStatus}><StatusBadge status={item.status} /></span>{item.latestResponse && <span className={styles.responseHint} title={`${item.latestResponse.actor.name}：${item.latestResponse.note}`}>有管理员回应</span>}</div>
       </div>
     </Link>
     <div className={styles.postActions}><button type="button" disabled={busy} aria-pressed={item.likedByMe} aria-busy={busy} aria-label={`${item.likedByMe ? "取消赞同" : "赞同"}「${item.title}」`} onClick={onLike}><Heart aria-hidden="true" fill={item.likedByMe ? "currentColor" : "none"} /><span>{item.likeCount}</span></button><Link href={`${href}#discussion`} aria-label={`评论「${item.title}」，${item.commentCount} 条评论`}><MessageCircle aria-hidden="true" /><span>{item.commentCount}</span></Link></div>
