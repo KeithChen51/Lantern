@@ -1,4 +1,6 @@
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { isHermitRecordsEnabled } from "@/config/features";
 import Link from "next/link";
 import { requireAnalyticsSummary } from "@/modules/auth/access";
 import { PlatformAdminNav } from "../PlatformAdminNav";
@@ -8,6 +10,7 @@ import { HermitRecords } from "./HermitRecords";
 export const dynamic = "force-dynamic";
 
 export default async function HermitRecordsPage() {
+  if (!isHermitRecordsEnabled()) notFound();
   try {
     await requireAnalyticsSummary(await headers());
   } catch (error) {

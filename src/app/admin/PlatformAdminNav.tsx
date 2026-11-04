@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isHermitRecordsEnabled } from "@/config/features";
 import styles from "./platform-admin.module.css";
 
 const pages = {
@@ -15,7 +16,9 @@ export function PlatformAdminNav({ active, canViewAnalytics }: {
     <div className={styles.moduleHeader}>
       <h1 className={styles.moduleLabel}>平台管理<span className="sr-only"> · {pages[active]}</span></h1>
       <nav aria-label="平台管理页面" className={styles.moduleNav}>
-        {Object.entries(pages).filter(([page]) => page === "knowledge" || canViewAnalytics).map(([page, label]) => (
+        {Object.entries(pages).filter(([page]) =>
+          (page === "knowledge" || canViewAnalytics) && (page !== "hermit-records" || isHermitRecordsEnabled())
+        ).map(([page, label]) => (
           <Link key={page} href={`/admin/${page}`} aria-current={active === page ? "page" : undefined}>{label}</Link>
         ))}
       </nav>
