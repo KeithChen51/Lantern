@@ -400,6 +400,11 @@ model User {
   publishedGuides      PublishedGuide[]      @relation("PublishedGuidePublisher")
   contributionStats    ContributionStat[]
   chatSessions         ChatSession[]         @relation("UserChatSessions")
+  feedbackSuggestions  FeedbackSuggestion[]  @relation("FeedbackAuthor")
+  feedbackLikes        FeedbackLike[]
+  feedbackComments     FeedbackComment[]
+  feedbackEvents       FeedbackEvent[]
+  feedbackNotifications FeedbackNotification[]
 
   @@index([primaryStoreId])
   @@map("users")
@@ -796,4 +801,114 @@ model AnalyticsDailyVisitor {
   visitors BigInt   @db.UnsignedBigInt
 
   @@map("analytics_daily_visitors")
+}
+
+enum FeedbackCategory {
+  platform
+  culture
+  knowledge
+  other
+}
+
+enum FeedbackStatus {
+  pending
+  reviewing
+  accepted
+  in_progress
+  implemented
+  declined
+}
+
+model FeedbackSuggestion {
+  id                  String           @id @default(cuid())
+  authorId            String           @map("author_id")
+  title               String           @db.VarChar(100)
+  content             String           @db.Text
+  category            FeedbackCategory
+  status              FeedbackStatus   @default(pending)
+  relatedSuggestionId String?          @map("related_suggestion_id")
+  createdAt           DateTime         @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt           DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
+
+  author            User                   @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  relatedSuggestion FeedbackSuggestion?    @relation("FeedbackRelated", fields: [relatedSuggestionId], references: [id], onDelete: SetNull)
+  relatedFrom       FeedbackSuggestion[]   @relation("FeedbackRelated")
+  likes             FeedbackLike[]
+  comments          FeedbackComment[]
+  events            FeedbackEvent[]
+  notifications     FeedbackNotification[]
+
+  @@index([createdAt, id])
+  @@index([category, status, createdAt])
+  @@index([status, createdAt])
+  @@index([authorId, createdAt])
+  @@index([relatedSuggestionId])
+  @@map("feedback_suggestions")
+}
+
+model FeedbackLike {
+  suggestionId String   @map("suggestion_id")
+  userId       String   @map("user_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  suggestion FeedbackSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([suggestionId, userId])
+  @@index([userId])
+  @@map("feedback_likes")
+}
+
+model FeedbackComment {
+  id           String    @id @default(cuid())
+  suggestionId String    @map("suggestion_id")
+  authorId     String    @map("author_id")
+  content      String    @db.Text
+  replyToId    String?   @map("reply_to_id")
+  hiddenAt     DateTime? @map("hidden_at") @db.DateTime(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+
+  suggestion FeedbackSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  author     User               @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  replyTo    FeedbackComment?   @relation("FeedbackReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies    FeedbackComment[]  @relation("FeedbackReplies")
+
+  @@index([suggestionId, createdAt, id])
+  @@index([authorId])
+  @@index([replyToId])
+  @@map("feedback_comments")
+}
+
+model FeedbackEvent {
+  id           String         @id @default(cuid())
+  suggestionId String         @map("suggestion_id")
+  actorId      String         @map("actor_id")
+  fromStatus   FeedbackStatus @map("from_status")
+  toStatus     FeedbackStatus @map("to_status")
+  note         String         @db.Text
+  createdAt    DateTime       @default(now()) @map("created_at") @db.DateTime(3)
+
+  suggestion FeedbackSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  actor      User               @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([suggestionId, createdAt, id])
+  @@index([actorId])
+  @@map("feedback_events")
+}
+
+model FeedbackNotification {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  suggestionId String    @map("suggestion_id")
+  message      String    @db.VarChar(255)
+  readAt       DateTime? @map("read_at") @db.DateTime(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  suggestion FeedbackSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt, id])
+  @@index([userId, readAt])
+  @@index([suggestionId])
+  @@map("feedback_notifications")
 }
