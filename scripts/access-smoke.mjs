@@ -33,7 +33,8 @@ await check('/api/hermit/attachments', 401, { method: 'POST', body: '{}' });
 await check('/api/admin/knowledge', 401, { method: 'POST', body: '{}' });
 await check('/api/admin/session', 410, { method: 'POST', body: '{}' });
 await check('/api/preview-identity', 410);
-await check('/api/feedback', 410, { method: 'POST', body: '{}' });
+await check('/api/feedback', 401, { method: 'POST', body: '{}' });
+await check('/api/feedback', 401);
 await check('/api/health/live', 200);
 await check('/api/health/ready', 503); // fixture deliberately has no reachable DB
 const callback = await check('/auth/portal/callback?token=synthetic&state=invalid', 303);
