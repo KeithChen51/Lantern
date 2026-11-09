@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import { useSearchParams } from "next/navigation";
 import { FeedbackBoard, PublishSuggestion } from "./FeedbackBoard";
 import { SuggestionDetailView } from "./SuggestionDetailView";
 import { useBoardResource } from "./board-client";
 import type { SuggestionDetail } from "@/modules/feedback/board-types";
 
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
+vi.mock("next/navigation", () => ({ useSearchParams: vi.fn(() => new URLSearchParams()) }));
 vi.mock("./board-client", async original => ({ ...await original<typeof import("./board-client")>(), useBoardResource: vi.fn(), boardRequest: vi.fn() }));
 const viewer = { userId: "employee-1", displayName: "员工甲", csrfToken: "private-token", canManage: false };
 const detail: SuggestionDetail = {
@@ -23,7 +24,10 @@ const detail: SuggestionDetail = {
   ], relatedSuggestion: { id: "idea-2", title: "另一条相关建议" },
 };
 const resource = (data?: unknown, error?: string, loading = false) => ({ data, error, loading, reload: vi.fn(), update: vi.fn() });
-beforeEach(() => { vi.mocked(useBoardResource).mockReset(); });
+beforeEach(() => {
+  vi.mocked(useBoardResource).mockReset();
+  vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
+});
 
 describe("suggestion board rendered states", () => {
   it("shows the feed first with author, category, status, counts and pagination", () => {
@@ -33,6 +37,14 @@ describe("suggestion board rendered states", () => {
     expect(html).toContain('href="/feedback/idea-1?returnTo=%2Ffeedback&amp;returnAnchor=resource-idea-1"');
     expect(html).not.toContain("private-token");
     expect(html).not.toContain("确认发布");
+  });
+
+  it("stops pagination at the API limit when more suggestions exist", () => {
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams("page=1000") as ReturnType<typeof useSearchParams>);
+    vi.mocked(useBoardResource).mockImplementation((url) => url.includes("notifications") ? resource({ items: [], unreadCount: 0 }) : resource({ items: [detail], total: 20001, page: 1000, pageSize: 20 }));
+    const html = renderToStaticMarkup(<FeedbackBoard viewer={viewer} />);
+    expect(html).toContain("第 1000 / 1000 页");
+    expect(html).toMatch(/<button\b[^>]*disabled=""[^>]*>下一页<\/button>/);
   });
 
   it.each(["loading", "error", "empty"])("offers a useful %s feed state", (state) => {

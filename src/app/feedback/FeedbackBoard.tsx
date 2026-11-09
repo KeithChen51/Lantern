@@ -46,7 +46,7 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [notificationBusy, setNotificationBusy] = useState(false);
   const [notificationError, setNotificationError] = useState("");
-  const totalPages = feed.data ? Math.max(1, Math.ceil(feed.data.total / feed.data.pageSize)) : 1;
+  const totalPages = feed.data ? Math.min(1000, Math.max(1, Math.ceil(feed.data.total / feed.data.pageSize))) : 1;
 
   useEffect(() => {
     if (feed.data && !feed.loading && page > totalPages) {
