@@ -6,13 +6,10 @@
 .panel { min-width: 0; padding: 1.5rem; }
 .toolbar { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.activeFilters { display: flex; flex-wrap: wrap; gap: .5rem; }
 .filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: end; }
 .selectField { display: grid; min-width: 0; gap: .5rem; color: var(--color-ink); font-size: var(--type-control); line-height: var(--leading-control); font-weight: var(--weight-semibold); }
 .selectField select { width: 100%; min-width: 0; min-height: 2.75rem; padding: .625rem .75rem; border: 1px solid var(--color-line-strong); border-radius: var(--lh-control-radius); background: var(--color-surface); color: var(--color-ink); font: inherit; }
 .selectField select:disabled { opacity: .55; }
-.check { display: inline-flex; gap: .5rem; align-items: center; min-height: 2.75rem; }
-.check input { accent-color: var(--color-primary); width: 1.125rem; height: 1.125rem; }
 .feed { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; list-style: none; margin: 0; padding: 0; }
 .feed > li { min-width: 0; }
 .title { margin: .5rem 0; color: var(--color-ink); font-size: var(--title-card); line-height: 2rem; font-weight: var(--weight-bold); overflow-wrap: anywhere; }
@@ -34,19 +31,22 @@
 .feedHeading { min-width: 0; }
 .page .feedHeading :global([data-lh-page-heading][data-lh-v3-heading]) { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0; }
 .feedHeading :global([data-lh-v3-heading-actions]) { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; max-width: 100%; margin: 0; }
-.feedNavigation { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.5rem; border-bottom: 1px solid var(--color-line); }
-.browseRow { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.feedNavigation { min-width: 0; display: grid; gap: .5rem; }
+.browseRow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1.5rem; min-width: 0; padding-bottom: .5rem; border-bottom: 1px solid var(--color-line); }
 .feedTabs { display: flex; gap: 1.5rem; min-width: 0; }
-.feedTabs button { min-height: 2.75rem; border: 0; border-bottom: 2px solid transparent; background: transparent; padding: .5rem 0; font: inherit; font-size: var(--type-control); color: var(--color-muted); cursor: pointer; }
+.feedTabs button { min-height: 2.75rem; border: 0; border-bottom: 2px solid transparent; background: transparent; padding: .5rem 0; font: inherit; font-size: var(--type-body); color: var(--color-ink-soft); white-space: nowrap; cursor: pointer; }
 .feedTabs button[aria-pressed="true"] { color: var(--color-primary-text); border-bottom-color: var(--color-primary); font-weight: var(--weight-semibold); }
-.categoryRow { display: flex; align-items: center; gap: .5rem; overflow-x: auto; min-width: 0; padding: .125rem; scrollbar-width: thin; scrollbar-color: var(--color-line) transparent; }
+.feedTabs button:hover { color: var(--color-primary-text); }
+.browseControls { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.browseSelect { display: flex; align-items: center; gap: .5rem; min-width: 0; color: var(--color-ink-soft); font-size: var(--type-control); line-height: var(--leading-control); }
+.browseSelect > span { flex-shrink: 0; }
+.browseSelect select { min-height: 2.75rem; min-width: 0; padding: .5rem; border: 1px solid var(--color-line); border-radius: var(--lh-control-radius); background: var(--color-surface); color: var(--color-ink); font: inherit; cursor: pointer; }
+.categoryRow { display: flex; align-items: center; gap: .5rem; overflow-x: auto; min-width: 0; padding: .25rem; scrollbar-width: thin; scrollbar-color: var(--color-line) transparent; }
 .categoryRow::-webkit-scrollbar { height: 3px; }
 .categoryRow::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 2rem; }
-.categoryRow button { flex-shrink: 0; min-height: 2.75rem; border: 1px solid transparent; border-radius: 2rem; padding: .5rem; background: transparent; font: inherit; font-size: var(--type-control); color: var(--color-ink-soft); white-space: nowrap; cursor: pointer; }
+.categoryRow button { flex-shrink: 0; min-width: 2.75rem; min-height: 2.75rem; border: 1px solid transparent; border-radius: var(--lh-control-radius); padding: .5rem .75rem; background: transparent; font: inherit; font-size: var(--type-control); color: var(--color-ink-soft); white-space: nowrap; cursor: pointer; }
 .categoryRow button[aria-pressed="true"] { background: var(--color-primary-soft); color: var(--color-primary-text); }
-.filterDisclosure { position: relative; font-size: var(--type-control); }
-.filterDisclosure > summary { display: flex; align-items: center; min-height: 2.75rem; cursor: pointer; padding: .5rem 0; color: var(--color-ink-soft); }
-.filterPopover { position: absolute; z-index: 5; inset-inline-end: 0; width: min(18rem, calc(100vw - 3rem)); padding: 1rem; display: grid; gap: 1rem; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--lh-card-radius); box-shadow: 0 .5rem 1.5rem #00000014; }
+.categoryRow button:hover:not([aria-pressed="true"]) { background: var(--color-surface-quiet); color: var(--color-primary-text); }
 /* Fixed metadata columns and fixed action tracks keep adjacent rows aligned. */
 .feedCard { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 5rem; align-items: center; gap: .5rem 1rem; padding: 1rem; border-radius: var(--lh-card-radius); }
 .cardMain { display: flex; min-width: 0; align-items: flex-start; gap: 1rem; color: inherit; text-decoration: none; }
@@ -88,9 +88,10 @@
   .feedHeading :global([data-lh-v3-heading-actions]) { gap: .5rem; }
   .feedHeading :global([data-lh-v3-heading-actions]) button { padding-inline: .5rem; }
   .page .feedHeading :global([data-lh-page-heading][data-lh-v3-heading]) { gap: .5rem; flex-direction: row; align-items: center; }
-  .feedNavigation { gap: 0; }
-  .browseRow { justify-content: space-between; width: 100%; }
-  .categoryRow { width: 100%; }
+  .feedTabs { width: 100%; justify-content: space-between; gap: 1rem; }
+  .browseControls { width: 100%; }
+  .browseSelect { flex: 1; }
+  .browseSelect select { width: 100%; }
   .feedCard { display: flex; flex-wrap: wrap; gap: .5rem; }
   .cardMain { width: 100%; }
   .avatar { display: none; }

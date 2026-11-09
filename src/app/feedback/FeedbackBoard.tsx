@@ -18,23 +18,42 @@ import styles from "./board.module.css";
 export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
   const params = useSearchParams();
   const browse = readFeedbackBrowse(params);
-  const { category, status, view, mine, page } = browse;
+  const { category, status, scope, sort, page } = browse;
   const returnTo = feedbackListHref(browse);
   function setBrowse(patch: Partial<FeedbackBrowse>) {
     const current = readFeedbackBrowse(new URLSearchParams(window.location.search));
     window.history.replaceState(null, "", feedbackListHref({ ...current, ...patch }));
   }
   const [tab, setTab] = useState<"feed" | "notifications">("feed");
+  const categoryRow = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = categoryRow.current;
+    if (!row) return;
+    const revealSelectedCategory = () => {
+      const selected = row.querySelector<HTMLElement>('[aria-pressed="true"]');
+      if (!selected) return;
+      const bounds = row.getBoundingClientRect();
+      const item = selected.getBoundingClientRect();
+      // Only move this strip; vertical scrolling belongs to list-position recovery.
+      if (item.left < bounds.left + 4) row.scrollLeft += item.left - bounds.left - 4;
+      else if (item.right > bounds.right - 4) row.scrollLeft += item.right - bounds.right + 4;
+    };
+    revealSelectedCategory();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(revealSelectedCategory);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [category, tab]);
   const [composing, setComposing] = useState(false);
   const [likeStates, setLikeStates] = useState<Record<string, { busy: boolean; error?: string }>>({});
   const pendingLikes = useRef(new Set<string>());
   const [published, setPublished] = useState<SuggestionDetail | null>(null);
   const publishButton = useRef<HTMLButtonElement>(null);
-  const query = new URLSearchParams({ sort: view === "popular" ? "popular" : "latest", page: String(page) });
+  const query = new URLSearchParams({ sort, page: String(page) });
   if (category) query.set("category", category);
   if (status) query.set("status", status);
-  if (mine) query.set("mine", "true");
-  if (view === "participated") query.set("participated", "true");
+  if (scope === "mine") query.set("mine", "true");
+  if (scope === "participated") query.set("participated", "true");
   const feedKey = query.toString();
   const currentFeed = useRef({ key: feedKey, revision: 0 });
   if (currentFeed.current.key !== feedKey) currentFeed.current = { key: feedKey, revision: currentFeed.current.revision + 1 };
@@ -117,33 +136,29 @@ export function FeedbackBoard({ viewer }: { viewer: BoardViewer }) {
 
   return <div className={styles.stack}>
     <div className={styles.feedHeading}><PageHeading title="建议广场"><LhButton type="button" variant="ghost" disabled={notificationBusy} aria-pressed={tab === "notifications"} onClick={() => { setTab("notifications"); notifications.reload(); }}>我的通知{(notifications.data?.unreadCount ?? 0) > 0 && <span className={styles.badge} aria-label={`${notifications.data!.unreadCount} 条未读`}>{notifications.data!.unreadCount}</span>}</LhButton><LhButton ref={publishButton} type="button" variant="primary" aria-haspopup="dialog" onClick={() => setComposing(true)}>提建议</LhButton></PageHeading></div>
-    {composing && <ComposerDialog key={viewer.userId} viewer={viewer} onCancel={closeComposer} onPublished={(item) => { setPublished(item); closeComposer(); setTab("feed"); setBrowse({ view: "latest", category: "", status: "", mine: false, page: 1 }); feed.reload(); }} />}
+    {composing && <ComposerDialog key={viewer.userId} viewer={viewer} onCancel={closeComposer} onPublished={(item) => { setPublished(item); closeComposer(); setTab("feed"); setBrowse({ scope: "all", sort: "latest", category: "", status: "", page: 1 }); feed.reload(); }} />}
     {published && !feed.error && <LhStateNotice tone="success">建议已发布。<Link className={styles.link} href={`/feedback/${encodeURIComponent(published.id)}`}>查看“{published.title}”</Link></LhStateNotice>}
     {tab === "feed" ? <>
-      <div className={styles.feedNavigation}><div className={styles.browseRow}>
-        <div className={styles.feedTabs} role="group" aria-label="浏览建议">
-          {([{ value: "latest", label: "最新" }, { value: "popular", label: "热门" }, { value: "participated", label: "我参与的" }] as const).map((option) => <button key={option.value} type="button" aria-pressed={view === option.value} onClick={() => setBrowse({ view: option.value, page: 1 })}>{option.label}</button>)}
+      <section className={styles.feedNavigation} aria-label="建议浏览">
+        <div className={styles.browseRow}>
+          <div className={styles.feedTabs} role="group" aria-label="浏览范围">
+            {([{ value: "all", label: "全部建议" }, { value: "participated", label: "我参与的" }, { value: "mine", label: "我发起的" }] as const).map((option) => <button key={option.value} type="button" aria-pressed={scope === option.value} aria-describedby={option.value === "participated" ? "participated-scope-hint" : undefined} onClick={() => setBrowse({ scope: option.value, page: 1 })}>{option.label}</button>)}
+          </div>
+          <span id="participated-scope-hint" className="sr-only">包括你发起、赞同或评论过的建议。</span>
+          <div className={styles.browseControls}>
+            <label className={styles.browseSelect}><span>排序</span><select aria-label="建议排序" value={sort} onChange={(event) => setBrowse({ sort: event.target.value as FeedbackBrowse["sort"], page: 1 })}><option value="latest">最新发布</option><option value="popular">最多赞同</option></select></label>
+            <label className={styles.browseSelect}><span>状态</span><select aria-label="处理状态" value={status} onChange={(event) => setBrowse({ status: event.target.value, page: 1 })}><option value="">全部状态</option>{SUGGESTION_STATUSES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          </div>
         </div>
-        <details className={styles.filterDisclosure}><summary>筛选{(status || mine) ? " · 已启用" : ""}</summary><div className={styles.filterPopover}>
-          <BoardSelect label="处理状态" value={status} onChange={(event) => setBrowse({ status: event.target.value, page: 1 })}><option value="">全部状态</option>{SUGGESTION_STATUSES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</BoardSelect>
-          <label className={styles.check}><input type="checkbox" checked={mine} onChange={(event) => setBrowse({ mine: event.target.checked, page: 1 })} />只看我发起的</label>
-          {(status || mine) && <LhButton type="button" variant="ghost" onClick={() => setBrowse({ status: "", mine: false, page: 1 })}>清除筛选</LhButton>}
-        </div></details>
-      </div>
-      <div className={styles.categoryRow} role="group" aria-label="建议分类"><button type="button" aria-pressed={!category} onClick={() => setBrowse({ category: "", page: 1 })}>全部</button>{SUGGESTION_CATEGORIES.map((option) => <button type="button" key={option.value} aria-pressed={category === option.value} onClick={() => setBrowse({ category: option.value, page: 1 })}>{option.label}</button>)}</div>
-      </div>
-      {(status || mine) && <div className={styles.activeFilters} aria-label="已选筛选">
-        {status && <LhButton type="button" variant="ghost" onClick={() => setBrowse({ status: "", page: 1 })}>{statusLabel(status)} · 清除状态筛选</LhButton>}
-        {mine && <LhButton type="button" variant="ghost" onClick={() => setBrowse({ mine: false, page: 1 })}>我发起的 · 清除</LhButton>}
-      </div>}
-      {view === "participated" && <p className={styles.meta}>你发起、赞同或评论过的建议都在这里。</p>}
+        <div ref={categoryRow} className={styles.categoryRow} role="group" aria-label="建议类型"><button type="button" aria-pressed={!category} onClick={() => setBrowse({ category: "", page: 1 })}>全部类型</button>{SUGGESTION_CATEGORIES.map((option) => <button type="button" key={option.value} aria-pressed={category === option.value} onClick={() => setBrowse({ category: option.value, page: 1 })}>{option.label}</button>)}</div>
+      </section>
       {feed.loading && <BoardLoading />}
       {feed.error && <BoardError message={feed.error} retry={feed.reload} />}
       {feed.data && <>
         {feed.data.items.length === 0 ? <LhEmptyState
           title={status ? `暂无“${statusLabel(status)}”的建议` : "暂无建议"}
-          description={category || status || mine || view === "participated" ? `当前范围：${[view === "participated" && "我参与的", mine && "我发起的", category && categoryLabel(category), status && statusLabel(status)].filter(Boolean).join(" · ")}。` : "把你希望改进的地方写下来，一起讨论下一步。"}
-          action={category || status || mine || view === "participated" ? <LhButton type="button" onClick={() => setBrowse({ view: "latest", category: "", status: "", mine: false, page: 1 })}>查看全部建议</LhButton> : undefined}
+          description={category || status || scope !== "all" ? `当前范围：${[scope === "participated" && "我参与的", scope === "mine" && "我发起的", category && categoryLabel(category), status && statusLabel(status)].filter(Boolean).join(" · ")}。` : "把你希望改进的地方写下来，一起讨论下一步。"}
+          action={category || status ? <LhButton type="button" onClick={() => setBrowse({ category: "", status: "", page: 1 })}>清除类型和状态筛选</LhButton> : scope !== "all" ? <LhButton type="button" onClick={() => setBrowse({ scope: "all", page: 1 })}>查看全部建议</LhButton> : undefined}
         /> : <ul className={styles.feed} aria-label="建议列表">{feed.data.items.map((item) => <li key={item.id}><SuggestionFeedCard item={item} returnTo={returnTo} busy={feed.loading || !!likeStates[item.id]?.busy} error={likeStates[item.id]?.error} onLike={() => void toggleLike(item)} /></li>)}</ul>}
         {!feed.loading && <ReadingListPosition key={returnTo} returnTo={returnTo} />}
         {totalPages > 1 && <nav className={styles.toolbar} aria-label="建议分页"><LhButton type="button" disabled={page <= 1} onClick={() => setBrowse({ page: page - 1 })}>上一页</LhButton><span aria-live="polite">第 {page} / {totalPages} 页</span><LhButton type="button" disabled={page >= totalPages} onClick={() => setBrowse({ page: page + 1 })}>下一页</LhButton></nav>}

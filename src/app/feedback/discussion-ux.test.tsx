@@ -106,7 +106,7 @@ describe("suggestion discussion navigation and composer", () => {
     const ui = setup();
     ui.browser.location.hash = "#discussion";
     const loading = ui.render();
-    expect(find(loading, LhBackLink)[0].props).toMatchObject({ href: "/feedback?view=popular&category=platform&page=2#resource-idea", scroll: false });
+    expect(find(loading, LhBackLink)[0].props).toMatchObject({ href: "/feedback?sort=popular&category=platform&page=2#resource-idea", scroll: false });
     expect(ui.discussion.scrollIntoView).not.toHaveBeenCalled();
 
     ui.load(detail);
