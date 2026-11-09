@@ -191,8 +191,8 @@ describe("community feed participation and likes", () => {
     let resolve!: (value: unknown) => void;
     vi.mocked(boardRequest).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
     (find(render(component), SuggestionFeedCard)[0].props.onLike as () => void)();
-    click(nativeButton(render(component), "热门")); render(component);
-    click(nativeButton(render(component), "最新"));
+    change(find(render(component), "select").find(item => item.props["aria-label"] === "建议排序")!, "popular"); render(component);
+    change(find(render(component), "select").find(item => item.props["aria-label"] === "建议排序")!, "latest");
     const reloadLatest = vi.fn();
     const previousResource = vi.mocked(useBoardResource).getMockImplementation()!;
     vi.mocked(useBoardResource).mockImplementation((url, owner) => ({ ...previousResource(url, owner), reload: reloadLatest }));
@@ -327,10 +327,32 @@ describe("publishing draft recovery", () => {
 
 it("combines rapid browse actions before React renders the new URL", () => {
   const tree = render(() => FeedbackBoard({ viewer }));
-  const popular = find(tree, "button").find(item => text(item.props.children as ReactNode) === "热门")!;
+  const sort = find(tree, "select").find(item => item.props["aria-label"] === "建议排序")!;
   const culture = find(tree, "button").find(item => text(item.props.children as ReactNode) === "服务文化")!;
-  click(popular);
+  change(sort, "popular");
   click(culture);
-  expect(new URLSearchParams(navigation.search).get("view")).toBe("popular");
+  expect(new URLSearchParams(navigation.search).get("sort")).toBe("popular");
   expect(new URLSearchParams(navigation.search).get("category")).toBe("culture");
+});
+
+it("combines scope, sort, category and status, resets pagination and retains the other controls when changing scope", () => {
+  navigation.search = "?scope=participated&sort=popular&category=culture&status=accepted&page=3";
+  vi.mocked(useBoardResource).mockReturnValue({ data: { items: [], total: 80, page: 3, pageSize: 20 }, loading: false, error: undefined, reload: vi.fn(), update: vi.fn() });
+  const component = () => FeedbackBoard({ viewer });
+  const tree = render(component);
+  expect(useBoardResource).toHaveBeenCalledWith("/api/feedback?sort=popular&page=3&category=culture&status=accepted&participated=true", viewer.userId);
+  click(find(tree, "button").find(item => text(item.props.children as ReactNode) === "我发起的")!);
+  render(component);
+  expect(navigation.search).toBe("?scope=mine&sort=popular&category=culture&status=accepted");
+  expect(useBoardResource).toHaveBeenCalledWith("/api/feedback?sort=popular&page=1&category=culture&status=accepted&mine=true", viewer.userId);
+  expect(window.history.replaceState).toHaveBeenLastCalledWith(null, "", `/feedback${navigation.search}`);
+});
+
+it("clears empty-result filters without changing the personal scope or sort", () => {
+  navigation.search = "?scope=mine&sort=popular&category=culture&status=accepted";
+  const component = () => FeedbackBoard({ viewer });
+  click(button(render(component), "清除类型和状态筛选"));
+  expect(navigation.search).toBe("?scope=mine&sort=popular");
+  click(button(render(component), "查看全部建议"));
+  expect(navigation.search).toBe("?sort=popular");
 });
