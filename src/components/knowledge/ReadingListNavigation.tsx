@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, type ComponentProps } from "react";
-import { parseReadingPosition, readingPositionKey, resourceReadingHref } from "./reading-return";
+import { parseReadingPosition, readingPositionKey, resourceReadingHref, safeReadingAnchor } from "./reading-return";
 
 type EntryProps = Omit<ComponentProps<typeof Link>, "href"> & { href: string; returnTo: string; entryId: string };
 export function ReadingEntryLink({ href, returnTo, entryId, onClick, ...props }: EntryProps) {
@@ -23,26 +23,30 @@ export function ReadingEntryLink({ href, returnTo, entryId, onClick, ...props }:
 export function ReadingListPosition({ returnTo }: { returnTo: string }) {
   useEffect(() => {
     let value: string | null = null;
-    try { value = sessionStorage.getItem(readingPositionKey(returnTo)); } catch { return; }
+    try { value = sessionStorage.getItem(readingPositionKey(returnTo)); } catch { /* Use the card anchor when storage is unavailable. */ }
     const position = parseReadingPosition(value);
-    if (!position) return;
+    let hashAnchor: string | null = null;
+    try { hashAnchor = safeReadingAnchor(decodeURIComponent(window.location.hash.slice(1))); } catch { /* Ignore a malformed hash. */ }
     const returnMarker = window.history.state?.lighthouseReadingReturn;
-    const isHistoryReturn = returnMarker?.returnTo === returnTo && returnMarker?.savedAt === position.savedAt;
-    const isLinkedReturn = window.location.hash === `#${encodeURIComponent(position.anchor)}`;
-    if (!isHistoryReturn && !isLinkedReturn) return;
+    const isHistoryReturn = position && returnMarker?.returnTo === returnTo && returnMarker?.savedAt === position.savedAt;
+    const isLinkedReturn = position && hashAnchor === position.anchor;
+    const savedPosition = isHistoryReturn || isLinkedReturn ? position : null;
+    const anchor = savedPosition?.anchor ?? hashAnchor;
+    if (!anchor) return;
     let frame = 0;
     let attempts = 0;
     let cancelled = false;
     const restore = () => {
       if (cancelled) return;
-      const entry = document.getElementById(position.anchor);
-      if (entry && (document.documentElement.scrollHeight >= position.y + window.innerHeight || attempts > 8)) {
+      const entry = document.getElementById(anchor);
+      if (entry && (!savedPosition || document.documentElement.scrollHeight >= savedPosition.y + window.innerHeight || attempts > 8)) {
         entry.focus({ preventScroll: true });
-        window.scrollTo({ top: position.y, behavior: "instant" });
+        if (savedPosition) window.scrollTo({ top: savedPosition.y, behavior: "instant" });
+        else entry.scrollIntoView({ block: "center", behavior: "instant" });
         // Consume only after restoration. StrictMode may cancel the first
         // scheduled frame and replay this effect before anything has moved.
         try {
-          if (sessionStorage.getItem(readingPositionKey(returnTo)) === value) sessionStorage.removeItem(readingPositionKey(returnTo));
+          if (savedPosition && sessionStorage.getItem(readingPositionKey(returnTo)) === value) sessionStorage.removeItem(readingPositionKey(returnTo));
         } catch { /* Restoration itself does not depend on storage writes. */ }
         return;
       }

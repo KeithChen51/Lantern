@@ -3,6 +3,8 @@ import type { ReactElement, ReactNode } from "react";
 import type { BoardNotificationResult, SuggestionDetail } from "@/modules/feedback/board-types";
 
 const hooks = vi.hoisted(() => ({ slot: 0, refSlot: 0, dirty: false, states: [] as unknown[], refs: [] as Array<{ current: unknown }>, cleanups: [] as Array<() => void> }));
+const navigation = vi.hoisted(() => ({ search: "" }));
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(navigation.search) }));
 vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(),
   useState: (initial: unknown) => {
     const slot = hooks.slot++;
@@ -17,7 +19,8 @@ import { FeedbackBoard, SuggestionFeedCard, ComposerDialog, PublishSuggestion } 
 import { ManageSuggestion } from "./SuggestionDetailView";
 import { BoardRequestError, boardRequest, markBoardNotificationsRead, useBoardResource } from "./board-client";
 import { BoardError, BoardSelect } from "./board-ui";
-import { LhButton, LhTextArea } from "@/components/ui/lighthouse-primitives";
+import { LhButton, LhTextArea, LhTextField } from "@/components/ui/lighthouse-primitives";
+import { clearSuggestionDraft, readSuggestionDraft, writeSuggestionDraft } from "./suggestion-draft";
 
 const viewer = { userId: "employee", displayName: "员工", csrfToken: "csrf", canManage: true };
 const initial: SuggestionDetail = {
@@ -50,10 +53,12 @@ function submit(tree: ReactNode) { return (find(tree, "form")[0].props.onSubmit 
 const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
 beforeEach(() => {
   vi.clearAllMocks(); hooks.states = []; hooks.refs = []; hooks.cleanups = [];
+  navigation.search = "";
   vi.mocked(useBoardResource).mockReturnValue({ data: { items: [], total: 0, page: 1, pageSize: 20 }, loading: false, error: undefined, reload: vi.fn(), update: vi.fn() });
-  vi.stubGlobal("window", { dispatchEvent: vi.fn() });
+  vi.stubGlobal("window", { dispatchEvent: vi.fn(), history: { state: {}, replaceState: vi.fn((_state, _title, href) => { navigation.search = new URL(href, "https://lighthouse.invalid").search; }) }, location: { get search() { return navigation.search; } } });
+  clearSuggestionDraft(viewer.userId);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { hooks.cleanups.forEach(cleanup => cleanup()); vi.unstubAllGlobals(); });
 
 describe("manager conflict review", () => {
   it("refreshes every controlled field after 409, preserves the note and requires review before the winner's revision can be submitted", async () => {
@@ -271,4 +276,61 @@ describe("native composer focus lifecycle", () => {
     (find(tree, PublishSuggestion)[0].props.onPublished as (item: SuggestionDetail) => void)(initial);
     expect(order).toEqual(["close-modal", "published-restore-trigger"]);
   });
+});
+
+describe("publishing draft recovery", () => {
+  function remount() { hooks.cleanups.forEach(cleanup => cleanup()); hooks.states = []; hooks.refs = []; hooks.cleanups = []; }
+  it("restores both fields after closing and keeps them after a failed submission", async () => {
+    const component = () => PublishSuggestion({ viewer, onCancel: vi.fn(), onPublished: vi.fn() });
+    change(find(render(component), LhTextField)[0], "同事的建议草稿");
+    change(find(render(component), LhTextArea)[0], "补充具体场景");
+    click(button(render(component), "暂存并关闭"));
+    remount();
+    expect(find(render(component), LhTextField)[0].props.value).toBe("同事的建议草稿");
+    expect(find(render(component), LhTextArea)[0].props.value).toBe("补充具体场景");
+    vi.mocked(boardRequest).mockRejectedValueOnce(new Error("网络中断"));
+    await submit(render(component));
+    expect(readSuggestionDraft(viewer.userId).content).toBe("补充具体场景");
+  });
+
+  it("clears only after an explicit discard or a successful publish", async () => {
+    const published = vi.fn();
+    const component = () => PublishSuggestion({ viewer, onCancel: vi.fn(), onPublished: published });
+    change(find(render(component), LhTextField)[0], "放弃的草稿");
+    click(button(render(component), "放弃草稿"));
+    remount();
+    expect(find(render(component), LhTextField)[0].props.value).toBe("");
+    change(find(render(component), LhTextField)[0], "正式建议");
+    change(find(render(component), LhTextArea)[0], "正式内容");
+    vi.mocked(boardRequest).mockResolvedValueOnce(initial);
+    await submit(render(component));
+    expect(published).toHaveBeenCalledWith(initial);
+    expect(readSuggestionDraft(viewer.userId).title).toBe("");
+  });
+
+  it.each([false, true])("handles late success after unmount while preserving newer edits=%s", async (newerEdits) => {
+    const published = vi.fn();
+    const component = () => PublishSuggestion({ viewer, onCancel: vi.fn(), onPublished: published });
+    change(find(render(component), LhTextField)[0], "已提交草稿");
+    change(find(render(component), LhTextArea)[0], "已提交内容");
+    let resolve!: (item: SuggestionDetail) => void;
+    vi.mocked(boardRequest).mockReturnValueOnce(new Promise<SuggestionDetail>(done => { resolve = done; }));
+    const pending = submit(render(component));
+    hooks.cleanups.forEach(cleanup => cleanup());
+    if (newerEdits) writeSuggestionDraft(viewer.userId, { category: "culture", title: "新草稿", content: "继续写" });
+    resolve(initial);
+    await pending;
+    expect(readSuggestionDraft(viewer.userId).title).toBe(newerEdits ? "新草稿" : "");
+    expect(published).not.toHaveBeenCalled();
+  });
+});
+
+it("combines rapid browse actions before React renders the new URL", () => {
+  const tree = render(() => FeedbackBoard({ viewer }));
+  const popular = find(tree, "button").find(item => text(item.props.children as ReactNode) === "热门")!;
+  const culture = find(tree, "button").find(item => text(item.props.children as ReactNode) === "服务文化")!;
+  click(popular);
+  click(culture);
+  expect(new URLSearchParams(navigation.search).get("view")).toBe("popular");
+  expect(new URLSearchParams(navigation.search).get("category")).toBe("culture");
 });

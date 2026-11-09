@@ -1,9 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { boardRequest, captureBoardAuthorization, markBoardNotificationsRead } from "./board-client";
+import { readSuggestionDraft, writeSuggestionDraft } from "./suggestion-draft";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("suggestion board HTTP boundary", () => {
+  it.each([401, 403])("clears private drafts on %s even when the composer is unmounted", async (status) => {
+    vi.stubGlobal("window", {});
+    writeSuggestionDraft("draft-owner", { category: "culture", title: "私有草稿", content: "仅本人可见" });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ error: {} }, { status })));
+    await expect(boardRequest("/api/feedback/idea", undefined, "draft-owner")).rejects.toThrow("已失效");
+    expect(readSuggestionDraft("draft-owner").title).toBe("");
+  });
   it("reads private data without browser caching", async () => {
     const fetcher = vi.fn().mockResolvedValue(Response.json({ data: { items: [] } }));
     vi.stubGlobal("fetch", fetcher);
