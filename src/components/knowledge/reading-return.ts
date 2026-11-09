@@ -1,5 +1,5 @@
 const readingOrigin = "https://lighthouse.invalid";
-const allowedLists = new Set(["/action", "/search"]);
+const allowedLists = new Set(["/action", "/search", "/feedback"]);
 
 /** Only list pages can be reading return targets; never accept an arbitrary URL. */
 export function safeReadingReturn(value: unknown): string | null {

@@ -84,6 +84,70 @@ describe.skipIf(!databaseUrl)("suggestion board on MySQL", () => {
     expect((await service.detail(coworker, created.id)).likedByMe).toBe(true);
   });
 
+  it("returns bounded Unicode feed excerpts and the deterministic latest public response", async () => {
+    const content = `<script>literal</script>\n${"😀".repeat(200)}BODY_TAIL`;
+    const created = await service.create(employee, { ...input, content });
+    const sameTime = new Date("2026-11-04T00:00:00.000Z");
+    await db.feedbackEvent.createMany({ data: [
+      { id: `${prefix}-event-a`, suggestionId: created.id, actorId: admin.userId, fromStatus: "pending", toStatus: "reviewing", note: "较旧回应", createdAt: sameTime },
+      { id: `${prefix}-event-z`, suggestionId: created.id, actorId: coworker.userId, fromStatus: "reviewing", toStatus: "accepted", note: `${"😀".repeat(200)}RESPONSE_TAIL`, createdAt: sameTime },
+    ] });
+    const listed = (await service.list(employee, { mine: true })).items[0];
+    expect(Array.from(listed.excerpt)).toHaveLength(180);
+    expect(listed.excerpt).toMatch(/^<script>literal<\/script> 😀/);
+    expect(listed.latestResponse).toEqual({ note: "😀".repeat(160), actor: { id: coworker.userId, name: "姓名暂未获取" }, createdAt: sameTime.toISOString() });
+    expect(JSON.stringify(listed)).not.toMatch(/BODY_TAIL|RESPONSE_TAIL|较旧回应|"content"|"events"/);
+    const detail = await service.detail(employee, created.id);
+    expect(detail.content).toBe(content);
+    expect(detail.events).toHaveLength(2);
+    expect(detail.events[1].note).toContain("RESPONSE_TAIL");
+    expect(detail.latestResponse).toEqual(listed.latestResponse);
+  });
+
+  it("scopes participation to authored, liked or commented suggestions and combines every filter", async () => {
+    const own = await service.create(employee, { ...input, title: `${prefix} topic own` });
+    const liked = await service.create(coworker, { ...input, title: `${prefix} topic liked` });
+    const commented = await service.create(coworker, { ...input, title: `${prefix} topic commented` });
+    await service.create(coworker, { ...input, title: `${prefix} topic unrelated` });
+    const nonmatch = await service.create(coworker, { ...input, title: "other title" });
+    await service.setLike(employee, liked.id, true);
+    await service.setLike(employee, nonmatch.id, true);
+    const comment = await service.comment(employee, commented.id, { content: "hidden contribution" });
+    await service.hideComment(admin, commented.id, comment.id);
+    const ids = async (extra = {}) => (await service.list(employee, { participated: true, q: prefix, ...extra })).items.map((item) => item.id);
+    expect(await ids()).toEqual(expect.arrayContaining([own.id, liked.id, commented.id]));
+    expect(await ids()).toHaveLength(3);
+    expect(await ids({ mine: true })).toEqual([own.id]);
+    expect(await ids({ category: "culture" })).toEqual([]);
+    expect(await ids({ status: "accepted" })).toEqual([]);
+    expect((await service.list(admin, { participated: true, q: prefix })).total).toBe(0);
+    expect(JSON.stringify(await service.list(employee, { participated: true, q: prefix }))).not.toContain("hidden contribution");
+    await service.setLike(employee, liked.id, false);
+    expect(await ids()).toHaveLength(2);
+    expect(await ids()).not.toContain(liked.id);
+    await service.setLike(employee, own.id, true);
+    await service.comment(employee, own.id, { content: "same author also comments" });
+    expect(await ids()).toHaveLength(2);
+  });
+
+  it("paginates multiple kinds of participation without duplicate suggestions", async () => {
+    const sameTime = new Date("2026-11-04T00:00:00.000Z");
+    const ids = Array.from({ length: 23 }, (_, index) => `${prefix}-participated-${String(index).padStart(2, "0")}`);
+    await db.feedbackSuggestion.createMany({ data: ids.map((id) => ({ id, authorId: coworker.userId,
+      title: `${prefix} topic`, content: "body", category: "platform", createdAt: sameTime, updatedAt: sameTime })) });
+    await db.feedbackLike.createMany({ data: ids.map((suggestionId) => ({ suggestionId, userId: employee.userId })) });
+    await db.feedbackComment.createMany({ data: ids.map((suggestionId) => ({ suggestionId, authorId: employee.userId, content: "also commented" })) });
+    const query = { participated: true, q: prefix, category: "platform" as const, status: "pending" as const };
+    const first = await service.list(employee, query);
+    const second = await service.list(employee, { ...query, page: 2 });
+    expect(first.total).toBe(23);
+    expect(first.items).toHaveLength(20);
+    expect(second.items).toHaveLength(3);
+    expect(first.items[0].id).toBe(ids[22]);
+    expect(new Set([...first.items, ...second.items].map((item) => item.id)).size).toBe(23);
+    expect(first.items.every((item) => item.latestResponse === null)).toBe(true);
+  });
+
   it("keeps comment replies scoped and creates a notification only for another author", async () => {
     const created = await service.create(employee, input);
     const other = await service.create(coworker, input);

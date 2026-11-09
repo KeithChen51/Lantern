@@ -77,7 +77,7 @@ export function readSuggestionComment(payload: unknown): SuggestionCommentInput 
 }
 
 export function readSuggestionQuery(params: URLSearchParams): SuggestionListQuery {
-  const allowed = ["category", "status", "mine", "sort", "page", "q"];
+  const allowed = ["category", "status", "mine", "participated", "sort", "page", "q"];
   for (const key of params.keys()) {
     if (!allowed.includes(key) || params.getAll(key).length !== 1) invalid("筛选参数无效。");
   }
@@ -88,6 +88,11 @@ export function readSuggestionQuery(params: URLSearchParams): SuggestionListQuer
     const mine = params.get("mine");
     if (!["true", "false", "1", "0"].includes(mine!)) invalid("我的建议筛选无效。");
     result.mine = mine === "true" || mine === "1";
+  }
+  if (params.has("participated")) {
+    const participated = params.get("participated");
+    if (!["true", "false", "1", "0"].includes(participated!)) invalid("参与建议筛选无效。");
+    result.participated = participated === "true" || participated === "1";
   }
   if (params.has("sort")) {
     const sort = params.get("sort");

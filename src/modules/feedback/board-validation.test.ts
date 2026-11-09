@@ -51,6 +51,15 @@ describe("suggestion input boundaries", () => {
     expect(readSuggestionQuery(new URLSearchParams("mine=0&q=+"))).toEqual({ mine: false, sort: "latest", page: 1 });
   });
 
+  it("parses participation only as an explicit boolean without accepting a caller identity", () => {
+    for (const value of ["true", "1"]) expect(readSuggestionQuery(new URLSearchParams(`participated=${value}&mine=true&q=topic`)))
+      .toMatchObject({ participated: true, mine: true, q: "topic" });
+    for (const value of ["false", "0"]) expect(readSuggestionQuery(new URLSearchParams(`participated=${value}`)).participated).toBe(false);
+    for (const query of ["participated=maybe", "participated=", "participated=true&participated=false", "participated=true&userId=other"]) {
+      expect(() => readSuggestionQuery(new URLSearchParams(query))).toThrow(AppError);
+    }
+  });
+
   it.each(["page=0", "page=1001", "page=1.5", "page=1e2", "mine=maybe", "sort=bad", "category=bad",
     "status=bad", "page=1&page=2", "extra=true", `q=${"x".repeat(101)}`, "q=line%0Abreak"]) (
     "rejects malformed query %s", (query) => {

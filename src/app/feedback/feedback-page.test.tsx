@@ -49,8 +49,8 @@ describe("employee suggestion board page guards", () => {
     const nextBoard = await FeedbackPage();
     const nextDetail = await FeedbackDetailPage({ params: Promise.resolve({ id: "suggestion-42" }) });
     const anotherDetail = await FeedbackDetailPage({ params: Promise.resolve({ id: "suggestion-43" }) });
-    expect(firstBoard.props.children[1].key).toBe(viewer.userId);
-    expect(nextBoard.props.children[1].key).toBe("another-employee");
+    expect(firstBoard.props.children.key).toBe(viewer.userId);
+    expect(nextBoard.props.children.key).toBe("another-employee");
     expect(firstDetail.key).not.toBe(nextDetail.key);
     expect(nextDetail.key).not.toBe(anotherDetail.key);
   });

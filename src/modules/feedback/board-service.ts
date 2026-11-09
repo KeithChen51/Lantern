@@ -26,6 +26,8 @@ const summaryInclude = (userId: string) => ({
   author: { select: authorSelect },
   _count: { select: { likes: true, comments: true } },
   likes: { where: { userId }, select: { userId: true } },
+  events: { include: { actor: { select: authorSelect } },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 1 },
 } satisfies Prisma.FeedbackSuggestionInclude);
 type SummaryRow = Prisma.FeedbackSuggestionGetPayload<{ include: ReturnType<typeof summaryInclude> }>;
 type CommentRow = Prisma.FeedbackCommentGetPayload<{ include: typeof commentInclude }>;
@@ -38,11 +40,18 @@ function author(user: { id: string; displayName: string; employeeNo: string | nu
   return { id: user.id, name: employeeDisplayName(user.displayName, account) };
 }
 
-function summary(row: SummaryRow): SuggestionSummary {
+function excerpt(text: string, limit: number): string {
+  return Array.from(text.replace(/\s+/gu, " ").trim()).slice(0, limit).join("");
+}
+
+function summary(row: SummaryRow, latest = row.events[0]): SuggestionSummary {
   return {
     id: row.id, title: row.title, category: row.category, status: row.status,
     author: author(row.author), createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
     likeCount: row._count.likes, commentCount: row._count.comments, likedByMe: row.likes.length > 0,
+    excerpt: excerpt(row.content, 180),
+    latestResponse: latest ? { note: excerpt(latest.note, 160), actor: author(latest.actor),
+      createdAt: latest.createdAt.toISOString() } : null,
   };
 }
 
@@ -93,7 +102,12 @@ export class FeedbackBoardService {
       ...(input.category ? { category: input.category } : {}),
       ...(input.status ? { status: input.status } : {}),
       ...(input.mine ? { authorId: actor.userId } : {}),
-      ...(input.q ? { OR: [{ title: { contains: input.q } }, { content: { contains: input.q } }] } : {}),
+      AND: [
+        ...(input.q ? [{ OR: [{ title: { contains: input.q } }, { content: { contains: input.q } }] }] : []),
+        ...(input.participated ? [{ OR: [{ authorId: actor.userId },
+          { likes: { some: { userId: actor.userId } } },
+          { comments: { some: { authorId: actor.userId } } }] }] : []),
+      ],
     };
     const orderBy: Prisma.FeedbackSuggestionOrderByWithRelationInput[] = input.sort === "popular"
       ? [{ likes: { _count: "desc" } }, { createdAt: "desc" }, { id: "desc" }]
@@ -103,7 +117,7 @@ export class FeedbackBoardService {
         take: PAGE_SIZE, include: summaryInclude(actor.userId) }),
       this.client.feedbackSuggestion.count({ where }),
     ]);
-    return { items: rows.map(summary), total, page, pageSize: PAGE_SIZE };
+    return { items: rows.map((row) => summary(row)), total, page, pageSize: PAGE_SIZE };
   }
 
   async create(actor: BoardActor, input: SuggestionCreateInput): Promise<SuggestionDetail> {
@@ -127,7 +141,7 @@ export class FeedbackBoardService {
     if (!row) notFound();
     const comments = await this.loadComments(tx, id);
     return {
-      ...summary(row), content: row.content, comments: comments.items, nextCommentCursor: comments.nextCursor,
+      ...summary(row, row.events.at(-1)), content: row.content, comments: comments.items, nextCommentCursor: comments.nextCursor,
       relatedSuggestion: row.relatedSuggestion,
       events: row.events.map((event) => ({ id: event.id, actor: author(event.actor), note: event.note,
         fromStatus: event.fromStatus, toStatus: event.toStatus, createdAt: event.createdAt.toISOString() })),

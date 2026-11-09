@@ -23,6 +23,8 @@ export type SuggestionSummary = {
   id: string; title: string; category: SuggestionCategory; status: SuggestionStatus;
   author: BoardAuthor; createdAt: string; updatedAt: string;
   likeCount: number; commentCount: number; likedByMe: boolean;
+  excerpt: string;
+  latestResponse: { note: string; actor: BoardAuthor; createdAt: string } | null;
 };
 export type SuggestionComment = {
   id: string; author: BoardAuthor; content: string; createdAt: string;
@@ -38,7 +40,7 @@ export type SuggestionDetail = SuggestionSummary & {
   relatedSuggestion: { id: string; title: string } | null;
 };
 export type SuggestionListQuery = {
-  category?: SuggestionCategory; status?: SuggestionStatus; mine?: boolean;
+  category?: SuggestionCategory; status?: SuggestionStatus; mine?: boolean; participated?: boolean;
   sort?: "latest" | "popular"; page?: number; q?: string;
 };
 export type SuggestionListResult = { items: SuggestionSummary[]; total: number; page: number; pageSize: number };

@@ -61,4 +61,15 @@ describe("reading list position lifecycle", () => {
     expect(page.history.state).toMatchObject({ __NA: true, lighthouseReadingReturn: { returnTo } });
     expect(JSON.parse(storage.get(readingPositionKey(returnTo))!)).toMatchObject({ y: 2101, anchor: "resource-a" });
   });
+  it.each(["missing", "blocked"])("restores the valid card anchor when position storage is %s", (mode) => {
+    page.location.hash = "#resource-a";
+    storage.clear();
+    if (mode === "blocked") vi.stubGlobal("sessionStorage", { getItem: () => { throw new Error("blocked"); } });
+    const scrollIntoView = vi.fn();
+    vi.stubGlobal("document", { getElementById: () => ({ focus, scrollIntoView }) });
+    setup(); runFrames();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "center", behavior: "instant" });
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
 });
