@@ -1,29 +1,63 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PageHeading } from "@/components/ui/PageHeading";
 import { LhBackLink, LhButton, LhEmptyState, LhPanel, LhStateNotice, LhTextArea, LhTextField } from "@/components/ui/lighthouse-primitives";
 import { SUGGESTION_CATEGORIES, SUGGESTION_STATUSES, SUGGESTION_LIMITS, type BoardViewer, type SuggestionCategory, type SuggestionComment, type SuggestionDetail, type SuggestionListResult, type SuggestionStatus } from "@/modules/feedback/board-types";
 import { BoardRequestError, boardRequest, useBoardResource } from "./board-client";
 import { BoardError, BoardLoading, BoardSelect, BoardTime, SuggestionMeta, statusLabel } from "./board-ui";
+import { feedbackReturnHref } from "./feedback-navigation";
 import styles from "./board.module.css";
 
 export function SuggestionDetailView({ id, viewer }: { id: string; viewer: BoardViewer }) {
+  const backHref = feedbackReturnHref(useSearchParams());
   const endpoint = `/api/feedback/${encodeURIComponent(id)}`;
   const resource = useBoardResource<SuggestionDetail>(endpoint, viewer.userId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [comment, setComment] = useState("");
+  const [commentOpen, setCommentOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<SuggestionComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [postedCommentId, setPostedCommentId] = useState<string | null>(null);
   const [moreBusy, setMoreBusy] = useState(false);
   const [moreError, setMoreError] = useState("");
   const [hiding, setHiding] = useState<string | null>(null);
   const commentInput = useRef<HTMLTextAreaElement>(null);
+  const discussionHeading = useRef<HTMLHeadingElement>(null);
   const item = resource.data;
+  const discussionReady = Boolean(item);
   const locked = busy || commentBusy || moreBusy || resource.loading;
+
+  useEffect(() => {
+    if (!discussionReady) return;
+
+    function scrollToDiscussion() {
+      if (window.location.hash !== "#discussion") return;
+      document.getElementById("discussion")?.scrollIntoView({ block: "start" });
+      if (document.activeElement === document.body || document.activeElement === document.documentElement) {
+        discussionHeading.current?.focus({ preventScroll: true });
+      }
+    }
+
+    scrollToDiscussion();
+    window.addEventListener("hashchange", scrollToDiscussion);
+    return () => window.removeEventListener("hashchange", scrollToDiscussion);
+  }, [discussionReady]);
+
+  useEffect(() => {
+    if (commentOpen) commentInput.current?.focus();
+  }, [commentOpen]);
+
+  useEffect(() => {
+    if (!postedCommentId) return;
+    const postedComment = document.getElementById(`comment-${postedCommentId}`);
+    postedComment?.scrollIntoView({ block: "start" });
+    postedComment?.focus({ preventScroll: true });
+  }, [postedCommentId]);
 
   async function toggleLike() {
     if (!item) return;
@@ -37,14 +71,16 @@ export function SuggestionDetailView({ id, viewer }: { id: string; viewer: Board
 
   async function submitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!item) return;
+    if (!item || locked) return;
     if (!comment.trim()) { setCommentError("请先填写评论内容。"); commentInput.current?.focus(); return; }
     setCommentBusy(true); setCommentError("");
     try {
       const created = await boardRequest<SuggestionComment>(`${endpoint}/comments`, { method: "POST", body: { content: comment.trim(), replyToId: replyTo?.id ?? null }, csrfToken: viewer.csrfToken }, viewer.userId);
       resource.update({ ...item, comments: [...item.comments, created], commentCount: item.commentCount + 1 });
-      setComment(""); setReplyTo(null);
-      commentInput.current?.focus();
+      setComment("");
+      setReplyTo(null);
+      setCommentOpen(false);
+      setPostedCommentId(created.id);
     } catch (error) { setCommentError(error instanceof Error ? error.message : "评论未发送，请重试。"); }
     finally { setCommentBusy(false); }
   }
@@ -74,7 +110,7 @@ export function SuggestionDetailView({ id, viewer }: { id: string; viewer: Board
 
   const events = item ? [...item.events].sort((a, b) => b.createdAt.localeCompare(a.createdAt)) : [];
   return <div className={`${styles.page} ${styles.stack}`} data-lh-page="feedback-detail">
-    <div><LhBackLink href="/feedback">返回建议广场</LhBackLink></div>
+    <div><LhBackLink href={backHref} scroll={false}>返回建议广场</LhBackLink></div>
     {resource.loading && <>{!item && <PageHeading title="建议详情" />}<BoardLoading /></>}
     {resource.error && <>{!item && <PageHeading title="建议详情" />}<BoardError message={resource.error} retry={resource.reload} /></>}
     {item && <>
@@ -94,19 +130,22 @@ export function SuggestionDetailView({ id, viewer }: { id: string; viewer: Board
         </>}
       </LhPanel>
 
-      <LhPanel id="discussion" className={`${styles.panel} ${styles.stack} ${styles.discussion}`} aria-label="评论与回复">
-        <h2 className={styles.sectionTitle}>评论与回复 · {item.commentCount}</h2>
-        <form className={styles.form} onSubmit={submitComment} noValidate aria-label="发表评论">
+      <LhPanel id="discussion" className={`${styles.panel} ${styles.stack} ${styles.discussion}`} aria-labelledby="discussion-title">
+        <div className={styles.discussionHeading}>
+          <h2 id="discussion-title" ref={discussionHeading} tabIndex={-1} className={styles.sectionTitle}>评论与回复 · {item.commentCount}</h2>
+          <LhButton type="button" aria-expanded={commentOpen} aria-controls={commentOpen ? "discussion-composer" : undefined} disabled={locked} onClick={() => setCommentOpen(!commentOpen)}>{commentOpen ? "收起" : "写评论"}</LhButton>
+        </div>
+        {commentOpen && <form id="discussion-composer" className={styles.form} onSubmit={submitComment} noValidate aria-label="发表评论">
           {replyTo && <LhStateNotice action={<LhButton type="button" disabled={commentBusy} onClick={() => { setReplyTo(null); commentInput.current?.focus(); }}>取消回复</LhButton>}>正在回复 {replyTo.author.name}</LhStateNotice>}
           <LhTextArea ref={commentInput} id="suggestion-comment" label={replyTo ? `回复 ${replyTo.author.name}` : "你的评论"} required rows={4} maxLength={SUGGESTION_LIMITS.comment} helperText={`仅支持文字，最多 ${SUGGESTION_LIMITS.comment} 字。`} value={comment} disabled={commentBusy} onChange={(event) => setComment(event.target.value)} />
           {commentError && <BoardError message={commentError} />}
           <div><LhButton type="submit" variant="primary" disabled={locked} aria-busy={commentBusy}>{commentBusy ? "发送中…" : replyTo ? "发送回复" : "发表评论"}</LhButton></div>
-        </form>
+        </form>}
         {item.comments.length === 0 && <LhEmptyState title="还没有评论" description="分享你的看法或补充具体场景。" />}
-        <ol className={styles.feed}>{item.comments.map((entry) => <li key={entry.id} id={`comment-${entry.id}`} className={`${styles.comment} ${entry.replyToId ? styles.reply : ""}`}>
+        <ol className={styles.feed}>{item.comments.map((entry) => <li key={entry.id} id={`comment-${entry.id}`} tabIndex={postedCommentId === entry.id ? -1 : undefined} className={`${styles.comment} ${entry.replyToId ? styles.reply : ""}`}>
           <div className={styles.meta}><span>{entry.author.name}</span><BoardTime value={entry.createdAt} />{entry.replyToAuthorName && <span>回复 {entry.replyToAuthorName}</span>}</div>
           <p className={styles.plain}>{entry.hidden ? "此评论已被管理员隐藏" : entry.content}</p>
-          {!entry.hidden && <div className={styles.actions}><LhButton type="button" variant="ghost" disabled={locked} onClick={() => { setReplyTo(entry); commentInput.current?.focus(); }}>回复 {entry.author.name}</LhButton>{viewer.canManage && (hiding === entry.id ? <><span>确认隐藏此评论？</span><LhButton type="button" variant="danger" disabled={locked} onClick={() => void hideComment(entry.id)}>确认隐藏</LhButton><LhButton type="button" disabled={locked} onClick={() => setHiding(null)}>取消</LhButton></> : <LhButton type="button" variant="ghost" disabled={locked} onClick={() => setHiding(entry.id)}>隐藏评论</LhButton>)}</div>}
+          {!entry.hidden && <div className={styles.actions}><LhButton type="button" variant="ghost" disabled={locked} onClick={() => { setReplyTo(entry); setCommentOpen(true); commentInput.current?.focus(); }}>回复 {entry.author.name}</LhButton>{viewer.canManage && (hiding === entry.id ? <><span>确认隐藏此评论？</span><LhButton type="button" variant="danger" disabled={locked} onClick={() => void hideComment(entry.id)}>确认隐藏</LhButton><LhButton type="button" disabled={locked} onClick={() => setHiding(null)}>取消</LhButton></> : <LhButton type="button" variant="ghost" disabled={locked} onClick={() => setHiding(entry.id)}>隐藏评论</LhButton>)}</div>}
         </li>)}</ol>
         {moreError && <BoardError message={moreError} />}
         {item.nextCommentCursor && <LhButton type="button" disabled={locked} onClick={() => void loadComments()}>{moreBusy ? "加载中…" : "加载更多评论"}</LhButton>}
