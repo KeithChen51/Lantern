@@ -76,6 +76,7 @@ describe("release delivery contract", () => {
     expect(getUserFacingReleases([{ ...internal, version: "1.3.6", userFacing: null }])).toEqual([]);
     expect(latestUserFacingVersion).toBe(releases[0]?.version);
     expect(releases.some(release => release.version === "1.2.1")).toBe(false);
+    expect(releases.some(release => release.version === "1.6.7")).toBe(false);
   });
 
   it("orders stable, textual and numeric prerelease identifiers correctly", () => {
