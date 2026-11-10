@@ -3,7 +3,7 @@ import { BrandAttribution } from "@/components/ui/BrandAttribution";
 import styles from "./login.module.css";
 
 /** A server-rendered entry: the native login form also works without JavaScript. */
-export function LoginSurface({ children }: { children: ReactNode }) {
+export function LoginSurface({ children, dealerLogin }: { children: ReactNode; dealerLogin?: boolean }) {
   return (
     <div data-lh-v3 data-lh-login className={styles.surface}>
       <div className={styles.layout}>
@@ -23,7 +23,7 @@ export function LoginSurface({ children }: { children: ReactNode }) {
         </section>
         <section className={styles.entry} aria-labelledby="auth-title">
           <div className={styles.entryContent}>
-            <p className={styles.eyebrow}>员工登录</p>
+            <p className={styles.eyebrow}>{dealerLogin ? "账号登录" : "员工登录"}</p>
             <h1 id="auth-title" className={styles.title}>欢迎来到灯塔</h1>
             {children}
             <p className={styles.help}>登录遇到问题，请联系平台维护人员（林子轩）。</p>

@@ -2,14 +2,16 @@ import { AccessError } from "./access-types";
 
 export type WecomAutoApplication = Readonly<{ corpId: string; agentId: string; secret: string }>;
 export type WecomAutoMember = { userId: string; displayName: string };
+export type WecomAutoEntry = "workbench" | "scan";
 export interface WecomAutoProvider {
-  authorizationUrl(callbackUrl: string, state: string): string;
+  authorizationUrl(callbackUrl: string, state: string, entry: WecomAutoEntry): string;
   authenticate(code: string): Promise<WecomAutoMember>;
   readMember(userId: string): Promise<WecomAutoMember>;
 }
 
 const API_ORIGIN = "https://qyapi.weixin.qq.com";
 const AUTHORIZE_URL = "https://open.weixin.qq.com/connect/oauth2/authorize";
+const SCAN_AUTHORIZE_URL = "https://login.work.weixin.qq.com/wwlogin/sso/login";
 const REQUEST_TIMEOUT_MS = 3000;
 const MAX_RESPONSE_BYTES = 64 * 1024;
 // Application details include the configured visible member list.
@@ -86,7 +88,7 @@ export class WecomAutoClient implements WecomAutoProvider {
     this.config = Object.freeze({ ...config });
   }
 
-  authorizationUrl(callbackUrl: string, state: string): string {
+  authorizationUrl(callbackUrl: string, state: string, entry: WecomAutoEntry = "workbench"): string {
     try {
       const callback = new URL(callbackUrl);
       if (callback.protocol !== "https:" || callback.username || callback.password || callback.hash
@@ -94,12 +96,17 @@ export class WecomAutoClient implements WecomAutoProvider {
     } catch {
       throw new AccessError("企业微信登录请求无效。", 400);
     }
-    const url = new URL(AUTHORIZE_URL);
+    const url = new URL(entry === "scan" ? SCAN_AUTHORIZE_URL : AUTHORIZE_URL);
     url.search = new URLSearchParams({
-      appid: this.config.corpId, redirect_uri: callbackUrl, response_type: "code",
-      scope: "snsapi_base", state, agentid: this.config.agentId,
+      appid: this.config.corpId, agentid: this.config.agentId, redirect_uri: callbackUrl, state,
     }).toString();
-    url.hash = "wechat_redirect";
+    if (entry === "scan") {
+      url.searchParams.set("login_type", "CorpApp");
+    } else {
+      url.searchParams.set("response_type", "code");
+      url.searchParams.set("scope", "snsapi_base");
+      url.hash = "wechat_redirect";
+    }
     return url.toString();
   }
 

@@ -14,7 +14,8 @@ export function getWecomAutoAccess(site = readSiteAccessConfig()) {
     cached = undefined;
     throw new AccessError("此环境未启用汽车企微登录。", 401);
   }
-  if (!cached || cached.config.namespace !== config.namespace || cached.config.secret !== config.secret) {
+  if (!cached || cached.config.namespace !== config.namespace || cached.config.secret !== config.secret
+    || cached.config.entries.workbench !== config.entries.workbench || cached.config.entries.scan !== config.entries.scan) {
     cached = { config, service: new WecomAutoAccessService(config, new WecomAutoClient(config), new PrismaAccessStore(prisma)) };
   }
   return cached;
