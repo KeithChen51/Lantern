@@ -2,11 +2,15 @@ import { randomUUID } from "node:crypto";
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { AccessError } from "./access-types";
 
+export type EmployeeGrantCredential =
+  | { source?: undefined; tokenCipher: string }
+  | { source: "wecom-group"; groupNamespace: string };
+
 export type AccessPayloads = {
   guest: { namespace: string; userId: string; grantId: string; csrfToken: string };
   login: { verifierHash: string; returnTo: string; consumed: boolean; authority?: "portal" | "iam" | "iam-portal"; entry?: "card" };
   pending: { tokenCipher: string; account: string; displayName: string; csrfToken: string; returnTo: string; consumed: boolean; upstreamExpiresAt: number };
-  grant: { userId: string; account: string; displayName: string; employeeNo?: string; organization?: string; tokenCipher: string; active: boolean; identityAt: number; rolesAt: number; roles: string[]; authority?: "portal" | "iam" | "iam-portal" };
+  grant: { userId: string; account: string; displayName: string; employeeNo?: string; organization?: string; active: boolean; identityAt: number; rolesAt: number; roles: string[]; authority?: "portal" | "iam" | "iam-portal" } & EmployeeGrantCredential;
   iamAccount: { account: string; displayName: string; organization?: string; active: boolean; deleted: boolean };
   iamPermission: { account: string; role: string; postCode: string; active: boolean; validUntil: number };
   iamDelivery: { endpoint: "account" | "permission" };
@@ -16,6 +20,8 @@ export type AccessPayloads = {
     userId: string; memberId: string; displayName: string;
     csrfToken: string; active: boolean; verifiedAt: number; lastUsedAt: number;
   };
+  wecomGroupLogin: { verifierHash: string; returnTo: string; consumed: boolean };
+  wecomGroupTicket: { claimed: true };
   device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number };
   userCode: { deviceId: string };
   client: { grantId: string; sessionId: string; name: string; active: boolean; currentRefreshHash: string; lastUsedAt: number };
@@ -36,6 +42,7 @@ export interface AccessTransaction {
   put<K extends AccessKind>(record: AccessRecord<K>): Promise<void>;
   find<K extends AccessKind>(kind: K, query: IndexedQuery): Promise<AccessRecord<K>[]>;
   ensureEmployee(account: string, displayName: string, candidateId: string): Promise<EmployeeShadow>;
+  findEmployee(account: string): Promise<EmployeeShadow | null>;
   employeeActive(account: string, userId: string): Promise<boolean>;
   ensureDealer(provider: string, memberId: string, displayName: string): Promise<string>;
   dealerActive(provider: string, memberId: string, userId: string): Promise<boolean>;
@@ -85,6 +92,10 @@ export class MemoryAccessStore implements AccessStore {
         if (!user) { user = { id: candidateId, account, displayName, active: true, employee: true }; employees.set(account, user); }
         return structuredClone(eligible(user));
       },
+      findEmployee: async account => {
+        const user = employees.get(account);
+        return user ? structuredClone(eligible(user)) : null;
+      },
       employeeActive: async (account, userId) => {
         const user = employees.get(account);
         return !!user && user.id === userId && user.active && user.employee && !user.conflicting;
@@ -124,6 +135,10 @@ export class PrismaAccessStore implements AccessStore {
         return await this.prisma.$transaction(async (db) => {
           const records = (db as unknown as { accessRecord: RecordDelegate }).accessRecord;
           const mapping = (account: string) => db.identityAccount.findUnique({ where: { provider_providerUserId: { provider: PROVIDER, providerUserId: account } }, include: { user: { include: { identityAccounts: { where: { provider: PROVIDER } } } } } });
+          const findEmployee = async (account: string) => {
+            const found = await mapping(account);
+            return found ? eligible({ id: found.userId, account, displayName: found.user.displayName, active: found.user.status === "ACTIVE", employee: found.user.userType === "INTERNAL_EMPLOYEE", conflicting: found.provider !== PROVIDER || found.providerUserId !== account || found.user.identityAccounts.some(identity => identity.providerUserId !== account) }) : null;
+          };
           const dealerMapping = (provider: string, providerUserId: string) => db.identityAccount.findUnique({
             where: { provider_providerUserId: { provider, providerUserId } },
             include: { user: { select: { userType: true, status: true } } },
@@ -145,12 +160,13 @@ export class PrismaAccessStore implements AccessStore {
               return rows.map((row) => deserialize<K>(row));
             },
             ensureEmployee: async (account, displayName, candidateId) => {
-              const found = await mapping(account);
-              if (found) return eligible({ id: found.userId, account, displayName: found.user.displayName, active: found.user.status === "ACTIVE", employee: found.user.userType === "INTERNAL_EMPLOYEE", conflicting: found.provider !== PROVIDER || found.providerUserId !== account || found.user.identityAccounts.some((identity) => identity.providerUserId !== account) });
+              const found = await findEmployee(account);
+              if (found) return found;
               // A new trusted account gets a new shadow. Never search employeeNo/email/demo users.
               const user = await db.user.create({ data: { id: candidateId, displayName, userType: "INTERNAL_EMPLOYEE", status: "ACTIVE", identityAccounts: { create: { id: randomUUID(), provider: PROVIDER, providerUserId: account } } } });
               return { id: user.id, account, displayName: user.displayName, active: true, employee: true };
             },
+            findEmployee,
             employeeActive: async (account, userId) => {
               const found = await mapping(account);
               return !!found && found.userId === userId && found.provider === PROVIDER && found.providerUserId === account && found.user.status === "ACTIVE" && found.user.userType === "INTERNAL_EMPLOYEE" && found.user.identityAccounts.every((identity) => identity.providerUserId === account);

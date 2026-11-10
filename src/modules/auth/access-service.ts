@@ -1,10 +1,12 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { equalSecret, hashToken, openToken, randomToken, safeReturnTo, sealToken } from "./access-crypto";
 import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type Capability, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
-import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
+import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction, EmployeeGrantCredential } from "./access-store";
 import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
 import { employeeDisplayName, readPortalEmployeeName } from "./employee-name";
+import { isWecomGroupSessionToken, readWecomGroupConfig } from "./wecom-group-config";
+import type { VerifiedWecomGroupLogin } from "./wecom-group-login";
 
 export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
 export type DeviceView = { userCode: string; clientName: string; scope: "knowledge:read"; expiresAt: number };
@@ -17,6 +19,8 @@ const CLIENT_ID = "lighthouse-cli";
 const SCOPE = "knowledge:read";
 const APPLICATION_ROLES = new Set<string>(IAM_ROLES.map(role => role.code));
 const key = (kind: AccessKind, value: string) => `${kind}:${hashToken(value)}`;
+// Older application images use the unprefixed hash and cannot read Group grants.
+const webSessionKey = (token: string) => key("session", isWecomGroupSessionToken(token) ? `wecom-group:v1:${token}` : token);
 const take = <T>(result: T): Exclude<T, Error> => { if (result instanceof Error) throw result; return result as Exclude<T, Error>; };
 const expired = (record: AccessRecord, now: number) => record.expiresAt <= now;
 const permanent = (error: unknown) => error instanceof AccessError && (error.status === 401 || error.status === 403);
@@ -129,7 +133,7 @@ export class AccessService {
         const row = await tx.get("login", id);
         if (!row || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
         row.payload.consumed = true; await this.save(tx, row);
-        await this.createSession(tx, identity, identityAt, roles, cipher, grantId, candidateId, sessionToken, csrfToken);
+        await this.createSession(tx, identity, identityAt, roles, { tokenCipher: cipher }, grantId, candidateId, sessionToken, csrfToken);
         return { kind: "session" as const, sessionToken, returnTo: transaction.payload.returnTo };
       });
     }
@@ -172,7 +176,7 @@ export class AccessService {
     const cipher = sealToken(exchanged.token, this.config.encryptionKey);
     return this.store.transaction(async tx => {
       if (expired(transaction, this.now())) throw new AccessError("Login transaction expired", 401);
-      await this.createSession(tx, identity, identityAt, roles, cipher, grantId, candidateId, sessionToken, csrfToken);
+      await this.createSession(tx, identity, identityAt, roles, { tokenCipher: cipher }, grantId, candidateId, sessionToken, csrfToken);
       return { sessionToken, returnTo: transaction.payload.returnTo };
     });
   }
@@ -194,11 +198,33 @@ export class AccessService {
       const row = await tx.get("pending", id);
       if (!row || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.csrfToken, csrfToken) || row.payload.upstreamExpiresAt <= this.now()) throw new AccessError("Login confirmation is invalid", 401);
       row.payload.consumed = true; await this.save(tx, row);
-      await this.createSession(tx, { ...identity, expiresAt: Math.min(identity.expiresAt ?? Infinity, row.payload.upstreamExpiresAt) }, identityAt, roles, row.payload.tokenCipher, grantId, candidateId, sessionToken, sessionCsrf);
+      await this.createSession(tx, { ...identity, expiresAt: Math.min(identity.expiresAt ?? Infinity, row.payload.upstreamExpiresAt) }, identityAt, roles, { tokenCipher: row.payload.tokenCipher }, grantId, candidateId, sessionToken, sessionCsrf);
       return { sessionToken, returnTo: row.payload.returnTo };
     });
   }
-  private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: AuthorizationSnapshot | null, cipher: string, grantId: string, candidateId: string, token: string, csrfToken: string) {
+  private groupPilot(namespace: string, account: string) {
+    const group = readWecomGroupConfig(this.config);
+    if (group?.mode !== "employee-pilot" || group.namespace !== namespace) {
+      throw new AccessError("集团企微登录已失效，请从工作台重新打开灯塔。", 401);
+    }
+    if (!group.pilotAccounts.has(account)) throw new AccessError("当前账号尚未加入集团企微试点。", 403);
+    return group;
+  }
+
+  async completeWecomGroupLogin(verified: VerifiedWecomGroupLogin): Promise<{ sessionToken: string; returnTo: string; expiresAt: number }> {
+    const { account, displayName } = verified.identity;
+    const pilot = this.groupPilot(verified.namespace, account);
+    const identity = this.identity({ account, displayName, employeeNo: account, expiresAt: verified.verifiedAt + pilot.sessionMs });
+    const roles = usesIamPortalAuthorization(this.config) ? await this.roles(account) : null;
+    const sessionToken = `group_${randomToken()}`;
+    const expiresAt = await this.store.transaction(async tx => {
+      if (verified.transactionExpiresAt <= this.now()) throw new AccessError("集团企微登录已失效，请从工作台重新打开灯塔。", 401);
+      return this.createSession(tx, identity, verified.verifiedAt, roles, { source: "wecom-group", groupNamespace: pilot.namespace }, `grant:${randomUUID()}`, randomUUID(), sessionToken, randomToken());
+    });
+    return { sessionToken, returnTo: verified.returnTo, expiresAt };
+  }
+
+  private async createSession(tx: AccessTransaction, identity: PortalIdentity, identityAt: number, roles: AuthorizationSnapshot | null, credential: EmployeeGrantCredential, grantId: string, candidateId: string, token: string, csrfToken: string) {
     if (usesIamSyncAuthorization(this.config)) {
       const directory = await readIamDirectory(tx, identity.account, this.now());
       identity = { ...identity, displayName: directory.displayName, expiresAt: Math.min(identity.expiresAt ?? Infinity, directory.expiresAt) };
@@ -209,17 +235,23 @@ export class AccessService {
     }
     const grants = await tx.find("grant", { subjectId: identity.account, expiresAfter: this.now(), activeOnly: true });
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
-    const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
+    const user = credential.source === "wecom-group"
+      ? await tx.findEmployee(identity.account)
+      : await tx.ensureEmployee(identity.account, identity.displayName, candidateId);
+    if (!user) throw new AccessError("当前工号尚未关联现有灯塔员工账号。", 403);
+    const expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
-    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, employeeNo: identity.employeeNo, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
+    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, employeeNo: identity.employeeNo, organization: roles?.organization, ...credential, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
     await tx.put(grant);
-    await tx.put(this.record("session", key("session", token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
-    await this.audit(tx, "login", identity.account, grantId);
+    await tx.put(this.record("session", webSessionKey(token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
+    await this.audit(tx, credential.source === "wecom-group" ? "wecom-group-login" : "login", identity.account, grantId);
+    return expiresAt;
   }
   private sessionValid(session: AccessRecord<"session">) { return session.payload.active && !expired(session, this.now()) && this.now() - session.payload.lastUsedAt < this.duration(this.config.sessionIdleMs, HOUR); }
   private async activeGrant(tx: AccessTransaction, id: string) {
     const grant = await tx.get("grant", id);
     if (!grant || (grant.payload.authority ?? "portal") !== accessAuthority(this.config) || !grant.payload.active || expired(grant, this.now()) || !await tx.employeeActive(grant.payload.account, grant.payload.userId)) throw new AccessError("Employee authorization expired", 401);
+    if (grant.payload.source === "wecom-group") this.groupPilot(grant.payload.groupNamespace, grant.payload.account);
     if (usesIamPortalAuthorization(this.config) && !grant.payload.roles.some(role => APPLICATION_ROLES.has(role))) throw new AccessError("Lighthouse access has not been granted", 403);
     if (usesIamSyncAuthorization(this.config)) {
       const directory = await readIamDirectory(tx, grant.payload.account, this.now());
@@ -239,6 +271,9 @@ export class AccessService {
     return client;
   }
   private async renew(grant: AccessRecord<"grant">, adminWrite = false): Promise<void> {
+    // Group H5 tickets are spent at login. The grant expires within the existing
+    // identity/role freshness window, so nothing is sent to IAM for renewal.
+    if (grant.payload.source === "wecom-group") return;
     const now = this.now(), identityFresh = this.duration(adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, adminWrite ? 60000 : 300000), roleFresh = this.duration(adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, adminWrite ? 60000 : 300000);
     let identity: PortalIdentity | undefined, identityAt: number | undefined;
     if (now - grant.payload.identityAt >= identityFresh) {
@@ -276,8 +311,9 @@ export class AccessService {
     await this.store.transaction(async (tx) => { const grant = await tx.get("grant", id); if (grant?.payload.active) { grant.payload.active = false; await this.save(tx, grant); await this.audit(tx, action, grant.payload.account, id); } });
   }
   async webPrincipal(token: string, options?: { adminWrite?: boolean }): Promise<Principal> {
-    this.secret(token); const id = key("session", token);
+    this.secret(token); const id = webSessionKey(token);
     const grant = await this.store.transaction(async (tx) => { const session = await tx.get("session", id); if (!session || !this.sessionValid(session)) throw new AccessError("Web session expired", 401); return this.activeGrant(tx, session.payload.grantId); });
+    if (grant.payload.source === "wecom-group" && options?.adminWrite) throw new AccessError("请使用 OA 登录访问管理功能。", 403);
     await this.renew(grant, options?.adminWrite);
     return this.store.transaction(async (tx) => {
       const session = await tx.get("session", id); if (!session || !this.sessionValid(session)) throw new AccessError("Web session expired", 401);
@@ -286,7 +322,7 @@ export class AccessService {
       if (this.now() - current.payload.identityAt >= this.duration(options?.adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, options?.adminWrite ? 60000 : 300000)) throw new AccessError("Employee verification is unavailable", 503);
       const roleFresh = this.duration(options?.adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, options?.adminWrite ? 60000 : 300000);
       const adminRoles = [this.config.adminRole, this.config.platformAdminRole].filter((role): role is string => Boolean(role));
-      const rolesFresh = this.now() - current.payload.rolesAt < roleFresh;
+      const rolesFresh = current.payload.source !== "wecom-group" && this.now() - current.payload.rolesAt < roleFresh;
       const admin = rolesFresh && adminRoles.some(role => current.payload.roles.includes(role));
       // Existing knowledge access may have used a shared role mapping. Such a
       // mapping cannot distinguish platform administrators and must not acquire
@@ -309,10 +345,11 @@ export class AccessService {
   }
   private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, adminCapabilities: readonly Capability[] = []): Principal {
     const employeeNo = grant.payload.employeeNo ?? (accessAuthority(this.config) !== "portal" ? grant.payload.account : undefined);
+    const webCapabilities = grant.payload.source === "wecom-group" ? EMPLOYEE_CAPABILITIES.filter(value => value !== "auth:client:self") : EMPLOYEE_CAPABILITIES;
     return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account),
       ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}),
       ...(channel === "web" && employeeNo ? { employeeNo } : {}),
-      grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
+      grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...webCapabilities, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);
@@ -328,18 +365,19 @@ export class AccessService {
       return this.principal(current, client.id, channel, Math.min(access.expiresAt, client.expiresAt, current.expiresAt));
     });
   }
-  private async authorizeWeb(tx: AccessTransaction, principal: Principal) {
+  private async authorizeWeb(tx: AccessTransaction, principal: Principal, allowGroup = false) {
     if (principal.channel !== "web") throw new AccessError("Web employee authorization required", 403);
     const session = await tx.get("session", principal.credentialId);
     if (!session || !this.sessionValid(session) || session.payload.grantId !== principal.grantId || session.subjectId !== principal.account) throw new AccessError("Web session expired", 401);
     const grant = await this.activeGrant(tx, principal.grantId);
     if (grant.payload.userId !== principal.userId || grant.payload.account !== principal.account) throw new AccessError("Employee authorization mismatch", 401);
+    if (grant.payload.source === "wecom-group" && !allowGroup) throw new AccessError("请使用 OA 登录管理工具授权。", 403);
     this.requirePortalRolesFresh(grant);
     return session;
   }
   async logout(principal: Principal, all = false): Promise<void> {
     await this.store.transaction(async (tx) => {
-      await this.authorizeWeb(tx, principal);
+      await this.authorizeWeb(tx, principal, !all);
       const grants = all ? await tx.find("grant", { subjectId: principal.account, expiresAfter: this.now(), activeOnly: true }) : [await this.activeGrant(tx, principal.grantId)];
       for (const grant of grants) { grant.payload.active = false; await this.save(tx, grant); for (const session of await tx.find("session", { parentId: grant.id, expiresAfter: this.now(), activeOnly: true })) { session.payload.active = false; await this.save(tx, session); for (const device of await tx.find("device", { parentId: session.id, expiresAfter: this.now() })) { device.payload.status = "revoked"; await this.save(tx, device); } } for (const client of await tx.find("client", { parentId: grant.id, expiresAfter: this.now(), activeOnly: true })) { client.payload.active = false; await this.save(tx, client); } }
       await this.audit(tx, all ? "logout-all" : "logout", principal.account, principal.credentialId);

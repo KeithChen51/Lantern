@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getDeviceRequest, requireEmployee } from "@/modules/auth/access";
 import { AuthNotice, AuthSurface } from "@/components/auth/AuthSurface";
 
@@ -6,6 +7,7 @@ export default async function DeviceApprovalPage({ searchParams }: { searchParam
   const params = await searchParams;
   const requestHeaders = await headers();
   const principal = await requireEmployee(requestHeaders);
+  if (!principal.capabilities.includes("auth:client:self")) redirect("/login?error=wecomGroupTool");
   if (params.completed === "1") return <AuthSurface title="工具授权"><p role="status">已记录你的授权决定。请返回发起请求的工具继续操作。</p><a href="/auth/tools">查看我的工具授权</a></AuthSurface>;
   let device;
   try {

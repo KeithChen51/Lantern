@@ -21,6 +21,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     {params.loggedOut === "wecom" && <AuthNotice>你已退出灯塔。再次访问时请从汽车企微工作台打开灯塔。</AuthNotice>}
     {params.error === "wecomAccess" ? <AuthNotice>当前企微账号没有灯塔访问权限。请确认你在应用的可见范围内。</AuthNotice>
       : params.error === "wecom" ? <AuthNotice>企微登录未完成，请从汽车企微工作台重新打开灯塔。</AuthNotice>
+      : params.error === "wecomGroupProbe" ? <AuthNotice>集团企微验证未完成，请从集团企微工作台重新打开灯塔。</AuthNotice>
+      : params.error === "wecomGroupAccess" ? <AuthNotice>当前账号无法通过集团企微进入灯塔，请联系平台维护人员确认试点资格。</AuthNotice>
+      : params.error === "wecomGroupTool" ? <AuthNotice>请使用 OA 登录管理工具授权。</AuthNotice>
+      : params.error === "wecomGroup" ? <AuthNotice>集团企微登录已失效，请从集团企微工作台重新打开灯塔。</AuthNotice>
       : params.error && <AuthNotice>{params.error === "unavailable" ? "统一登录服务暂不可用，请稍后重试。" : "登录未完成，请重新登录。"}</AuthNotice>}
     <form action="/api/auth/start" method="post">
       <input type="hidden" name="returnTo" value={safeReturnTo(params.returnTo)} />

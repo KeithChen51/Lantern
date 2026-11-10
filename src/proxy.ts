@@ -6,6 +6,7 @@ import { callback } from "@/modules/auth/access-http";
 import { classifyAccessPath, isEmployeePage, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 import { isLoginDocument, loginArrivalCookie, LOGIN_ARRIVAL_HEADER, validLoginArrival } from "@/modules/auth/login-arrival";
 import { isWecomAutoSessionToken } from "@/modules/auth/wecom-auto-access";
+import { isWecomGroupSessionToken } from "@/modules/auth/wecom-group-config";
 
 function noStore<T extends Response>(response: T): T {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
@@ -132,9 +133,12 @@ export async function proxy(request: NextRequest) {
       clean.searchParams.delete("token");
       clean.searchParams.delete("code");
       clean.searchParams.delete("state");
-      const wasDealer = isWecomAutoSessionToken(readAccessCookie(request.headers, config.sessionCookie) ?? "");
+      const sessionToken = readAccessCookie(request.headers, config.sessionCookie) ?? "";
+      const wasDealer = isWecomAutoSessionToken(sessionToken);
+      const wasGroup = isWecomGroupSessionToken(sessionToken);
       if (wasDealer) target.searchParams.set("error", "wecom");
-      const automaticEntry = !wasDealer && config.mode === "iam" && path === "/" && isLoginDocument(request)
+      if (wasGroup) target.searchParams.set("error", "wecomGroup");
+      const automaticEntry = !wasDealer && !wasGroup && config.mode === "iam" && path === "/" && isLoginDocument(request)
         && !request.nextUrl.searchParams.has("error") && !request.nextUrl.searchParams.has("loggedOut")
         // A successful callback with a rejected session cookie stops at retry.
         && !request.cookies.has(loginArrivalCookie(config.sessionCookie));
