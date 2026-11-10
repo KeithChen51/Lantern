@@ -434,8 +434,12 @@ export class KnowledgeManager {
     const current = resource.versions.find(item => item.id === resource.publishedVersionId);
     if (current && current.number > version.number) conflict("不能发布较旧的资源版本。");
     const publishedAt = version.publishedAt ?? now;
-    await tx.hubVersion.update({ where: { id: version.id }, data: { publishedAt } });
-    await tx.hubResource.update({ where: { id: resource.id }, data: { publishedVersionId: version.id, archived: false, updatedAt: now, ...(version.metadata && typeof version.metadata === "object" && !Array.isArray(version.metadata) && (version.metadata.visibility === "public" || version.metadata.visibility === "internal") ? { visibility: version.metadata.visibility } : {}) } });
+    const metadata = version.metadata && typeof version.metadata === "object" && !Array.isArray(version.metadata) ? version.metadata : null;
+    await tx.hubVersion.update({ where: { id: version.id }, data: {
+      publishedAt,
+      ...(!version.publishedAt && metadata ? { metadata: { ...metadata, publicationVisibility: resource.visibility } } : {}),
+    } });
+    await tx.hubResource.update({ where: { id: resource.id }, data: { publishedVersionId: version.id, archived: false, updatedAt: now } });
     await writeAudit(tx, "published", resource.id, version.id, now, this.actor);
     return { resourceId: resource.id, versionId: version.id, publishedAt };
   }

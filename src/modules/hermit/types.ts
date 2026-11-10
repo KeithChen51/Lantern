@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import type { HermitTurnContext } from "./history";
 
 /** A session belongs to one employee or one opaque browser guest, never both. */
 export type HermitChatOwner =
@@ -10,6 +11,8 @@ export type HermitChatParticipant = HermitChatOwner & {
   regionId: string | null;
   dealerId: string | null;
   storeId: string | null;
+  /** Server-authenticated profile only. Never read from the chat request body. */
+  identity?: { account: string; employeeNo?: string; organization?: string };
 };
 
 export type HermitChatSessionInput = HermitChatParticipant & {
@@ -32,6 +35,7 @@ export type HermitChatMessageRecord = {
   id: string;
   sessionId: string;
   externalMessageId: string;
+  role: HermitMessageRole;
 };
 
 export type HermitRetrievalTraceInput = HermitChatOwner & {
@@ -47,6 +51,7 @@ export type PersistIncomingMessagesInput = {
   participant: HermitChatParticipant;
   messages: UIMessage[];
   modelName: string;
+  turnContext?: HermitTurnContext;
 };
 
 export type PersistAssistantResponseInput = {

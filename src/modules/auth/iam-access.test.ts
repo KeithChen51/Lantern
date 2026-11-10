@@ -51,6 +51,15 @@ describe("IAM configuration is independent of portal credentials", () => {
 });
 
 describe("IAM login and synchronized authorization", () => {
+  it.each(["lighthouse_user", "lighthouse_knowledge_admin", "lighthouse_admin"])("separates %s summary permissions and immediately observes synchronized revocation", async role => {
+    const f = fixture();
+    await f.account(); await f.permission(0, role);
+    const login = await f.login();
+    expect(login.principal.capabilities.includes("knowledge:manage")).toBe(role !== "lighthouse_user");
+    expect(login.principal.capabilities.includes("analytics:summary")).toBe(role === "lighthouse_admin");
+    await f.permission(2, role);
+    await expect(f.service.webPrincipal(login.sessionToken, { adminWrite: true })).rejects.toMatchObject({ status: 401 });
+  });
   it("binds a one-use browser callback, preserves a trusted shadow ID and profile, and caps token lifetime", async () => {
     const f = fixture();
     f.store.seedEmployee({ id: "existing-portal-user", account: "000042", displayName: "old name", active: true, employee: true });
@@ -61,7 +70,7 @@ describe("IAM login and synchronized authorization", () => {
     expect(url.searchParams.get("redirect_uri")).toBe(`${origin}/auth/iam/callback`);
     expect(url.searchParams.get("response_type")).toBe("code"); expect(url.searchParams.get("state")).toBe(login.start.state);
     expect(login.returnTo).toBe("/auth/device?user_code=ABC123");
-    expect(login.principal).toMatchObject({ userId: "existing-portal-user", account: "000042", displayName: "模拟员工", organization: "售后/服务", expiresAt: f.now() + 1500000 });
+    expect(login.principal).toMatchObject({ userId: "existing-portal-user", account: "000042", employeeNo: "000042", displayName: "模拟员工", organization: "售后/服务", expiresAt: f.now() + 1500000 });
     expect(f.roles).not.toHaveBeenCalled();
     expect(JSON.stringify(f.store.snapshot())).not.toContain("synthetic-upstream-token");
     await expect(f.service.iamCallback({ code: "single-use-code", state: login.start.state, cookie: login.start.cookie })).rejects.toMatchObject({ status: 401 });
@@ -78,11 +87,23 @@ describe("IAM login and synchronized authorization", () => {
     expect(results.find(item => item.status === "fulfilled")).toMatchObject({ value: { returnTo: "/" } });
   });
   it("does not retry an exchange after its transaction was consumed", async () => {
-    const f = fixture(), start = await f.service.startLogin();
+    const f = fixture(), start = await f.service.startLogin("/auth/device?user_code=ABCD-EFGH");
+    expect(await f.service.loginReturnTo(start)).toBe("/auth/device?user_code=ABCD-EFGH");
     f.exchange.mockRejectedValueOnce(new Error("upstream unavailable"));
     await expect(f.service.iamCallback({ code: "code", state: start.state, cookie: start.cookie })).rejects.toThrow();
+    await expect(f.service.loginReturnTo(start)).rejects.toMatchObject({ status: 401 });
     await expect(f.service.iamCallback({ code: "code", state: start.state, cookie: start.cookie })).rejects.toMatchObject({ status: 401 });
     expect(f.exchange).toHaveBeenCalledTimes(1);
+  });
+  it("refuses retry destinations for wrong, expired, and cross-authority transactions", async () => {
+    const f = fixture(), start = await f.service.startLogin("/action");
+    await expect(f.service.loginReturnTo({ state: start.state, cookie: "wrong-cookie" })).rejects.toMatchObject({ status: 401 });
+    const portal = new AccessService({ ...f.config, mode: "portal", portalLoginMode: "callback" }, { identity: f.identity, roles: async () => [] }, f.store, f.now);
+    const other = await portal.startLogin("/me");
+    await expect(f.service.loginReturnTo(other)).rejects.toMatchObject({ status: 401 });
+    f.advance(f.config.transactionMs + 1);
+    await expect(f.service.loginReturnTo(start)).rejects.toMatchObject({ status: 401 });
+    expect(f.exchange).not.toHaveBeenCalled();
   });
   it("refuses identity-only login and requires both account and application role", async () => {
     const f = fixture();

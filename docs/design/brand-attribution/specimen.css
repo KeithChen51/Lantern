@@ -1,0 +1,29 @@
+/* Documentation specimens. The two layouts use the catalog's intrinsic sizes. */
+.signature-specimens {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 16px;
+}
+.signature-specimens figure { min-width: 0; margin: 0; }
+.signature-stage {
+  display: grid;
+  min-height: 178px;
+  align-content: center;
+  gap: 30px;
+  place-items: center;
+  padding: 20px;
+  background: #f3efe0;
+}
+.signature-stage--ink { background: #2c2c2c; }
+.signature-stage--warm-white { background: #fffdf8; }
+.signature-specimens figcaption { margin-top: 10px; color: #666158; font-size: 13px; line-height: 1.65; }
+.signature-specimens figcaption strong { display: block; color: var(--lh-ink); }
+.signature-placement { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--lh-line); }
+.signature-placement h3 { font-size: 17px; }
+.signature-placement p { margin: 6px 0 0; font-size: 14px; line-height: 1.7; }
+
+@media (max-width: 384px) {
+  #brand-attribution .section-body { padding-inline: 0; }
+  .signature-stage { padding-inline: 16px; }
+  .signature-specimens figcaption, .signature-placement { margin-inline: 12px; }
+}

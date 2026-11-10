@@ -6,7 +6,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
-import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
+import { BrandAttribution } from "@/components/ui/BrandAttribution";
+import { lighthouseIcons, type LighthouseIcon } from "@/components/ui/lighthouse-icons";
 import { useLhScrollProgress } from "@/hooks/use-lighthouse-motion";
 import { cn } from "@/lib/utils";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
@@ -218,10 +219,13 @@ function SidebarSearchPanel({
   isOpen?: boolean;
   setIsOpen?: (value: boolean) => void;
 }) {
+  const isComposing = React.useRef(false);
+
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        if (isComposing.current) return;
         onSubmit(query);
       }}
       className="relative min-w-0"
@@ -237,9 +241,12 @@ function SidebarSearchPanel({
             setIsOpen?.(true);
           }}
           onFocus={() => setIsOpen?.(true)}
+          onCompositionStart={() => { isComposing.current = true; }}
+          onCompositionEnd={() => { isComposing.current = false; }}
           onKeyDown={(event) => {
             if (event.key !== "Enter") return;
             event.preventDefault();
+            if (isComposing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
             onSubmit(event.currentTarget.value);
           }}
           type="text"
@@ -282,38 +289,59 @@ function SidebarSearchPanel({
   );
 }
 
-function SessionLinks({ isExpanded, onNavigate }: { isExpanded: boolean; onNavigate?: () => void }) {
-  const session = useEmployeeSession();
-  const unread = useReleaseUnread();
-  const pathname = usePathname();
-  const isActive = isItemActive(pathname, "/me");
+function SidebarLink({ href, label, description, icon, isExpanded, isActive, onNavigate, personal = false, unread = false }: {
+  href: string;
+  label: string;
+  description?: string;
+  icon: LighthouseIcon;
+  isExpanded: boolean;
+  isActive: boolean;
+  onNavigate?: () => void;
+  personal?: boolean;
+  unread?: boolean;
+}) {
+  const unreadDescriptionId = React.useId();
   return (
     <Link
-      data-lh-my-link
+      data-lh-nav-link
+      data-lh-my-link={personal ? "true" : undefined}
       data-active={isActive ? "true" : "false"}
-      href="/me"
+      href={href}
       onClick={onNavigate}
-      aria-label="我的"
+      aria-label={label}
+      aria-describedby={unread ? unreadDescriptionId : undefined}
       aria-current={isActive ? "page" : undefined}
-      title={session ? `我的 · ${session.user.displayName}` : "我的"}
+      title={personal || !isExpanded ? [label, description].filter(Boolean).join(" · ") : undefined}
       className={cn(
-        "group relative grid min-h-12 w-full items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+        "group relative grid min-h-12 min-w-0 w-full items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
         isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
         isActive
           ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
           : "border-transparent text-[var(--color-deck-text-soft)] hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
       )}
     >
-      {isActive && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-action" />}
-      <Icon icon={lighthouseIcons.user} aria-hidden="true" className={cn("h-5 w-5", isActive ? "text-action" : "text-[var(--color-deck-icon)] group-hover:text-action")} />
+      {isActive && <span data-lh-nav-active-marker className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-action" />}
+      <Icon data-lh-nav-icon icon={icon} aria-hidden="true" className={cn("h-5 w-5 shrink-0", isActive ? "text-action" : "text-[var(--color-deck-icon)] group-hover:text-action")} />
       {unread && <span aria-hidden="true" data-lh-my-notification-dot className="absolute left-8 top-2 h-1.5 w-1.5 rounded-full border border-panel bg-signal" />}
-      {!isExpanded && <span className="text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]">我的</span>}
-      {isExpanded && <span className="min-w-0">
-        <span className="block truncate text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)]">我的</span>
-        <span className="block truncate text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)] text-[var(--color-deck-muted)]">{session?.user.displayName}</span>
-      </span>}
+      {unread && <span id={unreadDescriptionId} className="sr-only">有未读版本消息</span>}
+      {isExpanded && (
+        <span data-lh-nav-copy className="min-w-0">
+          <span data-lh-nav-sub-label className="block shrink-0 text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)]">{label}</span>
+          <span data-lh-nav-label className={cn("block min-w-0 truncate text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]", isActive ? "text-[var(--color-deck-muted-strong)]" : "text-[var(--color-deck-muted)]")}>
+            {description}
+          </span>
+        </span>
+      )}
     </Link>
   );
+}
+
+function SessionLinks({ isExpanded, onNavigate }: { isExpanded: boolean; onNavigate?: () => void }) {
+  const session = useEmployeeSession();
+  const unread = useReleaseUnread();
+  const pathname = usePathname();
+  return <SidebarLink href="/me" label="我的" description={session?.user.displayName} icon={lighthouseIcons.user}
+    isExpanded={isExpanded} isActive={isItemActive(pathname, "/me")} onNavigate={onNavigate} personal unread={unread} />;
 }
 
 function NavLinks({
@@ -326,48 +354,18 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   const session = useEmployeeSession();
-  return getVisibleNavItems(session?.kind === "guest" ? [] : session?.capabilities).map((item) => {
-    const isActive = isItemActive(pathname, item.href);
-
-    return (
-      <Link
-        data-lh-nav-link
-        data-active={isActive ? "true" : "false"}
-        key={item.label}
-        href={item.href}
-        onClick={onNavigate}
-        className={cn(
-          "group relative grid min-h-12 items-center rounded-[var(--lh-control-radius)] border px-3 py-2 transition-[background,border-color,color,box-shadow,filter] duration-[var(--lh-motion-fast)] ease-[var(--lh-ease-standard)]",
-          isExpanded ? "grid-cols-[24px_minmax(0,1fr)] gap-3" : "grid-cols-1 justify-items-center",
-          isActive
-            ? "border-[var(--lh-deck-panel-active-border)] bg-[var(--lh-deck-panel-active)] text-[var(--color-deck-text)] shadow-[var(--lh-card-shadow)]"
-            : "border-transparent text-[var(--color-deck-text-soft)] hover:border-[var(--lh-deck-panel-border)] hover:bg-[var(--lh-deck-panel-hover)] hover:text-[var(--color-deck-text)]",
-        )}
-        title={isExpanded ? undefined : `${item.subLabel} ${item.label}`}
-      >
-        {isActive && <span data-lh-nav-active-marker className="absolute left-0 top-2 h-[calc(100%-16px)] w-0.5 rounded-r-full bg-action" />}
-        <Icon
-          data-lh-nav-icon
-          icon={item.icon}
-          className={cn("h-5 w-5", isActive ? "text-action" : "text-[var(--color-deck-icon)] group-hover:text-action")}
-        />
-        {isExpanded && (
-          <span data-lh-nav-copy className="min-w-0">
-            <span data-lh-nav-sub-label className="block truncate text-[length:var(--type-control)] font-[var(--weight-extrabold)] leading-[var(--leading-control)]">{item.subLabel}</span>
-            <span data-lh-nav-label className={cn("block truncate text-[length:var(--type-caption)] font-[var(--weight-bold)] leading-[var(--leading-caption)]", isActive ? "text-[var(--color-deck-muted-strong)]" : "text-[var(--color-deck-muted)]")}>
-              {item.label}
-            </span>
-          </span>
-        )}
-      </Link>
-    );
-  });
+  return getVisibleNavItems(session?.kind === "guest" ? [] : session?.capabilities).map((item) => (
+    <SidebarLink key={item.href} href={item.href} label={item.subLabel} description={item.label} icon={item.icon}
+      isExpanded={isExpanded} isActive={isItemActive(pathname, item.href)} onNavigate={onNavigate} />
+  ));
 }
 
 export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose, isHomeSurface = false }: NavigationProps) {
   const pathname = usePathname();
   const isExpanded = isPinned;
   const desktopSidebarRef = React.useRef<HTMLElement | null>(null);
+  const mobileDialogRef = React.useRef<HTMLDialogElement | null>(null);
+  const mobileCloseRef = React.useRef<HTMLButtonElement | null>(null);
   const desktopSidebarStyle = {
     width: isExpanded ? "var(--lh-classic-sidebar-width)" : "var(--lh-classic-sidebar-collapsed-width)",
     ...(isHomeSurface
@@ -397,6 +395,32 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
     node.style.removeProperty("--lh-home-nav-progress-value");
   }, [isHomeSurface]);
 
+  React.useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!isMobileOpen || !dialog) return;
+    const desktop = window.matchMedia("(min-width: 768px)");
+    if (desktop.matches) {
+      onMobileClose();
+      return;
+    }
+
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    mobileCloseRef.current?.focus({ preventScroll: true });
+    document.body.style.overflow = "hidden";
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) onMobileClose();
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [isMobileOpen, onMobileClose]);
+
   return (
     <>
       <nav
@@ -415,30 +439,46 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
           <NavLinks isExpanded={isExpanded} pathname={pathname} />
         </div>
 
-        <div data-lh-sidebar-utility-group className="mt-auto grid gap-2">
+        <div data-lh-sidebar-utility-group className="mt-auto grid min-w-0 gap-2">
           <SessionLinks isExpanded={isExpanded} />
         </div>
+        {isExpanded && (
+          <div data-lh-sidebar-attribution>
+            <BrandAttribution layout="standard-stacked" tone="amber" />
+          </div>
+        )}
       </nav>
 
-      <div
-        className={cn(
-          "fixed inset-0 z-50 bg-ink/30 transition-opacity duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-standard)] md:hidden",
-          isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-        )}
+      <dialog
+        ref={mobileDialogRef}
+        id="lighthouse-mobile-navigation"
+        data-lh-mobile-navigation
+        aria-label="导航菜单"
+        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-ink/30 p-0 text-ink md:hidden"
+        onCancel={(event) => { event.preventDefault(); onMobileClose(); }}
+        onClick={(event) => { if (event.target === event.currentTarget) onMobileClose(); }}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), [tabindex="0"]'))
+            .filter(control => control.getClientRects().length > 0);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            (event.shiftKey ? last : first)?.focus();
+          }
+        }}
       >
-        <button type="button" onClick={onMobileClose} aria-label="关闭导航菜单" className="absolute inset-0" />
         <nav
           data-lh-sidebar
           data-mobile="true"
-          className={cn(
-            "absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] transition-transform duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] [backdrop-filter:var(--lh-shell-blur)]",
-            isMobileOpen ? "translate-x-0" : "-translate-x-full",
-          )}
+          className="absolute left-0 top-0 flex h-full w-[min(86vw,320px)] flex-col overflow-y-auto overscroll-contain border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-hover-shadow)] [backdrop-filter:var(--lh-shell-blur)]"
           aria-label="移动端主导航"
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <Logo isExpanded onTogglePin={onTogglePin} showToggle={false} />
             <LhIconButton
+              ref={mobileCloseRef}
               type="button"
               label="关闭导航菜单"
               icon={<Icon icon={lighthouseIcons.close} className="h-5 w-5" />}
@@ -447,17 +487,17 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
               className="border-[var(--lh-deck-panel-border)] bg-[var(--lh-deck-panel-bg)] text-[var(--color-deck-text)] hover:border-[var(--lh-deck-panel-active-border)] hover:bg-[var(--lh-deck-panel-hover)]"
             />
           </div>
-          <SidebarSearch isExpanded onNavigate={onMobileClose} className="mt-5" />
+          <SidebarSearch isExpanded onNavigate={onMobileClose} className="mt-5 shrink-0" />
 
-          <div data-lh-sidebar-nav-group className="mt-6 flex flex-1 flex-col gap-2">
+          <div data-lh-sidebar-nav-group className="mt-6 flex shrink-0 flex-col gap-2">
             <NavLinks isExpanded pathname={pathname} onNavigate={onMobileClose} />
           </div>
 
-          <div data-lh-sidebar-utility-group className="mt-auto grid gap-2">
+          <div data-lh-sidebar-utility-group className="mt-auto grid min-w-0 shrink-0 gap-2 pt-2">
             <SessionLinks isExpanded onNavigate={onMobileClose} />
           </div>
         </nav>
-      </div>
+      </dialog>
     </>
   );
 }

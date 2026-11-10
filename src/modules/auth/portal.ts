@@ -63,7 +63,8 @@ export class HttpPortalAdapter implements PortalAdapter {
     if (typeof displayName !== "string" || !displayName.trim() || displayName.length > 120) throw new AccessError("门户返回的员工信息无效。", 401);
     // Status/expiry fields are deliberately not guessed. Production readiness
     // requires the active-employee contract to be confirmed by the provider.
-    return { account: employeeAccount, displayName };
+    return { account: employeeAccount, displayName,
+      ...(data.empNo !== undefined && data.empNo !== null ? { employeeNo: account(data.empNo) } : {}) };
   }
   async roles(employeeAccount: string): Promise<readonly string[]> {
     return (await this.authorization(employeeAccount)).roles;

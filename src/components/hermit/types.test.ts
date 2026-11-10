@@ -80,6 +80,27 @@ describe("Hermit UI data helpers", () => {
     expect(getAnswerSources(message)).toBeNull();
   });
 
+  it.each(["", "  \t"])("keeps verified legacy citations and recommendations with an empty source label (%j)", source => {
+    const citation = { number: 1, resourceId: "legacy-case", versionId: "v1", title: "参悟案例", source, startLine: 2, endLine: 5 };
+    const recommendation = { resourceId: "legacy-case", versionId: "v1", title: "参悟案例", source, reason: "参考类似场景的处理过程。" };
+    const message = { id: "legacy", role: "assistant", parts: [{ type: "data-answer-sources", data: {
+      status: "complete", text: "参考 [1](#hermit-citation-1)。", citations: [citation], recommendations: [recommendation],
+    } }] } as unknown as UIMessage;
+
+    expect(getHermitCitations(message)).toEqual([{ ...citation, source: "" }]);
+    expect(getHermitCitationFromHref("#hermit-citation-1", getHermitCitations(message))).toEqual({ ...citation, source: "" });
+    expect(getDocumentRecommendations(message)).toEqual([{ id: "recommendation:legacy-case:v1", ...recommendation, source: "" }]);
+  });
+
+  it.each([undefined, null, 7, {}])("still rejects malformed source labels (%j)", source => {
+    const resource = { resourceId: "case", versionId: "v1", title: "案例", source };
+    const message = { id: "malformed", role: "assistant", parts: [{ type: "data-answer-sources", data: {
+      status: "complete", text: "回答", citations: [{ ...resource, number: 1 }], recommendations: [{ ...resource, reason: "继续阅读" }],
+    } }] } as unknown as UIMessage;
+    expect(getHermitCitations(message)).toEqual([]);
+    expect(getDocumentRecommendations(message)).toEqual([]);
+  });
+
   it("formats attachment sizes for compact chips", () => {
     expect(formatHermitFileSize(512)).toBe("512 B");
     expect(formatHermitFileSize(2048)).toBe("2 KB");

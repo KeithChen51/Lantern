@@ -1,9 +1,12 @@
 import { ChatPanel } from "@/components/hermit/ChatPanel";
-import { HermitIdentity } from "@/components/hermit/HermitIdentity";
-import { PageHeading } from "@/components/ui/PageHeading";
+import { headers } from "next/headers";
+import { requireSiteVisitor } from "@/modules/auth/access";
 import styles from "@/components/hermit/hermit-v3.module.css";
+import { resolveCaseEntry } from "./case-entry";
 
-export default function HermitPage() {
+export default async function HermitPage({ searchParams }: { searchParams: Promise<{ from?: string | string[]; question?: string | string[] }> }) {
+  const [params, principal] = await Promise.all([searchParams, headers().then(requireSiteVisitor)]);
+  const entry = await resolveCaseEntry(params, principal);
   return (
     <div
       className={styles.page}
@@ -11,15 +14,8 @@ export default function HermitPage() {
       data-lh-page="hermit"
       data-lh-page-archetype="tool-workspace"
     >
-      <div className={styles.pageHeader} data-lh-hermit-intro>
-        <PageHeading
-          title="路引"
-          description="汽车售后服务文化助手 · 从现场问题，找到行动方向"
-          titleAdornment={<HermitIdentity />}
-        />
-      </div>
       <div className={styles.chatFrame} data-lh-hermit-chat-frame>
-        <ChatPanel />
+        <ChatPanel entry={entry} />
       </div>
     </div>
   );

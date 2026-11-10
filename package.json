@@ -1,6 +1,6 @@
 {
   "name": "lighthouse-app",
-  "version": "1.3.2",
+  "version": "1.6.9",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
@@ -35,7 +35,9 @@
     "check:fonts": "node scripts/check-fonts.mjs",
     "lighthouse": "node packages/lighthouse-client/src/cli.js",
     "test:client": "npm test --prefix packages/lighthouse-client",
-    "auth:prune": "tsx scripts/auth-prune.ts"
+    "auth:prune": "tsx scripts/auth-prune.ts",
+    "retention:preview": "tsx scripts/retention-preview.ts",
+    "usage:prune": "tsx scripts/usage-prune.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

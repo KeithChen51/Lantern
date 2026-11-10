@@ -50,7 +50,14 @@ function fixture() {
           upsert: async ({ where, create, update }: { where: Row; create: Row; update: Row }) => upsert("hub_resources", where, create, update),
           findMany: async () => rows("hub_resources").filter(row => !row.archived).map(row => ({ ...row, location: null })),
         },
-        hubVersion: { upsert: async ({ where, create, update }: { where: Row; create: Row; update: Row }) => upsert("hub_versions", where, create, update) },
+        hubVersion: {
+          upsert: async ({ where, create, update }: { where: Row; create: Row; update: Row }) => upsert("hub_versions", where, create, update),
+          updateMany: async ({ where, data }: { where: Row; data: Row }) => {
+            const versions = rows("hub_versions").filter(row => matches(row, where));
+            versions.forEach(row => Object.assign(row, structuredClone(data)));
+            return { count: versions.length };
+          },
+        },
         hubAudit: {
           create: async ({ data }: { data: Row }) => { rows("hub_audits").push(structuredClone(data)); return data; },
           findFirst: async ({ where }: { where: Row }) => rows("hub_audits").find(row => matches(row, where)) ?? null,

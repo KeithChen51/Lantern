@@ -1,8 +1,12 @@
+import { WECOM_AUTO_CALLBACK, WECOM_AUTO_START } from "./wecom-auto-config";
+
 // Keep the public entry points small: no business JavaScript is public.
 export const REQUEST_PATH_HEADER = "x-lighthouse-request-path";
-const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login"]);
+const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login", WECOM_AUTO_START, WECOM_AUTO_CALLBACK]);
 const PUBLIC_ASSETS = new Set([
   "/nav-lighthouse-transparent.png", "/favicon.ico", "/icon.png", "/apple-icon.png",
+  "/lighthouse-home-hero-bg-v2-realistic-shore.png",
+  "/fonts/brand/inter/InterVariable.woff2",
   "/fonts/brand/source-han-serif-sc/SourceHanSerifSC-VF.otf.woff2",
   "/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf",
   "/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf",
@@ -30,6 +34,7 @@ export function normalizeAccessPath(path: string): string | null {
 
 export function isPublicAuthPage(path: string): boolean { return PUBLIC_PAGES.has(path); }
 export function isPublicBrandAsset(path: string): boolean { return PUBLIC_ASSETS.has(path); }
+export function isEmployeePage(path: string): boolean { return /^\/(?:admin|auth|feedback)(?:\/|$)/.test(path); }
 
 export function classifyAccessPath(path: string, imageOriginal?: string | null): "invalid" | "public" | "api" | "asset" | "page" {
   const normalized = normalizeAccessPath(path);

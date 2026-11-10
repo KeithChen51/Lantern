@@ -1,11 +1,12 @@
 import { AppError } from "@/shared/errors";
 import type { IamLoginConfig } from "./iam-config";
 
-export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage";
+export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage" | "analytics:summary" | "feedback:manage";
+export type PrincipalKind = "employee" | "guest" | "dealer";
 export type Principal = {
-  kind?: "employee" | "guest";
+  kind?: PrincipalKind;
   userId: string; account: string; displayName: string;
-  organization?: string; avatarUrl?: string;
+  organization?: string; employeeNo?: string; avatarUrl?: string;
   grantId: string; credentialId: string; channel: "web" | "cli" | "mcp";
   capabilities: readonly Capability[]; csrfToken?: string; expiresAt: number;
 };
@@ -18,7 +19,7 @@ export class AccessError extends AppError {
 export class OAuthError extends Error {
   constructor(public readonly error: string, public readonly status = 400) { super(error); }
 }
-export type PortalIdentity = { account: string; displayName: string; expiresAt?: number };
+export type PortalIdentity = { account: string; displayName: string; employeeNo?: string; expiresAt?: number };
 export type PortalAuthorization = { roles: readonly string[]; organization?: string; displayName?: string };
 export interface PortalAdapter {
   exchange?(code: string): Promise<{ token: string; expiresAt: number }>;

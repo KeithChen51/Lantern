@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "vitest";
 import type { PrismaClient } from "@prisma/client";
-import { HubError, importSchema } from "./service";
+import { HubError, KnowledgeHub, importSchema } from "./service";
 import { createKnowledgeManager, protectedKnowledgeIds } from "./manager";
+import { PrismaHubStore } from "./prisma-store";
+import { GuestHubStore } from "./guest-store";
 
 type AnyRow = Record<string, any>;
 
@@ -63,6 +65,12 @@ class MemoryManagerDb {
   };
 
   hubVersion = {
+    updateMany: async ({ where, data }: AnyRow) => {
+      const versions = this.state.resources.flatMap(resource => resource.versions ?? [])
+        .filter((version: AnyRow) => version.id === where.id && version.publishedAt === where.publishedAt);
+      versions.forEach((version: AnyRow) => Object.assign(version, structuredClone(data)));
+      return { count: versions.length };
+    },
     update: async ({ where, data }: AnyRow) => {
       const resource = this.state.resources.find(item => (item.versions ?? []).some((version: AnyRow) => version.id === where.id));
       const version = resource?.versions.find((item: AnyRow) => item.id === where.id);
@@ -82,6 +90,7 @@ class MemoryManagerDb {
   hubAudit = {
     create: async ({ data }: AnyRow) => { this.state.audits.push(structuredClone(data)); return structuredClone(data); },
   };
+  hubRelation = { findMany: async () => [] };
 
   async $transaction(callback: (tx: this) => Promise<unknown>) {
     const snapshot = structuredClone(this.state);
@@ -114,6 +123,49 @@ function setup() {
 }
 
 describe("knowledge manager", () => {
+  it.each(["public", "internal"] as const)("preserves the administrator's %s audience through draft imports and publication", async visibility => {
+    const { db, manager } = setup();
+    const original = visibility === "public" ? "internal" : "public";
+    const data = importSchema.parse({ id: "case-a", type: "case", title: "案例", markdown: "# 首版", source: "测试", visibility: original });
+    const first = await manager.importManagedResource(data, null, "案例.md", "ask");
+    expect(db.state.resources[0].visibility).toBe(original);
+    await manager.apply({ action: "setVisibility", id: "case-a", visibility });
+    await manager.apply({ action: "publish", id: "case-a", versionId: first.versionId });
+    expect(db.state.resources[0].visibility).toBe(visibility);
+    expect(db.state.resources[0].versions[0].metadata).toMatchObject({ visibility: original, publicationVisibility: visibility });
+    const guest = new KnowledgeHub(new GuestHubStore(new PrismaHubStore(db as unknown as PrismaClient)));
+    if (visibility === "public") expect((await guest.get("case-a", first.versionId)).version.id).toBe(first.versionId);
+    else await expect(guest.get("case-a", first.versionId)).rejects.toMatchObject({ code: "not_found" });
+    const next = await manager.importManagedResource({ ...data, markdown: "# 新版" }, null, "案例.md", "overwrite");
+    expect(db.state.resources[0].visibility).toBe(visibility);
+    await manager.apply({ action: "publish", id: "case-a", versionId: next.versionId });
+    expect(db.state.resources[0].visibility).toBe(visibility);
+    expect(db.state.resources[0].versions.at(-1).metadata.visibility).toBe(original);
+    expect(db.state.resources[0].versions.at(-1).metadata.publicationVisibility).toBe(visibility);
+  });
+  it.each(["manager", "hub"] as const)("retains internal publication history through the %s Prisma path", async route => {
+    const { db, manager } = setup();
+    const store = new PrismaHubStore(db as unknown as PrismaClient);
+    const hub = new KnowledgeHub(store);
+    const guest = new KnowledgeHub(new GuestHubStore(store));
+    const publish = (versionId: string) => route === "hub" ? hub.publish("case-a", versionId) : manager.apply({ action: "publish", id: "case-a", versionId });
+    const data = importSchema.parse({ id: "case-a", type: "case", title: "案例", markdown: "# 内参首版", source: "测试", visibility: "public" });
+    const first = await manager.importManagedResource(data, null, "案例.md", "ask");
+    await manager.apply({ action: "setVisibility", id: "case-a", visibility: "internal" });
+    const checksum = db.state.resources[0].versions[0].checksum;
+    await publish(first.versionId!);
+    expect(db.state.resources[0].versions[0]).toMatchObject({ checksum, metadata: { visibility: "public", publicationVisibility: "internal" } });
+    await manager.apply({ action: "setVisibility", id: "case-a", visibility: "public" });
+    await publish(first.versionId!);
+    await expect(guest.get("case-a", first.versionId)).rejects.toMatchObject({ code: "not_found" });
+    const next = await manager.importManagedResource({ ...data, visibility: "internal", markdown: "# 公开新版" }, null, "案例.md", "overwrite");
+    await publish(next.versionId!);
+    expect((await guest.get("case-a", next.versionId)).version.id).toBe(next.versionId);
+    await expect(guest.get("case-a", first.versionId)).rejects.toMatchObject({ code: "not_found" });
+    expect((await guest.history("case-a")).map(version => version.id)).toEqual([next.versionId]);
+    expect(db.state.resources[0].versions[0].metadata.publicationVisibility).toBe("internal");
+    expect(db.state.resources[0].versions[1].metadata).toMatchObject({ visibility: "internal", publicationVisibility: "public" });
+  });
   it("maintains case audience with an audit without changing publication", async () => {
     const { db, manager } = setup();
     seedResource(db, "case-a", "案例");

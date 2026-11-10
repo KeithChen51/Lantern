@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { equalSecret, hashToken, openToken, randomToken, safeReturnTo, sealToken } from "./access-crypto";
-import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
+import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type Capability, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
 import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
 import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
@@ -35,6 +35,7 @@ export class AccessService {
   private secret(value: string) { if (!value || value.length > 8192) throw new AccessError("Invalid authorization credential", 401); }
   private identity(value: PortalIdentity) {
     if (!value || typeof value.account !== "string" || !value.account.trim() || value.account.length > 200 || typeof value.displayName !== "string" || !value.displayName.trim() || value.displayName.length > 200 || (value.expiresAt !== undefined && (!Number.isFinite(value.expiresAt) || value.expiresAt <= this.now()))) throw new AccessError("Invalid employee identity", 401);
+    if (value.employeeNo !== undefined && (typeof value.employeeNo !== "string" || !value.employeeNo || value.employeeNo.trim() !== value.employeeNo || value.employeeNo.length > 191 || /[\u0000-\u001f\u007f]/.test(value.employeeNo))) throw new AccessError("Invalid employee number", 401);
     return value;
   }
   private async verified(token: string) {
@@ -72,20 +73,41 @@ export class AccessService {
   async startLogin(returnTo?: string): Promise<{ state: string; cookie: string; redirectUrl: string }> {
     // Card entry has no child-app callback/state contract. The user returns via
     // the registered portal card and confirms the verified identity locally.
-    if (this.config.mode !== "iam" && this.config.portalLoginMode === "card") return { state: "", cookie: "", redirectUrl: this.config.portalLoginUrl };
-    const state = randomToken(), cookie = randomToken();
+    // Its browser-bound record preserves navigation only, never bypassing that confirmation.
+    const card = this.config.mode !== "iam" && this.config.portalLoginMode === "card";
+    const state = card ? "" : randomToken(), cookie = randomToken();
     const url = this.config.mode === "iam"
       ? new URL(this.portal.authorizationUrl!(new URL("/auth/iam/callback", this.config.origin).toString(), state))
       : new URL(this.config.portalLoginUrl);
-    if (this.config.mode !== "iam") {
+    if (this.config.mode !== "iam" && !card) {
       url.searchParams.set(this.config.callbackParam, new URL("/auth/portal/callback", this.config.origin).toString());
       url.searchParams.set(this.config.stateParam, state);
     }
     take(await this.store.transaction(async (tx) => {
       if (!await this.rate(tx, "login-start", "global", 100, 60000)) return new AccessError("Login requests are temporarily limited", 429);
-      await tx.put(this.record("login", key("login", state), "", null, { authority: accessAuthority(this.config), verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
+      await tx.put(this.record("login", key("login", card ? cookie : state), "", null, { authority: accessAuthority(this.config), verifierHash: hashToken(cookie), returnTo: safeReturnTo(returnTo ?? "/"), consumed: false, ...(card ? { entry: "card" as const } : {}) }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
     }));
     return { state, cookie, redirectUrl: url.toString() };
+  }
+  /** Read navigation context only after proving the live transaction belongs to this browser. */
+  async loginReturnTo(input: { state?: string; cookie?: string }): Promise<string> {
+    const card = input.state === undefined && this.config.mode !== "iam" && this.config.portalLoginMode === "card";
+    if (input.state === undefined && !card) return "/";
+    if (!input.cookie) {
+      if (card) return "/";
+      throw new AccessError("Login transaction is missing", 401);
+    }
+    this.secret(input.cookie);
+    if (!card) this.secret(input.state!);
+    const id = key("login", card ? input.cookie : input.state!), verifier = hashToken(input.cookie);
+    return this.store.transaction(async tx => {
+      const row = await tx.get("login", id);
+      if (!row || row.payload.authority !== accessAuthority(this.config) || expired(row, this.now()) || row.payload.consumed || (row.payload.entry === "card") !== card || !equalSecret(row.payload.verifierHash, verifier)) {
+        if (card) return "/"; // Opening a portal card directly remains supported.
+        throw new AccessError("Login transaction is invalid", 401);
+      }
+      return safeReturnTo(row.payload.returnTo);
+    });
   }
   async callback(input: { token: string; state?: string; cookie?: string }): Promise<LoginResult> {
     if (this.config.mode === "iam") throw new AccessError("Portal authentication is disabled", 401);
@@ -98,7 +120,7 @@ export class AccessService {
       const id = key("login", input.state), verifier = hashToken(input.cookie);
       const transaction = await this.store.transaction(async (tx) => {
         const row = await tx.get("login", id);
-        if (!row || (row.payload.authority ?? "portal") !== "portal" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
+        if (!row || (row.payload.authority ?? "portal") !== "portal" || row.payload.entry === "card" || expired(row, this.now()) || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) throw new AccessError("Login transaction is invalid", 401);
         return row;
       });
       const identity = await this.verified(input.token), identityAt = this.now(), roles = await this.roles(identity.account);
@@ -118,7 +140,15 @@ export class AccessService {
     await this.store.transaction(async (tx) => {
       const pending = await tx.find("pending", { subjectId: identity.account, expiresAfter: this.now() });
       if (pending.filter((row) => !row.payload.consumed).length >= 50) throw new AccessError("Too many pending employee confirmations", 429);
-      await tx.put(this.record("pending", key("pending", pendingToken), identity.account, null, { tokenCipher: cipher, account: identity.account, displayName: identity.displayName, csrfToken, returnTo: "/", consumed: false, upstreamExpiresAt: this.grantExpiry(identity) }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
+      let returnTo = "/";
+      if (this.config.portalLoginMode === "card" && input.cookie) {
+        const navigation = await tx.get("login", key("login", input.cookie));
+        if (navigation && navigation.payload.authority === "portal" && navigation.payload.entry === "card" && !expired(navigation, this.now()) && !navigation.payload.consumed && equalSecret(navigation.payload.verifierHash, hashToken(input.cookie))) {
+          returnTo = safeReturnTo(navigation.payload.returnTo);
+          navigation.payload.consumed = true; await this.save(tx, navigation);
+        }
+      }
+      await tx.put(this.record("pending", key("pending", pendingToken), identity.account, null, { tokenCipher: cipher, account: identity.account, displayName: identity.displayName, csrfToken, returnTo, consumed: false, upstreamExpiresAt: this.grantExpiry(identity) }, this.now() + this.duration(this.config.transactionMs, 10 * 60000)));
     });
     return { kind: "pending", pendingToken, returnTo: "/auth/confirm" };
   }
@@ -181,7 +211,7 @@ export class AccessService {
     if (grants.filter((grant) => grant.payload.active).length >= 50) throw new AccessError("Too many active employee sessions", 429);
     const user = await tx.ensureEmployee(identity.account, identity.displayName, candidateId), expiresAt = this.grantExpiry(identity);
     if (expiresAt <= this.now()) throw new AccessError("Employee authorization expired", 401);
-    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
+    const grant = this.record("grant", grantId, identity.account, null, { authority: accessAuthority(this.config), userId: user.id, account: identity.account, displayName: identity.displayName, employeeNo: identity.employeeNo, organization: roles?.organization, tokenCipher: cipher, active: true, identityAt, rolesAt: roles?.at ?? 0, roles: roles?.roles ?? [] }, expiresAt);
     await tx.put(grant);
     await tx.put(this.record("session", key("session", token), identity.account, grantId, { grantId, csrfToken, active: true, lastUsedAt: this.now() }, expiresAt));
     await this.audit(tx, "login", identity.account, grantId);
@@ -228,6 +258,7 @@ export class AccessService {
       // reuse the winner, then recheck freshness and revocation below.
       if (identity && identityAt !== undefined && current.payload.identityAt === grant.payload.identityAt && identityAt > current.payload.identityAt) {
         current.payload.identityAt = identityAt;
+        current.payload.employeeNo = identity.employeeNo;
         // IAM verifies the account. The combined mode's profile belongs to
         // the independently refreshed portal response, even in refresh races.
         if (!usesIamPortalAuthorization(this.config)) current.payload.displayName = identity.displayName;
@@ -255,7 +286,13 @@ export class AccessService {
       if (this.now() - current.payload.identityAt >= this.duration(options?.adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, options?.adminWrite ? 60000 : 300000)) throw new AccessError("Employee verification is unavailable", 503);
       const roleFresh = this.duration(options?.adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, options?.adminWrite ? 60000 : 300000);
       const adminRoles = [this.config.adminRole, this.config.platformAdminRole].filter((role): role is string => Boolean(role));
-      const admin = this.now() - current.payload.rolesAt < roleFresh && adminRoles.some(role => current.payload.roles.includes(role));
+      const rolesFresh = this.now() - current.payload.rolesAt < roleFresh;
+      const admin = rolesFresh && adminRoles.some(role => current.payload.roles.includes(role));
+      // Existing knowledge access may have used a shared role mapping. Such a
+      // mapping cannot distinguish platform administrators and must not acquire
+      // access to usage statistics when this capability is introduced.
+      const platformRole = this.config.platformAdminRole;
+      const analytics = rolesFresh && Boolean(platformRole && platformRole !== this.config.adminRole && current.payload.roles.includes(platformRole));
       // A page loads many authenticated chunks concurrently. Keep fresh checks
       // read-only; a retry after a competing touch sees the committed timestamp.
       // Rounding activity down can expire idle sessions up to one minute early,
@@ -264,11 +301,18 @@ export class AccessService {
       if (this.now() - session.payload.lastUsedAt >= touchInterval) {
         session.payload.lastUsedAt = this.now(); await this.save(tx, session);
       }
-      return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, admin);
+      return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, [
+        ...(admin ? ["knowledge:manage" as const] : []),
+        ...(analytics ? ["analytics:summary" as const, "feedback:manage" as const] : []),
+      ]);
     });
   }
-  private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, admin = false): Principal {
-    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account), ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}), grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...(admin ? ["knowledge:manage" as const] : [])] : [SCOPE], csrfToken, expiresAt };
+  private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, adminCapabilities: readonly Capability[] = []): Principal {
+    const employeeNo = grant.payload.employeeNo ?? (accessAuthority(this.config) !== "portal" ? grant.payload.account : undefined);
+    return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account),
+      ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}),
+      ...(channel === "web" && employeeNo ? { employeeNo } : {}),
+      grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);

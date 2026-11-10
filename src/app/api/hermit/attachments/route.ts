@@ -76,11 +76,16 @@ export async function POST(request: Request) {
     if (files.length !== 1 || !(files[0] instanceof File)) {
       return jsonNoStore({ error: { code: "validation_error", message: "请在 file 字段上传一个附件。" } }, { status: 422 });
     }
+    const conversationFields = formData.getAll("conversationId");
+    if (conversationFields.length > 1 || conversationFields.some(value => typeof value !== "string")) {
+      throw new AppError("validation_error", "对话标识无效，请重新打开对话后上传。", 422);
+    }
+    const conversationId = conversationFields[0] as string | undefined;
 
     // Parsing may be slow: recheck revocation before storing parsed content.
     await authenticate(request, principal);
-    const result = await saveHermitAttachment(request, files[0], principal);
-    try { await authenticate(request, principal); }
+    const result = await saveHermitAttachment(request, files[0], principal, conversationId);
+    try { await authenticate(request, principal); request.signal.throwIfAborted(); }
     catch (error) { await deleteHermitAttachment(principal, result.summary.id); throw error; }
     return jsonNoStore(result.summary, { status: 201 });
   } catch (error) {

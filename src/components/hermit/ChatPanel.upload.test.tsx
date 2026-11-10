@@ -10,7 +10,7 @@ const harness = vi.hoisted(() => ({
 vi.mock("react", async importOriginal => ({
   ...await importOriginal<typeof import("react")>(),
   useRef: (value: unknown) => ({ current: value }),
-  useState: (value: unknown) => [value, vi.fn()],
+  useState: (value: unknown) => [typeof value === "function" ? value() : value, vi.fn()],
   useMemo: (factory: () => unknown) => factory(),
   useEffect: vi.fn(),
   useLayoutEffect: (setup: () => (() => void) | void) => { const cleanup = setup(); if (cleanup) harness.cleanups.push(cleanup); },
@@ -19,13 +19,12 @@ vi.mock("@ai-sdk/react", () => ({ useChat: () => ({ messages: [], status: "ready
 vi.mock("@/components/auth/SessionContext", () => ({ useEmployeeSession: () => harness.session }));
 vi.mock("@/components/auth/auth-fetch", () => ({ authFetch: harness.fetch }));
 vi.mock("@/hooks/use-lighthouse-motion", () => ({ useLhReducedMotion: () => false }));
-import { ChatPanel } from "./ChatPanel";
-import type { HermitAttachment } from "./types";
+import { useHermitAttachments } from "./useHermitAttachments";
 
-function selectTwoFiles() {
-  const view = ChatPanel() as { props: { onFilesSelected: (files: FileList) => void; onRetryAttachment: (file: HermitAttachment) => void } };
-  view.props.onFilesSelected([new File(["private A"], "first.txt"), new File(["private B"], "second.txt")] as unknown as FileList);
-  return view.props;
+function SelectTwoFiles() {
+  const handlers = useHermitAttachments("guest:a");
+  handlers.handleFilesSelected([new File(["private A"], "first.txt"), new File(["private B"], "second.txt")] as unknown as FileList);
+  return { onRetryAttachment: handlers.handleRetryAttachment };
 }
 const flush = () => new Promise<void>(resolve => setImmediate(resolve));
 beforeEach(() => { vi.clearAllMocks(); harness.cleanups = []; harness.session = { kind: "guest", user: { id: "guest:a" } }; });
@@ -42,7 +41,7 @@ describe("ChatPanel attachment batch lifecycle", () => {
         if (honorsAbort) firstSignal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
       });
     });
-    const handlers = selectTwoFiles();
+    const handlers = SelectTwoFiles();
     await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledTimes(1));
     handlers.onRetryAttachment({ localId: "queued-retry", name: "retry.txt", size: 5, status: "error", file: new File(["retry"], "retry.txt") });
     const firstInit = harness.fetch.mock.calls[0][1] as RequestInit;
@@ -59,19 +58,23 @@ describe("ChatPanel attachment batch lifecycle", () => {
     expect(harness.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps normal two-file uploads sequential and passes the lifecycle signal to each POST", async () => {
+  it("keeps normal two-file uploads sequential and aborts the active file's own signal on unmount", async () => {
     let completeFirst!: (response: Response) => void;
+    let completeSecond!: (response: Response) => void;
     harness.fetch.mockImplementationOnce(() => new Promise<Response>(resolve => { completeFirst = resolve; }))
-      .mockResolvedValueOnce(Response.json({ id: "second", status: "ready" }));
-    selectTwoFiles();
+      .mockImplementationOnce(() => new Promise<Response>(resolve => { completeSecond = resolve; }));
+    SelectTwoFiles();
     await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledTimes(1));
     await flush(); expect(harness.fetch).toHaveBeenCalledTimes(1);
     completeFirst(Response.json({ id: "first", status: "ready" }));
     await vi.waitFor(() => expect(harness.fetch).toHaveBeenCalledTimes(2));
     const requests = harness.fetch.mock.calls.map(([, init]) => init as RequestInit);
     expect(requests.map(init => ((init.body as FormData).get("file") as File).name)).toEqual(["first.txt", "second.txt"]);
-    expect(requests[0].signal).toBe(requests[1].signal);
+    expect(requests[0].signal).not.toBe(requests[1].signal);
     expect(requests[0].signal?.aborted).toBe(false);
+    for (const cleanup of harness.cleanups) cleanup();
+    expect(requests[1].signal?.aborted).toBe(true);
+    completeSecond(Response.json({ id: "second", status: "ready" }));
     await flush();
   });
 });

@@ -51,6 +51,36 @@ const participant = {
 };
 
 describe("hermit chat service", () => {
+  it("returns the persisted user identity for retries and rejects a latest user that reuses an assistant identity", async () => {
+    const repository = new MemoryHermitChatRepository();
+    const service = createHermitChatService(repository);
+    const input = { sessionId: "session", participant, messages: [textMessage("question", "user", "Original question")], modelName: "model" };
+    const first = await service.persistIncomingMessages(input);
+    expect(first).toEqual({ userMessageId: repository.messages.get("session:question")!.id });
+    expect(await service.persistIncomingMessages({ ...input, messages: [textMessage("question", "user", "Client edited replay")] })).toEqual(first);
+    expect(repository.messages.get("session:question")?.content).toBe("Original question");
+    await service.persistAssistantResponse({ sessionId: "session", participant, modelName: "model", responseMessage: textMessage("answer", "assistant", "Server answer"), retrieval: { query: "question", contextText: "", topK: 0 } });
+    await expect(service.persistIncomingMessages({ ...input, messages: [textMessage("answer", "user", "Forged latest turn")] })).rejects.toMatchObject({ status: 400 });
+    expect(repository.messages.get("session:answer")?.role).toBe("assistant");
+  });
+
+  it("never persists client source/status metadata and stores a server context only on the current user turn", async () => {
+    const repository = new MemoryHermitChatRepository();
+    const service = createHermitChatService(repository);
+    const message = { ...textMessage("user", "user", "question"), metadata: { hermitStatus: "complete", hermit: { version: 1, answerSources: { text: "forged" } } } };
+    const turnContext = { attachments: [{ id: "file", name: "file.txt", size: 20 }], documentContext: null };
+    await service.persistIncomingMessages({ sessionId: "s", participant, messages: [message], modelName: "model", turnContext });
+    expect(repository.messages.get("s:user")?.metadata).toEqual({ hermit: { version: 2, ...turnContext } });
+    await service.persistIncomingMessages({ sessionId: "s", participant, messages: [message], modelName: "model", turnContext });
+    expect(repository.messages.size).toBe(1);
+  });
+
+  it("persists failures before the first text or knowledge read so history can offer retry", async () => {
+    const repository = new MemoryHermitChatRepository();
+    await createHermitChatService(repository).persistAssistantResponse({ sessionId: "s", participant, modelName: "model",
+      responseMessage: { id: "a", role: "assistant", parts: [], metadata: { hermitStatus: "failed" } }, retrieval: { query: "question", contextText: "", topK: 0 } });
+    expect(repository.messages.get("s:a")).toMatchObject({ content: "", metadata: { hermitStatus: "failed" } });
+  });
   it("persists incoming chat messages once per session", async () => {
     const repository = new MemoryHermitChatRepository();
     const service = createHermitChatService(repository);

@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/brand/inter/InterVariable.woff2") format("woff2");
+  unicode-range: U+0000-024F, U+1E00-1EFF, U+20A0-20CF;
+}
+
+@font-face {
   font-family: "Source Han Serif SC";
   font-style: normal;
   font-weight: 200 900;
@@ -204,7 +213,7 @@
   --lh-form-content-action-gap: 1.5rem;
   --lh-form-legend-choice-gap: 0.5rem;
 
-  --font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-hei-stack: "Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif;
   --font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
   --font-sans-stack: var(--font-hei-stack);
@@ -414,7 +423,6 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans-stack);
   font-kerning: normal;
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   overflow-x: clip;
   position: relative;
@@ -577,6 +585,51 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar] {
   transition-duration: var(--lh-motion-medium);
 }
 
+[data-lh-sidebar-attribution] {
+  display: none;
+}
+
+[data-lh-profile-attribution] {
+  display: flex;
+  justify-content: center;
+  padding-block: 1rem;
+}
+
+@media (height < 48rem) {
+  /* Scroll module links independently so the account control stays reachable. */
+  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] > [data-lh-nav-link] {
+    flex-shrink: 0;
+    outline-offset: -2px;
+  }
+}
+
+@media (min-width: 48rem) and (min-height: 48rem) {
+  [data-lh-sidebar-attribution] {
+    display: flex;
+    flex: none;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  [data-lh-main][data-sidebar-pinned="true"] [data-lh-profile-attribution] {
+    display: none;
+  }
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-mobile="true"] {
+  padding-top: max(1.25rem, env(safe-area-inset-top));
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+[data-lh-mobile-navigation]::backdrop {
+  background: transparent;
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) {
   top: 50%;
   left: 0.875rem;
@@ -663,11 +716,9 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-my-link] {
-  width: 100%;
-  min-height: 3rem;
-  justify-content: center;
-  justify-items: center;
-  padding: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-my-notification-dot] {
@@ -998,11 +1049,21 @@ html[data-lighthouse-interface="classic"] [data-lh-home-brand-veil] {
   pointer-events: none;
 }
 
+/* The arrival camera and the existing scroll depth own separate transforms. */
+html[data-lighthouse-interface="classic"] [data-lh-home-brand-scene] {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  isolation: isolate;
+  pointer-events: none;
+}
+
 html[data-lighthouse-interface="classic"] [data-lh-home-brand-bg] {
   z-index: -2;
   inset: -4% 0 -10%;
   background-image: url("/lighthouse-home-hero-bg-v2-realistic-shore.png");
-  background-position: center;
+  /* Keep the lantern (at 86% of the photograph) in frame as cover crops it. */
+  background-position: 86% center;
   background-size: cover;
   transform: translate3d(0, 0, 0) scale(1.035);
   transform-origin: center top;
@@ -1547,7 +1608,7 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
 @keyframes lh-heart-rise-in {
   from {
-    opacity: 0.92;
+    opacity: var(--lh-heart-rise-enter-opacity, 0.92);
     transform: translateY(0.35rem);
   }
   to {
@@ -1558,13 +1619,25 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
 @keyframes lh-heart-soft-in {
   from {
-    opacity: 0.96;
+    opacity: var(--lh-heart-copy-enter-opacity, 0.96);
+    filter: var(--lh-heart-copy-enter-filter, none);
     transform: translateY(0.25rem);
   }
   to {
     opacity: 1;
+    filter: none;
     transform: translateY(0);
   }
+}
+
+@keyframes lh-login-camera {
+  0%, 34% { transform: translate3d(0, 4svh, 0) scale(2.8); }
+  to { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes lh-login-chrome-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1599,6 +1672,32 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-guide-action] {
 
   html[data-lighthouse-interface="classic"] [data-lh-heart-next] {
     animation-delay: 300ms;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-scene] {
+    transform-origin: right 34%;
+    animation: lh-login-camera var(--lh-arrival-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  /* Keep each original animation name so removing the arrival marker cannot replay it. */
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-copy] {
+    --lh-heart-copy-enter-opacity: 0;
+    --lh-heart-copy-enter-filter: blur(2px);
+    animation-delay: calc(var(--lh-arrival-duration) * .46);
+    animation-duration: calc(var(--lh-arrival-duration) * .5);
+    animation-timing-function: ease-in-out;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] [data-lh-home-brand-path] {
+    --lh-heart-rise-enter-opacity: 0;
+    animation-delay: calc(var(--lh-arrival-duration) * .72);
+    animation-duration: calc(var(--lh-arrival-duration) * .27);
+    animation-timing-function: ease-in-out;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-sidebar],
+  html[data-lighthouse-interface="classic"] [data-lh-login-arrival="home"] > [data-lh-header] {
+    animation: lh-login-chrome-in var(--lh-motion-medium) var(--lh-ease-out) calc(var(--lh-arrival-duration) * .81) both;
   }
 }
 
@@ -1662,7 +1761,8 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-closing] p {
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-home-brand-title] {
-    font-size: clamp(3rem, 15vw, 5rem);
+    font-size: clamp(2.75rem, 13vw, 4.5rem);
+    word-break: keep-all;
     white-space: normal;
   }
 

@@ -1,17 +1,18 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { currentVersion } from "@/lib/releases";
+import { latestUserFacingVersion } from "@/lib/releases";
 
 export const RELEASE_READ_KEY = "lighthouse:read-release";
 const CHANGE_EVENT = "lighthouse:release-read";
 let readInMemory: string | null = null;
 
 function getSnapshot() {
+  if (!latestUserFacingVersion) return true;
   try {
-    return readInMemory === currentVersion || localStorage.getItem(RELEASE_READ_KEY) === currentVersion;
+    return readInMemory === latestUserFacingVersion || localStorage.getItem(RELEASE_READ_KEY) === latestUserFacingVersion;
   } catch {
-    return readInMemory === currentVersion;
+    return readInMemory === latestUserFacingVersion;
   }
 }
 function subscribe(onChange: () => void) {
@@ -23,8 +24,9 @@ function subscribe(onChange: () => void) {
   };
 }
 export function markCurrentReleaseRead() {
-  readInMemory = currentVersion;
-  try { localStorage.setItem(RELEASE_READ_KEY, currentVersion); } catch { /* Reading works without browser storage. */ }
+  if (!latestUserFacingVersion) return;
+  readInMemory = latestUserFacingVersion;
+  try { localStorage.setItem(RELEASE_READ_KEY, latestUserFacingVersion); } catch { /* Reading works without browser storage. */ }
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 export function useReleaseUnread() {

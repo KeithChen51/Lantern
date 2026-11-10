@@ -25,8 +25,11 @@ export function HomeBrandHero() {
 
   return (
     <section ref={heroRef} data-lh-home-brand-hero aria-labelledby="home-brand-title">
-      <div ref={bgRef} data-lh-home-brand-bg aria-hidden="true" />
-      <div ref={veilRef} data-lh-home-brand-veil aria-hidden="true" />
+      <link rel="preload" as="image" href="/lighthouse-home-hero-bg-v2-realistic-shore.png" fetchPriority="high" />
+      <div data-lh-home-brand-scene aria-hidden="true">
+        <div ref={bgRef} data-lh-home-brand-bg />
+        <div ref={veilRef} data-lh-home-brand-veil />
+      </div>
       <div ref={copyRef} data-lh-home-brand-copy>
         <p data-lh-home-brand-kicker>精诚服务品牌再出发</p>
         <h1 id="home-brand-title" data-lh-home-brand-title>

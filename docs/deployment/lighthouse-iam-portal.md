@@ -13,7 +13,9 @@
 
 本次测试选择第二行，现有生产继续显式 `AUTH_MODE=guest`。模式由部署配置选择；认证或授权失败不会自动降级访客，也不自动回退原门户。不同模式和 IAM 授权来源的会话隔离，切换后必须重新登录，旧门户或 IAM sync 会话不能直接获得组合模式权限。
 
-登录流程：浏览器打开灯塔 → `/auth/iam/start` → IAM 授权码登录 → `/auth/iam/callback` → 灯塔后端交换 code 并调用 IAM `getUserInfo` → 以可信工号向中台 `POST /sso/admin/subapp/role-query` 查询角色 → 校验同工号、同应用及已知角色 → 建立灯塔会话。IAM token 仅由后端保存和复验，**不发送给中台 `infoByToken`**。中台卡片只需导航至灯塔 `/auth/iam/start`，不传旧门户 token。
+登录流程：浏览器打开灯塔域名首页 `/`，未登录的普通页面导航自动进入 `/auth/iam/start` → IAM 授权码登录 → `/auth/iam/callback` → 灯塔后端交换 code 并调用 IAM `getUserInfo` → 以可信工号向中台 `POST /sso/admin/subapp/role-query` 查询角色 → 校验同工号、同应用及已知角色 → 建立灯塔会话。IAM token 仅由后端保存和复验，**不发送给中台 `infoByToken`**。中台卡片可以保留灯塔域名首页，也可直接导航至 `/auth/iam/start`，不传旧门户 token。
+
+主动退出和回调错误仍停在灯塔登录页供用户重试。其他受保护页面的匿名访问保留现有登录页与站内目标地址。关闭 Cookie 时回调无法通过浏览器事务校验，选择性丢失会话 Cookie 时也不会连续自动重登。IAM 成功回调签发 90 秒的视觉入场标记，绑定本环境、本次会话与完整目标地址；首个匹配且已鉴权的页面文档消耗它，API、资源及预取不触发。标记不承载身份或访问权限，无需数据库迁移。
 
 组合模式只认可固定灯塔角色：
 
@@ -21,7 +23,7 @@
 | --- | --- |
 | `lighthouse_user` | 员工浏览、知识读取、路引对话及已实现的员工功能 |
 | `lighthouse_knowledge_admin` | 员工能力与已有 `knowledge:manage` |
-| `lighthouse_admin` | 员工能力与已有 `knowledge:manage` |
+| `lighthouse_admin` | 员工能力、`knowledge:manage` 和 Web 汇总看板 `analytics:summary` |
 
 无角色或只有未知角色均拒绝登录与访问；未知角色本身不授予能力。固定角色不读取 `PORTAL_KNOWLEDGE_ADMIN_ROLE` / `PORTAL_PLATFORM_ADMIN_ROLE`，也不会产生未实现的平台管理功能。CLI/MCP 仍仅提供员工已有的知识读取能力，不因浏览器管理员身份增加客户端写权限。
 

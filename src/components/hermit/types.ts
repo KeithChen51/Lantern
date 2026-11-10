@@ -107,10 +107,12 @@ function parseCitation(value: unknown): HermitCitation | null {
   const resourceId = readRequiredText(value, "resourceId");
   const versionId = readRequiredText(value, "versionId");
   const title = readRequiredText(value, "title");
-  const source = readRequiredText(value, "source");
+  // Legacy published versions may lack a source label; identity and access are
+  // still established by the verified resource/version, not this display text.
+  const source = typeof value.source === "string" ? value.source.trim() : null;
   const startLine = readOptionalLine(value, "startLine");
   const endLine = readOptionalLine(value, "endLine");
-  if (!resourceId || !versionId || !title || !source || startLine === null || endLine === null) return null;
+  if (!resourceId || !versionId || !title || source === null || startLine === null || endLine === null) return null;
   if (startLine !== undefined && endLine !== undefined && endLine < startLine) return null;
   return { number: value.number, resourceId, versionId, title, source, ...(startLine === undefined ? {} : { startLine }), ...(endLine === undefined ? {} : { endLine }) };
 }
@@ -120,11 +122,11 @@ function parseRecommendation(value: unknown): HermitDocumentRecommendation | nul
   const resourceId = readRequiredText(value, "resourceId");
   const versionId = readRequiredText(value, "versionId");
   const title = readRequiredText(value, "title");
-  const source = readRequiredText(value, "source");
+  const source = typeof value.source === "string" ? value.source.trim() : null;
   const reason = readRequiredText(value, "reason");
   const startLine = readOptionalLine(value, "startLine");
   const endLine = readOptionalLine(value, "endLine");
-  if (!resourceId || !versionId || !title || !source || !reason || startLine === null || endLine === null) return null;
+  if (!resourceId || !versionId || !title || source === null || !reason || startLine === null || endLine === null) return null;
   if (startLine !== undefined && endLine !== undefined && endLine < startLine) return null;
   return {
     id: `recommendation:${resourceId}:${versionId}`,

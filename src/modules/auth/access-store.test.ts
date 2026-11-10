@@ -80,6 +80,21 @@ describe("transactional AccessStore", () => {
     f.db.identityAccount.findUnique.mockResolvedValue({ ...mapping(), provider: "LIGHTHOUSE-PORTAL" });
     expect(await f.store.transaction(async (tx) => tx.employeeActive("000042", "mapped-user"))).toBe(false);
   });
+  it("keeps the same member ID under a separate dealer identity and requires an active dealer", async () => {
+    const { db, store } = dbFixture();
+    const provider = "wecom-auto:wwSyntheticAuto";
+    const memberId = "000042";
+    const dealer = { provider, providerUserId: memberId, userId: "dealer-user", user: { userType: "DEALER_USER", status: "ACTIVE" } };
+    db.identityAccount.findUnique.mockImplementation(async ({ where: { provider_providerUserId: identity } }) =>
+      identity.provider === provider ? dealer : mapping());
+    await expect(store.transaction(tx => tx.ensureDealer(provider, memberId, "经销商"))).resolves.toBe("dealer-user");
+    await expect(store.transaction(tx => tx.employeeActive(memberId, "dealer-user"))).resolves.toBe(false);
+    db.identityAccount.findUnique.mockResolvedValueOnce({ ...dealer, user: { ...dealer.user, status: "DISABLED" } });
+    await expect(store.transaction(tx => tx.dealerActive(provider, memberId, "dealer-user"))).resolves.toBe(false);
+    db.identityAccount.findUnique.mockResolvedValueOnce({ ...dealer, user: { ...dealer.user, userType: "INTERNAL_EMPLOYEE" } });
+    await expect(store.transaction(tx => tx.ensureDealer(provider, memberId, "经销商"))).rejects.toMatchObject({ status: 403 });
+    expect(db.user.create).not.toHaveBeenCalled();
+  });
   it("sends bounded indexed Prisma queries, translates dates, and keeps payload opaque", async () => {
     const f = dbFixture(); f.db.accessRecord.findUnique.mockResolvedValue({ ...row, expiresAt: new Date(row.expiresAt), createdAt: new Date(row.createdAt), updatedAt: new Date(row.updatedAt) });
     await f.store.transaction(async (tx) => { expect(await tx.get("bucket", row.id)).toEqual(row); await tx.put(row); await tx.find("bucket", { subjectId: "owner", expiresAfter: 100 }); });

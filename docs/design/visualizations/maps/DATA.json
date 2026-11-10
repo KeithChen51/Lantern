@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "mode": "local-script-injected",
+  "rule": "Preserve original geographic coordinates and source identifiers. Script wrappers permit offline file:// previews.",
+  "entries": [
+    {
+      "id": "usa",
+      "source": "https://raw.githubusercontent.com/apache/echarts-examples/88ca004030e999073a15303e5fe32462b8fefae2/public/data/asset/geo/USA.json",
+      "features": 52,
+      "sourceSha256": "625fee36be80a5422d21c5a5b922aed3ca028c27c9dc005ad73443bf37852834",
+      "file": "usa.js",
+      "sha256": "680bdfaaa267e4d1f8fe44fb7aba5789851b211ae36a729e68bf05ed78a26e7e"
+    },
+    {
+      "id": "world",
+      "source": "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/world.json",
+      "features": 217,
+      "sourceSha256": "049b334579e5a42d5d16c72d014d380e048e39fc1504049f212acb589484d2fa",
+      "file": "world.js",
+      "sha256": "135a6088c6a0e77e9e9de2d9658d7d1e10406cf824e113855c7c2371a2a86322"
+    }
+  ]
+}

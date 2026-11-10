@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "runtime/**",
+    "docs/design/visualizations/runtime/**",
+    "docs/design/visualizations/maps/*.js",
     "release/**",
     "next-env.d.ts",
     ".understand-anything/**",

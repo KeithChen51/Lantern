@@ -409,9 +409,9 @@ describe("lighthouse design system contract", () => {
     const input = readProjectFile("src/components/hermit/ChatInput.tsx");
     const message = readProjectFile("src/components/hermit/MessageBubble.tsx");
     const css = readProjectFile("src/components/hermit/hermit-v3.module.css");
-    expect(page).toContain("PageHeading");
-    expect(page).toContain("HermitIdentity");
-    for (const token of ["isVisibleMessage", "shouldShowThinkingIndicator", "LhSuggestionList", "data-lh-hermit-composer"]) expect(panel).toContain(token);
+    expect(page).toContain("ChatPanel");
+    expect(page).toContain('data-lh-page-archetype="tool-workspace"');
+    for (const token of ["ConversationHeader", "HermitIdentity", "ScenarioCards", "HistoryDrawer", "RunFeedback", "data-lh-hermit-composer"]) expect(panel).toContain(token);
     for (const token of ["data-lh-focus-origin", "focusIntentRef", "onPointerDownCapture", "onKeyDownCapture", "onFocusCapture", "onBlurCapture", 'type="file"']) expect(input).toContain(token);
     for (const token of ["remarkPlugins={[remarkGfm]}", "normalizeMarkdownTableSeparators", "data-lh-message-table-wrap", "阅读文档", "data-lh-message-meta-note"]) expect(message).toContain(token);
     expect(message).not.toContain("splitAssistantAnswer");
@@ -432,7 +432,11 @@ describe("lighthouse design system contract", () => {
     expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype")');
     expect(globals).toContain('url("/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype")');
     expect(globals).toContain('url("/fonts/brand/smiley-sans/SmileySans-Oblique.woff2") format("woff2")');
-    expect(globals).toContain('--font-hei-stack: "Source Han Sans SC", "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;');
+    const uiFonts = '"Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif';
+    expect(globals).toContain(`--font-hei-stack: ${uiFonts};`);
+    expect(readProjectFile("docs/design/lighthouse-classic-amber-visual-spec.html")).toContain(`--font-hei: ${uiFonts};`);
+    expect(globals).toContain('url("/fonts/brand/inter/InterVariable.woff2") format("woff2")');
+    expect(extractCssBlock(globals, "body", "font-kerning")).not.toContain("tabular-nums");
     expect(globals).toContain('--font-serif-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;');
     expect(globals).toContain('--font-noto-stack: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;');
     expect(globals).toContain("--font-sans-stack: var(--font-hei-stack);");

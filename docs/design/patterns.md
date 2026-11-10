@@ -6,7 +6,7 @@ This document defines the active page and workflow patterns for the Lighthouse p
 
 ## V3 Shared Frame
 
-All pages except the unchanged Heart / 本心 homepage use the shared frame:
+Business pages except the unchanged Heart / 本心 homepage use the shared frame. Public authentication pages have their own frame:
 
 - `main[data-lh-v3]` owns the non-home V3 scope. The existing navigation and shell remain outside that scope.
 - Desktop content starts at `x=128px`, keeps `32px` on the right, begins below the `64px` page header, and is constrained to `1280px`.
@@ -17,6 +17,16 @@ All pages except the unchanged Heart / 本心 homepage use the shared frame:
 The frame is a layout contract, not a new theme. Mirror, Action, Search, Feedback, Admin, and Hermit share the frame while retaining their task-specific density and content order.
 
 ## Product Map
+
+### Employee login entry
+
+- `/login` uses `LoginSurface`: the existing lighthouse/coast image and concise platform introduction sit beside one clearly labeled native login action. Warm paper, amber actions and bundled fonts follow V3; the login frame does not inherit the business sidebar offset.
+- At widths below 768px, the image becomes a compact header above the login area. Content can grow vertically for errors, text zoom and short screens; the login action must remain unobstructed.
+- IAM, portal callback and portal card modes keep their existing labels and instructions. Configuration failures disable the action; service errors and logout feedback stay beside it. The form remains a server-rendered POST with the validated return target, including when JavaScript is unavailable.
+- Only the exact shared decorative image is added to the public brand-asset allowlist. Business images and scripts stay protected. No external fonts, imagery, QR login or new authentication flow is introduced.
+- Identity confirmation, access-denied and device approval retain `AuthSurface`; the image-led entry is specific to `/login`.
+
+### Business areas
 
 | Area | Primary user task | UI character |
 | --- | --- | --- |
@@ -110,6 +120,9 @@ Runtime home pattern:
 - Heart motion uses `--lh-motion-*` and `--lh-ease-*` tokens. Motion should clarify reading order and interaction feedback, not decorate.
 - Heart scroll motion must use `useLhElementScrollProgress`; the global shell transition must use `useLhScrollProgress`. Do not create page-local scroll listeners.
 - Entrance animation is allowed once on page load for hero and major sections; repeated or looping motion is not allowed.
+- A successful IAM login opens on full-screen sea fog. Two overlapping, textured banks travel apart before the camera pulls back to the existing home cover; a lower mist layer drifts away last. Allow 2.3 seconds on Home and 780ms on other destinations. The trusted server arrival path scopes this effect to the first destination, and the shell consumes it before later navigation.
+- The arrival camera uses `data-lh-home-brand-scene`; scroll depth continues to transform its inner background. Keep the approved image as a single scene and preload it with high priority on Home. The cloud curtain stays pointer-transparent and finishes in CSS, so delayed scripts or image loading cannot block the page. Reduced-motion users get the destination directly.
+- Align the cover at the tower's horizontal position in the photograph (86%) so it stays in view on desktop and portrait screens. Pull back from the right edge of the same image and wrap the mobile title between complete values.
 - Scroll-driven motion is allowed only for cover depth and the sidebar surface transition. Other product pages should not use scroll-driven chrome changes.
 - Hover motion may use opacity and transform only. It must not change layout dimensions, spacing, or content order.
 - `prefers-reduced-motion` must disable Heart page motion and keep all content immediately available.
@@ -123,13 +136,19 @@ Runtime home pattern:
 | Mirror / 镜鉴 | Shared heading, featured case plus quiet upcoming copy, then comparison or case cards. | One-column case list; featured case stays first. | Evidence and reflection through service cases. |
 | Action / 笃行 | Shared heading, equal-track case directory, filter/status row, expandable method preview, long-form case reading. | One-column directory; method preview expands inline before entering the reading view. | Translate principles into concrete action. |
 | Search / 知识资源 | Shared heading, query field, scoped result list, explicit empty/error states. | Query and filters stack; result rows keep source and read action visible. | Find published knowledge without creating a second navigation shell. |
-| Feedback / 意见反馈 | Shared heading, form panel, helper/error stack, success state. | Single-column form with full-width action and preserved entered content on error. | Collect product feedback and recovery context. |
+| Feedback / 建议广场 | Compact horizontal suggestion cards: 22px titles, 16px single-line excerpts, aligned author/category/status metadata and a fixed interaction column. Scope tabs (all / participated / authored) are separate from labeled sort and status selects; category chips occupy their own row. Each control preserves the other choices and resets pagination. Publishing opens on demand. | Stack scope, sort/status controls and horizontally scrollable types without shrinking their 44px targets. Give 18px two-line titles and 14px excerpts the full card width. Place author, short category and status alongside horizontal interactions below, wrapping interactions on narrow screens. Return to the previous list position and filters; old shared URLs remain readable. Existing discussion appears before opening the comment editor. Preserve keyboard focus and employee draft recovery. | Discuss platform and service culture suggestions, follow responses and private employee notifications. |
 | Admin / 内容维护 | Shared heading, access state or dense editing surface, status and save actions. | Controls stack; table/list becomes readable rows with explicit actions. | Maintain knowledge and permissions with operational density. |
-| Hermit / 路引 | Shared heading with Hermit identity, centered conversation, composer, recommendations, optional document reader. | Conversation remains primary; reader becomes an in-page view with return to chat. | Answer service-culture questions and let users read and ask about knowledge documents. |
+| Hermit / 路引 | Centered start with identity, composer and three optional prompt shortcuts; compact conversation header after sending, bottom composer, optional reader and account history drawer. | Prompt cards stack, attachments wrap; reader becomes an in-page view with return to chat. | Use Lighthouse knowledge to find principles, compare cases and analyze materials. |
 
 ### Knowledge resource reading
 
-Hub-backed documents and cases use the existing cultural-reading / case-workflow archetypes. The shared ResourceView keeps an editorial title, a bounded reading column, and a quiet desktop contents rail; mobile contents collapse into a disclosure. Markdown headings link to original source lines, while the repeated document title is omitted only from rendering. Downloads and version-local citations retain the original content unchanged.
+Hub-backed documents and cases use the existing cultural-reading / case-workflow archetypes. The shared ResourceView keeps an editorial title, a bounded reading column, and a quiet desktop contents rail. At widths up to 900px, non-embedded articles have a lightweight fixed return / contents / top bar with room reserved below the article and safe-area padding; embedded readers retain their host controls. Markdown headings link to original source lines, while the repeated document title is omitted only from rendering. Downloads and version-local citations retain the original content unchanged.
+
+`ReadingEntryLink` and `ReadingListPosition` preserve the originating `/action` or `/search` URL and a one-time tab-local scroll snapshot. Return URLs must pass the internal list allowlist; direct article access has a meaningful default. Browser Back retains the same position behavior. Action filters use GET `q` / `tag` parameters and actual readable-resource tags, with clear and empty-result states.
+
+Mirror-to-Hermit entry points carry an editable question and resolve the currently readable publication on the server. They never auto-send. Empty composers can be prefilled; an existing draft or conversation requires an explicit add-to-draft action that preserves existing text. Unavailable sources are explained and must not appear as attached citations.
+
+Knowledge management entry points are shown only to principals with `knowledge:manage`; server authorization remains mandatory. Feedback is available to employees only; guest navigation omits its entry and server guards protect its data.
 
 Raw file paths, resource IDs, and citation IDs belong in the source disclosure at the end, not in the reading header or search excerpts. Source images that are unavailable are labeled as unavailable rather than rendered as broken links. The Home/Heart surface retains HomeBrandHero and its value-path anchor before the Hub-backed article.
 
@@ -195,8 +214,8 @@ UI requirements:
 
 V3 Hermit contract:
 
-- The title block uses the shared page heading and a small amber Hermit identity mark. The navigation remains the original Lighthouse rail.
-- The empty state leads with “把现场的难题，一起理清。” and keeps three high-quality suggested questions close to the composer.
+- Current interaction authority: [Hermit knowledge workspace](hermit-authoritative-definition.md), confirmed 2026-10-27; earlier Hermit layout examples are archived. The navigation remains the original Lighthouse rail.
+- The empty state leads with “让灯塔知识，帮你找到下一步。” and places the composer centrally with three optional prompt shortcuts below it. Clicking fills an editable draft; cards have no persistent selected state and do not select a mode.
 - The composer places the writing area above the attachment and send tools. Its states are empty, input, processing, disabled, and keyboard focus.
 - Upload supports PDF, Word, TXT, and Markdown in the UI. Each attachment exposes name, size, upload/readiness status, cancel, retry, and remove actions; unfinished or failed attachments cannot be sent.
 - A recommendation identifies document source, title, related chapter, and reason. Opening it uses an in-page reader and preserves the current conversation.
@@ -204,7 +223,9 @@ V3 Hermit contract:
 - There is no artifact or deliverable workspace. Model and Harness remain implementation details and do not become navigation labels.
 
 - Prompt entry is prominent but not flashy.
-- Suggested questions are guidance chips, not decorative pills.
+- Pending files are compact tiles immediately above the composer, left aligned and wrapping; sent file context stays removable. Restrictions are available on demand.
+- Generation leaves the draft editable. Real execution events drive progress; failure and stop appear in the associated response position. Retry never duplicates the question or overwrites the next draft.
+- Account history uses a dismissible drawer with owned conversations, pagination, loading/empty/error states and keyboard focus return. Expired files are disclosed and excluded from resumed context.
 - Responses distinguish assistant answer, source/evidence, and next-step recommendation.
 - Loading and retry states are clear.
 - User and assistant message bubbles use readable contrast and shared tokens.
@@ -212,7 +233,7 @@ V3 Hermit contract:
 
 Runtime migration rule:
 
-- Hermit chat uses `LhChat*`, `LhMessage*`, and `LhSuggestionList` primitives. Page files keep behavior, data flow, and role semantics; visual styling belongs to `globals.css` token rules and component primitives.
+- Hermit reuses `LhChat*`, `LhMessage*`, buttons and typography tokens. Dedicated composition components are defined in [hermit-components.md](hermit-components.md); module CSS owns their structure without affecting the global shell.
 - Hermit auto-scroll respects `useLhReducedMotion`; loading or typing indicators use `LhLoadingGlyph`, not page-local spinner classes.
 - Migrated Hermit files are covered by the design-system test migration list. They should not reintroduce local Tailwind text sizes, raw font weights, ad hoc rounded corners, `shadow-lh-*`, or arbitrary gradient backgrounds.
 
@@ -267,6 +288,7 @@ Admin surfaces are work tools. They should be denser, more neutral, and more exp
 Required patterns:
 
 - Table or list first, with filters visible.
+- 平台管理的三个页面共用顶部导航。当前标签以深琥珀文字和下划线标记，内容区直接进入工作区。路引记录使用独立的表格滚动区，标签、筛选、表头和分页在浏览记录时保持可见。
 - Status badges with semantic colors.
 - Row actions on hover or in a compact action column.
 - Bulk action toolbar when selection is active.
@@ -279,6 +301,26 @@ Rules:
 - Do not use decorative amber or glow to signal importance.
 - Do not use global grid texture, radial glow, or translucent floating sections as default product page backgrounds.
 - Use compact density where users compare many rows.
+
+### Switching chart views in the admin dashboard
+
+The access calendar and PV/UV trend share a chart card. Use the same slots in both views.
+
+| Slot | Layout and behavior |
+| --- | --- |
+| Header | Title and one-line caption on the left, persistent view switch on the right. Stack the switch below the title when the card's inner width is 32rem or less. |
+| Toolbar | The calendar total and trend range selector occupy the same leading slot. The legend occupies the trailing slot. At 48rem or less, both legends use a separate row with space for wrapped labels. |
+| Plot | Center both plots on a shared rail up to 68rem wide and reserve 14rem of height, including while loading, on failure and when empty. Keep calendar cells square and scroll the calendar locally when needed. |
+| Daily readout | Show the selected day, its measured values or collection status, and the displayed period. Use the same background and spacing in both views. Allow the period its own line on small screens. |
+| Help | Use a single disclosure below the readout for chart navigation, date boundaries and counting rules. |
+
+Keep the view switch mounted and focusable. Preserve the chosen range, day and calendar position when returning to a view. A switch or range request must leave the following report in place. Check at desktop, tablet and phone sizes, including delayed and failed chart requests.
+
+For the calendar, use soft paper and warm apricot tones for the two lower positive ranges. For the higher ranges, soften orange-gold and classic amber with 14% neutral gray at similar lightness. Use the same fills in the legend and cells. Give zero a quiet neutral fill and missing dates a diagonal hatch. A selected date has a light and dark inset edge that remains visible at either end of the scale. At the default text size, use 16px desktop and 14px phone cells with 4px corners and 4px gaps between rows and columns. Keep the 365-day calendar, month and weekday axes, and actual PV ranges in its legend; the rounded matrix reference informs spacing and color, not the data model.
+
+Use independent series on a shared zero-based count scale for daily PV and UV. Draw an amber PV outline over light daily stems with a faint fill to the baseline. On long ranges, thin the stems to fit the available width while retaining every observed value in the outline. Highlight the recorded peak with an amber stem and its count. Distinguish UV by its dash pattern and square selection marker. Show missing dates as gaps and measured zeros on the baseline.
+
+Label the PV average directly on its horizontal reference line. On hover, tap or keyboard navigation, highlight the selected day and show its two counts and PV comparison in a compact tooltip. Keep the tooltip inside the plot near either end of the time axis and out of the card's layout flow.
 
 ## Forms
 
@@ -332,7 +374,7 @@ Mobile is part of the V3 acceptance gate. It keeps the same information order wh
 
 The visual spec controls code through typography tokens, not page-by-page font choices.
 
-- Product chrome, navigation, controls, forms, data tables, and admin flows use PingFang SC through `--font-sans-stack`.
+- Product chrome, navigation, controls, forms, data tables, and admin flows use `--font-sans-stack` for platform Chinese fonts and bundled Inter for Latin text and digits.
 - Page display titles and explicit editorial moments use Source Han Serif SC through `--font-serif-stack`; they do not turn the surrounding controls into serif UI.
 - Reusable primitives and navigation consume `--type-*`, `--title-*`, `--leading-*`, and `--weight-*`; page-local exceptions are migration debt and should not be copied into new components.
 - When the type scale changes, update `tokens.md`, the HTML visual spec, `globals.css`, shared primitives, navigation, and design-system tests together.

@@ -41,7 +41,7 @@ Use the existing Lighthouse framework and treat V3 as a visual system update acr
 | Use sans-serif for product UI, forms, nav, tables, cards, and Hermit chat. | Use serif as ordinary UI body text. |
 | Use serif sparingly for quotations, chapter-like moments, or explicit editorial emphasis. | Apply literary heading/body styling to admin, review queues, filters, or controls. |
 | Use `--type-*`, `--title-*`, `--leading-*`, and `--weight-*` in reusable primitives and navigation. | Hard-code `text-xs`, `text-sm`, `font-bold`, or `leading-6` as the source of truth in shared UI. |
-| Keep PingFang SC first in the sans stack and Source Han Serif SC first in the serif stack. | Reintroduce Aptos, Playfair Display, or runtime typeface switching into platform UI. |
+| Use Inter for Latin UI text and digits, PingFang SC or Microsoft YaHei for Chinese UI text, and Source Han Serif SC for editorial headings. | Reintroduce Aptos, Playfair Display, or runtime typeface switching into platform UI. |
 | Keep normal text readable with strong enough contrast. | Hide important constraints or metadata in low-opacity text. |
 | Use the large Source Han Serif display line only for the homepage / Heart brand cover. | Reuse the homepage display scale for ordinary page titles, cards, admin panels, or empty states. |
 

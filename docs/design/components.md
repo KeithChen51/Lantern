@@ -66,6 +66,32 @@ Existing primitives:
 
 These are the runtime base. The design system should strengthen their semantics before adding many new primitives.
 
+<a id="brand-attribution"></a>
+
+## 技术署名
+
+灯塔是产品名称，「Powered by SPACE AI Native」说明技术归属。共享组件 `BrandAttribution` 提供两种构图、三款固定配色。登录页、展开侧栏和「我的」页尾统一使用琥珀强调款，在暖纸底上直接呈现浅暖灰字标与琥珀双轨道。[查看六个原尺寸样张](lighthouse-classic-amber-visual-spec.html#brand-attribution)
+
+| 款式 | 使用表面 | 固定用色 |
+| --- | --- | --- |
+| 深墨单色 | 暖纸 `#F3EFE0` 或暖白 `#FFFDF8`，日常默认 | 全部字形与双轨道使用深墨 `#2C2C2C`。 |
+| 纯白单色 | 深色表面，样张底色为 `#2C2C2C` | 全部字形与双轨道使用纯白 `#FFFFFF`。 |
+| 琥珀强调 | 暖白 `#FFFDF8`，以及上述三个暖纸署名位置 | SPACE 字标（含 A）用浅暖灰 `#8D867B`，Powered by 与 NATIVE 小字用暖灰 `#726B61`。双轨道取颜色系统的主强调色 `--lh-classic-amber`（`#D97706`），AI 小字取文字色 `--lh-primary-text`（样张为 `#9B5C14`）。 |
+
+三款都是透明底、平面材质。颜色由款式固定，页面仅选择适用款式。小字对比度至少 4.5:1。暖白样张的轨道对比度为 3.13:1，AI 小字为 5.25:1。三个暖纸落点使用同一套原色，装饰轨道在暖纸上的对比度为 2.77:1，AI 小字为 4.63:1，其余小字为 4.57:1。[查看主琥珀与文字色样](lighthouse-classic-amber-visual-spec.html#color)
+
+| 灯塔场景 | 构图与位置 |
+| --- | --- |
+| 桌面展开侧栏（240px） | 在「我的」入口下方留 24px，居中放置标准竖向 `standard-stacked`，SPACE 宽 160px。桌面视口宽、高均达到 48rem 时展示。 |
+| 侧栏收起（80px）、短屏或移动端 | 署名落在「我的」页尾，使用紧凑横向 `compact-horizontal`。SPACE 宽 108px，整组宽 243px。 |
+| 员工登录 | 紧凑横版在右栏底部沿表单中线居中。手机端跟随登录帮助进入文档流。 |
+
+同一产品视口最多一处，侧栏已展示时「我的」页尾省略。四周净空至少为 SPACE 字标高度的一半，且每侧至少 16px。可用宽度不足时另选容器，不缩放、裁切或抽取 SPACE 图形代替完整署名。本心封面、顶部标题、主导航项、业务卡片、对话消息与操作按钮组均不作署名位置。
+
+署名作为一幅静态图呈现，只有一个可读名称 `Powered by SPACE AI Native`。内部字形对辅助技术隐藏，整体不占键盘焦点。正式 SVG 的轮廓、比例、间距和轨道前后关系必须保留。SPACE 的叠放顺序为后轨道、S/P/C/E、A、前轨道，两版各有专用的 Powered by、AI、NATIVE 三张字形蒙版。
+
+**资产出处。** 上游为《通用设计组件与skill》的 `design-consultant/templates/component-library.html#brand-attribution` 与 `references/brand-attribution-placement.md`，本次核对的源码版本为 `bc60ea6f8b61`。样张随仓库携带十张正式 SVG 蒙版的离线编码。更新时从仓库根目录运行 `node docs/design/brand-attribution/sync-masks.mjs <design-consultant目录> --check` 比对原件；经确认更新资产时去掉 `--check` 重新生成。
+
 ## Component Principles
 
 - One component should encode one meaning. Do not make one generic badge carry status, role, filter, code, and metric semantics.
@@ -314,6 +340,8 @@ Rules:
 
 ## Chat And Assistant Surfaces
 
+Hermit's current composition and states are defined in [hermit-components.md](hermit-components.md). The approved 2026-10-27 workspace uses optional prompt shortcut cards, a compact conversation header, a history drawer and compact pending-file tiles. These compose the primitives below; they do not create another global shell or a mode selector.
+
 Runtime base: `LhChatShell`, `LhChatHeader`, `LhChatMain`, `LhChatFooter`, `LhChatInputShell`, `LhChatTextarea`, `LhChatSubmitButton`, `LhMessageRow`, `LhMessageAvatar`, `LhMessageBubble`, and `LhSuggestionList`.
 
 Use for Hermit-like assistant interfaces where the user submits a scenario and receives structured guidance.
@@ -398,6 +426,7 @@ Rules:
 
 - Product logo links to the primary landing page.
 - Primary nav remains stable across modules.
+- The bottom “我的” entry uses the same `SidebarLink` and `data-lh-nav-*` anatomy as module links: a 24px icon, shared copy/active/hover/focus styles, and an icon-only collapsed state. Expanded mode keeps the employee name as truncated secondary text with the full value in the title. The unread dot remains attached to the personal entry and has an accessible description.
 - Deep pages show a back link or breadcrumb.
 - Actions state their scope before the user commits.
 
@@ -430,3 +459,5 @@ Rules:
 ## Text-entry focus boundary
 
 Text fields use one focus boundary: the existing rounded border changes to the accent color, with a subtle outer halo. Do not draw an outline around the editable text inside a composite control. Mark composite controls with `data-lh-input-frame`; their frame owns focus-within while the nested input/textarea has no extra outline or shadow. Keyboard focus remains visible; buttons, links, checkboxes and radio controls retain their focus-visible indicators. Invalid fields retain the error color on focus.
+
+The current Hermit composer is an explicit exception: focusing text keeps its default neutral boundary and light shadow, with no added accent border, halo, or inner rectangle. The caret identifies text focus; its buttons and links retain keyboard focus-visible indicators. See [Hermit components](hermit-components.md).

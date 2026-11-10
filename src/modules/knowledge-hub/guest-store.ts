@@ -1,5 +1,12 @@
 import { defaultVersion, HubError } from "./service";
-import type { HubResource, HubStore, HubTransaction } from "./types";
+import type { HubResource, HubStore, HubTransaction, HubVersion } from "./types";
+
+function publicationVisibility(version: HubVersion) {
+  const metadata = version.metadata;
+  // Legacy publications only have the original visibility snapshot. An explicit
+  // publication snapshot takes precedence, including an unknown/invalid value.
+  return metadata && "publicationVisibility" in metadata ? metadata.publicationVisibility : metadata?.visibility;
+}
 
 /** Filter before search, citations, downloads and AI tools see any resource data. */
 function guestResource(resource: HubResource | null, now: string): HubResource | null {
@@ -7,9 +14,9 @@ function guestResource(resource: HubResource | null, now: string): HubResource |
   // Resolve expiry/scheduling against the complete history before hiding versions.
   // Otherwise removing an internal retired version could revive an older policy.
   const effective = defaultVersion(resource, now);
-  if (!effective || effective.metadata?.visibility !== "public") return null;
+  if (!effective || publicationVisibility(effective) !== "public") return null;
   // Snapshotless legacy versions have unknown historical visibility: deny them.
-  const versions = resource.versions.filter(version => version.publishedAt && version.metadata?.visibility === "public");
+  const versions = resource.versions.filter(version => version.publishedAt && publicationVisibility(version) === "public");
   // Do not resurrect an older public version after a restricted publication.
   if (!versions.some(version => version.id === resource.publishedVersionId)) return null;
   return { ...resource, versions };

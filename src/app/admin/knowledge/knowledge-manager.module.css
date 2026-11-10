@@ -3,8 +3,6 @@
   padding-bottom: 4rem;
 }
 
-.managerPage :global([data-lh-page-heading]) { margin-bottom: 1.75rem; }
-.managerPage :global([data-lh-page-heading-actions]) { display: flex; flex-wrap: wrap; gap: .5rem; }
 .topNotice { margin-bottom: 1rem; }
 
 .workspace {

@@ -109,12 +109,12 @@ export class IamIdentityClient {
     return { token: body.access_token, expiresAt };
   }
 
-  async identity(token: string): Promise<{ account: string; displayName: string }> {
+  async identity(token: string): Promise<{ account: string; displayName: string; employeeNo: string }> {
     if (!credential(token)) throw invalidLogin();
     const url = new URL("/gateway/bam-protocol-service/oauth2/getUserInfo", this.config.baseUrl);
     url.search = new URLSearchParams({ access_token: token, client_id: this.config.clientId }).toString();
     const body = await this.request(url, { method: "GET", headers: { accept: "application/json" } });
     if (typeof body.loginName !== "string" || !/^[A-Za-z0-9._-]{1,80}$/.test(body.loginName)) throw invalidLogin();
-    return { account: body.loginName, displayName: body.loginName };
+    return { account: body.loginName, displayName: body.loginName, employeeNo: body.loginName };
   }
 }

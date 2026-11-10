@@ -4,7 +4,43 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>灯塔平台 Classic Amber V3 视觉规范</title>
+  <link rel="stylesheet" href="brand-attribution/masks.css" />
+  <link rel="stylesheet" href="brand-attribution/signature.css" />
+  <link rel="stylesheet" href="brand-attribution/specimen.css" />
   <style>
+    @font-face {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url("../../public/fonts/brand/inter/InterVariable.woff2") format("woff2");
+      unicode-range: U+0000-024F, U+1E00-1EFF, U+20A0-20CF;
+    }
+
+    @font-face {
+      font-family: "Source Han Sans SC";
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url("../../public/fonts/brand/source-han-sans-cn/SourceHanSansCN-Regular.otf") format("opentype");
+    }
+
+    @font-face {
+      font-family: "Source Han Sans SC";
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+      src: url("../../public/fonts/brand/source-han-sans-cn/SourceHanSansCN-Medium.otf") format("opentype");
+    }
+
+    @font-face {
+      font-family: "Source Han Sans SC";
+      font-style: normal;
+      font-weight: 700 900;
+      font-display: swap;
+      src: url("../../public/fonts/brand/source-han-sans-cn/SourceHanSansCN-Bold.otf") format("opentype");
+    }
+
     :root {
       --lh-ink: #2c2c2c;
       --lh-ink-soft: color-mix(in srgb, #2c2c2c 74%, white);
@@ -88,7 +124,7 @@
       --weight-bold: 700;
       --weight-extrabold: 800;
       --weight-black: 900;
-      --font-hei: "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+      --font-hei: "Inter", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang TC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", sans-serif;
       --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", SimSun, serif;
       --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
@@ -179,7 +215,7 @@
 
     .nav a:hover,
     .nav a.is-active { background: rgba(217, 119, 6, 0.08); color: var(--lh-primary-text); }
-    .main { display: grid; gap: 30px; min-width: 0; padding-bottom: 56px; }
+    .main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; min-width: 0; padding-bottom: 56px; }
     .hero { padding: var(--space-6) var(--space-2) 18px; }
 
     .eyebrow,
@@ -789,7 +825,9 @@
         <a href="#grid">网格</a>
         <a href="#shadow">阴影</a>
         <a href="#icon">图标</a>
+        <a href="#brand-attribution">品牌署名</a>
         <a href="#components">组件</a>
+        <a href="#visualizations">数据可视化</a>
         <a href="#accessibility">可访问性</a>
         <a href="#states">交互状态</a>
         <a href="#anatomy">组件结构</a>
@@ -805,7 +843,7 @@
       <section id="v3-baseline" class="section">
         <div class="section-header"><span class="section-kicker">V3 / Current Baseline</span><h2>跨页面视觉系统</h2><p class="section-intro">V3 保留本心首页与灯塔原有导航框架；其余页面共享同一页头、栅格、卡片、表单、阅读和状态规则。Figma 完整系统：<a href="https://www.figma.com/design/pTRlWu7oWNW7LqLCFr9262?node-id=121-983">node 121:983</a>。</p></div>
         <div class="token-grid">
-          <article class="card"><h3>Canonical palette</h3><p><code>#F3EFE0</code> paper · <code>#FFFDF8</code> warm white · <code>#F7F4EC</code> quiet · <code>#DED9CD</code> line · <code>#2C2C2C</code> ink · <code>#666158</code> secondary · <code>#A65D12</code> amber action · <code>#F3E5CE</code> selected.</p></article>
+          <article class="card"><h3>Canonical palette</h3><p><code>#F3EFE0</code> paper · <code>#2C2C2C</code> ink · <code>#D97706</code> amber · <code>#9B5C14</code> small amber text · <code>#9B7A4C</code> brass · <code>#806744</code> small brass text. <a href="#color">颜色角色以颜色系统为准。</a></p></article>
           <article class="card"><h3>Shared rhythm</h3><p>Page title <code>44/56</code> desktop and <code>32/44</code> mobile; body <code>16/28</code>; controls <code>14/22</code>; metadata <code>12/20</code>; cards <code>16px</code>; controls <code>8px</code>; Hermit composer <code>18px</code>.</p></article>
           <article class="card"><h3>Page frame</h3><p>Desktop content starts at <code>x=128px</code>, keeps a <code>32px</code> right gutter, begins below the <code>64px</code> header, and is constrained to <code>1280px</code>. Mobile uses <code>20px</code> padding and one column.</p></article>
         </div>
@@ -956,7 +994,8 @@
               <span>标题使用思源宋建立“手册、灯塔、价值文本”的编辑感。正文保持足够对比，不用过低透明度制造高级感。</span>
             </div>
             <ul class="spec-list">
-              <li><b>UI 字体</b><span><code>--font-hei</code>：苹方优先，用于导航、表单、按钮、后台表格和普通 UI 正文。</span></li>
+              <li><b>UI 字体</b><span>导航、表单和正文采用系统中文字体。Windows 使用微软雅黑 UI 或微软雅黑，iOS 和 macOS 使用苹方 SC，缺少这些字体时使用内置思源黑体。</span></li>
+              <li><b>英文与数字</b><span>Lighthouse、PDF、v1.6.1 与 09:48 使用内置 Inter。正文采用自然字宽，统计指标和数值列使用等宽数字。</span></li>
               <li><b>标题字体</b><span><code>--font-serif</code>：思源宋优先，用于页面主标题、价值阅读标题和编辑性段落。</span></li>
               <li><b>排版基准</b><span>正文从 15-16px 起步，控件 14px，说明文字 12-13px；页面标题只在真正的顶层场景使用 40-72px，不复制到模块标题。</span></li>
               <li><b>首页封面</b><span>首页/本心首屏可使用 64-100px 思源宋品牌主张，一整行横排优先；第二屏开始回到常规阅读层级。</span></li>
@@ -994,12 +1033,12 @@
               <div class="heading-row">
                 <span class="heading-role"><b>Card Title</b><code>--title-card</code></span>
                 <strong class="heading-sample heading-card">低阴影低噪声</strong>
-                <span class="heading-note">思源宋或苹方，20px，700，1.25。用于卡片、面板和表单小节标题。</span>
+                <span class="heading-note">思源宋或系统中文无衬线，20px，700，1.25。用于卡片、面板和表单小节标题。</span>
               </div>
               <div class="heading-row">
                 <span class="heading-role"><b>Kicker / Label</b><code>--title-kicker</code></span>
                 <strong class="heading-sample heading-kicker">07 / Iconography</strong>
-                <span class="heading-note">苹方，12px，900，0.12em 字距。只做结构定位，不承载正文信息。</span>
+                <span class="heading-note">系统无衬线，12px，900，0.12em 字距。只做结构定位，不承载正文信息。</span>
               </div>
             </div>
           </article>
@@ -1086,7 +1125,7 @@
           </div>
 
           <div class="grid two">
-            <article class="card"><h3>Operational Shell</h3><p>默认产品壳层使用奶油色浮动侧栏、Solar 图标、搜索、通知、清晰 focus 和固定导航顺序。镜鉴、笃行、路引、Workshop、Admin 和详情页都使用这一状态。</p></article>
+            <article class="card"><h3>Operational Shell</h3><p>默认产品壳层使用奶油色浮动侧栏、Solar 图标、搜索、通知、清晰 focus 和固定导航顺序。镜鉴、笃行、路引、Workshop、Admin 和详情页都使用这一状态。“我的”复用同一导航组件与 24px 图标；展开时姓名作为可截断的次级文字，收起时仅保留图标和未读提示。</p></article>
             <article class="card"><h3>Immersive Home Shell</h3><p>首页/本心封面可通过 <code>data-home-surface="true"</code> 降低侧栏存在感，并用 <code>--lh-home-nav-progress</code> 随滚动自然回到 Operational Shell。它不是全站深色模式。</p></article>
           </div>
 
@@ -1132,6 +1171,86 @@
         </div>
       </section>
 
+      <section id="brand-attribution" class="section" aria-labelledby="brand-attribution-title">
+        <div class="section-header">
+          <span class="section-kicker">Classic Amber / 技术归属</span>
+          <h2 id="brand-attribution-title">品牌署名</h2>
+          <p class="section-intro">灯塔标识产品身份。「Powered by SPACE AI Native」说明技术提供方。下列样张均为正式字形，上为标准竖向，下为紧凑横向。</p>
+        </div>
+        <div class="section-body">
+          <div class="signature-specimens">
+            <figure>
+              <div class="signature-stage">
+                <span class="space-signature" data-tone="dark" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+                <span class="space-signature space-signature--compact" data-tone="dark" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+              </div>
+              <figcaption><strong>深墨单色</strong>用于暖纸与暖白表面，全部字形和轨道均为深墨色。</figcaption>
+            </figure>
+            <figure>
+              <div class="signature-stage signature-stage--ink">
+                <span class="space-signature" data-tone="light" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+                <span class="space-signature space-signature--compact" data-tone="light" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+              </div>
+              <figcaption><strong>纯白单色</strong>用于深色表面，全部字形和轨道反白。</figcaption>
+            </figure>
+            <figure>
+              <div class="signature-stage signature-stage--warm-white">
+                <span class="space-signature" data-tone="amber" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+                <span class="space-signature space-signature--compact" data-tone="amber" role="img" aria-label="Powered by SPACE AI Native">
+                  <span class="space-signature__by" aria-hidden="true"></span>
+                  <span class="space-signature__mark" aria-hidden="true">
+                    <span class="space-signature__orbit-back"></span><span class="space-signature__wordmark"></span>
+                    <span class="space-signature__focus"></span><span class="space-signature__orbit-front"></span>
+                  </span>
+                  <span class="space-signature__descriptor" aria-hidden="true"></span>
+                </span>
+              </div>
+              <figcaption><strong>琥珀强调</strong>登录页、展开侧栏和「我的」页尾均使用此款。浅暖灰字标配主琥珀色双轨道，AI 小字采用深琥珀色。<a href="#color">查看色样</a></figcaption>
+            </figure>
+          </div>
+          <div class="signature-placement">
+            <h3>尺寸与落位</h3>
+            <p>竖版 SPACE 宽 160px，适合 240px 展开侧栏的次级工具下方。横版 SPACE 宽 108px，整组宽 243px，适合「我的」、登录或授权流程的页尾。</p>
+            <p>侧栏收至 80px 或进入手机布局时，将署名留给「我的」页尾。同一产品视口最多一处。四周净空至少为 SPACE 字标高度的一半，且不小于 16px。</p>
+          </div>
+        </div>
+      </section>
+
       <section id="components" class="section">
         <div class="section-header"><span class="section-kicker">08 / Components</span><h2>组件样式</h2><p class="section-intro">组件样式对应当前 <code>LhButton</code>、<code>LhChip</code>、<code>LhStatusBadge</code>、<code>LhPanel</code>、<code>LhCard</code>、<code>LhTextField</code>、<code>LhDataTableShell</code> 的视觉语言。</p></div>
         <div class="section-body grid">
@@ -1140,6 +1259,28 @@
           <article class="card"><h3>Form</h3><p><code>LhTextField</code>、<code>LhTextArea</code>、<code>LhFieldGroup</code> 与 <code>LhChoiceGroup</code> 共享同一套排版和垂直节奏合同。</p><div class="form-grid" style="margin-top:16px"><div class="field"><label for="scenario">场景名称</label><input id="scenario" value="客户等待时间过长" /><span class="helper">输入应对应真实服务现场，不使用抽象口号。</span></div><div class="field"><label for="owner">提交角色</label><input id="owner" value="服务顾问" /><span class="helper">字段高度与按钮保持同一视觉节奏。</span></div><div class="field" style="grid-column:1 / -1"><label for="note">处理建议</label><textarea id="note">先确认客户的等待感受，再说明当前进度与下一步可选择方案。</textarea></div></div><div class="form-rhythm-grid"><span class="form-rhythm-item"><code>--lh-form-label-control-gap</code><b>8px · label → control</b></span><span class="form-rhythm-item"><code>--lh-form-field-gap</code><b>20px · field → field</b></span><span class="form-rhythm-item"><code>--lh-form-content-action-gap</code><b>24px · content → action</b></span><span class="form-rhythm-item"><code>--lh-form-control-message-gap</code><b>8px · control → message</b></span><span class="form-rhythm-item"><code>--lh-form-message-gap</code><b>8px · helper → error</b></span><span class="form-rhythm-item"><code>--lh-form-legend-choice-gap</code><b>8px · legend → choices</b></span></div></article>
           <article class="callout"><span class="callout-icon"><svg class="solar-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2s10 4.477 10 10" opacity=".5"/><path fill="currentColor" d="M12 17.75a.75.75 0 0 0 .75-.75v-6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75M12 7a1 1 0 1 1 0 2a1 1 0 0 1 0-2"/></svg></span><span><strong>Classic Amber 的 callout 用于当前页面内的提示，不用于全局装饰。</strong><p>如果一个区块只是为了好看而加提示框，应改为普通段落或区域说明。</p></span></article>
           <div class="table-wrap"><table><thead><tr><th>Component</th><th>Token</th><th>Rule</th><th>Usage</th></tr></thead><tbody><tr><td>Card / Panel</td><td><code>--lh-card-radius</code></td><td>16px + light border + soft surface</td><td>案例卡、数据区、内容面板</td></tr><tr><td>Button / Input</td><td><code>--lh-control-radius</code></td><td>8px + consistent height rhythm</td><td>操作按钮、搜索、输入控件</td></tr><tr><td>Data table</td><td><code>--grid-table-min</code></td><td>720px minimum, 13px 16px cell padding</td><td>后台列表、审核队列、统计表</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="visualizations" class="section">
+        <div class="section-header">
+          <span class="section-kicker">Data Visualization</span>
+          <h2>数据可视化</h2>
+          <p class="section-intro">供开发者与编程 AI 为灯塔 UI 选图和查找实现。按趋势、排名、日历等用途看缩略图，再核对复用状态与所选示例。</p>
+        </div>
+        <div class="section-body">
+          <p><strong>1.6.0 · 访问与使用</strong>　后台已接入全年访问日历、每日 PV/UV 趋势与排行。<a href="visualizations/index.html#implementation">查看页面实现</a> · <a href="../analytics-examples/pv-uv-trend.png">查看访问趋势样张</a></p>
+          <p><a href="../analytics-examples/visit-calendar.png">访问日历大格预览</a>（365 天合成数据，1.6.1 页面布局）</p>
+          <p><a href="visualizations/index.html"><strong>打开 UI 开发图表目录 →</strong></a></p>
+          <p><a href="visualizations/index.html#trend">趋势</a> · <a href="visualizations/index.html#ranking">排名</a> · <a href="visualizations/index.html#calendar">日历</a> · <a href="visualizations/guides/chart-workflow.md">开发与 AI 阅读指南</a></p>
+          <p>普通页面先查平台 token、组件和页面模式。图表任务先读制作指南与选型目录，再读选中编号的一个示例。当前分支中的组件导出与接口决定能否直接复用，独立 HTML 图型标为参考示例。</p>
+          <p>需要汇报输出时，可从<a href="visualizations/lantern/presentation.html">灯塔演示</a>与<a href="visualizations/lantern/report.html">灯塔周报</a>进入，使用其虚构聚合样例核对版式。第三方<a href="visualizations/presentations/index.html">19 页演示参考</a>、<a href="visualizations/reports/index.html">12 套报告参考</a>和<a href="visualizations/index.html#examples">完整示例</a>用于扩展选型。</p>
+          <p>颜色来自本规范的<a href="#color">颜色系统</a>。暖纸与墨色构成页面和文字，琥珀用于主要数据，黄铜用于辅助序列。浅色和深色图使用同一组角色，并按背景校准明度。风险与错误采用对应语义颜色，价值标签辅助色用于其内容分类。</p>
+          <p>多序列通过名称、位置、点形或实虚线共同区分。正文和小标签至少达到 4.5∶1 对比度，大字与关键数据边界至少达到 3∶1，较浅的填充配合清楚的边界和精确读数。制作方法见<a href="visualizations/guides/chart-workflow.md">灯塔图表制作指南</a>。</p>
+          <ul>
+            <li>61 个当前图型与 2 个历史模板保留编号，按用途选择后可进入完整绘图与交互预览。</li>
+            <li>图库颜色遵守本页规范；原项目的配色注释、演示数字与来源文档按参考材料读取。</li>
+          </ul>
         </div>
       </section>
 
@@ -1298,8 +1439,8 @@
               <p>路引是服务文化问答工作台，不是宣传页。它要让用户把真实服务场景说清楚，并得到有依据的下一步建议。</p>
               <dl>
                 <div><dt>Hook</dt><dd><code>data-lh-page="hermit"</code> + <code>tool-workspace</code></dd></div>
-                <div><dt>首屏</dt><dd>紧凑上下文标题、稳定工作 surface、明确输入区和少量高质量建议问题。</dd></div>
-                <div><dt>节奏</dt><dd>场景输入 -> 回答 -> 依据/相近案例 -> 下一步动作。空态也要显露领域边界。</dd></div>
+                <div><dt>首屏</dt><dd>路引身份与居中输入，底下三张快捷提示词卡仅填入草稿，不选择模式；发送前附件为输入框上方的紧凑横排小卡。当前规范见 <a href="hermit-authoritative-definition.md">路引知识工作区</a>。</dd></div>
+                <div><dt>节奏</dt><dd>编辑草稿 -> 发送 -> 真实执行反馈 -> 回答与知识文档。进入对话后使用紧凑会话栏与底部输入，历史对话在账号内恢复。</dd></div>
                 <div><dt>主次</dt><dd>输入框和最新回答是主角；建议问题、状态和帮助文案退居辅助。</dd></div>
                 <div><dt>禁用</dt><dd>隐藏标题、落地页式空态、装饰性 prompt pill、泛 AI agent 视觉。</dd></div>
               </dl>
@@ -1316,7 +1457,7 @@
       <section id="rules" class="section">
         <div class="section-header"><span class="section-kicker">16 / Guardrails</span><h2>使用边界</h2><p class="section-intro">经典琥珀版本要有效、雅致。有效意味着规范能直接落地；雅致意味着有足够秩序、留白和克制。</p></div>
         <div class="section-body rule-grid">
-          <article class="rule-card"><h3>Do</h3><ul><li>用苹方承载产品 UI，用思源宋承载少量价值表达。</li><li>用 12 列逻辑网格和固定间距控制页面秩序。</li><li>用真实 Solar 图标和 <code>lighthouseIcons</code> 入口。</li><li>用轻边框、暖纸色和低阴影表达层级。</li></ul></article>
+          <article class="rule-card"><h3>Do</h3><ul><li>产品 UI 中文用苹方或微软雅黑，英文与数字用 Inter，价值表达用思源宋。</li><li>用 12 列逻辑网格和固定间距控制页面秩序。</li><li>用真实 Solar 图标和 <code>lighthouseIcons</code> 入口。</li><li>用轻边框、暖纸色和低阴影表达层级。</li></ul></article>
           <article class="rule-card dont"><h3>Don't</h3><ul><li>不要混入探索版蓝绿色、印刷稿或对外品牌 VI 资产。</li><li>不要用字符、手绘图形或其他图标库替代 Solar。</li><li>不要为了“丰富”随机跨列、叠卡、加重阴影。</li><li>不要用低对比文字或过度透明制造所谓高级感。</li></ul></article>
         </div>
       </section>

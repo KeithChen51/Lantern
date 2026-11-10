@@ -3,7 +3,9 @@ import { getGuestAccessService, readAccessCookie, requireEmployee, requireSiteVi
 import { readAccessConfig } from "@/modules/auth/access-config";
 import { readSiteAccessConfig } from "@/modules/auth/site-access-config";
 import { callback } from "@/modules/auth/access-http";
-import { classifyAccessPath, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
+import { classifyAccessPath, isEmployeePage, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
+import { isLoginDocument, loginArrivalCookie, LOGIN_ARRIVAL_HEADER, validLoginArrival } from "@/modules/auth/login-arrival";
+import { isWecomAutoSessionToken } from "@/modules/auth/wecom-auto-access";
 
 function noStore<T extends Response>(response: T): T {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
@@ -15,7 +17,7 @@ function noStore<T extends Response>(response: T): T {
 export async function proxy(request: NextRequest) {
   const path = normalizeAccessPath(request.nextUrl.pathname);
   // Classify the raw URL where available. The production adapter may normalize
-  // /_next/data to its page first; that path still passes the employee gate.
+  // /_next/data to its page first; that path still passes the authentication gate.
   const kind = classifyAccessPath(new URL(request.url).pathname, request.nextUrl.searchParams.get("url"));
   if (kind === "invalid") return noStore(new NextResponse("无效的请求路径。", { status: 400 }));
   if (process.env.AUTH_MODE === "guest") {
@@ -41,6 +43,7 @@ export async function proxy(request: NextRequest) {
       }
       const forwarded = new Headers(request.headers);
       forwarded.set(REQUEST_PATH_HEADER, path!);
+      forwarded.delete(LOGIN_ARRIVAL_HEADER);
       if (kind === "api") return noStore(NextResponse.next({ request: { headers: forwarded } }));
       // Public JS/CSS and build assets do not create anonymous sessions.
       if ((kind === "public" && !isPublicAuthPage(path!)) || path?.startsWith("/_next/static/")) return noStore(NextResponse.next({ request: { headers: forwarded } }));
@@ -77,6 +80,7 @@ export async function proxy(request: NextRequest) {
   const forwarded = new Headers(request.headers);
   // Always overwrite the untrusted client header, including on public routes.
   forwarded.set(REQUEST_PATH_HEADER, path!);
+  forwarded.delete(LOGIN_ARRIVAL_HEADER);
   if (kind === "api") return NextResponse.next({ request: { headers: forwarded } });
   if (kind === "public") {
     const response = noStore(NextResponse.next({ request: { headers: forwarded } }));
@@ -92,18 +96,49 @@ export async function proxy(request: NextRequest) {
     return response;
   }
   try {
-    await requireEmployee(request);
-    return noStore(NextResponse.next({ request: { headers: forwarded } }));
+    if (process.env.AUTH_MODE === "iam" && path === "/" && ["token", "code", "state"].some(name => request.nextUrl.searchParams.has(name))) {
+      return noStore(NextResponse.redirect(new URL("/login?error=callback", readAccessConfig().origin), 303));
+    }
+    if (isEmployeePage(path!)) await requireEmployee(request);
+    else await requireSiteVisitor(request);
+    let arrivalCookie: string | undefined;
+    let secureCookies = false;
+    if (process.env.AUTH_MODE === "iam" && kind === "page" && isLoginDocument(request)) {
+      const config = readAccessConfig();
+      const name = loginArrivalCookie(config.sessionCookie);
+      const markers = request.cookies.getAll(name);
+      if (markers.length) {
+        const returnTo = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+        if (markers.length === 1 && validLoginArrival(config, markers[0].value, readAccessCookie(request.headers, config.sessionCookie), returnTo)) {
+          arrivalCookie = name;
+          secureCookies = config.secureCookies;
+          forwarded.set(LOGIN_ARRIVAL_HEADER, path!);
+        }
+      }
+    }
+    const response = noStore(NextResponse.next({ request: { headers: forwarded } }));
+    if (arrivalCookie) response.cookies.set(arrivalCookie, "", { path: "/", httpOnly: true, sameSite: "lax", secure: secureCookies, maxAge: 0 });
+    return response;
   } catch (error) {
     const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 503;
     // Next's production adapter strips flight headers and _rsc from some
     // requests. Those receive the same no-store login redirect as navigation;
     // both paths deny access before rendering any business payload.
     if (status === 401 && kind === "page" && !request.headers.has("rsc")) {
-      const target = new URL("/login", readAccessConfig().origin);
+      const config = readAccessConfig();
+      const target = new URL("/login", config.origin);
       const clean = new URL(request.url);
       clean.searchParams.delete(tokenParam);
       clean.searchParams.delete("token");
+      clean.searchParams.delete("code");
+      clean.searchParams.delete("state");
+      const wasDealer = isWecomAutoSessionToken(readAccessCookie(request.headers, config.sessionCookie) ?? "");
+      if (wasDealer) target.searchParams.set("error", "wecom");
+      const automaticEntry = !wasDealer && config.mode === "iam" && path === "/" && isLoginDocument(request)
+        && !request.nextUrl.searchParams.has("error") && !request.nextUrl.searchParams.has("loggedOut")
+        // A successful callback with a rejected session cookie stops at retry.
+        && !request.cookies.has(loginArrivalCookie(config.sessionCookie));
+      if (automaticEntry) target.pathname = "/auth/iam/start";
       target.searchParams.set("returnTo", `${clean.pathname}${clean.search}`);
       return noStore(NextResponse.redirect(target, 303));
     }

@@ -22,8 +22,13 @@ export function createPrismaHubTransaction(client: Prisma.TransactionClient): Hu
       await client.hubResource.upsert({ where: { id: value.id }, create: row, update: row });
       for (const v of versions) {
         const version = { ...v, resourceId: value.id, createdAt: new Date(v.createdAt), publishedAt: v.publishedAt ? new Date(v.publishedAt) : null, effectiveFrom: v.effectiveFrom ? new Date(v.effectiveFrom) : null, effectiveTo: v.effectiveTo ? new Date(v.effectiveTo) : null, metadata: v.metadata ? json(v.metadata) : Prisma.DbNull, files: json(v.files), citations: json(v.citations) };
-        // Once stored, version content is immutable. Publication is the only update.
-        await client.hubVersion.upsert({ where: { id: v.id }, create: version, update: { publishedAt: version.publishedAt } });
+        // Import content and checksum remain immutable. Only the first publication
+        // may add its separate audience snapshot; never rewrite published history.
+        await client.hubVersion.upsert({ where: { id: v.id }, create: version, update: {} });
+        if (version.publishedAt) await client.hubVersion.updateMany({
+          where: { id: v.id, publishedAt: null },
+          data: { publishedAt: version.publishedAt, ...(v.metadata?.publicationVisibility ? { metadata: version.metadata } : {}) },
+        });
       }
     },
     async getInteraction(id) { const row = await client.hubInteraction.findUnique({ where: { id } }); return row ? interaction(row) : null; },

@@ -17,7 +17,8 @@
 | **笃行 / Action** | 回看内部服务中的选择与权衡；可见案例取决于发布状态和访问权限。 |
 | **路引 / Hermit** | 围绕具体问题查资料、讨论做法，推荐文档并在页内阅读；支持临时参考附件。 |
 | **启航 / Games** | 当前为两款文化游戏的预告，尚未开放游玩；可通过功能开关隐藏入口。 |
-| **资料维护** | 有知识管理权限的员工在 `/admin/knowledge` 维护目录、资料与版本；访客不可使用。 |
+| **建议广场** | 登录员工从“我的”进入，阅读同事的建议、直接点赞和参与讨论，按最新、热门或我参与的浏览；平台管理员公开回应和维护状态。纯文本数据保存在平台数据库，访客不可访问。[使用与迁移说明](docs/feedback-board.md) |
+| **平台管理** | 两类管理员从 `/admin` 进入知识管理。平台管理员可在「访问与使用」查看访问趋势、时段报表和排行。「路引记录」暂时关闭；已有对话数据、后续对话保存、用户个人历史和 AI 统计继续保留。[指标与权限](docs/platform-management.md) |
 
 例如，面对“是否应该为取送车司机设立休息区”，可以先读本心中的理念依据，再查阅笃行中的同题案例，最后把本店的场地、人员和服务条件交给路引继续讨论。案例提供判断参考，具体做法仍需结合现场条件确认。
 
@@ -125,7 +126,7 @@ npm run dev
 
 ## 维护与部署
 
-**维护知识**：准备资料 → 标准化与校验 → 导入草稿 → 预览核对 → 显式发布。知识管理员通过资料维护入口操作，上传不会自动发布。参见[资料标准化](docs/knowledge-standardization.md)与[文件管理器](docs/knowledge-file-manager.md)。
+**维护知识**：准备资料 → 标准化与校验 → 导入草稿 → 预览核对 → 显式发布。知识管理员通过「平台管理 → 知识管理」操作，上传不会自动发布。参见[资料标准化](docs/knowledge-standardization.md)与[文件管理器](docs/knowledge-file-manager.md)。
 
 **部署应用**：按[生产与测试部署流程](docs/deployment/production-environments.md)选择模板、准备匹配版本的应用与运维镜像，完成备份、迁移、升级和就绪验证。新建空环境与已有环境升级使用不同步骤；已有环境保留原数据库、卷、知识版本和密钥。完整路引还需检查载体、模型网关和可见知识，不能把构建成功当作业务验收通过。
 
@@ -142,6 +143,7 @@ npm run dev
 | 员工外部工具 | [CLI / MCP 客户端](packages/lighthouse-client/README.md) |
 | 路引构建与验收 | [运行载体](docs/deployment/hermit-runtime-package.md)、[业务验收](docs/deployment/hermit-business-acceptance.md) |
 | 环境部署与交付 | [部署流程](docs/deployment/production-environments.md)、[版本规范](docs/release-notes.md)、[内网 AI 更新指南模板](docs/deployment/ai-source-update-guide.md) |
+| 网页隐形水印 | [公共服务接入、环境配置与验收](docs/deployment/lighthouse-web-watermark.md) |
 | 开发协作 | [AGENTS.md](AGENTS.md)、[GitHub Issues](https://github.com/KeithChen51/Lantern/issues) |
 
 部分知识维护与路引文档保留了首期实现和历史验证记录。涉及登录、权限、存储与部署时，以当前[访问模式](#访问与使用)及其对应部署指南为准，不沿用旧的共享管理密码、无账号假设或 SQLite 站点部署说明。

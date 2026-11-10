@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
 interface HeaderProps {
   isSidebarPinned: boolean;
   onOpenMobileNav: () => void;
+  isMobileNavOpen?: boolean;
 }
 
-export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
+export function Header({ isSidebarPinned, onOpenMobileNav, isMobileNavOpen = false }: HeaderProps) {
   const session = useEmployeeSession();
   return (
     <header
@@ -30,6 +31,9 @@ export function Header({ isSidebarPinned, onOpenMobileNav }: HeaderProps) {
         <LhIconButton
           type="button"
           label="打开导航菜单"
+          aria-haspopup="dialog"
+          aria-expanded={isMobileNavOpen}
+          aria-controls="lighthouse-mobile-navigation"
           icon={<Icon icon={lighthouseIcons.menu} className="h-5 w-5" />}
           onClick={onOpenMobileNav}
           size="sm"

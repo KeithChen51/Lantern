@@ -49,7 +49,7 @@ describe("IAM identity with middle-platform roles", () => {
     const f = fixture();
     f.store.seedEmployee({ id: "existing-user", account: "000042", displayName: "old profile", active: true, employee: true });
     const login = await f.login();
-    expect(login.principal).toMatchObject({ userId: "existing-user", account: "000042", displayName: "姓名暂未获取", organization: "售后/服务", expiresAt: f.now() + 1500000 });
+    expect(login.principal).toMatchObject({ userId: "existing-user", account: "000042", employeeNo: "000042", displayName: "姓名暂未获取", organization: "售后/服务", expiresAt: f.now() + 1500000 });
     expect(login.returnTo).toBe("/me");
     expect(new URL(login.start.redirectUrl).hostname).toBe("iam.example.invalid");
     expect(f.identity).toHaveBeenCalledWith("synthetic-iam-token");
@@ -61,12 +61,13 @@ describe("IAM identity with middle-platform roles", () => {
 
   it.each([
     ["lighthouse_user", false], ["lighthouse_knowledge_admin", true], ["lighthouse_admin", true],
-  ])("maps %s to the existing capability set", async (role, admin) => {
+  ])("maps %s to distinct knowledge and analytics capabilities", async (role, admin) => {
     const f = fixture();
     f.authorization.mockResolvedValue({ roles: [role as string, "unrelated_admin"] });
     const login = await f.login();
     expect(login.principal.capabilities).toContain("content:read");
     expect(login.principal.capabilities.includes("knowledge:manage")).toBe(admin);
+    expect(login.principal.capabilities.includes("analytics:summary")).toBe(role === "lighthouse_admin");
     expect(f.store.snapshot().find(row => row.kind === "grant")?.payload).toMatchObject({ roles: [role] });
     const tokens = await f.client(login.sessionToken);
     expect((await f.service.clientPrincipal(tokens.access_token, "mcp")).capabilities).toEqual(["knowledge:read"]);

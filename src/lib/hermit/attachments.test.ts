@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DELETE, POST } from "@/app/api/hermit/attachments/route";
 import {
   HERMIT_ATTACHMENT_MAX_FILE_BYTES,
+  HERMIT_ATTACHMENT_MAX_FILES_PER_CONVERSATION,
+  HERMIT_ATTACHMENT_MAX_STORE_ENTRIES,
+  HERMIT_ATTACHMENT_MAX_STORE_TEXT_CHARS,
+  HERMIT_ATTACHMENT_MAX_TEXT_CHARS,
+  saveHermitAttachment,
   resolveHermitAttachments,
   resetHermitAttachmentStoreForTests,
 } from "./attachments";
@@ -26,10 +31,11 @@ afterEach(() => {
   resetHermitAttachmentStoreForTests();
 });
 
-async function upload(name: string, contents: Buffer | string, cookie?: string) {
+async function upload(name: string, contents: Buffer | string, cookie?: string, conversationId?: string) {
   const formData = new FormData();
   const blobPart = typeof contents === "string" ? contents : (new Uint8Array(contents) as unknown as ArrayBufferView<ArrayBuffer>);
   formData.append("file", new File([blobPart], name));
+  if (conversationId !== undefined) formData.append("conversationId", conversationId);
   const request = new Request("http://localhost/api/hermit/attachments", {
     method: "POST",
     body: formData,
@@ -65,6 +71,57 @@ function makePdf(text: string) {
 }
 
 describe("Hermit attachment API", () => {
+  it("bounds each owner's conversation without letting invisible old files block a new conversation", async () => {
+    let firstId = "";
+    for (let index = 0; index < HERMIT_ATTACHMENT_MAX_FILES_PER_CONVERSATION; index++) {
+      const ready = await upload(`${index}.txt`, "conversation A", undefined, "conversation-a");
+      expect(ready.response.status).toBe(201);
+      firstId ||= ready.body.id;
+    }
+    const full = await upload("sixth.txt", "overflow", undefined, "conversation-a");
+    expect(full.response.status).toBe(422);
+    expect(full.body.error.message).toContain("本次对话");
+    expect((await upload("new.txt", "conversation B", undefined, "conversation-b")).response.status).toBe(201);
+    expect((await upload("another-owner.txt", "employee B", "employee-b", "conversation-a")).response.status).toBe(201);
+    // Creating B must not evict A's still valid references or change ownership.
+    expect((await resolveHermitAttachments(employee(), [firstId]))[0].text).toBe("conversation A");
+    await expect(resolveHermitAttachments(employee("b"), [firstId])).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("keeps a bounded legacy bucket and checks the conversation quota again after concurrent parsing", async () => {
+    const attempts = await Promise.all(Array.from({ length: 6 }, (_, index) => upload(`${index}.txt`, "legacy")));
+    expect(attempts.filter(result => result.response.status === 201)).toHaveLength(5);
+    expect(attempts.filter(result => result.response.status === 422)).toHaveLength(1);
+    expect((await upload("new.txt", "scoped", undefined, "new-conversation")).response.status).toBe(201);
+  });
+
+  it.each(["", " ", "a".repeat(161), "bad\u0000id"])("rejects malformed conversation ID %j", async conversationId => {
+    expect((await upload("file.txt", "text", undefined, conversationId)).response.status).toBe(422);
+  });
+
+  it("rejects duplicate or file-valued conversation fields", async () => {
+    for (const values of [["a", "b"], [new File(["not an ID"], "id.txt")]]) {
+      const formData = new FormData();
+      formData.append("file", new File(["text"], "file.txt"));
+      for (const value of values) formData.append("conversationId", value);
+      expect((await POST(new Request("http://localhost/api/hermit/attachments", { method: "POST", body: formData }))).status).toBe(422);
+    }
+  });
+
+  it("retains process-wide entry and text limits across different conversation IDs", async () => {
+    const request = new Request("http://localhost");
+    for (let index = 0; index < HERMIT_ATTACHMENT_MAX_STORE_ENTRIES; index++) {
+      await saveHermitAttachment(request, new File(["text"], "file.txt"), employee(), `conversation-${index}`);
+    }
+    await expect(saveHermitAttachment(request, new File(["overflow"], "file.txt"), employee(), "extra")).rejects.toMatchObject({ status: 503 });
+    resetHermitAttachmentStoreForTests();
+    const text = "a".repeat(HERMIT_ATTACHMENT_MAX_TEXT_CHARS);
+    for (let index = 0; index < HERMIT_ATTACHMENT_MAX_STORE_TEXT_CHARS / text.length; index++) {
+      await saveHermitAttachment(request, new File([text], "file.txt"), employee(), `conversation-${index}`);
+    }
+    await expect(saveHermitAttachment(request, new File(["overflow"], "file.txt"), employee(), "extra")).rejects.toMatchObject({ status: 503 });
+  });
+
   it("accepts UTF-8 text and resolves it only for the owning employee and web session", async () => {
     const first = await upload("现场记录.md", "交车时间待确认\n下一次反馈：周五");
     expect(first.response.status).toBe(201);
@@ -117,17 +174,27 @@ describe("Hermit attachment API", () => {
     await expect(resolveHermitAttachments({ ...employee(), expiresAt: 1 }, [])).rejects.toMatchObject({ status: 401 });
   });
   it("never stores content if an upload aborts during parsing", async () => {
-    const { saveHermitAttachment, HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER } = await import("./attachments");
     const controller = new AbortController();
     const file = new File(["cancelled"], "cancelled.txt");
     vi.spyOn(file, "arrayBuffer").mockImplementation(async () => { controller.abort(); return new TextEncoder().encode("cancelled").buffer; });
     await expect(saveHermitAttachment(new Request("http://localhost", { signal: controller.signal }), file, employee())).rejects.toThrow();
     // All five slots remain available after the aborted parse.
-    for (let index = 0; index < HERMIT_ATTACHMENT_MAX_FILES_PER_OWNER; index++) expect((await upload(`${index}.txt`, "ready")).response.status).toBe(201);
+    for (let index = 0; index < HERMIT_ATTACHMENT_MAX_FILES_PER_CONVERSATION; index++) expect((await upload(`${index}.txt`, "ready")).response.status).toBe(201);
   });
   it("removes a parsed upload when revocation is detected before returning it", async () => {
     auth.employee.mockResolvedValueOnce(employee()).mockResolvedValueOnce(employee()).mockRejectedValueOnce(new AppError("unauthorized", "revoked", 401));
     expect((await upload("revoked.txt", "private")).response.status).toBe(401);
+    auth.employee.mockResolvedValue(employee());
+    for (let index = 0; index < 5; index++) expect((await upload(`${index}.txt`, "ready")).response.status).toBe(201);
+  });
+  it("removes the stored file if the request is cancelled during the final identity check", async () => {
+    const controller = new AbortController();
+    auth.employee.mockResolvedValueOnce(employee()).mockResolvedValueOnce(employee()).mockImplementationOnce(async () => {
+      controller.abort(); return employee();
+    });
+    const formData = new FormData();
+    formData.append("file", new File(["cancelled"], "cancelled.txt"));
+    expect((await POST(new Request("http://localhost/api/hermit/attachments", { method: "POST", body: formData, signal: controller.signal }))).status).not.toBe(201);
     auth.employee.mockResolvedValue(employee());
     for (let index = 0; index < 5; index++) expect((await upload(`${index}.txt`, "ready")).response.status).toBe(201);
   });

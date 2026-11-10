@@ -16,7 +16,7 @@ if (args[0] === "image") {
   const image = args.at(-1);
   const hash = image.includes("tools") ? "b" : image.includes("mysql") ? "c" : image === imageId("d") ? "d" : "a";
   if (args[3] === "{{.Id}}") out(imageId(hash));
-  else out(`${imageId(hash)}|${hash === "d" ? "2".repeat(40) : process.env.FAKE_LABEL_MISMATCH && hash === "b" ? "3".repeat(40) : revision}|1.1.3`);
+  else out(`${imageId(hash)}|${hash === "d" ? "2".repeat(40) : process.env.FAKE_LABEL_MISMATCH && hash === "b" ? "3".repeat(40) : revision}|${process.env.FAKE_VERSION ?? "1.1.3"}`);
 } else if (args[0] === "inspect") {
   const format = args[args.indexOf("--format") + 1];
   const id = args.at(-1);

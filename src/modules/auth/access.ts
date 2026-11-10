@@ -8,6 +8,8 @@ import { AccessService } from "./access-service";
 import { PrismaAccessStore } from "./access-store";
 import { AccessError, type Principal } from "./access-types";
 import { createAccessProvider } from "./access-provider";
+import { isWecomAutoSessionToken } from "./wecom-auto-access";
+import { getWecomAutoAccess } from "./wecom-auto-runtime";
 
 export type { Capability, Principal } from "./access-types";
 export { AccessError } from "./access-types";
@@ -21,7 +23,7 @@ export function getGuestAccessService(): GuestAccessService {
 }
 export async function requireSiteVisitor(request: Request | Headers): Promise<Principal> {
   const config = readSiteAccessConfig();
-  if (config.mode !== "guest") return requireEmployee(request);
+  if (config.mode !== "guest") return requireWebAccount(request);
   const token = readAccessCookie(requestHeaders(request), config.sessionCookie);
   if (!token) throw new AccessError("访客会话已失效，请刷新页面。", 401);
   return getGuestAccessService().webPrincipal(token);
@@ -50,20 +52,49 @@ export function readAccessCookie(headers: Headers, name: string): string | undef
   return /^[A-Za-z0-9_-]{32,160}$/.test(token) ? token : undefined;
 }
 function requestHeaders(request: Request | Headers): Headers { return request instanceof Headers ? request : request.headers; }
-export async function requireEmployee(request: Request | Headers): Promise<Principal> {
+export async function requireWebAccount(request: Request | Headers): Promise<Principal> {
+  denyGuestEmployeeAccess();
+  const config = readAccessConfig();
+  const token = readAccessCookie(requestHeaders(request), config.sessionCookie);
+  if (!token) throw new AccessError("请先登录灯塔。", 401);
+  if (isWecomAutoSessionToken(token)) return getWecomAutoAccess(config).service.webPrincipal(token);
+  return getAccessService().webPrincipal(token);
+}
+function employeeToken(request: Request | Headers): string {
   denyGuestEmployeeAccess();
   const config = readAccessConfig();
   const token = readAccessCookie(requestHeaders(request), config.sessionCookie);
   if (!token) throw new AccessError("请先使用员工账号登录。", 401);
+  if (isWecomAutoSessionToken(token)) throw new AccessError("此功能仅向员工开放。", 403);
+  return token;
+}
+export async function requireEmployee(request: Request | Headers): Promise<Principal> {
+  const token = employeeToken(request);
   return getAccessService().webPrincipal(token);
 }
 export async function requireKnowledgeAdmin(request: Request | Headers, options?: { write?: boolean }): Promise<Principal> {
-  denyGuestEmployeeAccess();
-  const token = readAccessCookie(requestHeaders(request), readAccessConfig().sessionCookie);
-  if (!token) throw new AccessError("请先使用员工账号登录。", 401);
+  const token = employeeToken(request);
   const principal = await getAccessService().webPrincipal(token, { adminWrite: options?.write });
   if (!principal.capabilities.includes("knowledge:manage")) throw new AccessError("当前账号没有知识管理权限。", 403);
   if (options?.write) assertMutationHeaders(requestHeaders(request), principal);
+  return principal;
+}
+/** Dashboard reads use the short administration freshness window, too. */
+export async function requireAnalyticsSummary(request: Request | Headers): Promise<Principal> {
+  const token = employeeToken(request);
+  const principal = await getAccessService().webPrincipal(token, { adminWrite: true });
+  if (principal.kind === "guest" || principal.channel !== "web" || !principal.capabilities.includes("analytics:summary")) {
+    throw new AccessError("当前账号没有访问与使用统计权限。", 403);
+  }
+  return principal;
+}
+/** Suggestion decisions belong to the independently authorized platform admin. */
+export async function requireFeedbackManager(request: Request | Headers): Promise<Principal> {
+  const token = employeeToken(request);
+  const principal = await getAccessService().webPrincipal(token, { adminWrite: true });
+  if (principal.kind === "guest" || principal.channel !== "web" || !principal.capabilities.includes("feedback:manage")) {
+    throw new AccessError("仅平台管理员可处理建议。", 403);
+  }
   return principal;
 }
 export async function requireKnowledgeClient(request: Request): Promise<Principal> {

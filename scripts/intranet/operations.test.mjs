@@ -10,11 +10,11 @@ import { runOperations } from './operations.mjs';
 
 const repo = process.cwd();
 const revision = 'a'.repeat(40);
-function fixture() {
+function fixture(version = '1.1.3') {
   const root = mkdtempSync(path.join(tmpdir(), 'lighthouse-operations-'));
   const json = (name, value) => { const file = path.join(root, name); mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value)); };
-  json('build-manifest.json', { revision, version: '1.1.3', platform: 'linux', arch: 'x64', prismaVersion: '6.19.3', prismaEngineCommit: revision });
-  json('package.json', { version: '1.1.3' });
+  json('build-manifest.json', { revision, version, platform: 'linux', arch: 'x64', prismaVersion: '6.19.3', prismaEngineCommit: revision });
+  json('package.json', { version });
   json('node_modules/prisma/package.json', { version: '6.19.3' });
   json('node_modules/@prisma/client/package.json', { version: '6.19.3' });
   json('prisma/migrations/migration_lock.toml', {});
@@ -31,7 +31,21 @@ test('default/help and unknown/extra arguments cannot start a database tool', ()
   assert.equal(runOperations(['help'], options), 0);
   assert.equal(runOperations(['db:setup'], options), 2);
   assert.equal(runOperations(['initialize', '--force'], options), 2);
+  assert.equal(runOperations(['retention-preview', '--apply'], options), 2);
+  assert.equal(runOperations(['usage-prune', '--all'], options), 2);
   assert.equal(calls, 0);
+});
+
+test('retention preview passes only an optional notice instant to its read-only entrypoint', () => {
+  const f = fixture();
+  try {
+    runOperations(['retention-preview'], f);
+    runOperations(['retention-preview', '--notice-at', '2026-10-01T16:00:00+08:00'], f);
+    assert.deepEqual(f.calls.map(call => call.args), [
+      [path.join(f.root, 'retention-preview.cjs')],
+      [path.join(f.root, 'retention-preview.cjs'), '--notice-at', '2026-10-01T16:00:00+08:00'],
+    ]);
+  } finally { f.cleanup(); }
 });
 
 test('each mutation command has a distinct fixed entrypoint; migrate never imports or seeds', () => {
@@ -48,8 +62,8 @@ test('each mutation command has a distinct fixed entrypoint; migrate never impor
   } finally { f.cleanup(); }
 });
 
-test('offline verify loads native engine, checks version and previews with an unusable database URL', () => {
-  const f = fixture();
+for (const version of ['1.1.3', '1.3.3-beta.1']) test(`offline verify accepts ${version}, loads native engine and previews with an unusable database URL`, () => {
+  const f = fixture(version);
   try {
     let engine;
     let output = '';
@@ -192,7 +206,7 @@ test('pipeline image identity loop stops on missing or mismatched labels in eith
   }
 });
 
-test('operations packaging completes with no Git on PATH and requires the host-verified full SHA', async () => {
+for (const version of ['1.1.3', '1.3.3-beta.1']) test(`operations packaging accepts ${version} with no Git on PATH and requires the host-verified full SHA`, async () => {
   const { packageOperations } = await import('../package-intranet-operations.mjs');
   const root = mkdtempSync(path.join(tmpdir(), 'lighthouse-package-'));
   const put = (name, value) => { const file = path.join(root, name); mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, value); };
@@ -200,7 +214,7 @@ test('operations packaging completes with no Git on PATH and requires the host-v
     for (const invalid of [undefined, '', 'abc123', 'A'.repeat(40), `${revision}\n`]) {
       await assert.rejects(packageOperations({ root, platform: 'linux', arch: 'x64', env: { BUILD_REVISION: invalid } }), /BUILD_REVISION/);
     }
-    put('package.json', JSON.stringify({ version: '1.1.3' }));
+    put('package.json', JSON.stringify({ version }));
     for (const name of ['prisma', '@prisma/client']) put(`node_modules/${name}/package.json`, JSON.stringify({ version: '6.19.3' }));
     put('node_modules/.env.private', 'not-for-distribution');
     put('prisma/schema.prisma', 'datasource db { provider = "mysql" }');
@@ -208,6 +222,7 @@ test('operations packaging completes with no Git on PATH and requires the host-v
     put('release/knowledge-cli/initialize.cjs', 'console.log("preview")');
     put('deploy/system/bin/openssl', 'test fixture');
     put('scripts/intranet/operations.mjs', 'console.log("help")');
+    for (const source of ['scripts/retention-preview.ts', 'scripts/usage-prune.ts', 'src/modules/analytics/retention-preview.ts', 'src/modules/analytics/usage-prune.ts', 'src/infrastructure/db/client.ts']) put(source, readFileSync(path.join(repo, source)));
     for (const source of ['scripts/check-access-config.ts', 'src/modules/auth/site-access-config.ts', 'src/modules/auth/access-config.ts', 'src/modules/auth/access-types.ts', 'src/modules/auth/iam-config.ts', 'src/modules/auth/iam-sync-config.ts', 'src/shared/errors/index.ts', 'tsconfig.json']) put(source, readFileSync(path.join(repo, source)));
     put('deploy/offline/manifest.json', JSON.stringify({ prismaEngineCommit: revision }));
     put(`deploy/offline/engines/all_commits/${revision}/debian-openssl-3.0.x/schema-engine.gz`, gzipSync('schema engine fixture'));
@@ -215,6 +230,8 @@ test('operations packaging completes with no Git on PATH and requires the host-v
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', source, root], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: '', BUILD_REVISION: revision } });
     assert.equal(result.status, 0, result.stderr);
     const output = path.join(root, 'release/intranet-operations');
+    assert.equal(JSON.parse(readFileSync(path.join(output, 'build-manifest.json'), 'utf8')).version, version);
+    assert.equal(JSON.parse(readFileSync(path.join(output, 'package.json'), 'utf8')).version, version);
     assert.equal(JSON.parse(readFileSync(path.join(output, 'build-manifest.json'), 'utf8')).revision, revision);
     assert.equal(readFileSync(path.join(output, 'engines/schema-engine'), 'utf8'), 'schema engine fixture');
     const check = spawnSync(process.execPath, [path.join(output, 'check-access-config.cjs'), 'lighthouse'], { input: JSON.stringify({ services: { lighthouse: { environment: { PORTAL_APP_SECRET: 'never-print-this-private-value' } } } }), encoding: 'utf8' });

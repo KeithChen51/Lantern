@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import { AppError } from "@/shared/errors";
 import type {
   HermitChatParticipant,
   HermitChatOwner,
@@ -74,15 +75,27 @@ export class HermitChatService {
       buildSessionInput(input.sessionId, input.participant, buildSessionTitle(input.messages)),
     );
 
+    const latestUser = input.messages.findLast(message => message.role === "user");
+    let userMessageId: string | undefined;
     for (const message of input.messages) {
       // Assistant content and completion status are owned by the server. A client
       // history replay must not overwrite the finalized answer or its audit.
       if (message.role !== "user") continue;
       const messageInput = toMessageInput(message, input.sessionId, input.participant, input.modelName);
       if (!messageInput) continue;
+      // Client metadata (including sources, status and context) is untrusted.
+      messageInput.metadata = message === latestUser && input.turnContext ? { hermit: { version: 2, ...input.turnContext } } : null;
 
-      await this.repository.upsertMessage(messageInput);
+      const stored = await this.repository.upsertMessage(messageInput);
+      if (message === latestUser) {
+        // Turn identity comes from the owned persisted user row. Replaying an
+        // assistant ID as the latest user cannot supersede that assistant.
+        if (stored.role !== "user") throw new AppError("bad_request", "问题标识无效，请开启新对话后重试。", 400);
+        userMessageId = stored.id;
+      }
     }
+    if (!userMessageId) throw new AppError("bad_request", "请输入问题。", 400);
+    return { userMessageId };
   }
 
   async persistAssistantResponse(input: PersistAssistantResponseInput) {
@@ -90,7 +103,7 @@ export class HermitChatService {
 
     const snapshot = input.retrieval.sourceSnapshot;
     const hasEvidence = !!snapshot && typeof snapshot === "object" && "mode" in snapshot && snapshot.mode === "progressive-index" && "reads" in snapshot && Array.isArray(snapshot.reads) && snapshot.reads.length > 0;
-    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.participant, input.modelName, hasEvidence);
+    const messageInput = toMessageInput(input.responseMessage, input.sessionId, input.participant, input.modelName, true);
     if (!messageInput) return;
 
     const storedMessage = await this.repository.upsertMessage(messageInput);

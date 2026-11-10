@@ -24,16 +24,21 @@
 
 本改造依赖账号 [PR #49](https://github.com/KeithChen51/Lantern/pull/49) 的认证、迁移与 `/api/health/ready`。正式交付必须先完成两项改动的集成验证：保留 production 构建、HTTP 测试的精确 origin 例外及 HTTPS 生产配置；健康检查只接受直接 200。不能单独把本开发分支当作 main 交付包。当前本地证据和内网待验收项见 [验证记录](../../docs/deployment/production-deployment-verification.md)。
 
-## 两个流水线任务共用根目录 Jenkinsfile
+## 一个构建计划自动识别 dev / master
 
-分别配置源码分支及 `LIGHTHOUSE_BUILD_BRANCH`：
+CODING 构建计划使用根目录 `Jenkinsfile`，将推送触发分支配置为 `dev` 和 `master`。`LIGHTHOUSE_BUILD_BRANCH` 不填、留空或设为 `auto` 时，流水线在检出前读取触发分支；合并 dev → master 后，由 **master 推送事件**构建生产镜像。不要用合并请求创建/更新事件代替合并后的 master 构建。
+
+**已有计划需调整一次**：删除固定的 `LIGHTHOUSE_BUILD_BRANCH=dev/master` 默认值，或将其改成 `auto`，并同步更新 dev、master 中的 Jenkinsfile。以后无需每次手工切换参数。保留现有代码仓库凭据和镜像仓库凭据。
 
 | 任务 | 参数 | 产物标签 |
 | --- | --- | --- |
-| 测试构建 | `dev`（默认） | `dev-<12 位提交号>-<构建批次号>`；兼容别名 `dev` |
-| 生产构建 | `master` | `master-<12 位提交号>-<构建批次号>`；别名 `master` |
+| dev 推送 / 手动选择 dev | `auto`（默认） | `dev-<12 位提交号>-<构建批次号>`；兼容别名 `dev` |
+| master 推送 / 手动选择 master | `auto`（默认） | `master-<12 位提交号>-<构建批次号>`；别名 `master` |
+| 保留两个独立计划 / 手动指定 | 显式 `dev` 或 `master` | 按指定分支生成相应标签 |
 
-提交 SHA 或 MR ref 只是触发信息。检出的 HEAD 必须等于该任务实际拉取的 `origin/dev` 或 `origin/master`；配置错误会拒绝发布。SCM 回退 `checkout scm` 时也必须选对应分支。
+自动识别采用 CODING 的 `GIT_BRANCH`，兼容 `BRANCH_NAME` / `GIT_LOCAL_BRANCH`；这些字段同时存在时必须一致。接受裸分支名以及 `origin/`、`refs/heads/`、`refs/remotes/origin/` 形式，仅允许 dev、master。字段缺失、值不支持或相互冲突会停止，不默认猜测 dev；`GIT_BUILD_REF` 可能只是提交 SHA，不能用来推断分支。字段定义见 [CODING 内置环境变量](https://coding.net/help/docs/ci/configuration/env.html)。
+
+合并请求或标签构建即使显式指定分支也会拒绝发布。检出的 HEAD 仍必须等于本次实际拉取的 `origin/dev` 或 `origin/master`；配置错误会停止。SCM 回退 `checkout scm` 时必须由计划检出对应触发分支，不能固定为 dev。日志中的 `Selected build branch`、`Verified source commit` 和归档清单应互相对应。
 
 | 参数 | 用途 |
 | --- | --- |
@@ -74,4 +79,6 @@ Git 检出及提交核对发生在 Jenkins 宿主。打包器要求传入已核�
 
 ## 本机验证与内网验收
 
-执行 `node --test scripts/intranet/operations.test.mjs`，覆盖真实打包预览、固定命令分派、失败停止和 Git 分支守卫。Linux CI 内执行真正的运维 `verify`。当本机 Docker daemon 不可用时，不将本机预览测试当作 Linux 镜像或数据库部署验证；保留流水线完整日志和构建清单回传。
+执行 `node --test scripts/intranet/branch-selection.test.mjs scripts/intranet/operations.test.mjs`，覆盖自动分支选择、手动覆盖、MR/标签拒绝、真实打包预览、固定命令分派、失败停止和 Git 分支守卫。Linux CI 内执行真正的运维 `verify`。当本机 Docker daemon 不可用时，不将本机预览测试当作 Linux 镜像或数据库部署验证；保留流水线完整日志和构建清单回传。
+
+切换自动识别后，在内网分别验证 dev 推送、dev 合并 master 后的 master 推送、手动选择 master；核对所选分支、完整提交号、应用/tools 配对标签与归档摘要。自动构建只生成镜像，部署仍按测试先行、生产后评估的顺序执行。
