@@ -36,7 +36,12 @@ export default async function RootLayout({
     }
     // Public login HTML never renders or loads the business shell.
     const { AppShell } = await import("@/components/layout/AppShell");
-    content = <AppShell loginArrivalPath={requestHeaders.get(LOGIN_ARRIVAL_HEADER) === requestPath ? requestPath : undefined} visitTrackingEnabled={Boolean(visitCoverageStart())} watermarkSdkUrl={principal.kind === "guest" ? null : getWatermarkSdkUrl()} session={{ kind: principal.kind, user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}>{children}</AppShell>;
+    content = <AppShell
+      loginArrivalPath={requestHeaders.get(LOGIN_ARRIVAL_HEADER) === requestPath ? requestPath : undefined}
+      visitTrackingEnabled={principal.kind !== "dealer" && Boolean(visitCoverageStart())}
+      watermarkSdkUrl={(principal.kind ?? "employee") === "employee" ? getWatermarkSdkUrl() : null}
+      session={{ kind: principal.kind, user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken ?? "", expiresAt: principal.expiresAt }}
+    >{children}</AppShell>;
   }
   return (
     <html

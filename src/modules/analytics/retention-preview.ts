@@ -87,14 +87,15 @@ export async function getRetentionPreview(database: Pick<PrismaClient, "$queryRa
         WHEN 'guest' THEN ${guestCutoff} ELSE NULL END AS normal_cutoff
       FROM (
         SELECT CASE
-          WHEN s.user_id IS NOT NULL AND TRIM(s.user_id) <> '' AND s.guest_id IS NULL THEN 'employee'
+          WHEN s.user_id IS NOT NULL AND TRIM(s.user_id) <> '' AND s.guest_id IS NULL AND u.user_type = 'internal_employee' THEN 'employee'
           WHEN s.guest_id IS NOT NULL AND TRIM(s.guest_id) <> '' AND s.user_id IS NULL THEN 'guest'
           ELSE 'unknown' END AS actor,
           s.created_at AS session_created_at,
           MAX(m.created_at) AS last_user_saved_at
         FROM chat_sessions s
+        LEFT JOIN users u ON u.id = s.user_id
         LEFT JOIN chat_messages m ON m.session_id = s.id AND m.role = 'user'
-        GROUP BY s.id, s.user_id, s.guest_id, s.created_at
+        GROUP BY s.id, s.user_id, s.guest_id, s.created_at, u.user_type
       ) facts
     ) classified
     GROUP BY actor

@@ -9,7 +9,7 @@ import hermitStyles from "@/components/hermit/hermit-v3.module.css";
 import styles from "./hermit-records.module.css";
 
 type RecordRow = {
-  id: string; actor: "employee" | "guest" | "unknown"; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number;
+  id: string; actor: "employee" | "guest" | "dealer" | "unknown"; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number;
   identity?: { employeeNo: string | null; account: string | null; organization: string | null; source: "session-snapshot" | "current-profile" | "unavailable" } | null;
 };
 type Message = { id: string; role: "user" | "assistant"; text: string };
@@ -18,7 +18,7 @@ type RecordsResult = { rows: RecordRow[]; nextCursor: string | null };
 type ContentResult = { messages: Message[]; nextCursor: string | null; view?: "stored-attempts" };
 const emptyFilters: Filters = { start: "", end: "", actor: "", id: "" };
 const dates = new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", dateStyle: "medium", timeStyle: "short" });
-const actors = { employee: "员工", guest: "访客", unknown: "身份未明确" };
+const actors = { employee: "员工", guest: "访客", dealer: "经销商", unknown: "身份未明确" };
 function dateLabel(value: string | null) { return value && Number.isFinite(Date.parse(value)) ? dates.format(new Date(value)) : "暂无提问"; }
 function employeeLabel(row: RecordRow) {
   if (row.actor !== "employee") return actors[row.actor];
@@ -198,7 +198,7 @@ function RecordsWorkspace({ expiresAt }: { expiresAt: number }) {
       <div className={styles.filterPanelHeader}><strong>筛选条件</strong><button className={styles.secondary} type="button" onClick={closeFilters}>收起筛选</button></div>
       <label>开始日期<input type="date" value={draft.start} onChange={event => setDraft({ ...draft, start: event.target.value })} /></label>
       <label>结束日期<input type="date" value={draft.end} min={draft.start || undefined} onChange={event => setDraft({ ...draft, end: event.target.value })} /></label>
-      <label>用户类型<select value={draft.actor} onChange={event => setDraft({ ...draft, actor: event.target.value })}><option value="">全部类型</option><option value="employee">员工</option><option value="guest">访客</option><option value="unknown">身份未明确</option></select></label>
+      <label>用户类型<select value={draft.actor} onChange={event => setDraft({ ...draft, actor: event.target.value })}><option value="">全部类型</option>{Object.entries(actors).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label className={styles.identifier}>会话编号<input type="search" maxLength={191} placeholder="输入完整会话编号" value={draft.id} onChange={event => setDraft({ ...draft, id: event.target.value })} /></label>
       <button className={styles.primary} type="submit" disabled={loading}>筛选</button>
       <button className={styles.secondary} type="button" disabled={loading} onClick={() => { setDraft(emptyFilters); setSelected(null); setResult({ rows: [], nextCursor: null }); setLoading(true); setPageIndex(0); setPageCursors([""]); setFilters({ ...emptyFilters }); }}>重置</button>

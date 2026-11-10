@@ -53,12 +53,14 @@ const readDatabase: SummaryReader = async (source, start, end) => {
   } else if (source === "hermit") {
     rows = await prisma.$queryRaw<Counts[]>(Prisma.sql`
       SELECT
-        CAST(COALESCE(SUM(s.user_id IS NOT NULL AND s.guest_id IS NULL), 0) AS UNSIGNED) AS employeeMessages,
+        COUNT(CASE WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL AND u.user_type = 'internal_employee' THEN 1 END) AS employeeMessages,
         CAST(COALESCE(SUM(s.guest_id IS NOT NULL AND s.user_id IS NULL), 0) AS UNSIGNED) AS guestMessages,
-        CAST(COALESCE(SUM((s.user_id IS NULL AND s.guest_id IS NULL) OR (s.user_id IS NOT NULL AND s.guest_id IS NOT NULL)), 0) AS UNSIGNED) AS unknownMessages,
+        COUNT(CASE WHEN (s.user_id IS NULL AND s.guest_id IS NULL)
+          OR (s.user_id IS NOT NULL AND (s.guest_id IS NOT NULL OR COALESCE(u.user_type, '') <> 'internal_employee')) THEN 1 END) AS unknownMessages,
         COUNT(DISTINCT m.session_id) AS conversations,
-        COUNT(DISTINCT CASE WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL THEN s.user_id END) AS employees
+        COUNT(DISTINCT CASE WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL AND u.user_type = 'internal_employee' THEN s.user_id END) AS employees
       FROM chat_messages AS m INNER JOIN chat_sessions AS s ON s.id = m.session_id
+      LEFT JOIN users AS u ON u.id = s.user_id
       WHERE m.role = 'user' AND m.created_at >= ${start} AND m.created_at <= ${end}
     `);
   } else if (source === "knowledgeInventory") {
@@ -103,8 +105,8 @@ export async function getAnalyticsSummary(days: AnalyticsPeriod = 7, options: Su
     {
       id: "hermit", title: "路引已保存的提问", status: "unavailable", source: "路引已保存的会话和消息",
       description: "按用户消息首次保存时间统计，含今日截至页面生成时刻。",
-      metrics: [metric("employeeMessages", "员工用户消息"), metric("guestMessages", "访客用户消息"), metric("unknownMessages", "身份未知用户消息"), metric("conversations", "有用户消息的会话", "段"), metric("employees", "提问员工人数", "人")],
-      note: "仅覆盖已成功保存的数据；旧客户端历史回传可能使保存时间晚于实际提问。访客与员工分别统计，身份已脱离的历史记录列为未知。尚无完整尝试、失败、取消、耗时和解决效果数据。",
+      metrics: [metric("employeeMessages", "员工用户消息"), metric("guestMessages", "访客用户消息"), metric("unknownMessages", "其他及身份未知用户消息"), metric("conversations", "有用户消息的会话", "段"), metric("employees", "提问员工人数", "人")],
+      note: "仅覆盖已成功保存的数据，旧客户端历史回传可能使保存时间晚于实际提问。经销商和身份已脱离的历史记录计入其他及身份未知消息。尚无完整尝试、失败、取消、耗时和解决效果数据。",
     },
     {
       id: "knowledgeInventory", title: "当前知识供给", status: "unavailable", source: "知识资料库",

@@ -6,6 +6,7 @@ const service = vi.hoisted(() => ({ authorizeDevice: vi.fn(), exchangeDevice: vi
 vi.mock("./access", () => ({
   getAccessService: () => service,
   requireEmployee: vi.fn(async () => ({ userId: "fixture", credentialId: "web", channel: "web", csrfToken: "fixture-csrf" })),
+  requireWebAccount: vi.fn(async () => ({ userId: "fixture", credentialId: "web", channel: "web", csrfToken: "fixture-csrf" })),
   requireKnowledgeClient: vi.fn(async () => ({ userId: "fixture", credentialId: "client", channel: "cli" })),
   readAccessCookie: (headers: Headers, name: string) => headers.get("cookie")?.split(";").map(part => part.trim()).find(part => part.startsWith(`${name}=`))?.slice(name.length + 1),
   assertSameOrigin: (headers: Headers) => { if (headers.get("origin") !== "https://app.example.invalid") throw new AccessError("origin", 403); },

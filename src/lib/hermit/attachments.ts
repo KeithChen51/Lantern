@@ -36,7 +36,7 @@ export type ResolvedHermitAttachment = {
 };
 
 type StoredHermitAttachment = ResolvedHermitAttachment & {
-  kind: "employee" | "guest";
+  kind: NonNullable<Principal["kind"]>;
   userId: string;
   grantId: string;
   credentialId: string;
