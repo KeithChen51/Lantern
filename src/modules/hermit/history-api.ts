@@ -36,7 +36,7 @@ export async function getHermitConversation(request: Request, id: string) {
     if (restored.context.documentContext && isKnowledgeHubEnabled()) {
       const context = restored.context.documentContext;
       try {
-        const resource = await getSiteKnowledgeHub().get(context.resourceId, context.versionId);
+        const resource = await getSiteKnowledgeHub(principal).get(context.resourceId, context.versionId);
         detail.documentContext = { resourceId: resource.id, versionId: resource.version.id, title: resource.title, source: resource.source };
       } catch { /* Revoked or retired documents are never restored as active context. */ }
     }
@@ -44,7 +44,7 @@ export async function getHermitConversation(request: Request, id: string) {
       const context = restored.context.skillContext;
       try {
         if (!isKnowledgeHubEnabled()) throw new Error("Knowledge hub unavailable");
-        detail.skillContext = await resolveHermitSkillContext(getSiteKnowledgeHub(), context);
+        detail.skillContext = await resolveHermitSkillContext(getSiteKnowledgeHub(principal), context);
       } catch {
         detail.unavailableSkillContext = { ...context, message: "原来选择的平台 Skill 已不可用，请重新选择后再使用。" };
       }

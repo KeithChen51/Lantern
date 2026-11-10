@@ -4,9 +4,10 @@ import { hubHttpError, hubJson } from "@/modules/knowledge-hub/http";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
-    try { await requireSiteVisitor(request); } catch (error) { return authErrorResponse(error); }
+    let principal;
+    try { principal = await requireSiteVisitor(request); } catch (error) { return authErrorResponse(error); }
     if (!isKnowledgeHubEnabled()) return hubJson({ error: "知识服务尚未启用。" }, { status: 503, headers: { "Cache-Control": "no-store" } });
     const query = new URL(request.url).searchParams;
-    return hubJson(await getSiteKnowledgeHub().search({ query: query.get("q") ?? "", sort: query.get("sort") ?? "relevance", type: query.get("type") || undefined, offset: Number(query.get("offset") ?? 0), limit: Number(query.get("limit") ?? 20), includeInactive: false }), { headers: { "Cache-Control": "no-store" } });
+    return hubJson(await getSiteKnowledgeHub(principal).search({ query: query.get("q") ?? "", sort: query.get("sort") ?? "relevance", type: query.get("type") || undefined, offset: Number(query.get("offset") ?? 0), limit: Number(query.get("limit") ?? 20), includeInactive: false }), { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return hubHttpError(error); }
 }

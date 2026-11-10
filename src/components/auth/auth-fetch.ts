@@ -1,5 +1,7 @@
+import type { PrincipalKind } from "@/modules/auth/access-types";
+
 export type WebSession = {
-  kind?: "employee" | "guest";
+  kind?: PrincipalKind;
   user: { id: string; account: string; displayName: string; organization?: string; avatarUrl?: string };
   capabilities: readonly string[];
   csrfToken: string;
@@ -23,6 +25,10 @@ export class AuthRequestError extends Error {
 
 function recoverSession(kind: WebSession["kind"], identityChanged = false) {
   if (typeof window === "undefined") return;
+  if (kind === "dealer" && !identityChanged) {
+    window.location.assign("/login?error=wecom");
+    return;
+  }
   window.location.assign(kind === "guest" || identityChanged ? "/" : `/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 }
 

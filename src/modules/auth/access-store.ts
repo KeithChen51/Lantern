@@ -11,6 +11,11 @@ export type AccessPayloads = {
   iamPermission: { account: string; role: string; postCode: string; active: boolean; validUntil: number };
   iamDelivery: { endpoint: "account" | "permission" };
   session: { grantId: string; csrfToken: string; active: boolean; lastUsedAt: number };
+  wecomAutoLogin: { verifierHash: string; returnTo: string; consumed: boolean };
+  wecomAutoSession: {
+    userId: string; memberId: string; displayName: string;
+    csrfToken: string; active: boolean; verifiedAt: number; lastUsedAt: number;
+  };
   device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number };
   userCode: { deviceId: string };
   client: { grantId: string; sessionId: string; name: string; active: boolean; currentRefreshHash: string; lastUsedAt: number };
@@ -32,6 +37,8 @@ export interface AccessTransaction {
   find<K extends AccessKind>(kind: K, query: IndexedQuery): Promise<AccessRecord<K>[]>;
   ensureEmployee(account: string, displayName: string, candidateId: string): Promise<EmployeeShadow>;
   employeeActive(account: string, userId: string): Promise<boolean>;
+  ensureDealer(provider: string, memberId: string, displayName: string): Promise<string>;
+  dealerActive(provider: string, memberId: string, userId: string): Promise<boolean>;
 }
 export interface AccessStore {
   transaction<T>(callback: (tx: AccessTransaction) => Promise<T>): Promise<T>;
@@ -50,6 +57,7 @@ function eligible(user: EmployeeShadow) {
 export class MemoryAccessStore implements AccessStore {
   private records = new Map<string, AccessRecord>();
   private employees = new Map<string, EmployeeShadow>();
+  private dealers = new Map<string, string>();
   private tail: Promise<void> = Promise.resolve();
   seedEmployee(value: EmployeeShadow) { this.employees.set(value.account, structuredClone(value)); }
   snapshot(): AccessRecord[] { return structuredClone([...this.records.values()]); }
@@ -59,6 +67,7 @@ export class MemoryAccessStore implements AccessStore {
     this.tail = new Promise<void>((resolve) => { release = resolve; });
     await prior;
     const records = structuredClone(this.records), employees = structuredClone(this.employees);
+    const dealers = new Map(this.dealers);
     const tx: AccessTransaction = {
       get: async <K extends AccessKind>(kind: K, id: string) => {
         const record = records.get(id);
@@ -80,8 +89,19 @@ export class MemoryAccessStore implements AccessStore {
         const user = employees.get(account);
         return !!user && user.id === userId && user.active && user.employee && !user.conflicting;
       },
+      ensureDealer: async (provider, memberId) => {
+        const key = JSON.stringify([provider, memberId]);
+        const id = dealers.get(key) ?? randomUUID();
+        dealers.set(key, id);
+        return id;
+      },
+      dealerActive: async (provider, memberId, userId) => dealers.get(JSON.stringify([provider, memberId])) === userId,
     };
-    try { const result = await callback(tx); this.records = records; this.employees = employees; return result; }
+    try {
+      const result = await callback(tx);
+      this.records = records; this.employees = employees; this.dealers = dealers;
+      return result;
+    }
     finally { release(); }
   }
 }
@@ -104,6 +124,13 @@ export class PrismaAccessStore implements AccessStore {
         return await this.prisma.$transaction(async (db) => {
           const records = (db as unknown as { accessRecord: RecordDelegate }).accessRecord;
           const mapping = (account: string) => db.identityAccount.findUnique({ where: { provider_providerUserId: { provider: PROVIDER, providerUserId: account } }, include: { user: { include: { identityAccounts: { where: { provider: PROVIDER } } } } } });
+          const dealerMapping = (provider: string, providerUserId: string) => db.identityAccount.findUnique({
+            where: { provider_providerUserId: { provider, providerUserId } },
+            include: { user: { select: { userType: true, status: true } } },
+          });
+          const eligibleDealer = (found: Awaited<ReturnType<typeof dealerMapping>>, provider: string, memberId: string) =>
+            found !== null && found.provider === provider && found.providerUserId === memberId
+            && found.user.userType === "DEALER_USER" && found.user.status === "ACTIVE";
           const tx: AccessTransaction = {
             get: async <K extends AccessKind>(kind: K, id: string) => { const row = await records.findUnique({ where: { id } }); return row?.kind === kind ? deserialize<K>(row) : null; },
             put: async (record) => {
@@ -127,6 +154,26 @@ export class PrismaAccessStore implements AccessStore {
             employeeActive: async (account, userId) => {
               const found = await mapping(account);
               return !!found && found.userId === userId && found.provider === PROVIDER && found.providerUserId === account && found.user.status === "ACTIVE" && found.user.userType === "INTERNAL_EMPLOYEE" && found.user.identityAccounts.every((identity) => identity.providerUserId === account);
+            },
+            ensureDealer: async (provider, memberId, displayName) => {
+              const found = await dealerMapping(provider, memberId);
+              if (found) {
+                if (!eligibleDealer(found, provider, memberId)) throw new AccessError("当前经销商账号无法访问灯塔。", 403);
+                return found.userId;
+              }
+              // The verified enterprise/member pair is the only account link.
+              const user = await db.user.create({
+                data: {
+                  displayName, userType: "DEALER_USER", status: "ACTIVE",
+                  identityAccounts: { create: { provider, providerUserId: memberId } },
+                },
+                select: { id: true },
+              });
+              return user.id;
+            },
+            dealerActive: async (provider, memberId, userId) => {
+              const found = await dealerMapping(provider, memberId);
+              return found?.userId === userId && eligibleDealer(found, provider, memberId);
             },
           };
           return callback(tx);

@@ -47,6 +47,18 @@ describe("DSH chat transport boundary", () => {
     });
   });
   afterEach(() => { vi.unstubAllEnvs(); mocks.enabled = true; });
+  it("keeps dealer conversations tied to the dealer user without an employee identity snapshot", async () => {
+    const dealer = { ...principal, kind: "dealer", userId: "dealer-a", account: "dealer-member" };
+    mocks.employee.mockResolvedValue(dealer);
+    const response = await POST(request({ id: "dealer-session", messages: [question] }));
+    expect(response.status).toBe(200);
+    expect(await response.text()).not.toContain('"type":"error"');
+    expect(mocks.upsertSession).toHaveBeenCalled();
+    for (const [input] of mocks.upsertSession.mock.calls) {
+      expect(input).toMatchObject({ userId: dealer.userId, guestId: null });
+      expect(input).not.toHaveProperty("identity");
+    }
+  });
   it("binds each attempt to the persisted latest user rather than client retry or source metadata", async () => {
     mocks.run.mockImplementation(async ({ onText }) => onText("Answer"));
     const body = { id: "retry-session", messages: [{ ...question, metadata: { hermitTurn: { userMessageId: "foreign", startedAt: Number.MAX_SAFE_INTEGER } } }],

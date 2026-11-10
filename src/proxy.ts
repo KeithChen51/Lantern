@@ -3,8 +3,9 @@ import { getGuestAccessService, readAccessCookie, requireEmployee, requireSiteVi
 import { readAccessConfig } from "@/modules/auth/access-config";
 import { readSiteAccessConfig } from "@/modules/auth/site-access-config";
 import { callback } from "@/modules/auth/access-http";
-import { classifyAccessPath, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
+import { classifyAccessPath, isEmployeePage, isPublicAuthPage, normalizeAccessPath, REQUEST_PATH_HEADER } from "@/modules/auth/page-access";
 import { isLoginDocument, loginArrivalCookie, LOGIN_ARRIVAL_HEADER, validLoginArrival } from "@/modules/auth/login-arrival";
+import { isWecomAutoSessionToken } from "@/modules/auth/wecom-auto-access";
 
 function noStore<T extends Response>(response: T): T {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
@@ -16,7 +17,7 @@ function noStore<T extends Response>(response: T): T {
 export async function proxy(request: NextRequest) {
   const path = normalizeAccessPath(request.nextUrl.pathname);
   // Classify the raw URL where available. The production adapter may normalize
-  // /_next/data to its page first; that path still passes the employee gate.
+  // /_next/data to its page first; that path still passes the authentication gate.
   const kind = classifyAccessPath(new URL(request.url).pathname, request.nextUrl.searchParams.get("url"));
   if (kind === "invalid") return noStore(new NextResponse("无效的请求路径。", { status: 400 }));
   if (process.env.AUTH_MODE === "guest") {
@@ -98,7 +99,8 @@ export async function proxy(request: NextRequest) {
     if (process.env.AUTH_MODE === "iam" && path === "/" && ["token", "code", "state"].some(name => request.nextUrl.searchParams.has(name))) {
       return noStore(NextResponse.redirect(new URL("/login?error=callback", readAccessConfig().origin), 303));
     }
-    await requireEmployee(request);
+    if (isEmployeePage(path!)) await requireEmployee(request);
+    else await requireSiteVisitor(request);
     let arrivalCookie: string | undefined;
     let secureCookies = false;
     if (process.env.AUTH_MODE === "iam" && kind === "page" && isLoginDocument(request)) {
@@ -130,7 +132,9 @@ export async function proxy(request: NextRequest) {
       clean.searchParams.delete("token");
       clean.searchParams.delete("code");
       clean.searchParams.delete("state");
-      const automaticEntry = config.mode === "iam" && path === "/" && isLoginDocument(request)
+      const wasDealer = isWecomAutoSessionToken(readAccessCookie(request.headers, config.sessionCookie) ?? "");
+      if (wasDealer) target.searchParams.set("error", "wecom");
+      const automaticEntry = !wasDealer && config.mode === "iam" && path === "/" && isLoginDocument(request)
         && !request.nextUrl.searchParams.has("error") && !request.nextUrl.searchParams.has("loggedOut")
         // A successful callback with a rejected session cookie stops at retry.
         && !request.cookies.has(loginArrivalCookie(config.sessionCookie));

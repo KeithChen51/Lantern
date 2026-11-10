@@ -1,14 +1,15 @@
 import { getSiteKnowledgeHub, isKnowledgeHubEnabled } from "@/modules/knowledge-hub/runtime";
+import type { Principal } from "@/modules/auth/access-types";
 import { caseEntryPrompt, MIRROR_CASE_ID, MIRROR_CASE_TITLE, type HermitCaseEntry } from "@/components/hermit/case-entry";
 
 /** Resolve the current readable publication; a URL never supplies a trusted citation. */
-export async function resolveCaseEntry(params: { from?: string | string[]; question?: string | string[] }): Promise<HermitCaseEntry | undefined> {
+export async function resolveCaseEntry(params: { from?: string | string[]; question?: string | string[] }, viewer: Pick<Principal, "kind">): Promise<HermitCaseEntry | undefined> {
   const prompt = caseEntryPrompt(params);
   if (!prompt) return undefined;
   const entry: HermitCaseEntry = { prompt, title: MIRROR_CASE_TITLE, document: null };
   if (isKnowledgeHubEnabled()) {
     try {
-      const resource = await getSiteKnowledgeHub().get(MIRROR_CASE_ID);
+      const resource = await getSiteKnowledgeHub(viewer).get(MIRROR_CASE_ID);
       entry.document = { id: `context:${resource.id}`, resourceId: resource.id, versionId: resource.version.id, title: resource.title, source: resource.source };
       return entry;
     } catch {

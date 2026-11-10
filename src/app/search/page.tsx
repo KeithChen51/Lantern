@@ -23,7 +23,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   let error = !parsed.success ? "查询参数不正确，请调整后重试。" : "";
   let result: Awaited<ReturnType<ReturnType<typeof getSiteKnowledgeHub>["search"]>> | null = null;
   if (parsed.success && isKnowledgeHubEnabled()) {
-    try { result = await getSiteKnowledgeHub().search(options); } catch { error = "知识服务暂时不可用，请稍后重试。"; }
+    try { result = await getSiteKnowledgeHub(principal).search(options); } catch { error = "知识服务暂时不可用，请稍后重试。"; }
   }
   const pageLink = (offset: number) => `/search?${new URLSearchParams({ q: options.query, sort: options.sort, ...(options.type ? { type: options.type } : {}), offset: String(offset) })}`;
   const navigationMatches = getHeaderSearchMatches(query);

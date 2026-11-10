@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { readSiteAccessConfig } from "../src/modules/auth/site-access-config";
+import { readWecomAutoConfig } from "../src/modules/auth/wecom-auto-config";
 
 /** Check the exact resolved app environment, without inheriting tools-image defaults. */
 export function checkResolvedAccessConfig(input: unknown, service: string, expectedDeployment: "test" | "production" = "test"): void {
@@ -14,7 +15,8 @@ export function checkResolvedAccessConfig(input: unknown, service: string, expec
   // Both deployed environments use production builds; HTTP is only an exact
   // test-origin exception. Never inherit tools-image defaults.
   if (env.NODE_ENV !== "production" || env.LIGHTHOUSE_DEPLOYMENT_ENV !== expectedDeployment || env.AUTH_ALLOW_LOCAL_HTTP !== "false") throw new Error("Unexpected deployment");
-  readSiteAccessConfig(env);
+  const site = readSiteAccessConfig(env);
+  readWecomAutoConfig(site, env);
 }
 
 if (/(?:^|[\\/])check-access-config\.(?:ts|cjs)$/.test(process.argv[1] ?? "")) {

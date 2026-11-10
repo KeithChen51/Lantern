@@ -1,10 +1,11 @@
 import { type NextRequest } from "next/server";
-import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireSiteVisitor, requireKnowledgeClient } from "./access";
+import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireSiteVisitor, requireWebAccount, requireKnowledgeClient } from "./access";
 import { readAccessConfig } from "./access-config";
 import { hashToken } from "./access-crypto";
 import { AccessError, OAuthError } from "./access-types";
 import { loginRetryHref } from "./login-return";
 import { createLoginArrival, loginArrivalCookie, LOGIN_ARRIVAL_MAX_AGE } from "./login-arrival";
+import { getWecomAutoAccess } from "./wecom-auto-runtime";
 
 export const NO_STORE = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" };
 export function json(value: unknown, status = 200): Response { return Response.json(value, { status, headers: NO_STORE }); }
@@ -65,8 +66,8 @@ function requiredCookie(request: Request, name: string): string {
   if (!value) throw new AccessError("登录流程已失效，请重新开始。", 401);
   return value;
 }
-async function mutation(request: Request, input?: Record<string, unknown>) {
-  const principal = await requireEmployee(request);
+async function mutation(request: Request, input?: Record<string, unknown>, readPrincipal = requireEmployee) {
+  const principal = await readPrincipal(request);
   if (isForm(request)) {
     const headers = new Headers(request.headers);
     headers.set("x-csrf-token", textField(input ?? await body(request), "csrfToken"));
@@ -158,6 +159,44 @@ export const iamCallback = async (request: NextRequest): Promise<Response> => {
     } catch { return new Response(null, { status: 303, headers: { ...NO_STORE, Location: "/login?error=unavailable" } }); }
   }
 };
+export const wecomAutoStart = route(async request => {
+  const { config, service } = getWecomAutoAccess();
+  const params = new URL(request.url).searchParams;
+  if ([...params.keys()].some(name => name !== "returnTo") || params.getAll("returnTo").length > 1) {
+    throw new AccessError("登录参数无效。", 400);
+  }
+  const result = await service.startLogin(params.get("returnTo") ?? undefined);
+  const response = redirect(result.redirectUrl);
+  setCookie(response, config.transactionCookie, result.cookie, config.transactionMs / 1000);
+  return response;
+});
+export async function wecomAutoCallback(request: NextRequest): Promise<Response> {
+  try {
+    const site = readAccessConfig();
+    const { config, service } = getWecomAutoAccess(site);
+    const params = new URL(request.url).searchParams;
+    const code = params.get("code");
+    const state = params.get("state");
+    if (params.has("error") || params.getAll("state").length !== 1 || params.getAll("code").length !== 1
+      || !state || !code || code === "authdeny") {
+      throw new AccessError("企微登录回调无效。", 401);
+    }
+    const result = await service.callback({
+      code, state,
+      cookie: readAccessCookie(request.headers, config.transactionCookie),
+      previousSession: readAccessCookie(request.headers, site.sessionCookie),
+    });
+    const response = redirect(result.returnTo);
+    setCookie(response, site.sessionCookie, result.sessionToken, site.sessionAbsoluteMs / 1000);
+    setCookie(response, config.transactionCookie, "", 0);
+    setCookie(response, loginArrivalCookie(site.sessionCookie), "", 0);
+    return response;
+  } catch (error) {
+    const reason = error instanceof AccessError && error.status === 403 ? "wecomAccess" : "wecom";
+    // Remove the authorization code from the address before rendering a page.
+    return new Response(null, { status: 303, headers: { ...NO_STORE, Location: `/login?error=${reason}` } });
+  }
+}
 export const pending = route(async request => json(await getAccessService().pending(requiredCookie(request, readAccessConfig().pendingCookie))));
 export const confirm = route(async request => {
   assertSameOrigin(request.headers);
@@ -170,10 +209,19 @@ export const me = route(async request => {
   return json({ ...(principal.kind ? { kind: principal.kind } : {}), user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken, expiresAt: principal.expiresAt });
 });
 export function logout(all: boolean) { return route(async request => {
-  const principal = await mutation(request);
-  await getAccessService().logout(principal, all);
+  const principal = await mutation(request, undefined, requireWebAccount);
   const config = readAccessConfig();
-  const response = isForm(request) ? redirect(config.mode === "iam" ? "/login?loggedOut=1" : "/login") : empty();
+  if (principal.kind === "dealer") {
+    const { config: wecom, service } = getWecomAutoAccess(config);
+    await service.logout(principal, all);
+    const response = isForm(request) ? redirect("/login?loggedOut=wecom") : empty();
+    setCookie(response, config.sessionCookie, "", 0);
+    setCookie(response, wecom.transactionCookie, "", 0);
+    return response;
+  }
+  await getAccessService().logout(principal, all);
+  const path = config.mode === "iam" ? "/login?loggedOut=1" : "/login";
+  const response = isForm(request) ? redirect(path) : empty();
   for (const cookie of [config.sessionCookie, config.transactionCookie, config.pendingCookie, loginArrivalCookie(config.sessionCookie)]) setCookie(response, cookie, "", 0);
   return response;
 }); }

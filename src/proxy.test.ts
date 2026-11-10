@@ -6,7 +6,7 @@ import { createLoginArrival, loginArrivalCookie, LOGIN_ARRIVAL_HEADER } from "./
 
 const { employee, portalCallback } = vi.hoisted(() => ({ employee: vi.fn(), portalCallback: vi.fn() }));
 vi.mock("@/modules/auth/access-http", () => ({ callback: portalCallback }));
-vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee, readAccessCookie: (headers: Headers, name: string) => headers.get("cookie")?.split("; ").find(value => value.startsWith(`${name}=`))?.slice(name.length + 1) }));
+vi.mock("@/modules/auth/access", () => ({ requireEmployee: employee, requireSiteVisitor: employee, readAccessCookie: (headers: Headers, name: string) => headers.get("cookie")?.split("; ").find(value => value.startsWith(`${name}=`))?.slice(name.length + 1) }));
 vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: () => ({ origin: "https://lighthouse.invalid", mode: process.env.AUTH_MODE ?? "portal", sessionCookie: "lighthouse_test_session", secureCookies: true, transactionMs: 300000, encryptionKey: Buffer.alloc(32, 5).toString("base64") }) }));
 beforeEach(() => { employee.mockReset(); portalCallback.mockReset(); });
 afterEach(() => vi.unstubAllEnvs());
