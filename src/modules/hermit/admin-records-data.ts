@@ -9,7 +9,7 @@ import { readRecordIdentities, unavailableRecordIdentity, type HermitRecordIdent
 
 type Database = Pick<PrismaClient, "$queryRaw">;
 type Options = { database?: Database; now?: Date; authority?: "portal" | "iam" | "iam-portal" };
-export type HermitRecordActor = "employee" | "guest" | "unknown";
+export type HermitRecordActor = "employee" | "guest" | "dealer" | "unknown";
 export type HermitRecordFilters = { start?: string; end?: string; actor?: HermitRecordActor; id?: string; cursor?: string };
 export type HermitRecordRow = { id: string; actor: HermitRecordActor; createdAt: string; lastQuestionAt: string | null; turns: number; periodTurns?: number; identity: HermitRecordIdentity };
 export type HermitRecordsResult = { rows: HermitRecordRow[]; nextCursor: string | null };
@@ -23,7 +23,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
   const parsed = new Date(value + "T00:00:00.000Z");
   return value >= "1000-01-01" && value < "9999-12-31" && Number.isFinite(+parsed) && parsed.toISOString().slice(0, 10) === value;
 });
-const filtersSchema = z.object({ start: date.optional(), end: date.optional(), actor: z.enum(["employee", "guest", "unknown"]).optional(), id: identifier.optional(), cursor: z.string().optional() }).strict();
+const filtersSchema = z.object({ start: date.optional(), end: date.optional(), actor: z.enum(["employee", "guest", "dealer", "unknown"]).optional(), id: identifier.optional(), cursor: z.string().optional() }).strict();
 const listCursorSchema = z.object({ filter: z.string(), id: identifier, createdAt: z.string().datetime(), lastQuestionAt: z.string().datetime().nullable() }).strict();
 const messageCursorSchema = z.union([
   z.object({ session: identifier, after: identifier }).strict(),
@@ -76,7 +76,8 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
       ${hasPeriod ? Prisma.sql`, inventory.periodTurns` : Prisma.empty}
     FROM (
       SELECT s.id, s.created_at AS createdAt,
-        CASE WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL THEN 'employee'
+        CASE WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL AND u.user_type = 'internal_employee' THEN 'employee'
+          WHEN s.user_id IS NOT NULL AND s.guest_id IS NULL AND u.user_type = 'dealer_user' THEN 'dealer'
           WHEN s.guest_id IS NOT NULL AND s.user_id IS NULL THEN 'guest' ELSE 'unknown' END AS actor,
         question.lastQuestionAt, COALESCE(question.turns, 0) AS turns
         ${hasPeriod ? Prisma.sql`, question.periodTurns` : Prisma.empty}
@@ -87,6 +88,7 @@ export async function listHermitRecords(input: HermitRecordFilters = {}, options
           ${id ? Prisma.sql`AND session_id = ${id}` : Prisma.empty}
         GROUP BY session_id
       ) question ON question.session_id = s.id
+      LEFT JOIN users u ON u.id = s.user_id
       ${id ? Prisma.sql`WHERE s.id = ${id} AND BINARY s.id = BINARY ${id}` : Prisma.empty}
     ) inventory
     ${conditions.length ? Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}` : Prisma.empty}

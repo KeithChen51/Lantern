@@ -40,6 +40,6 @@ export function waitForHermitUpload<T>(work: Promise<T>, signal: AbortSignal): P
   });
 }
 
-export function hermitUploadOwner(session: { kind?: "employee" | "guest"; user: { id: string } } | null) {
+export function hermitUploadOwner(session: { kind?: import("@/modules/auth/access-types").PrincipalKind; user: { id: string } } | null) {
   return session ? `${session.kind ?? "employee"}:${session.user.id}` : null;
 }

@@ -42,6 +42,8 @@ describe("MySQL summary queries", () => {
     const hermit = queries.find((query) => query.sql.includes("FROM chat_messages"))!;
     expect(hermit.sql).toContain("m.role = 'user'");
     expect(hermit.sql).toContain("s.user_id IS NOT NULL AND s.guest_id IS NULL");
+    expect(hermit.sql).toContain("LEFT JOIN users AS u ON u.id = s.user_id");
+    expect(hermit.sql).toContain("u.user_type = 'internal_employee'");
     expect(hermit.sql).toContain("s.guest_id IS NOT NULL AND s.user_id IS NULL");
     expect(hermit.sql).toContain("COUNT(DISTINCT m.session_id)");
   });

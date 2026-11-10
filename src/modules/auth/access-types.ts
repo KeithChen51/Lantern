@@ -2,8 +2,9 @@ import { AppError } from "@/shared/errors";
 import type { IamLoginConfig } from "./iam-config";
 
 export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage" | "analytics:summary" | "feedback:manage";
+export type PrincipalKind = "employee" | "guest" | "dealer";
 export type Principal = {
-  kind?: "employee" | "guest";
+  kind?: PrincipalKind;
   userId: string; account: string; displayName: string;
   organization?: string; employeeNo?: string; avatarUrl?: string;
   grantId: string; credentialId: string; channel: "web" | "cli" | "mcp";

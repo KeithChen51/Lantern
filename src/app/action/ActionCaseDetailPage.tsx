@@ -8,15 +8,15 @@ import { headers } from "next/headers";
 import { requireSiteVisitor } from "@/modules/auth/access";
 
 export async function ActionCaseDetailPage({ slug }: { slug: string }) {
-  await requireSiteVisitor(await headers());
+  const principal = await requireSiteVisitor(await headers());
   if (isKnowledgeHubEnabled()) {
-    const resource = await getSiteKnowledgeHub().get(`case-${slug}`).catch(error => {
+    const resource = await getSiteKnowledgeHub(principal).get(`case-${slug}`).catch(error => {
       if (error instanceof HubError && error.code === "not_found") notFound();
       throw error;
     });
     return <ResourceView resource={resource} />;
   }
-  const actionCase = await getPublicActionCaseBySlug(slug);
+  const actionCase = await getPublicActionCaseBySlug(slug, principal);
 
   if (!actionCase) {
     notFound();

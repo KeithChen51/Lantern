@@ -34,6 +34,7 @@ export async function POST(request: Request) {
   if (!visitCoverageStart()) return new Response(null, { status: 204, headers: HEADERS });
   try {
     const principal = await requireSiteVisitor(request);
+    if (principal.kind === "dealer") return new Response(null, { status: 204, headers: HEADERS });
     assertWebMutation(request, principal);
     const input = parseVisitInput(await boundedBody(request));
     // This additional binding rejects a stale page after the browser cookie has
