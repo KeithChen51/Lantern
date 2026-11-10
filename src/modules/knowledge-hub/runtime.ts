@@ -1,4 +1,5 @@
 import { prisma } from "@/infrastructure/db";
+import type { Principal } from "@/modules/auth/access-types";
 import { resolveKnowledgeSqlitePath } from "./sqlite-path";
 import { KnowledgeHub } from "./service";
 import { PrismaHubStore } from "./prisma-store";
@@ -34,10 +35,11 @@ export async function closeKnowledgeHub() {
 export function getKnowledgeHub() {
   return new KnowledgeHub(getKnowledgeHubStore());
 }
-/** Business pages and AI share the same guest visibility boundary. Admin/CLI stay employee-only. */
-export function getSiteKnowledgeHub() {
+/** Non-employee site readers share the published public view across pages, APIs and AI tools. */
+export function getSiteKnowledgeHub(viewer: Pick<Principal, "kind">) {
   const store = getKnowledgeHubStore();
-  return new KnowledgeHub(process.env.AUTH_MODE === "guest" ? new GuestHubStore(store) : store);
+  const publicOnly = viewer.kind === "guest" || viewer.kind === "dealer" || process.env.AUTH_MODE === "guest";
+  return new KnowledgeHub(publicOnly ? new GuestHubStore(store) : store);
 }
 export function isKnowledgeHubEnabled() {
   return process.env.KNOWLEDGE_HUB_ENABLED === "true";

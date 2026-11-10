@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { requireSiteVisitor } from "@/modules/auth/access";
 import { LhButton, LhEmptyState } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
 import { Icon } from "@iconify/react";
@@ -25,7 +27,8 @@ function statusLabel(status: string) {
 }
 
 export default async function ActionPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const [actionCases, params] = await Promise.all([getPublicActionCaseSummaries(), searchParams]);
+  const [principal, params] = await Promise.all([headers().then(requireSiteVisitor), searchParams]);
+  const actionCases = await getPublicActionCaseSummaries(principal);
   const query = typeof params.q === "string" ? params.q.slice(0, 200) : "";
   const tag = typeof params.tag === "string" ? params.tag.slice(0, 100) : "";
   const tags = actionCaseTags(actionCases);

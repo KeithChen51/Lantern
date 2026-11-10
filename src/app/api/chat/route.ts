@@ -75,7 +75,7 @@ function readSessionId(value: unknown): string {
 function chatParticipant(principal: Principal): HermitChatParticipant {
   const owner: HermitChatOwner = principal.kind === "guest" ? { userId: null, guestId: principal.userId } : { userId: principal.userId, guestId: null };
   return { ...owner, brandId: null, regionId: null, dealerId: null, storeId: null,
-    ...(principal.kind !== "guest" ? { identity: { account: principal.account,
+    ...((principal.kind ?? "employee") === "employee" ? { identity: { account: principal.account,
       ...(principal.employeeNo ? { employeeNo: principal.employeeNo } : {}),
       ...(principal.organization ? { organization: principal.organization } : {}) } } : {}) };
 }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
   try { await hermitChatRepository.upsertSession({ id: sessionId, ...participant, title: null }); }
   catch (error) { return errorResponse(error); }
   const useDsh = process.env.HERMIT_RUNTIME === "dsh";
-  const hub = isKnowledgeHubEnabled() ? getSiteKnowledgeHub() : null;
+  const hub = isKnowledgeHubEnabled() ? getSiteKnowledgeHub(principal) : null;
   if (!hub && (useDsh || body.documentContext || body.skillContext || body.attachmentIds.length)) return Response.json({ error: "请先启用并初始化知识中台。" }, { status: 503 });
   if (useDsh) {
     try { await verifyDshInstallation(); }
