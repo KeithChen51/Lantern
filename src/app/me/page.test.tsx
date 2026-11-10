@@ -8,6 +8,7 @@ const { employee, requestHeaders } = vi.hoisted(() => ({ employee: vi.fn(), requ
 vi.mock("@/modules/auth/access", () => ({ requireSiteVisitor: employee }));
 vi.mock("next/headers", () => ({ headers: async () => requestHeaders }));
 vi.mock("@/components/layout/release-read-state", () => ({ useReleaseUnread: vi.fn(() => false) }));
+const employeeProfile = { displayName: "测试员工", account: "000123", csrfToken: "csrf-fixture", capabilities: ["auth:client:self"] };
 
 beforeEach(() => {
   employee.mockReset();
@@ -16,7 +17,7 @@ beforeEach(() => {
 
 describe("my employee page", () => {
   it("renders verified employee identity and the existing CSRF logout form", async () => {
-    employee.mockResolvedValue({ displayName: "测试员工", account: "000123", csrfToken: "csrf-fixture", grantId: "never-render-grant", credentialId: "never-render-session" });
+    employee.mockResolvedValue({ ...employeeProfile, grantId: "never-render-grant", credentialId: "never-render-session" });
     const html = renderToStaticMarkup(await MyPage());
 
     expect(employee).toHaveBeenCalledWith(requestHeaders);
@@ -37,7 +38,7 @@ describe("my employee page", () => {
   });
 
   it("renders available employee avatar and organization", async () => {
-    employee.mockResolvedValue({ displayName: "测试员工", account: "000123", csrfToken: "csrf-fixture", avatarUrl: "https://images.example.invalid/employee.png", organization: "服务中心 / 售后服务部" });
+    employee.mockResolvedValue({ ...employeeProfile, avatarUrl: "https://images.example.invalid/employee.png", organization: "服务中心 / 售后服务部" });
     const html = renderToStaticMarkup(await MyPage());
     expect(html).toContain('src="https://images.example.invalid/employee.png"');
     expect(html).toContain('referrerPolicy="no-referrer"');
@@ -46,11 +47,19 @@ describe("my employee page", () => {
   });
 
   it("keeps an account-only legacy profile out of the name field and heading", async () => {
-    employee.mockResolvedValue({ displayName: "000123", account: "000123", csrfToken: "csrf-fixture" });
+    employee.mockResolvedValue({ ...employeeProfile, displayName: "000123" });
     const html = renderToStaticMarkup(await MyPage());
     expect(html).toContain("姓名暂未获取");
     expect(html.match(/000123/g)).toHaveLength(1);
     expect(html).toMatch(/工号<\/dt><dd[^>]*>000123<\/dd>/);
+  });
+
+  it("shows the employee profile and logout for a Group pilot session without tools", async () => {
+    employee.mockResolvedValue({ ...employeeProfile, capabilities: ["content:read"] });
+    const html = renderToStaticMarkup(await MyPage());
+    expect(html).toContain("000123");
+    expect(html).toContain('action="/api/auth/logout"');
+    expect(html).not.toContain('href="/auth/tools"');
   });
 
   it("shows guest mode without employee identity or privileged account actions", async () => {

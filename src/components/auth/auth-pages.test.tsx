@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import LoginPage from "@/app/login/page";
 import ConfirmLoginPage from "@/app/auth/confirm/page";
 import DeviceApprovalPage from "@/app/auth/device/page";
+import ToolGrantsPage from "@/app/auth/tools/page";
 
 const { config, siteConfig, redirect, pending, device, employee } = vi.hoisted(() => ({ config: vi.fn(), siteConfig: vi.fn(), redirect: vi.fn(), pending: vi.fn(), device: vi.fn(), employee: vi.fn() }));
 vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: config }));
@@ -70,14 +71,21 @@ describe("native employee entry and approval pages", () => {
     expect(renderToStaticMarkup(await ConfirmLoginPage())).toContain('href="/login"');
   });
   it("shows employee, client and knowledge-only scope with separate approve/refuse native controls", async () => {
-    employee.mockResolvedValue({ displayName: "测试员工", account: "employee-fixture", csrfToken: "csrf-fixture" });
+    employee.mockResolvedValue({ displayName: "测试员工", account: "employee-fixture", csrfToken: "csrf-fixture", capabilities: ["auth:client:self"] });
     device.mockResolvedValue({ userCode: "ABCD-EFGH", clientName: "测试工具", scope: "knowledge:read", expiresAt: 1800000000000, deviceCode: "never-render-device-token" });
     const html = renderToStaticMarkup(await DeviceApprovalPage({ searchParams: Promise.resolve({ user_code: "ABCD-EFGH" }) }));
     expect(html).toContain("测试工具"); expect(html).toContain("knowledge:read"); expect(html).toContain('value="true" name="approve"'); expect(html).toContain('value="false" name="approve"'); expect(html).not.toContain("never-render-device-token");
   });
   it("disables approval when the request is expired or unavailable", async () => {
-    employee.mockResolvedValue({ displayName: "测试员工", account: "employee-fixture" }); device.mockRejectedValue({ status: 503 });
+    employee.mockResolvedValue({ displayName: "测试员工", account: "employee-fixture", capabilities: ["auth:client:self"] }); device.mockRejectedValue({ status: 503 });
     const html = renderToStaticMarkup(await DeviceApprovalPage({ searchParams: Promise.resolve({ user_code: "ABCD-EFGH" }) }));
     expect(html).toContain("服务暂不可用"); expect(html).toContain("disabled"); expect(html).not.toContain('action="/api/auth/device/decision"');
+  });
+  it("requires an OA-capable session for tools and device completion", async () => {
+    employee.mockResolvedValue({ capabilities: ["content:read"] });
+    await expect(ToolGrantsPage()).rejects.toThrow("NEXT_REDIRECT");
+    await expect(DeviceApprovalPage({ searchParams: Promise.resolve({ completed: "1" }) })).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirect.mock.calls).toEqual([["/login?error=wecomGroupTool"], ["/login?error=wecomGroupTool"]]);
+    expect(device).not.toHaveBeenCalled();
   });
 });

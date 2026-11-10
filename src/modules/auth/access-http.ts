@@ -6,6 +6,7 @@ import { AccessError, OAuthError } from "./access-types";
 import { loginRetryHref } from "./login-return";
 import { createLoginArrival, loginArrivalCookie, LOGIN_ARRIVAL_MAX_AGE } from "./login-arrival";
 import { getWecomAutoAccess } from "./wecom-auto-runtime";
+import { readWecomGroupConfig } from "./wecom-group-config";
 
 export const NO_STORE = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" };
 export function json(value: unknown, status = 200): Response { return Response.json(value, { status, headers: NO_STORE }); }
@@ -223,6 +224,12 @@ export function logout(all: boolean) { return route(async request => {
   const path = config.mode === "iam" ? "/login?loggedOut=1" : "/login";
   const response = isForm(request) ? redirect(path) : empty();
   for (const cookie of [config.sessionCookie, config.transactionCookie, config.pendingCookie, loginArrivalCookie(config.sessionCookie)]) setCookie(response, cookie, "", 0);
+  try {
+    const group = readWecomGroupConfig(config);
+    if (group) setCookie(response, group.transactionCookie, "", 0);
+  } catch {
+    // Broken optional Group configuration cannot prevent normal IAM logout.
+  }
   return response;
 }); }
 export const clients = route(async request => json({ items: await getAccessService().listClients(await requireEmployee(request)) }));
