@@ -1,8 +1,11 @@
-import { WECOM_AUTO_CALLBACK, WECOM_AUTO_START } from "./wecom-auto-config";
+import { WECOM_AUTO_ROUTES } from "./wecom-auto-config";
 
 // Keep the public entry points small: no business JavaScript is public.
 export const REQUEST_PATH_HEADER = "x-lighthouse-request-path";
-const PUBLIC_PAGES = new Set(["/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login", WECOM_AUTO_START, WECOM_AUTO_CALLBACK]);
+const PUBLIC_PAGES = new Set([
+  "/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login",
+  ...Object.values(WECOM_AUTO_ROUTES).flatMap(({ start, callback }) => [start, callback]),
+]);
 const PUBLIC_ASSETS = new Set([
   "/nav-lighthouse-transparent.png", "/favicon.ico", "/icon.png", "/apple-icon.png",
   "/lighthouse-home-hero-bg-v2-realistic-shore.png",

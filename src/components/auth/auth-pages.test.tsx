@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/modules/auth/access", () => ({ getPendingLogin: pending, getDeviceRequest: device, requireEmployee: employee }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 beforeEach(() => { config.mockReset(); siteConfig.mockReset().mockReturnValue({ mode: "iam" }); redirect.mockReset().mockImplementation(() => { throw new Error("NEXT_REDIRECT"); }); pending.mockReset(); device.mockReset(); employee.mockReset(); });
-afterEach(() => vi.clearAllMocks());
+afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
 describe("native employee entry and approval pages", () => {
   it("takes guests home without loading employee configuration or showing OA login", async () => {
     siteConfig.mockReturnValue({ mode: "guest" });
@@ -28,6 +28,32 @@ describe("native employee entry and approval pages", () => {
     expect(html.match(/aria-label="Powered by SPACE AI Native"/g)).toHaveLength(1);
     expect(html).toContain('src="/lighthouse-home-hero-bg-v2-realistic-shore.png"');
     expect(redirect).not.toHaveBeenCalled();
+  });
+  it("renders the two enabled scan options alongside native OA login without rendering credentials", async () => {
+    config.mockReturnValue({ mode: "iam", origin: "https://lantern.invalid", secureCookies: true, encryptionKey: Buffer.alloc(32).toString("base64") });
+    vi.stubEnv("IAM_WECOM_SCAN_ENABLED", "true");
+    vi.stubEnv("WECOM_AUTO_SCAN_ENABLED", "true");
+    vi.stubEnv("WECOM_AUTO_CORP_ID", "wwSyntheticAuto");
+    vi.stubEnv("WECOM_AUTO_AGENT_ID", "1000005");
+    vi.stubEnv("WECOM_AUTO_SECRET", "synthetic-private-secret");
+    const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({ returnTo: "/heart" }) }));
+    expect(html).toContain("OA 登录");
+    expect(html).toContain("比亚迪集团员工 · 企微扫码");
+    expect(html).toContain("在集团统一登录页选择企业微信扫码");
+    expect(html).toContain("比亚迪汽车经销商 · 企微扫码");
+    expect(html).toContain('formAction="/auth/wecom/auto/scan/start"');
+    expect(html).toContain('name="returnTo" value="/heart"');
+    expect(html).not.toContain("synthetic-private-secret");
+  });
+  it("keeps OA available when the optional scan configuration is incomplete", async () => {
+    config.mockReturnValue({ mode: "iam", secureCookies: true });
+    vi.stubEnv("IAM_WECOM_SCAN_ENABLED", "false");
+    vi.stubEnv("WECOM_AUTO_SCAN_ENABLED", "true");
+    vi.stubEnv("WECOM_AUTO_SECRET", "");
+    const html = renderToStaticMarkup(await LoginPage({ searchParams: Promise.resolve({}) }));
+    expect(html).toContain("OA 登录");
+    expect(html).not.toContain("企微扫码");
+    expect(html).not.toContain("disabled");
   });
   it.each([
     [{ mode: "portal", portalLoginMode: "card" }, { error: "unavailable" }, "前往统一门户", "统一登录服务暂不可用"],

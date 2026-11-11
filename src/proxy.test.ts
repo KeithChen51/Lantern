@@ -18,6 +18,16 @@ describe("employee request gate", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("https://lighthouse.invalid/auth/iam/start?returnTo=%2F%3Fview%3Dvalues");
   });
+  it.each([
+    { IAM_WECOM_SCAN_ENABLED: "true" },
+    { WECOM_AUTO_SCAN_ENABLED: "true", WECOM_AUTO_CORP_ID: "wwTestCorp", WECOM_AUTO_AGENT_ID: "1000001", WECOM_AUTO_SECRET: "synthetic-key" },
+  ])("opens the login choices when a scan entry is available", async env => {
+    vi.stubEnv("AUTH_MODE", "iam");
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    employee.mockRejectedValue({ status: 401 });
+    const response = await proxy(new NextRequest("https://lighthouse.invalid/?view=values", { headers: { accept: "text/html" } }));
+    expect(response.headers.get("location")).toBe("https://lighthouse.invalid/login?returnTo=%2F%3Fview%3Dvalues");
+  });
   it("does not auto-start twice when a returned session cookie is missing", async () => {
     vi.stubEnv("AUTH_MODE", "iam");
     employee.mockRejectedValue({ status: 401 });

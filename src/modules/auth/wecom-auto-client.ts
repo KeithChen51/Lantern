@@ -2,16 +2,20 @@ import { AccessError } from "./access-types";
 
 export type WecomAutoApplication = Readonly<{ corpId: string; agentId: string; secret: string }>;
 export type WecomAutoMember = { userId: string; displayName: string };
+export type WecomAutoEntry = "workbench" | "scan";
 export interface WecomAutoProvider {
-  authorizationUrl(callbackUrl: string, state: string): string;
+  authorizationUrl(callbackUrl: string, state: string, entry: WecomAutoEntry): string;
   authenticate(code: string): Promise<WecomAutoMember>;
   readMember(userId: string): Promise<WecomAutoMember>;
 }
 
 const API_ORIGIN = "https://qyapi.weixin.qq.com";
 const AUTHORIZE_URL = "https://open.weixin.qq.com/connect/oauth2/authorize";
+const SCAN_AUTHORIZE_URL = "https://login.work.weixin.qq.com/wwlogin/sso/login";
 const REQUEST_TIMEOUT_MS = 3000;
 const MAX_RESPONSE_BYTES = 64 * 1024;
+const ROOT_DEPARTMENT_ID = 1;
+const MAX_DEPARTMENT_DEPTH = 16;
 // Application details include the configured visible member list.
 const MAX_APPLICATION_BYTES = 2 * 1024 * 1024;
 const MEMBER_ID = /^[A-Za-z0-9][A-Za-z0-9_.@-]{0,63}$/;
@@ -38,6 +42,19 @@ function memberId(value: unknown): string {
 
 function tokenRejected(code: number) {
   return code === 40014 || code === 42001;
+}
+
+function departmentId(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : undefined;
+}
+
+function memberDepartmentId(member: ApiBody): number | undefined {
+  const main = departmentId(member.main_department);
+  if (main !== undefined) return main;
+  const visible = new Set((Array.isArray(member.department) ? member.department : []).map(departmentId));
+  visible.delete(undefined);
+  visible.delete(ROOT_DEPARTMENT_ID);
+  return visible.size === 1 ? visible.values().next().value : undefined;
 }
 
 async function readJson(response: Response, signal: AbortSignal, maximumBytes: number): Promise<ApiBody> {
@@ -86,7 +103,7 @@ export class WecomAutoClient implements WecomAutoProvider {
     this.config = Object.freeze({ ...config });
   }
 
-  authorizationUrl(callbackUrl: string, state: string): string {
+  authorizationUrl(callbackUrl: string, state: string, entry: WecomAutoEntry = "workbench"): string {
     try {
       const callback = new URL(callbackUrl);
       if (callback.protocol !== "https:" || callback.username || callback.password || callback.hash
@@ -94,12 +111,17 @@ export class WecomAutoClient implements WecomAutoProvider {
     } catch {
       throw new AccessError("企业微信登录请求无效。", 400);
     }
-    const url = new URL(AUTHORIZE_URL);
+    const url = new URL(entry === "scan" ? SCAN_AUTHORIZE_URL : AUTHORIZE_URL);
     url.search = new URLSearchParams({
-      appid: this.config.corpId, redirect_uri: callbackUrl, response_type: "code",
-      scope: "snsapi_base", state, agentid: this.config.agentId,
+      appid: this.config.corpId, agentid: this.config.agentId, redirect_uri: callbackUrl, state,
     }).toString();
-    url.hash = "wechat_redirect";
+    if (entry === "scan") {
+      url.searchParams.set("login_type", "CorpApp");
+    } else {
+      url.searchParams.set("response_type", "code");
+      url.searchParams.set("scope", "snsapi_base");
+      url.hash = "wechat_redirect";
+    }
     return url.toString();
   }
 
@@ -126,6 +148,32 @@ export class WecomAutoClient implements WecomAutoProvider {
       body = await this.memberResponse(userId, await this.applicationToken());
     }
     return this.checkedMember(body, userId);
+  }
+
+  async readOrganization(value: string): Promise<string | undefined> {
+    const userId = memberId(value);
+    const deadline = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    const token = await this.applicationToken();
+    const member = await this.memberResponse(userId, token, deadline);
+    this.checkedMember(member, userId);
+
+    const names: string[] = [];
+    const visited = new Set<number>();
+    let id = memberDepartmentId(member);
+    while (id !== undefined && id !== ROOT_DEPARTMENT_ID && !visited.has(id) && names.length < MAX_DEPARTMENT_DEPTH) {
+      visited.add(id);
+      const body = await this.request("/cgi-bin/department/get", { access_token: token.value, id: String(id) }, MAX_RESPONSE_BYTES, deadline)
+        .catch(() => undefined);
+      if (!body) break;
+      this.discardRejectedToken(token, body.errcode);
+      const department = body.department as { id?: unknown; name?: unknown; parentid?: unknown } | undefined;
+      if (body.errcode !== 0 || department?.id !== id || typeof department.name !== "string") break;
+      const name = department.name.trim();
+      if (!name || name.length > 120 || CONTROL_CHARACTER.test(name)) break;
+      names.push(name);
+      id = departmentId(department.parentid);
+    }
+    return names.length ? names.reverse().join(" / ") : undefined;
   }
 
   private applicationToken(): Promise<ApplicationToken> {
@@ -155,8 +203,8 @@ export class WecomAutoClient implements WecomAutoProvider {
     if (tokenRejected(code) && this.cachedToken === token) this.cachedToken = undefined;
   }
 
-  private async memberResponse(userId: string, token: ApplicationToken): Promise<ApiBody> {
-    const body = await this.request("/cgi-bin/user/get", { access_token: token.value, userid: userId });
+  private async memberResponse(userId: string, token: ApplicationToken, deadline?: AbortSignal): Promise<ApiBody> {
+    const body = await this.request("/cgi-bin/user/get", { access_token: token.value, userid: userId }, MAX_RESPONSE_BYTES, deadline);
     this.discardRejectedToken(token, body.errcode);
     return body;
   }
@@ -170,18 +218,20 @@ export class WecomAutoClient implements WecomAutoProvider {
     return { userId, displayName };
   }
 
-  private async request(path: string, params: Record<string, string>, maximumBytes = MAX_RESPONSE_BYTES): Promise<ApiBody> {
+  private async request(path: string, params: Record<string, string>, maximumBytes = MAX_RESPONSE_BYTES, deadline?: AbortSignal): Promise<ApiBody> {
     const url = new URL(path, API_ORIGIN);
     url.search = new URLSearchParams(params).toString();
     const controller = new AbortController();
+    const signal = deadline ? AbortSignal.any([controller.signal, deadline]) : controller.signal;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
+      signal.throwIfAborted();
       return await Promise.race([
         (async () => {
           const response = await this.fetcher(url.toString(), {
-            method: "GET", headers: { accept: "application/json" }, cache: "no-store", redirect: "error", signal: controller.signal,
+            method: "GET", headers: { accept: "application/json" }, cache: "no-store", redirect: "error", signal,
           });
-          return readJson(response, controller.signal, maximumBytes);
+          return readJson(response, signal, maximumBytes);
         })(),
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => { controller.abort(); reject(unavailable()); }, REQUEST_TIMEOUT_MS);

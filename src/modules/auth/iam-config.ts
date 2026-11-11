@@ -1,9 +1,14 @@
-import { AccessError } from "./access-types";
+import { AccessError, type AccessConfig } from "./access-types";
 
 export interface IamLoginConfig {
   baseUrl: string;
   clientId: string;
   clientSecret: string;
+}
+
+/** Enable only after the registered IAM application exposes enterprise WeChat scan. */
+export function isIamWecomScanAvailable(site: AccessConfig, env: NodeJS.ProcessEnv = process.env): boolean {
+  return site.mode === "iam" && site.secureCookies && env.IAM_WECOM_SCAN_ENABLED === "true";
 }
 
 export function readIamLoginConfig(env: Record<string, string | undefined> = process.env): IamLoginConfig {

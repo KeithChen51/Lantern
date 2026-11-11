@@ -1,10 +1,13 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST as wecomAutoScanStart } from "@/app/auth/wecom/auto/scan/start/route";
+import { GET as wecomAutoScanCallback } from "@/app/auth/wecom/auto/scan/callback/route";
 import { proxy } from "@/proxy";
 import { requireKnowledgeAdmin, requireKnowledgeClient } from "./access";
 import { readAccessConfig } from "./access-config";
 import { clients, logout, me, wecomAutoCallback, wecomAutoStart } from "./access-http";
-import { readWecomAutoConfig } from "./wecom-auto-config";
+import type { WecomAutoEntry } from "./wecom-auto-client";
+import { readWecomAutoConfig, wecomAutoTransactionCookie, WECOM_AUTO_ROUTES } from "./wecom-auto-config";
 
 vi.mock("@/infrastructure/db", () => ({ prisma: {} }));
 vi.mock("./access-store", async importOriginal => {
@@ -16,12 +19,14 @@ vi.mock("./access-store", async importOriginal => {
 const ORIGIN = "https://lighthouse.example.invalid";
 const START = "/auth/wecom/auto/start";
 const CALLBACK = "/auth/wecom/auto/callback";
+const SCAN = WECOM_AUTO_ROUTES.scan;
 const app = {
   AUTH_MODE: "iam", IAM_AUTHORIZATION_SOURCE: "portal", LIGHTHOUSE_DEPLOYMENT_ENV: "test",
   LIGHTHOUSE_ORIGIN: ORIGIN, AUTH_ALLOW_LOCAL_HTTP: "false", AUTH_TEST_HTTP_ORIGIN: "",
   IAM_BASE_URL: "https://iam.example.invalid", IAM_CLIENT_ID: "fixture", IAM_CLIENT_SECRET: "iam-key",
   PORTAL_API_BASE_URL: "https://portal.example.invalid", PORTAL_APP_CODE: "fixture", PORTAL_APP_SECRET: "portal-key",
-  WECOM_AUTO_ENABLED: "true", WECOM_AUTO_CORP_ID: "wwSyntheticAuto", WECOM_AUTO_AGENT_ID: "1000005", WECOM_AUTO_SECRET: "synthetic-secret",
+  WECOM_AUTO_ENABLED: "true", WECOM_AUTO_SCAN_ENABLED: "false", WECOM_AUTO_CORP_ID: "wwSyntheticAuto",
+  WECOM_AUTO_AGENT_ID: "1000005", WECOM_AUTO_SECRET: "synthetic-secret",
 };
 const upstream = vi.fn<typeof fetch>();
 let testIndex = 0;
@@ -37,20 +42,27 @@ function cookieValue(response: Response, name: string): string | undefined {
   return response.headers.getSetCookie().find(value => value.startsWith(`${name}=`))?.split(";", 1)[0];
 }
 
-async function begin(returnTo = "/heart") {
-  const start = await wecomAutoStart(browser(`${START}?returnTo=${encodeURIComponent(returnTo)}`));
+function submitScan(returnTo: string, origin = ORIGIN) {
+  return wecomAutoScanStart(new NextRequest(ORIGIN + SCAN.start, {
+    method: "POST", headers: { origin }, body: new URLSearchParams({ returnTo }),
+  }));
+}
+
+async function begin(returnTo = "/heart", entry: WecomAutoEntry = "workbench") {
+  const start = entry === "scan" ? await submitScan(returnTo) : await wecomAutoStart(browser(`${START}?returnTo=${encodeURIComponent(returnTo)}`));
   expect(start.status).toBe(303);
   const oauth = new URL(start.headers.get("location")!);
   const site = readAccessConfig();
   const wecom = readWecomAutoConfig(site)!;
-  const verifier = cookieValue(start, wecom.transactionCookie)!;
-  const callback = `${CALLBACK}?state=${oauth.searchParams.get("state")}&code=synthetic-code`;
+  const verifier = cookieValue(start, wecomAutoTransactionCookie(wecom, entry))!;
+  const callback = `${WECOM_AUTO_ROUTES[entry].callback}?state=${oauth.searchParams.get("state")}&code=synthetic-code`;
   return { oauth, verifier, callback, site, start };
 }
 
-async function signIn(returnTo = "/heart", previous?: string) {
-  const flow = await begin(returnTo);
-  const response = await wecomAutoCallback(browser(flow.callback, previous ? `${flow.verifier}; ${previous}` : flow.verifier));
+async function signIn(returnTo = "/heart", previous?: string, entry: WecomAutoEntry = "workbench") {
+  const flow = await begin(returnTo, entry);
+  const finish = entry === "scan" ? wecomAutoScanCallback : wecomAutoCallback;
+  const response = await finish(browser(flow.callback, previous ? `${flow.verifier}; ${previous}` : flow.verifier));
   return { ...flow, response, session: cookieValue(response, flow.site.sessionCookie) };
 }
 
@@ -73,6 +85,68 @@ beforeEach(() => {
         ? { errcode: 60011 } : { errcode: 0, userid: "Dealer01", name: "试点经销商", status: memberStatus });
       default: throw new Error("unexpected WeCom path");
     }
+  });
+});
+
+describe("BYD Auto desktop QR entry", () => {
+  beforeEach(() => vi.stubEnv("WECOM_AUTO_SCAN_ENABLED", "true"));
+
+  it("opens the official QR page and signs in a dealer with workbench disabled", async () => {
+    vi.stubEnv("WECOM_AUTO_ENABLED", "false");
+    expect((await wecomAutoStart(browser(START))).status).toBe(401);
+    expect((await submitScan("/heart", "https://another.invalid")).status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+
+    const { oauth, start, site, response, session } = await signIn("/heart?view=values", undefined, "scan");
+    expect(oauth.origin + oauth.pathname).toBe("https://login.work.weixin.qq.com/wwlogin/sso/login");
+    expect(Object.fromEntries(oauth.searchParams)).toEqual({
+      login_type: "CorpApp", appid: app.WECOM_AUTO_CORP_ID, agentid: app.WECOM_AUTO_AGENT_ID,
+      redirect_uri: ORIGIN + SCAN.callback, state: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(start.headers.get("set-cookie")).toMatch(/__Host-.*_scan=.*HttpOnly; SameSite=Lax; Max-Age=300; Secure/);
+    expect(start.headers.get("location")).not.toContain(app.WECOM_AUTO_SECRET);
+    expect(response.headers.get("location")).toBe(ORIGIN + "/heart?view=values");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(cookieValue(response, site.transactionCookie)).toBeUndefined();
+    expect(session).toBeDefined();
+    const account = await (await me(browser("/api/auth/me", session))).json();
+    expect(account).toMatchObject({ kind: "dealer", user: { account: "dealer01" }, capabilities: ["content:read", "knowledge:read", "hermit:chat", "hermit:attachment:self"] });
+    expect((await proxy(browser("/admin/knowledge", session))).status).toBe(403);
+  });
+
+  it("rejects callbacks without the same browser and entry before contacting WeCom, and prevents replay", async () => {
+    const flow = await begin("/heart", "scan");
+    const wrongBrowser = await wecomAutoScanCallback(browser(flow.callback));
+    expect(wrongBrowser.headers.get("location")).toBe("/login?error=wecomScan");
+    const wrongRoute = await wecomAutoCallback(browser(flow.callback.replace(SCAN.callback, CALLBACK), flow.verifier.replace("_scan=", "=")));
+    expect(wrongRoute.headers.get("location")).toBe("/login?error=wecom");
+    expect(upstream).not.toHaveBeenCalled();
+
+    const legitimate = await wecomAutoScanCallback(browser(flow.callback, flow.verifier));
+    expect(legitimate.headers.get("location")).toBe(ORIGIN + "/heart");
+    const replay = await wecomAutoScanCallback(browser(flow.callback, flow.verifier));
+    expect(replay.headers.get("location")).toBe("/login?error=wecomScan");
+    expect(replay.headers.has("set-cookie")).toBe(false);
+    expect(upstream.mock.calls.filter(([url]) => url.toString().includes("/auth/getuserinfo"))).toHaveLength(1);
+  });
+
+  it("uses the same dealer account and stops scan access independently of workbench", async () => {
+    const scan = await signIn("/", undefined, "scan");
+    const workbench = await signIn();
+    const scanAccount = await (await me(browser("/api/auth/me", scan.session))).json();
+    const workbenchAccount = await (await me(browser("/api/auth/me", workbench.session))).json();
+    expect(scanAccount.user.id).toBe(workbenchAccount.user.id);
+    vi.stubEnv("WECOM_AUTO_SCAN_ENABLED", "false");
+    expect((await submitScan("/")).headers.get("location")).toBe("/login?error=wecomScan");
+    expect((await me(browser("/api/auth/me", scan.session))).status).toBe(401);
+    expect((await me(browser("/api/auth/me", workbench.session))).status).toBe(200);
+  });
+
+  it("refuses an out-of-scope scan member without returning the code or a session", async () => {
+    outOfScope = true;
+    const { response, session } = await signIn("/", undefined, "scan");
+    expect(response.headers.get("location")).toBe("/login?error=wecomAccess");
+    expect(session).toBeUndefined();
   });
 });
 afterEach(() => {

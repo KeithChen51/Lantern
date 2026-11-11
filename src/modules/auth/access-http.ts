@@ -5,6 +5,8 @@ import { hashToken } from "./access-crypto";
 import { AccessError, OAuthError } from "./access-types";
 import { loginRetryHref } from "./login-return";
 import { createLoginArrival, loginArrivalCookie, LOGIN_ARRIVAL_MAX_AGE } from "./login-arrival";
+import type { WecomAutoEntry } from "./wecom-auto-client";
+import { wecomAutoTransactionCookie } from "./wecom-auto-config";
 import { getWecomAutoAccess } from "./wecom-auto-runtime";
 
 export const NO_STORE = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" };
@@ -159,21 +161,41 @@ export const iamCallback = async (request: NextRequest): Promise<Response> => {
     } catch { return new Response(null, { status: 303, headers: { ...NO_STORE, Location: "/login?error=unavailable" } }); }
   }
 };
-export const wecomAutoStart = route(async request => {
+async function startWecomAuto(entry: WecomAutoEntry, returnTo?: string): Promise<Response> {
   const { config, service } = getWecomAutoAccess();
+  const result = await service.startLogin(entry, returnTo);
+  const response = redirect(result.redirectUrl);
+  setCookie(response, wecomAutoTransactionCookie(config, entry), result.cookie, config.transactionMs / 1000);
+  return response;
+}
+
+export const wecomAutoStart = route(async request => {
   const params = new URL(request.url).searchParams;
   if ([...params.keys()].some(name => name !== "returnTo") || params.getAll("returnTo").length > 1) {
     throw new AccessError("登录参数无效。", 400);
   }
-  const result = await service.startLogin(params.get("returnTo") ?? undefined);
-  const response = redirect(result.redirectUrl);
-  setCookie(response, config.transactionCookie, result.cookie, config.transactionMs / 1000);
-  return response;
+  return startWecomAuto("workbench", params.get("returnTo") ?? undefined);
 });
-export async function wecomAutoCallback(request: NextRequest): Promise<Response> {
+
+function wecomAutoRetry(reason: "wecom" | "wecomScan" | "wecomAccess"): Response {
+  return new Response(null, { status: 303, headers: { ...NO_STORE, Location: `/login?error=${reason}` } });
+}
+
+export const wecomAutoScanStart = route(async request => {
+  assertSameOrigin(request.headers);
+  const input = await body(request);
+  try {
+    return await startWecomAuto("scan", typeof input.returnTo === "string" ? input.returnTo : undefined);
+  } catch {
+    return wecomAutoRetry("wecomScan");
+  }
+});
+
+async function finishWecomAuto(request: NextRequest, entry: WecomAutoEntry): Promise<Response> {
   try {
     const site = readAccessConfig();
     const { config, service } = getWecomAutoAccess(site);
+    const transactionCookie = wecomAutoTransactionCookie(config, entry);
     const params = new URL(request.url).searchParams;
     const code = params.get("code");
     const state = params.get("state");
@@ -181,22 +203,24 @@ export async function wecomAutoCallback(request: NextRequest): Promise<Response>
       || !state || !code || code === "authdeny") {
       throw new AccessError("企微登录回调无效。", 401);
     }
-    const result = await service.callback({
+    const result = await service.callback(entry, {
       code, state,
-      cookie: readAccessCookie(request.headers, config.transactionCookie),
+      cookie: readAccessCookie(request.headers, transactionCookie),
       previousSession: readAccessCookie(request.headers, site.sessionCookie),
     });
     const response = redirect(result.returnTo);
     setCookie(response, site.sessionCookie, result.sessionToken, site.sessionAbsoluteMs / 1000);
-    setCookie(response, config.transactionCookie, "", 0);
+    setCookie(response, transactionCookie, "", 0);
     setCookie(response, loginArrivalCookie(site.sessionCookie), "", 0);
     return response;
   } catch (error) {
-    const reason = error instanceof AccessError && error.status === 403 ? "wecomAccess" : "wecom";
     // Remove the authorization code from the address before rendering a page.
-    return new Response(null, { status: 303, headers: { ...NO_STORE, Location: `/login?error=${reason}` } });
+    if (error instanceof AccessError && error.status === 403) return wecomAutoRetry("wecomAccess");
+    return wecomAutoRetry(entry === "scan" ? "wecomScan" : "wecom");
   }
 }
+export const wecomAutoCallback = (request: NextRequest) => finishWecomAuto(request, "workbench");
+export const wecomAutoScanCallback = (request: NextRequest) => finishWecomAuto(request, "scan");
 export const pending = route(async request => json(await getAccessService().pending(requiredCookie(request, readAccessConfig().pendingCookie))));
 export const confirm = route(async request => {
   assertSameOrigin(request.headers);
@@ -216,7 +240,8 @@ export function logout(all: boolean) { return route(async request => {
     await service.logout(principal, all);
     const response = isForm(request) ? redirect("/login?loggedOut=wecom") : empty();
     setCookie(response, config.sessionCookie, "", 0);
-    setCookie(response, wecom.transactionCookie, "", 0);
+    setCookie(response, wecomAutoTransactionCookie(wecom, "workbench"), "", 0);
+    setCookie(response, wecomAutoTransactionCookie(wecom, "scan"), "", 0);
     return response;
   }
   await getAccessService().logout(principal, all);

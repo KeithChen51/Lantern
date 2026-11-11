@@ -3,13 +3,13 @@ import { equalSecret, hashToken, randomToken, safeReturnTo } from "./access-cryp
 import type { AccessRecord, AccessStore, AccessTransaction } from "./access-store";
 import { AccessError, type Principal } from "./access-types";
 import { classifyAccessPath, isEmployeePage, normalizeAccessPath } from "./page-access";
-import type { WecomAutoMember, WecomAutoProvider } from "./wecom-auto-client";
-import { WECOM_AUTO_CALLBACK, type WecomAutoConfig } from "./wecom-auto-config";
+import type { WecomAutoEntry, WecomAutoMember, WecomAutoProvider } from "./wecom-auto-client";
+import { WECOM_AUTO_ROUTES, type WecomAutoConfig } from "./wecom-auto-config";
 
 type MemberSession = AccessRecord<"wecomAutoSession">;
 const CAPABILITIES = ["content:read", "knowledge:read", "hermit:chat", "hermit:attachment:self"] as const;
 const MINUTE = 60_000;
-const LOGIN_ERROR = "企微登录已失效，请从企微工作台重新打开灯塔。";
+const LOGIN_ERROR = "企微登录已失效，请重新登录灯塔。";
 
 export function isWecomAutoSessionToken(token: string): boolean {
   return /^dealer_[a-zA-Z0-9_-]{43}$/.test(token);
@@ -22,7 +22,7 @@ function dealerReturnTo(value: string | undefined): string {
   return path && !isEmployeePage(path) && classifyAccessPath(pathname) === "page" ? target : "/";
 }
 
-/** Workbench sessions reuse the site's cookie, with records and permissions isolated from employee grants. */
+/** Both dealer entry points share the same identity and permission policy. */
 export class WecomAutoAccessService {
   constructor(
     private readonly config: WecomAutoConfig,
@@ -39,14 +39,16 @@ export class WecomAutoAccessService {
     return hashToken(`${this.config.namespace}:${userId}`);
   }
 
-  async startLogin(returnTo?: string) {
+  async startLogin(entry: WecomAutoEntry, returnTo?: string) {
+    if (!this.config.entries[entry]) throw new AccessError("此环境未启用该企微登录入口。", 401);
     // Enterprise WeChat requires an alphanumeric OAuth state.
     const state = randomBytes(32).toString("hex");
     const cookie = randomToken();
     const now = this.now();
     const window = Math.floor(now / MINUTE);
     const bucketId = `bucket:${hashToken(`${this.config.namespace}:login:${window}`)}`;
-    const redirectUrl = this.upstream.authorizationUrl(new URL(WECOM_AUTO_CALLBACK, this.config.origin).href, state);
+    const callbackUrl = new URL(WECOM_AUTO_ROUTES[entry].callback, this.config.origin).href;
+    const redirectUrl = this.upstream.authorizationUrl(callbackUrl, state, entry);
     await this.store.transaction(async tx => {
       const bucket = await tx.get("bucket", bucketId);
       const count = bucket?.payload.count ?? 0;
@@ -58,15 +60,16 @@ export class WecomAutoAccessService {
       });
       await tx.put({
         kind: "wecomAutoLogin", id: this.id("wecomAutoLogin", state), subjectId: this.config.namespace, parentId: null,
-        payload: { verifierHash: hashToken(cookie), returnTo: dealerReturnTo(returnTo), consumed: false },
+        payload: { verifierHash: hashToken(cookie), returnTo: dealerReturnTo(returnTo), consumed: false, entry },
         expiresAt: now + this.config.transactionMs, createdAt: now, updatedAt: now,
       });
     });
     return { cookie, redirectUrl };
   }
 
-  async callback(input: { state: string; code: string; cookie?: string; previousSession?: string }) {
-    if (!/^[a-f0-9]{64}$/.test(input.state) || !input.cookie || !/^[a-zA-Z0-9_-]{43}$/.test(input.cookie)) {
+  async callback(entry: WecomAutoEntry, input: { state: string; code: string; cookie?: string; previousSession?: string }) {
+    if (!this.config.entries[entry] || !/^[a-f0-9]{64}$/.test(input.state)
+      || !input.cookie || !/^[a-zA-Z0-9_-]{43}$/.test(input.cookie)) {
       throw new AccessError(LOGIN_ERROR, 401);
     }
     const id = this.id("wecomAutoLogin", input.state);
@@ -74,7 +77,8 @@ export class WecomAutoAccessService {
     const transaction = await this.store.transaction(async tx => {
       const row = await tx.get("wecomAutoLogin", id);
       const now = this.now();
-      if (!row || row.expiresAt <= now || row.payload.consumed || !equalSecret(row.payload.verifierHash, verifier)) {
+      if (!row || row.expiresAt <= now || row.payload.consumed || (row.payload.entry ?? "workbench") !== entry
+        || !equalSecret(row.payload.verifierHash, verifier)) {
         throw new AccessError(LOGIN_ERROR, 401);
       }
       row.payload.consumed = true;
@@ -91,7 +95,7 @@ export class WecomAutoAccessService {
       if (transaction.expiresAt <= now) throw new AccessError(LOGIN_ERROR, 401);
       const userId = await tx.ensureDealer(this.config.provider, member.userId, member.displayName);
       const subjectId = this.subject(userId);
-      // A browser opening a new workbench entry receives a newly verified session.
+      // A newly verified login replaces the browser's previous dealer session.
       if (input.previousSession && isWecomAutoSessionToken(input.previousSession)) {
         const prior = await tx.get("wecomAutoSession", this.id("wecomAutoSession", input.previousSession));
         if (prior?.payload.active) await this.endSession(tx, prior, now);
@@ -102,11 +106,11 @@ export class WecomAutoAccessService {
       }
       const session: MemberSession = {
         kind: "wecomAutoSession", id: this.id("wecomAutoSession", sessionToken), subjectId, parentId: null,
-        payload: { userId, memberId: member.userId, displayName: member.displayName, csrfToken, active: true, verifiedAt: now, lastUsedAt: now },
+        payload: { userId, memberId: member.userId, displayName: member.displayName, csrfToken, active: true, verifiedAt: now, lastUsedAt: now, entry },
         expiresAt: now + this.config.sessionAbsoluteMs, createdAt: now, updatedAt: now,
       };
       await tx.put(session);
-      await this.audit(tx, "wecom-auto-login", userId, session.id, now);
+      await this.audit(tx, entry === "scan" ? "wecom-auto-scan-login" : "wecom-auto-login", userId, session.id, now);
     });
     return { sessionToken, returnTo: dealerReturnTo(transaction.payload.returnTo) };
   }
@@ -114,7 +118,8 @@ export class WecomAutoAccessService {
   private async activeSession(tx: AccessTransaction, id: string): Promise<MemberSession> {
     const row = await tx.get("wecomAutoSession", id);
     const now = this.now();
-    if (!row?.payload.active || row.expiresAt <= now || now - row.payload.lastUsedAt >= this.config.sessionIdleMs
+    if (!row?.payload.active || !this.config.entries[row.payload.entry ?? "workbench"]
+      || row.expiresAt <= now || now - row.payload.lastUsedAt >= this.config.sessionIdleMs
       || !await tx.dealerActive(this.config.provider, row.payload.memberId, row.payload.userId)) {
       throw new AccessError(LOGIN_ERROR, 401);
     }
