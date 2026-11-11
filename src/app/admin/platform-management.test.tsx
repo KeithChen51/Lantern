@@ -26,8 +26,8 @@ const fixture: UsageReport = {
   generatedAt: "2026-10-31T08:30:00.000Z",
   heatmap: { ...coverage, startDate: "2025-11-01", endDate: "2026-10-31", days: [{ date: "2026-10-31", views: 0, status: "available" }] },
   visits: { ...coverage, total: 0, modules: [], coverageStart: null },
-  visitors: { ...coverage, employees: 0, guests: 0 },
-  ai: { ...coverage, conversations: 0, rounds: 0 },
+  visitors: { ...coverage, employees: 0, guests: 0, total: 0, byIdentity: [] },
+  ai: { ...coverage, conversations: 0, rounds: 0, byIdentity: [] },
   departments: { ...coverage, items: [], unknownOrganizationVisits: 0 },
 };
 

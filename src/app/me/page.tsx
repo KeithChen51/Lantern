@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { BrandAttribution } from "@/components/ui/BrandAttribution";
 import { requireSiteVisitor } from "@/modules/auth/access";
+import { readWecomAutoOrganization } from "@/modules/auth/wecom-auto-runtime";
 import { employeeDisplayName } from "@/modules/auth/employee-name";
 import { LhButton, LhPanel, LhStatusBadge } from "@/components/ui/lighthouse-primitives";
 import { currentVersion } from "@/lib/releases";
@@ -18,6 +19,7 @@ export default async function MyPage() {
   const isDealer = principal.kind === "dealer";
   const isEmployee = !isGuest && !isDealer;
   const displayName = isGuest ? "访客" : isDealer ? principal.displayName : employeeDisplayName(principal.displayName, principal.account);
+  const organization = isDealer ? await readWecomAutoOrganization(principal) : principal.organization;
 
   return (
     <div data-lh-page="me" className="mx-auto w-full max-w-3xl space-y-8">
@@ -32,7 +34,7 @@ export default async function MyPage() {
         {isGuest ? <p className="mt-6 text-[length:var(--type-body)] leading-[var(--leading-body)] text-muted">可浏览平台内容、查阅知识并使用路引 AI 问答。</p> : <dl className="mt-6 grid gap-5 text-[length:var(--type-body)] leading-[var(--leading-body)] sm:grid-cols-2">
           <div><dt className="text-muted">姓名</dt><dd className="mt-1 break-words text-ink">{displayName}</dd></div>
           <div><dt className="text-muted">{isDealer ? "企微账号" : "工号"}</dt><dd className="mt-1 break-all text-ink">{principal.account}</dd></div>
-          {isEmployee && <div className="sm:col-span-2"><dt className="text-muted">组织架构</dt><dd className="mt-1 break-words text-ink">{principal.organization?.trim() || "暂未提供"}</dd></div>}
+          <div className="sm:col-span-2"><dt className="text-muted">{isDealer ? "所属部门" : "组织架构"}</dt><dd className="mt-1 break-words text-ink">{organization?.trim() || "暂未提供"}</dd></div>
         </dl>}
       </LhPanel>
       <LhPanel aria-label="消息与反馈" className="divide-y divide-line overflow-hidden">

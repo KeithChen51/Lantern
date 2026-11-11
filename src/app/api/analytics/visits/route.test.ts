@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AccessError } from "@/modules/auth/access-types";
 const mocks = vi.hoisted(() => ({ visitor: vi.fn(), mutation: vi.fn(), capture: vi.fn(), coverage: vi.fn() }));
 vi.mock("@/modules/auth/access", () => ({
   requireSiteVisitor: mocks.visitor, assertWebMutation: mocks.mutation,
@@ -33,13 +34,29 @@ describe("visit collection boundary", () => {
     expect(mocks.capture).toHaveBeenCalledWith(expect.objectContaining({ userId: "employee" }), body);
     expect(mocks.mutation).toHaveBeenCalledBefore(mocks.capture);
   });
-  it("rejects an old tab after the cookie owner changed even if its header was refreshed", async () => {
-    mocks.visitor.mockResolvedValue({ channel: "web", csrfToken: "b".repeat(43), userId: "other-employee" });
+  it("collects a verified dealer report only after the shared Web mutation check", async () => {
+    const dealer = { channel: "web", kind: "dealer", csrfToken: csrf, userId: "verified-dealer" };
+    mocks.visitor.mockResolvedValue(dealer);
+    const incoming = request();
+    expect((await POST(incoming)).status).toBe(204);
+    expect(mocks.mutation).toHaveBeenCalledWith(incoming, dealer);
+    expect(mocks.mutation).toHaveBeenCalledBefore(mocks.capture);
+    expect(mocks.capture).toHaveBeenCalledWith(dealer, body);
+  });
+  it("honors Web mutation rejections for a verified dealer", async () => {
+    mocks.visitor.mockResolvedValue({ channel: "web", kind: "dealer", csrfToken: csrf, userId: "verified-dealer" });
+    mocks.mutation.mockImplementationOnce(() => { throw new AccessError("请求来源不受信任。", 403); });
+    expect((await POST(request())).status).toBe(403);
+    expect(mocks.capture).not.toHaveBeenCalled();
+  });
+  it.each(["employee", "dealer"])("rejects an old tab after the cookie changed to a %s even if its header was refreshed", async kind => {
+    mocks.visitor.mockResolvedValue({ channel: "web", kind, csrfToken: "b".repeat(43), userId: "other-account" });
     expect((await POST(request())).status).toBe(403);
     expect(mocks.capture).not.toHaveBeenCalled();
   });
   it.each([
     { ...body, subjectId: "spoof" }, { ...body, occurredAt: "2026-01-01" },
+    { ...body, actorKind: "employee" }, { ...body, organization: "spoof" },
     { ...body, module: "admin" }, { ...body, module: "action?token=private" },
     { ...body, v: 2 }, { ...body, eventId: "not-a-uuid" },
   ])("rejects forged identity, date, routes and invalid versions", async payload => {

@@ -1,9 +1,15 @@
-import type { UsageReport, ReportStatus } from "@/modules/analytics/report";
+import type { IdentitySource, UsageReport, ReportStatus } from "@/modules/analytics/report";
 import styles from "../platform-admin.module.css";
 import reportStyles from "./usage-report.module.css";
 
 const numberFormat = new Intl.NumberFormat("zh-CN");
 const percentFormat = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 });
+const identities: ReadonlyArray<{ source: IdentitySource; label: string }> = [
+  { source: "employee", label: "比亚迪集团员工" },
+  { source: "dealer", label: "比亚迪汽车企微" },
+  { source: "guest", label: "匿名访客" },
+  { source: "unknown", label: "身份不明" },
+];
 
 function value(value: number | null) {
   return value === null ? "—" : numberFormat.format(value);
@@ -22,8 +28,10 @@ function sourceNote(status: ReportStatus, note: string) {
 }
 
 export function UsageReportView({ report }: { report: UsageReport }) {
-  const people = report.visitors.employees === null || report.visitors.guests === null
-    ? null : report.visitors.employees + report.visitors.guests;
+  const people = report.visitors.total;
+  const visitDetailAvailable = report.visitors.status === "available" || report.visitors.status === "partial";
+  const visitDetailNote = people === null || report.visitors.status === "partial" ? coverageText(report.visitors) : "";
+  const aiAvailable = report.ai.status === "available" || report.ai.status === "partial";
   const moduleSourceAvailable = report.visits.status === "available" || report.visits.status === "partial";
   const modules = moduleSourceAvailable ? [...report.visits.modules].sort((a, b) => b.views - a.views) : [];
   const total = report.visits.total;
@@ -39,8 +47,8 @@ export function UsageReportView({ report }: { report: UsageReport }) {
         <dl className={reportStyles.primaryMetrics}>
           <div><dt>访问次数 <small>PV</small></dt><dd>{value(total)}<span>次</span></dd><p>{coverageText(report.visits) || "业务页面实际显示次数"}</p></div>
           <div><dt>去重访问人数 <small>UV</small></dt><dd>{value(people)}<span>个</span></dd>
-            <p>{people === null ? coverageText(report.visitors) : `员工 ${value(report.visitors.employees)} 人 · 访客 ${value(report.visitors.guests)} 个标识`}</p>
-            {report.visitors.status === "partial" && <p>{coverageText(report.visitors)}</p>}</div>
+            {people !== null && <p>按身份来源分别去重</p>}
+            {visitDetailNote && <p id="visit-detail-coverage">{visitDetailNote}</p>}</div>
         </dl>
       </section>
       <section className={`${reportStyles.metricGroup} ${reportStyles.aiGroup}`} aria-labelledby="ai-metrics-title">
@@ -52,6 +60,36 @@ export function UsageReportView({ report }: { report: UsageReport }) {
         {aiNote && <p className={reportStyles.sourceNote}>{aiNote}</p>}
       </section>
     </div>
+    <section className={`${reportStyles.panel} ${reportStyles.identityPanel}`} aria-labelledby="identity-metrics-title">
+      <div className={reportStyles.panelHeading}><h3 id="identity-metrics-title">按身份来源</h3></div>
+      <table className={reportStyles.identityTable} aria-labelledby="identity-metrics-title"
+        aria-describedby={visitDetailNote ? "identity-coverage-note visit-detail-coverage" : "identity-coverage-note"}>
+        <thead>
+          <tr>
+            <th scope="col">身份来源</th>
+            <th scope="col">访问<wbr />次数 <small>PV</small></th>
+            <th scope="col">去重<wbr />访问<wbr />人数 <small>UV</small></th>
+            <th scope="col">路引<wbr />对话</th>
+            <th scope="col">提问<wbr />轮次</th>
+          </tr>
+        </thead>
+        <tbody>{identities.map(({ source, label }) => {
+          const visit = visitDetailAvailable ? report.visitors.byIdentity.find(row => row.source === source) : undefined;
+          const ai = aiAvailable ? report.ai.byIdentity.find(row => row.source === source) : undefined;
+          if (source === "unknown" && !visit?.views && !ai?.rounds) return null;
+          const missingVisits = visitDetailAvailable && source !== "dealer" ? 0 : null;
+
+          return <tr key={source}>
+            <th scope="row">{label}</th>
+            <td>{value(visit?.views ?? missingVisits)}</td>
+            <td>{value(visit?.visitors ?? missingVisits)}</td>
+            <td>{value(ai?.conversations ?? (aiAvailable ? 0 : null))}</td>
+            <td>{value(ai?.rounds ?? (aiAvailable ? 0 : null))}</td>
+          </tr>;
+        })}</tbody>
+      </table>
+      <p id="identity-coverage-note" className={reportStyles.sourceNote}>访问次数和去重访问人数按可查询的访问明细统计。汽车企微的页面访问从 1.6.10 上线并确认访问告知后开始记录。— 表示暂无可用数据。</p>
+    </section>
     <div className={reportStyles.panels}>
       <section className={reportStyles.panel} aria-labelledby="module-visits-title">
         <div className={reportStyles.panelHeading}><h3 id="module-visits-title">常用模块访问次数</h3><span>次数 / 占比</span></div>
@@ -86,7 +124,7 @@ export function UsageReportView({ report }: { report: UsageReport }) {
     <details className={styles.metricDefinitions}>
       <summary>统计口径与数据范围</summary>
       <p>访问统计自本环境启用采集、使用者确认首次告知后计入，依赖可见页面导航上报；未上报的访问无法观测。</p>
-      <p>访问次数按已显示的业务页面计数。员工按账号去重，匿名访客按短期标识分别去重，同一人更换身份或访客标识后可能重复计数。模块次数与访问日历采用同一来源。</p>
+      <p>访问次数按已显示的业务页面计数。集团员工和汽车企微按各自账号去重，匿名访客按短期标识去重。同一人更换身份或访客标识后可能重复计数。模块次数与访问日历采用同一来源。</p>
       <p>AI 对话按已保存的用户消息统计，历史补传时间可能晚于实际提问。部门采用访问时身份源提供的组织信息，只展示达到样本门槛的部门。</p>
     </details>
   </>;

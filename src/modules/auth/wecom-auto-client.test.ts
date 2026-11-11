@@ -123,3 +123,41 @@ describe("official WeCom authentication", () => {
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
 });
+
+describe("WeCom member organization", () => {
+  const department = (id: number, name: string, parentid: number) => ({ errcode: 0, department: { id, name, parentid } });
+
+  it("reads the verified member's main department and renders the readable path in hierarchy order", async () => {
+    const { client, fetcher } = fixture([
+      token, details, { ...member, department: [9, 12], main_department: 12 },
+      department(12, "试点门店", 8), department(8, "区域服务部", 3), department(3, "售后服务", 1),
+    ]);
+    await expect(client.readOrganization("member-a")).resolves.toBe("售后服务 / 区域服务部 / 试点门店");
+    expect(paths(fetcher)).toEqual([
+      "/cgi-bin/gettoken", "/cgi-bin/agent/get", "/cgi-bin/user/get",
+      "/cgi-bin/department/get", "/cgi-bin/department/get", "/cgi-bin/department/get",
+    ]);
+    expect(fetcher.mock.calls.slice(3).map(([url]) => new URL(String(url)).searchParams.get("id"))).toEqual(["12", "8", "3"]);
+  });
+
+  it("keeps the readable department when the app cannot read its parent", async () => {
+    const { client, fetcher } = fixture([
+      token, details, { ...member, department: [1, 12] },
+      department(12, "试点门店", 8), { errcode: 60011 },
+    ]);
+    await expect(client.readOrganization("member-a")).resolves.toBe("试点门店");
+    expect(fetcher).toHaveBeenCalledTimes(5);
+  });
+
+  it("leaves organization empty when there is no unambiguous department", async () => {
+    const { client, fetcher } = fixture([token, details, { ...member, department: [7, 12] }]);
+    await expect(client.readOrganization("member-a")).resolves.toBeUndefined();
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not look up any department for a different member in the response", async () => {
+    const { client, fetcher } = fixture([token, details, { ...member, userid: "another-user", main_department: 12 }]);
+    await expect(client.readOrganization("member-a")).rejects.toMatchObject({ status: 403 });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+});

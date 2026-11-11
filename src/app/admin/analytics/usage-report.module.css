@@ -20,6 +20,14 @@
 .panelHeading > span, .panelDescription, .sourceNote { color: var(--color-muted); font-size: var(--type-caption); line-height: var(--leading-caption); }
 .panelDescription { margin: .35rem 0 0; }
 .sourceNote { margin: .875rem 0 0; }
+.identityPanel { margin-top: 1rem; }
+.identityTable { width: 100%; margin-top: .875rem; border-collapse: collapse; table-layout: fixed; font-size: var(--type-control); line-height: var(--leading-control); }
+.identityTable th, .identityTable td { padding: .625rem .75rem; border-bottom: 1px solid var(--color-line); text-align: right; overflow-wrap: anywhere; }
+.identityTable th:first-child { width: 28%; text-align: left; }
+.identityTable thead th { background: var(--color-surface-quiet); color: var(--color-ink-soft); font-weight: var(--weight-bold); vertical-align: bottom; }
+.identityTable thead small { color: var(--color-muted); font-size: var(--type-caption); font-weight: var(--weight-medium); }
+.identityTable tbody th { color: var(--color-ink); font-weight: var(--weight-medium); }
+.identityTable td { color: var(--color-ink); font-variant-numeric: tabular-nums; }
 .moduleList, .departmentList { list-style: none; margin: 1.25rem 0 0; padding: 0; }
 .moduleList { display: grid; gap: 1.125rem; }
 .moduleReadout { display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto 3.75rem; align-items: baseline; column-gap: .625rem; row-gap: .25rem; color: var(--color-ink-soft); font-size: var(--type-control); line-height: var(--leading-control); }
@@ -41,6 +49,10 @@
 @media (max-width: 1050px) { .metrics, .panels { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) {
   .metricGroup, .panel { padding: 1rem; }
+  .identityTable { font-size: var(--type-caption); line-height: var(--leading-caption); }
+  .identityTable th, .identityTable td { padding: .5rem .25rem; }
+  .identityTable thead th { word-break: keep-all; }
+  .identityTable thead small { display: block; }
   .primaryMetrics > div + div, .secondaryMetrics > div + div { padding-left: .875rem; }
   .primaryMetrics > div:first-child, .secondaryMetrics > div:first-child { padding-right: .875rem; }
   .primaryMetrics dd { font-size: 2rem; }
