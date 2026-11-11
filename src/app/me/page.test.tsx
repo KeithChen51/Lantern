@@ -4,13 +4,17 @@ import MyPage from "./page";
 import { classifyAccessPath, isPublicAuthPage } from "@/modules/auth/page-access";
 import { useReleaseUnread } from "@/components/layout/release-read-state";
 
-const { employee, requestHeaders } = vi.hoisted(() => ({ employee: vi.fn(), requestHeaders: new Headers({ cookie: "fixture" }) }));
+const { employee, dealerOrganization, requestHeaders } = vi.hoisted(() => ({
+  employee: vi.fn(), dealerOrganization: vi.fn(), requestHeaders: new Headers({ cookie: "fixture" }),
+}));
 vi.mock("@/modules/auth/access", () => ({ requireSiteVisitor: employee }));
+vi.mock("@/modules/auth/wecom-auto-runtime", () => ({ readWecomAutoOrganization: dealerOrganization }));
 vi.mock("next/headers", () => ({ headers: async () => requestHeaders }));
 vi.mock("@/components/layout/release-read-state", () => ({ useReleaseUnread: vi.fn(() => false) }));
 
 beforeEach(() => {
   employee.mockReset();
+  dealerOrganization.mockReset();
   vi.mocked(useReleaseUnread).mockReturnValue(false);
 });
 
@@ -43,6 +47,19 @@ describe("my employee page", () => {
     expect(html).toContain('referrerPolicy="no-referrer"');
     expect(html).toContain("服务中心 / 售后服务部");
     expect(html).not.toContain("暂未提供");
+    expect(dealerOrganization).not.toHaveBeenCalled();
+  });
+
+  it.each(["售后服务 / 区域服务部 / 试点门店", undefined])("renders the dealer's department or a fallback", async organization => {
+    const dealer = { kind: "dealer", channel: "web", displayName: "测试经销商", account: "dealer-fixture", csrfToken: "dealer-csrf" };
+    employee.mockResolvedValue(dealer);
+    dealerOrganization.mockResolvedValue(organization);
+    const html = renderToStaticMarkup(await MyPage());
+    expect(dealerOrganization).toHaveBeenCalledWith(dealer);
+    expect(html).toContain("所属部门");
+    expect(html).toContain(organization ?? "暂未提供");
+    expect(html).toContain("企微账号");
+    expect(html).not.toContain('href="/auth/tools"');
   });
 
   it("keeps an account-only legacy profile out of the name field and heading", async () => {
@@ -64,6 +81,7 @@ describe("my employee page", () => {
     expect(html).not.toContain('href="/feedback"');
     expect(html).not.toContain("must-not-render-");
     expect(html).not.toContain("opaque-guest-id");
+    expect(dealerOrganization).not.toHaveBeenCalled();
     for (const text of ["姓名", "工号", "组织架构", "已登录", "退出登录", "工具授权", "/admin", "/api/auth/logout"]) expect(html).not.toContain(text);
   });
 
