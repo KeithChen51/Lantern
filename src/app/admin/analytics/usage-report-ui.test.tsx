@@ -14,9 +14,18 @@ const report: UsageReport = {
     { date: "2026-10-30", views: 0, status: "available" },
     { date: "2026-10-31", views: 4, status: "partial" },
   ] },
-  visits: { ...source, total: 4, coverageStart: source.observedFrom, modules: [{ module: "hermit", label: "路引", views: 4 }] },
-  visitors: { ...source, employees: 1, guests: 2 },
-  ai: { ...source, conversations: 1, rounds: 3 },
+  visits: { ...source, total: 14, coverageStart: source.observedFrom, modules: [{ module: "hermit", label: "路引", views: 14 }] },
+  visitors: { ...source, total: 6, employees: 1, guests: 2, byIdentity: [
+    { source: "employee", views: 4, visitors: 1 },
+    { source: "dealer", views: 5, visitors: 2 },
+    { source: "guest", views: 3, visitors: 2 },
+    { source: "unknown", views: 2, visitors: 1 },
+  ] },
+  ai: { ...source, conversations: 6, rounds: 12, byIdentity: [
+    { source: "employee", conversations: 1, rounds: 3 },
+    { source: "dealer", conversations: 2, rounds: 4 },
+    { source: "unknown", conversations: 3, rounds: 5 },
+  ] },
   departments: { ...source, items: [{ department: "售后服务 / 华南", views: 12 }], unknownOrganizationVisits: 0 },
 };
 
@@ -65,7 +74,8 @@ describe("access calendar and period report", () => {
     const html = renderToStaticMarkup(<UsageReportView report={report} />);
     expect(html).toContain("访问次数");
     expect(html).toContain("去重访问人数");
-    expect(html).toContain("员工 1 人 · 访客 2 个标识");
+    expect(html).toContain("<dd>14<span>次</span></dd>");
+    expect(html).toContain("<dd>6<span>个</span></dd>");
     expect(html).toContain("AI 对话次数");
     expect(html).toContain("AI 对话轮次");
     expect(html).toContain("常用模块访问次数");
@@ -73,14 +83,50 @@ describe("access calendar and period report", () => {
     expect(html).toContain("售后服务 / 华南");
   });
 
+  it("renders all identity metrics with accessible row and column headers", () => {
+    const html = renderToStaticMarkup(<UsageReportView report={report} />);
+    expect(html).toContain('id="identity-metrics-title">按身份来源');
+    expect(html).toMatch(/<table [^>]*aria-labelledby="identity-metrics-title"[^>]*aria-describedby="identity-coverage-note"/);
+    const tableHtml = html.replaceAll("<wbr/>", "");
+    expect(tableHtml).toContain('<th scope="col">访问次数 <small>PV</small></th>');
+    expect(tableHtml).toContain('<th scope="col">去重访问人数 <small>UV</small></th>');
+    expect(tableHtml).toContain('<th scope="col">路引对话</th>');
+    expect(tableHtml).toContain('<th scope="col">提问轮次</th>');
+    expect(html).toContain('<th scope="row">比亚迪集团员工</th><td>4</td><td>1</td><td>1</td><td>3</td>');
+    expect(html).toContain('<th scope="row">比亚迪汽车企微</th><td>5</td><td>2</td><td>2</td><td>4</td>');
+    expect(html).toContain('<th scope="row">匿名访客</th><td>3</td><td>2</td><td>0</td><td>0</td>');
+    expect(html).toContain('<th scope="row">身份不明</th><td>2</td><td>1</td><td>3</td><td>5</td>');
+    expect(html).toContain("汽车企微的页面访问从 1.6.10 上线并确认访问告知后开始记录");
+    expect(html).toContain("— 表示暂无可用数据");
+  });
+
+  it("preserves measured zeros and distinguishes unrecorded dealer visits from zero", () => {
+    const sparse = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visitors: { ...report.visitors, status: "partial", total: 0, employees: 0, guests: 0, byIdentity: [] },
+      ai: { ...report.ai, conversations: 0, rounds: 0, byIdentity: [] },
+    }} />);
+    expect(sparse).toContain('<th scope="row">比亚迪集团员工</th><td>0</td><td>0</td><td>0</td><td>0</td>');
+    expect(sparse).toContain('<th scope="row">比亚迪汽车企微</th><td>—</td><td>—</td><td>0</td><td>0</td>');
+    expect(sparse).toContain('<th scope="row">匿名访客</th><td>0</td><td>0</td><td>0</td><td>0</td>');
+    expect(sparse).not.toContain('<th scope="row">身份不明</th>');
+    expect(sparse).toContain('aria-describedby="identity-coverage-note visit-detail-coverage"');
+    const measured = renderToStaticMarkup(<UsageReportView report={{ ...report,
+      visitors: { ...report.visitors, byIdentity: [{ source: "dealer", views: 0, visitors: 0 }] },
+    }} />);
+    expect(measured).toContain('<th scope="row">比亚迪汽车企微</th><td>0</td><td>0</td><td>2</td><td>4</td>');
+    expect(measured).toContain('<th scope="row">身份不明</th><td>0</td><td>0</td><td>3</td><td>5</td>');
+  });
+
   it("keeps a measured zero visible and puts partial coverage next to the count", () => {
     const html = renderToStaticMarkup(<UsageReportView report={{ ...report,
       visits: { ...report.visits, total: 0, modules: [], status: "partial", observedFrom: "2026-10-30T00:00:00.000Z" },
-      visitors: { ...report.visitors, employees: null, guests: null, status: "not_collected", note: "尚未采集" },
+      visitors: { ...report.visitors, total: null, employees: null, guests: null, status: "not_collected", note: "尚未采集" },
     }} />);
     expect(html).toContain("<dd>0<span>次</span></dd>");
     expect(html).toContain("<dd>—<span>个</span></dd>");
     expect(html).toContain("已记录范围自 2026/10/30 08:00 起（北京时间）");
+    expect(html).toContain('<th scope="row">比亚迪集团员工</th><td>—</td><td>—</td><td>1</td><td>3</td>');
+    expect(html).toContain('<th scope="row">身份不明</th><td>—</td><td>—</td><td>3</td><td>5</td>');
   });
 
   it("uses recorded period PV for module shares and preserves partial coverage", () => {
@@ -94,7 +140,7 @@ describe("access calendar and period report", () => {
     expect(html).toContain('aria-label="占已记录访问 30%"');
     expect(html).toContain('style="width:60%"');
     expect(html).not.toContain("66.7%");
-    expect(html.indexOf("路引")).toBeLessThan(html.indexOf("镜鉴"));
+    expect(html.indexOf(">路引<")).toBeLessThan(html.indexOf(">镜鉴<"));
     expect(html).toContain("仅包含已采集的日期");
     expect(html).toContain("模块占比仅反映已记录范围");
   });
@@ -133,10 +179,16 @@ describe("access calendar and period report", () => {
   it("does not draw source values when the source is unavailable", () => {
     const html = renderToStaticMarkup(<UsageReportView report={{ ...report,
       visits: { ...report.visits, total: null, status: "unavailable", note: "访问数据读取失败" },
+      visitors: { ...report.visitors, total: null, status: "unavailable", note: "访问明细读取失败" },
+      ai: { ...report.ai, conversations: null, rounds: null, status: "unavailable", note: "路引数据读取失败" },
       departments: { ...report.departments, status: "unavailable", note: "部门数据读取失败" },
     }} />);
     expect(html).toContain("访问数据读取失败");
+    expect(html).toContain("访问明细读取失败");
+    expect(html).toContain("路引数据读取失败");
     expect(html).toContain("部门数据读取失败");
+    expect(html).toContain('<th scope="row">比亚迪汽车企微</th><td>—</td><td>—</td><td>—</td><td>—</td>');
+    expect(html).not.toContain('<th scope="row">身份不明</th>');
     expect(html).not.toContain('aria-label="占已记录访问');
     expect(html).not.toContain("售后服务 / 华南");
   });
