@@ -43,7 +43,7 @@ async function limit(tx: Transaction, key: string, maximum: number, now: Date) {
 /** A browser report is a low-trust interaction, not evidence for security decisions. */
 export async function captureVisit(principal: Principal, input: VisitInput, now = new Date(), database: VisitDatabase = prisma) {
   if (principal.channel !== "web" || !principal.userId || principal.userId.length > 191) throw new AccessError("需要有效网页身份。", 403);
-  const kind = principal.kind === "guest" ? "guest" : "employee";
+  const kind = principal.kind ?? "employee";
   const organization = kind === "employee" && typeof principal.organization === "string" && principal.organization.length <= 1000 ? principal.organization : null;
   const day = new Date(now.getTime() + 8 * 3_600_000).toISOString().slice(0, 10);
   return database.$transaction(async tx => {

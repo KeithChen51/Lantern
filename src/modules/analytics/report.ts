@@ -7,13 +7,16 @@ import { VISIT_MODULES, type VisitModule } from "./visit-modules";
 export type ReportStatus = "available" | "partial" | "not_collected" | "unavailable";
 export type ReportCoverage = { status: ReportStatus; note: string; observedFrom: string | null };
 export type HeatmapDay = { date: string; views: number | null; status: ReportStatus };
+export type IdentitySource = "employee" | "dealer" | "guest" | "unknown";
+type IdentityVisits = { source: IdentitySource; views: number; visitors: number };
+type IdentityAI = { source: IdentitySource; conversations: number; rounds: number };
 export type UsageReport = {
   period: ReportPeriod;
   generatedAt: string;
   heatmap: ReportCoverage & { startDate: string; endDate: string; days: HeatmapDay[] };
   visits: ReportCoverage & { total: number | null; modules: Array<{ module: string; label: string; views: number }>; coverageStart: string | null };
-  visitors: ReportCoverage & { employees: number | null; guests: number | null };
-  ai: ReportCoverage & { conversations: number | null; rounds: number | null };
+  visitors: ReportCoverage & { employees: number | null; guests: number | null; total: number | null; byIdentity: IdentityVisits[] };
+  ai: ReportCoverage & { conversations: number | null; rounds: number | null; byIdentity: IdentityAI[] };
   departments: ReportCoverage & { items: Array<{ department: string; views: number }>; unknownOrganizationVisits: number | null };
 };
 type ReportQuery = (query: Prisma.Sql) => Promise<unknown[]>;
@@ -97,16 +100,23 @@ export async function getUsageReport(period: ReportPeriod, options: Options = {}
     } catch { return { ...empty, ...failed() }; }
   };
   const visitors = async (): Promise<UsageReport["visitors"]> => {
-    const empty = { ...detailCoverage, employees: null, guests: null };
+    const empty = { ...detailCoverage, employees: null, guests: null, total: null, byIdentity: [] };
     if (!detailStart || detailCoverage.status === "not_collected") return empty;
     try {
-      const counts = one<{ employees: unknown; guests: unknown }>(await query(Prisma.sql`
-        SELECT COUNT(DISTINCT CASE WHEN actor_kind = 'employee' THEN subject_id END) AS employees,
-          COUNT(DISTINCT CASE WHEN actor_kind = 'guest' THEN subject_id END) AS guests
+      const rows = rowsOf<{ identity_source: IdentitySource; views: unknown; visitors: unknown }>(await query(Prisma.sql`
+        SELECT CASE actor_kind
+            WHEN 'employee' THEN 'employee' WHEN 'dealer' THEN 'dealer' WHEN 'guest' THEN 'guest' ELSE 'unknown'
+          END AS identity_source, COUNT(*) AS views, COUNT(DISTINCT actor_kind, subject_id) AS visitors
         FROM analytics_page_views WHERE occurred_at >= ${detailStart} AND occurred_at < ${endExclusive}
+        GROUP BY identity_source
       `));
-      return { ...empty, employees: safeCount(counts.employees), guests: safeCount(counts.guests),
-        note: [empty.note, "员工按账号去重，访客按匿名标识去重；标识重建后可能重复计入。"].filter(Boolean).join(" ") };
+      const byIdentity = rows.map(row => ({ source: row.identity_source, views: safeCount(row.views), visitors: safeCount(row.visitors) }));
+      return {
+        ...empty, byIdentity, total: safeCount(byIdentity.reduce((sum, item) => sum + item.visitors, 0)),
+        employees: byIdentity.find(item => item.source === "employee")?.visitors ?? 0,
+        guests: byIdentity.find(item => item.source === "guest")?.visitors ?? 0,
+        note: [empty.note, "员工与汽车企微按各自账号去重，访客按匿名标识去重。"].filter(Boolean).join(" "),
+      };
     } catch { return { ...empty, ...failed() }; }
   };
   const heatmap = async (): Promise<UsageReport["heatmap"]> => {
@@ -123,16 +133,28 @@ export async function getUsageReport(period: ReportPeriod, options: Options = {}
   };
   const ai = async (): Promise<UsageReport["ai"]> => {
     try {
-      const counts = one<{ conversations: unknown; rounds: unknown }>(await query(Prisma.sql`
-        SELECT COUNT(DISTINCT session_id) AS conversations, COUNT(*) AS rounds FROM chat_messages
-        WHERE role = 'user' AND created_at >= ${start} AND created_at < ${endExclusive}
+      const rows = rowsOf<{ identity_source: IdentitySource; conversations: unknown; rounds: unknown }>(await query(Prisma.sql`
+        SELECT CASE
+            WHEN s.user_id IS NULL AND s.guest_id IS NOT NULL THEN 'guest'
+            WHEN s.guest_id IS NULL AND u.user_type = 'internal_employee' THEN 'employee'
+            WHEN s.guest_id IS NULL AND u.user_type = 'dealer_user' AND EXISTS (
+              SELECT 1 FROM identity_accounts AS i WHERE i.user_id = s.user_id AND i.provider LIKE 'wecom-auto:%'
+            ) THEN 'dealer'
+            ELSE 'unknown'
+          END AS identity_source, COUNT(DISTINCT m.session_id) AS conversations, COUNT(*) AS rounds
+        FROM chat_messages AS m INNER JOIN chat_sessions AS s ON s.id = m.session_id
+        LEFT JOIN users AS u ON u.id = s.user_id
+        WHERE m.role = 'user' AND m.created_at >= ${start} AND m.created_at < ${endExclusive}
+        GROUP BY identity_source
       `));
+      const byIdentity = rows.map(row => ({ source: row.identity_source, conversations: safeCount(row.conversations), rounds: safeCount(row.rounds) }));
       return {
-        status: "available", observedFrom: start.toISOString(),
-        conversations: safeCount(counts.conversations), rounds: safeCount(counts.rounds),
+        status: "available", observedFrom: start.toISOString(), byIdentity,
+        conversations: safeCount(byIdentity.reduce((sum, item) => sum + item.conversations, 0)),
+        rounds: safeCount(byIdentity.reduce((sum, item) => sum + item.rounds, 0)),
         note: "按提问首次保存的时间统计，包含访问采集开始前已保存的对话。同一时段内每段会话计 1 次，每条用户提问计 1 轮。历史补传和内容清理会影响覆盖范围。",
       };
-    } catch { return { ...failed(), conversations: null, rounds: null }; }
+    } catch { return { ...failed(), conversations: null, rounds: null, byIdentity: [] }; }
   };
   const departments = async (): Promise<UsageReport["departments"]> => {
     const empty = { ...detailCoverage, items: [], unknownOrganizationVisits: null };

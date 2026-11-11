@@ -26,11 +26,19 @@ describe("visit facts and daily totals", () => {
     const other = database({ actor_kind: "employee", subject_id: "other", module: "mirror" });
     await expect(captureVisit(principal, input, new Date(), other.db as never)).rejects.toMatchObject({ status: 409 });
   });
-  it("never attaches organization to anonymous visitors", async () => {
+  it.each(["guest", "dealer"] as const)("records %s with its own actor kind and no organization", async kind => {
     const fixture = database();
-    await captureVisit({ ...principal, kind: "guest" }, input, new Date(), fixture.db as never);
+    await captureVisit({ ...principal, kind }, input, new Date(), fixture.db as never);
     const insert = fixture.execute.mock.calls.find(([sql]) => sql.sql.includes("INSERT IGNORE"))![0];
-    expect((insert as unknown as { values: unknown[] }).values.slice(1, 4)).toEqual(["guest", "employee", null]);
+    expect((insert as unknown as { values: unknown[] }).values.slice(1, 4)).toEqual([kind, principal.userId, null]);
+  });
+  it("deduplicates dealer retries and rejects an employee event with the same subject ID", async () => {
+    const dealer = { ...principal, kind: "dealer" } as const;
+    const same = database({ actor_kind: "dealer", subject_id: dealer.userId, module: input.module });
+    await expect(captureVisit(dealer, input, new Date(), same.db as never)).resolves.toEqual({ recorded: false });
+    expect(same.execute.mock.calls.some(([sql]) => sql.sql.includes("analytics_visit_days"))).toBe(false);
+    const employee = database({ actor_kind: "employee", subject_id: dealer.userId, module: input.module });
+    await expect(captureVisit(dealer, input, new Date(), employee.db as never)).rejects.toMatchObject({ status: 409 });
   });
   it("limits a hot session before inserting any facts", async () => {
     const fixture = database(undefined, 121);
