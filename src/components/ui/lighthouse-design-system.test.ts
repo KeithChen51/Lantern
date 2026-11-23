@@ -374,8 +374,8 @@ describe("lighthouse design system contract", () => {
       "data-lh-home-main",
       "data-lh-main-frame",
       "React.useState(false)",
-      "md:pl-[var(--lh-classic-main-offset)]",
-      "md:pl-[var(--lh-classic-main-collapsed-offset)]",
+      "lg:pl-[var(--lh-classic-main-offset)]",
+      "lg:pl-[var(--lh-classic-main-collapsed-offset)]",
     ].forEach((token) => {
       expect(appShell).toContain(token);
     });
@@ -416,7 +416,8 @@ describe("lighthouse design system contract", () => {
     for (const token of ["remarkPlugins={[remarkGfm]}", "normalizeMarkdownTableSeparators", "data-lh-message-table-wrap", "阅读文档", "data-lh-message-meta-note"]) expect(message).toContain(token);
     expect(message).not.toContain("splitAssistantAnswer");
     expect(css).toContain(".chatLayoutWithReader");
-    expect(css).toContain("@media (max-width: 900px)");
+    expect(css).toContain("container: hermit-chat / inline-size;");
+    expect(css).toContain("@container hermit-chat (max-width: 60rem)");
     expect(css).toContain("focus-visible");
     expect(input).not.toContain("outline-none");
     const prompt = readProjectFile("src/lib/hermit/system-prompt.ts");

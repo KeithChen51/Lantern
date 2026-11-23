@@ -72,6 +72,7 @@ describe("mobile navigation modal lifecycle", () => {
   function fixture(desktop = false) {
     class Element { isConnected = true; focus = vi.fn(); }
     const opener = new Element();
+    const railEntry = new Element();
     const close = new Element();
     const dialog = { showModal: vi.fn(), close: vi.fn() };
     const media = { matches: desktop, addEventListener: vi.fn(), removeEventListener: vi.fn() };
@@ -82,9 +83,10 @@ describe("mobile navigation modal lifecycle", () => {
     const onClose = vi.fn();
     const refOffset = harness.refs.length;
     const view = Navigation({ isPinned: false, onTogglePin: vi.fn(), isMobileOpen: true, onMobileClose: onClose });
+    harness.refs[refOffset].current = { querySelector: () => railEntry };
     harness.refs[refOffset + 1].current = dialog;
     harness.refs[refOffset + 2].current = close;
-    return { view, dialog, opener, close, media, document, onClose, effect: harness.effects.at(-1)! };
+    return { view, dialog, opener, railEntry, close, media, document, onClose, effect: harness.effects.at(-1)! };
   }
 
   it("opens as a browser modal, focuses its close control, and restores scrolling and opener focus on close", () => {
@@ -131,13 +133,16 @@ describe("mobile navigation modal lifecycle", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("closes when resized to desktop instead of leaving an invisible blocking modal", () => {
-    const { effect, media, onClose } = fixture();
+  it("closes and returns focus to the visible navigation when resized to desktop", () => {
+    const { effect, media, onClose, railEntry } = fixture();
     const cleanup = effect();
+    expect(window.matchMedia).toHaveBeenCalledWith("(min-width: 64rem)");
     const onChange = media.addEventListener.mock.calls[0][1];
+    media.matches = true;
     onChange({ matches: true });
     expect(onClose).toHaveBeenCalledOnce();
     cleanup?.();
+    expect(railEntry.focus).toHaveBeenCalledWith({ preventScroll: true });
     const alreadyDesktop = fixture(true);
     alreadyDesktop.effect();
     expect(alreadyDesktop.dialog.showModal).not.toHaveBeenCalled();

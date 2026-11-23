@@ -33,7 +33,11 @@ export function HomeBrandHero() {
       <div ref={copyRef} data-lh-home-brand-copy>
         <p data-lh-home-brand-kicker>精诚服务品牌再出发</p>
         <h1 id="home-brand-title" data-lh-home-brand-title>
-          求真、尽善、致美、大爱、幸福
+          <span>求真、</span>
+          <span>尽善、</span>
+          <span>致美、</span>
+          <span>大爱、</span>
+          <span>幸福</span>
         </h1>
         <a href="#heart-values" data-lh-home-brand-path>
           <span aria-hidden="true" />

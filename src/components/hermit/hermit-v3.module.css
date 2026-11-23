@@ -80,6 +80,7 @@
   display: block;
   min-width: 0;
   width: 100%;
+  container: hermit-chat / inline-size;
 }
 
 .chatLayout {
@@ -972,6 +973,7 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 
 .readerBack {
   display: none;
+  white-space: nowrap;
 }
 
 .readerBody {
@@ -1179,7 +1181,8 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   border-bottom: 0;
 }
 
-@media (max-width: 900px) {
+/* Both panes need room after the shared navigation has taken its space. */
+@container hermit-chat (max-width: 60rem) {
   .chatLayoutWithReader {
     display: block;
   }
@@ -1190,10 +1193,6 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page .chatLayoutWithReader [data-lh-hermit-conversation] {
     display: none;
-  }
-
-  .readerPanel {
-    min-height: min(752px, calc(100dvh - 8rem));
   }
 
   .readerBack {
@@ -1351,9 +1350,9 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   padding-top: clamp(1rem, 3dvh, 1.75rem);
   padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
 }
-@media (max-width: 767px) {
+@media (width < 64rem) {
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main][data-lh-v3]):has(.page .conversationSurface) {
-    padding-top: 5rem; /* Clear the fixed mobile navigation. */
+    padding-top: 5rem; /* Clear the compact navigation header. */
   }
 }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main-frame]):has(> .page) {
@@ -1496,6 +1495,8 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 .contextResults > p, .contextResults > div { margin: 10px; color: var(--hermit-secondary); font-size: 13px; line-height: 22px; }
 .contextResults > .contextLoadMore { justify-content: center; color: var(--hermit-accent); font-size: 12px; }
 .attachmentTiles { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; margin: 0 0 10px; padding: 0; list-style: none; }
+/* Only pending files scroll; composer menus can extend into the message area. */
+.attachmentTiles { max-height: min(8rem, 20dvh); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; }
 .attachmentTile { position: relative; display: grid; width: min(210px, 100%); min-width: 0; min-height: 64px; grid-template-columns: 30px minmax(0, 1fr); align-items: center; column-gap: 8px; row-gap: 2px; border: 1px solid var(--hermit-line); border-radius: 12px; background: var(--hermit-surface); padding: 10px 30px 10px 12px; text-align: left; }
 .attachmentTile > .attachmentIcon { grid-row: span 2; }
 .attachmentTile > .attachmentIcon svg { width: 26px; height: 26px; }
@@ -1512,7 +1513,7 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-footer] { padding: 8px 0 0; }
 /* The conversation gives space to answers; the centered start keeps its larger composer. */
 :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-input] { padding: 12px 16px; }
-:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-textarea] { min-height: 28px; padding: 0; }
+:global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-composer] [data-lh-chat-textarea] { min-height: 28px; max-height: clamp(28px, calc(100dvh - 24rem), 156px); padding: 0; }
 [data-lh-hermit-composer] .inputTools { padding-top: 6px; }
 .runCancelled, .expiredAttachments { margin: 0; border-radius: 10px; background: var(--hermit-subtle); padding: 10px 12px; color: var(--hermit-secondary); font-size: 13px; line-height: 22px; }
 .runCancelled { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
@@ -1555,6 +1556,29 @@ button.messageContextContent:hover { background: var(--hermit-selected); }
   :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-chat-submit] { width: 36px; min-width: 36px; padding-inline: 0; }
   .historyDrawer { padding: 24px 20px; }
   .requestError { flex-wrap: wrap; }
+}
+@media (height < 36rem) {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main][data-lh-v3]):has(.page) {
+    padding-top: 1rem;
+    padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
+  }
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start] {
+    padding-block: 0;
+  }
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start-inner] {
+    justify-content: flex-start;
+    gap: 12px;
+    padding-block: 8px;
+  }
+  .startCopy { gap: 8px; }
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-v3]) .page [data-lh-hermit-start] [data-lh-chat-input] {
+    padding: 12px 16px;
+  }
+}
+@media (height < 36rem) and (width < 64rem) {
+  :global(html[data-lighthouse-interface="classic"]) :global([data-lh-main][data-lh-v3]):has(.page) {
+    padding-top: 5rem;
+  }
 }
 @media (prefers-reduced-motion: reduce) { .page *, .page *::before, .page *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
 .draftUndo {
