@@ -136,9 +136,9 @@ body:has([data-lh-records-workspace]) { min-height: 100dvh; }
     padding-block: .5rem;
   }
 }
-@media (max-height: 440px) and (max-width: 767px) and (orientation: landscape) {
+@media (max-height: 440px) and (width < 64rem) and (orientation: landscape) {
   html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-v3][data-sidebar-pinned]:has([data-lh-records-workspace]) {
-    padding-top: 4.5rem;
+    padding-top: 5rem;
   }
 }
 
@@ -230,10 +230,13 @@ html[data-lighthouse-interface="classic"] [data-lh-v3] :is(button, a, summary):f
   outline-offset: 3px;
 }
 
-@media (max-width: 767px) {
+@media (width < 64rem) {
   html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-v3][data-sidebar-pinned] {
     padding: 6rem 1.25rem 2rem;
   }
+}
+
+@media (max-width: 767px) {
   html[data-lighthouse-interface="classic"] [data-lh-v3] [data-lh-v3-heading] {
     align-items: flex-start;
     flex-direction: column;

@@ -49,7 +49,7 @@ describe("my navigation entry", () => {
   });
 
   it("shows the verified employee name as a mobile header link", () => {
-    const html = renderToStaticMarkup(<SessionProvider session={session}><Header isSidebarPinned={false} onOpenMobileNav={() => {}} /></SessionProvider>);
+    const html = renderToStaticMarkup(<SessionProvider session={session}><Header onOpenMobileNav={() => {}} /></SessionProvider>);
     expect(html).toContain('href="/me"');
     expect(html).toContain("测试员工");
     expect(html).toContain('aria-label="我的"');
@@ -57,7 +57,7 @@ describe("my navigation entry", () => {
 
   it("shows a guest entry with browsing and AI navigation but no admin or authorization links", () => {
     const guest = { ...session, kind: "guest" as const, user: { id: "opaque-guest", account: "", displayName: "访客" }, capabilities: ["content:read", "knowledge:read", "hermit:chat", "hermit:attachment:self", "knowledge:manage"] };
-    const html = renderToStaticMarkup(<SessionProvider session={guest}><Navigation isPinned onTogglePin={() => {}} isMobileOpen onMobileClose={() => {}} /><Header isSidebarPinned={false} onOpenMobileNav={() => {}} /></SessionProvider>);
+    const html = renderToStaticMarkup(<SessionProvider session={guest}><Navigation isPinned onTogglePin={() => {}} isMobileOpen onMobileClose={() => {}} /><Header onOpenMobileNav={() => {}} /></SessionProvider>);
     expect(html).toContain("访客");
     expect(html).toContain('href="/hermit"');
     expect(html).toContain('href="/me"');

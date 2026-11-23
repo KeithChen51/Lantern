@@ -398,12 +398,13 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
   React.useEffect(() => {
     const dialog = mobileDialogRef.current;
     if (!isMobileOpen || !dialog) return;
-    const desktop = window.matchMedia("(min-width: 768px)");
+    const desktop = window.matchMedia("(min-width: 64rem)");
     if (desktop.matches) {
       onMobileClose();
       return;
     }
 
+    const desktopSidebar = desktopSidebarRef.current;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     dialog.showModal();
@@ -417,7 +418,10 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
       desktop.removeEventListener("change", closeOnDesktop);
       dialog.close();
       document.body.style.overflow = previousOverflow;
-      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+      const focusTarget = desktop.matches
+        ? desktopSidebar?.querySelector<HTMLElement>("[data-lh-logo]")
+        : previousFocus;
+      if (focusTarget?.isConnected) focusTarget.focus({ preventScroll: true });
     };
   }, [isMobileOpen, onMobileClose]);
 
@@ -429,7 +433,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         data-expanded={isExpanded ? "true" : "false"}
         data-home-surface={isHomeSurface ? "true" : undefined}
         style={desktopSidebarStyle}
-        className="fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] md:flex"
+        className="fixed left-0 top-0 z-50 hidden h-dvh flex-col border-r border-[var(--lh-deck-panel-border)] bg-[linear-gradient(180deg,var(--color-deck),var(--color-deck-soft))] px-4 py-5 shadow-[var(--lh-card-shadow)] transition-[width] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] lg:flex"
         aria-label="主导航"
       >
         <Logo isExpanded={isExpanded} onTogglePin={onTogglePin} />
@@ -454,7 +458,7 @@ export function Navigation({ isPinned, onTogglePin, isMobileOpen, onMobileClose,
         id="lighthouse-mobile-navigation"
         data-lh-mobile-navigation
         aria-label="导航菜单"
-        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-ink/30 p-0 text-ink md:hidden"
+        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-ink/30 p-0 text-ink lg:hidden"
         onCancel={(event) => { event.preventDefault(); onMobileClose(); }}
         onClick={(event) => { if (event.target === event.currentTarget) onMobileClose(); }}
         onKeyDown={(event) => {

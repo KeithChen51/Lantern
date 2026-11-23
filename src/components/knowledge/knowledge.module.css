@@ -1,4 +1,5 @@
 .reader, .searchPage { width: 100%; max-width: 72rem; margin-inline: auto; padding-bottom: 4rem; }
+.reader { container: knowledge-reader / inline-size; }
 .reader[data-lh-resource][data-lh-page-archetype] { width: min(100%, 70rem); max-width: 70rem; margin-inline: 0; scroll-margin-top: 6rem; }
 .breadcrumb { display: flex; align-items: center; margin-bottom: 2rem; font-size: var(--type-control); color: var(--color-muted); }
 .breadcrumb a { display: inline-flex; min-width: 10rem; min-height: 2.5rem; align-items: center; gap: .5rem; padding: .5rem .75rem; border: 1px solid var(--lh-refine-line, var(--color-line)); border-radius: var(--lh-control-radius, .5rem); background: var(--lh-refine-surface, var(--color-surface)); color: var(--color-primary-text); font-weight: var(--weight-semibold); }
@@ -60,11 +61,28 @@
 .references code { font-size: var(--type-caption); }
 .attachments { margin-top: 1.5rem; } .attachments h3 { font-size: var(--type-body); margin-bottom: .5rem; } .attachments li { overflow-wrap: anywhere; }
 .homeReading { padding: 4rem 2rem 0; scroll-margin-top: 4rem; }
-@media (min-width: 768px) { .homeReading { padding-left: max(2rem, var(--lh-classic-main-collapsed-offset)); } }
-@media (max-width: 1100px) { .readingLayout { grid-template-columns: minmax(0,1fr) 11rem; gap: 1.5rem; } }
-@media (max-width: 900px) {
-  .readingLayout { display: block; } .readingRail { display: none; }
+@media (min-width: 64rem) { .homeReading { padding-left: max(2rem, var(--lh-classic-main-collapsed-offset)); } }
+@container knowledge-reader (width < 67rem) {
+  .readingLayout { grid-template-columns: minmax(0, 1fr) 11rem; }
+}
+
+@container knowledge-reader (width < 54rem) {
+  .readingLayout { grid-template-columns: minmax(0, 1fr); }
+  .readingRail { display: none; }
+  .mobileContents { display: block; margin-top: 1.25rem; border-top: 1px solid var(--color-line); padding-top: .5rem; font-size: var(--type-control); }
+  .mobileContents summary span { color: var(--color-muted); margin-left: .5rem; font-size: var(--type-caption); }
+  .mobileContents ol { margin-top: .75rem; display: grid; gap: .5rem; }
+  .mobileContents a { display: block; padding-block: .3rem; color: var(--color-ink-soft); }
+  .mobileContents li[data-depth="3"] { padding-left: 1rem; }
+}
+
+@container knowledge-reader (width < 38rem) {
+  .paper { padding: 1.35rem; }
+}
+
+@media (width < 48rem) {
   .reader:not([data-lh-reader-embedded]) { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  .reader:not([data-lh-reader-embedded]) .mobileContents { display: none; }
   .mobileReadingBar { position: fixed; z-index: 30; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; align-items: center; gap: .5rem; padding: .4rem 1rem calc(.4rem + env(safe-area-inset-bottom)); background: var(--lh-refine-surface, var(--color-panel)); border-top: 1px solid var(--color-line); box-shadow: 0 -.25rem 1rem #2c2c2c08; font-size: var(--type-control); }
   .mobileReadingBar > a, .mobileReadingMenu > summary { display: flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: .5rem; color: var(--color-primary-text); cursor: pointer; white-space: nowrap; }
   .mobileReadingMenu > summary { list-style: none; }
@@ -73,17 +91,10 @@
   .mobileReadingMenu ol { list-style: none; }
   .mobileReadingMenu a { display: block; min-height: 2.75rem; padding: .6rem .5rem; line-height: 1.6; }
   .mobileReadingMenu li[data-depth="3"] a { padding-left: 1.25rem; color: var(--color-muted); }
-  .mobileContents { display: block; margin-top: 1.25rem; border-top: 1px solid var(--color-line); padding-top: .5rem; font-size: var(--type-control); }
-  .mobileContents summary span { color: var(--color-muted); margin-left: .5rem; font-size: var(--type-caption); }
-  .mobileContents ol { margin-top: .75rem; display: grid; gap: .5rem; } .mobileContents a { display: block; padding-block: .3rem; color: var(--color-ink-soft); }
-  .mobileContents li[data-depth="3"] { padding-left: 1rem; }
 }
-@media (min-width: 768px) and (max-width: 900px) {
-  .mobileReadingBar { left: var(--lh-classic-main-collapsed-offset, 100px); }
-  :global([data-sidebar-pinned="true"]) .mobileReadingBar { left: var(--lh-classic-main-offset, 260px); }
-}
+
 @media (max-width: 600px) {
-  .paper { padding: 1.35rem; } .breadcrumb { margin-bottom: 1rem; }
+  .breadcrumb { margin-bottom: 1rem; }
   .articleHeader .articleTitle { font-size: 1.75rem; } .articleHeader { margin-bottom: 2rem; }
   .homeReading { padding: 2rem 1rem 0; } .prose h2 { font-size: 1.4rem; } .prose h3 { font-size: 1.2rem; }
 }.searchPage { max-width: 64rem; }

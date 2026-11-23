@@ -365,7 +365,8 @@ Mobile is part of the V3 acceptance gate. It keeps the same information order wh
 - Use desktop and mobile screenshots as the V3 acceptance evidence for their page pattern.
 - Do not introduce desktop patterns that require fixed pixel widths or horizontal overflow.
 - Keep controls and component tokens capable of collapsing into the V3 mobile layout.
-- The existing Lighthouse navigation framework remains the source of truth; mobile may collapse it into the existing responsive navigation treatment, but V3 does not add a second product navigation model.
+- Below a viewport width of 64rem, Lighthouse uses the existing navigation drawer. In short windows with a desktop sidebar, its module links scroll within the rail.
+- Reading directories and Hermit's second pane fit against the width available after the sidebar. The Home cover reflows the value groups inside the space reserved for its copy.
 - Bottom navigation does not carry second-level actions; complex filters and secondary actions move into page-local drawers, segmented controls, or inline sections.
 - Main content collapses to one column. Desktop 8/4 and 6/6 layouts become ordered vertical sections rather than squeezed columns. The V3 pages use `20px` horizontal padding.
 - Touch targets should be at least 44px, and page content needs bottom padding that clears the bottom navigation and safe area.

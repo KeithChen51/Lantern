@@ -513,7 +513,7 @@ html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-home-main="true
   line-height: var(--leading-body);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 64rem) {
   html[data-lighthouse-interface="classic"] [data-lh-main][data-sidebar-pinned="true"] {
     padding-left: var(--lh-classic-main-offset);
   }
@@ -526,12 +526,12 @@ html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-home-main="true
     padding-left: 0;
   }
 
-  html[data-lighthouse-interface="classic"] [data-lh-header][data-sidebar-pinned="true"] {
-    padding-left: var(--lh-classic-main-offset);
+  html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-home-main="true"][data-sidebar-pinned="true"] {
+    --lh-home-sidebar-inset: var(--lh-classic-main-offset);
   }
 
-  html[data-lighthouse-interface="classic"] [data-lh-header][data-sidebar-pinned="false"] {
-    padding-left: var(--lh-classic-main-collapsed-offset);
+  html[data-lighthouse-interface="classic"] [data-lh-main][data-lh-home-main="true"][data-sidebar-pinned="false"] {
+    --lh-home-sidebar-inset: var(--lh-classic-main-collapsed-offset);
   }
 }
 
@@ -595,20 +595,7 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar] {
   padding-block: 1rem;
 }
 
-@media (height < 48rem) {
-  /* Scroll module links independently so the account control stays reachable. */
-  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] {
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  [data-lh-sidebar][data-expanded="true"] [data-lh-sidebar-nav-group] > [data-lh-nav-link] {
-    flex-shrink: 0;
-    outline-offset: -2px;
-  }
-}
-
-@media (min-width: 48rem) and (min-height: 48rem) {
+@media (min-width: 64rem) and (min-height: 48rem) {
   [data-lh-sidebar-attribution] {
     display: flex;
     flex: none;
@@ -702,6 +689,24 @@ html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false
   min-height: 3rem;
   justify-content: center;
   padding: 0;
+}
+
+@media (height < 48rem) {
+  /* The link list can scroll while search and the account control stay in reach. */
+  html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded]:not([data-mobile]) [data-lh-sidebar-nav-group] {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-block: 0.75rem;
+    gap: 0.5rem;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+  }
+
+  [data-lh-sidebar][data-expanded]:not([data-mobile]) [data-lh-sidebar-nav-group] > [data-lh-nav-link] {
+    flex-shrink: 0;
+    outline-offset: -2px;
+  }
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-sidebar][data-expanded="false"]:not([data-mobile]) [data-lh-nav-icon] {
@@ -1014,7 +1019,10 @@ html[data-lighthouse-interface="classic"] [data-lh-page-archetype="case-workflow
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-page] {
+  --lh-home-content-gutter: clamp(1rem, 3vw, 3.5rem);
+  --lh-home-content-start: max(var(--lh-home-content-gutter), var(--lh-home-sidebar-inset, 0px));
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(3.25rem, 5vw, 4.75rem);
   background: var(--color-paper);
 }
@@ -1024,21 +1032,23 @@ html[data-lighthouse-interface="classic"] [data-lh-main]:has([data-lh-heart-page
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-heart-page] > :not([data-lh-home-brand-hero]) {
-  width: min(calc(100% - clamp(2rem, 6vw, 7rem)), 80rem);
-  margin-inline: auto;
+  width: min(80rem, calc(100% - var(--lh-home-content-start) - var(--lh-home-content-gutter)));
+  margin-inline-start: max(var(--lh-home-content-start), calc(50% - 40rem));
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-home-brand-hero] {
   position: relative;
   isolation: isolate;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   margin-bottom: clamp(-5rem, -5vw, -2.5rem);
   min-height: 100svh;
   overflow: hidden;
   place-items: center end;
-  padding: clamp(6rem, 9vw, 9rem) clamp(4rem, 8vw, 9rem) clamp(5rem, 8vw, 7rem) clamp(7rem, 12vw, 12rem);
+  padding-block: clamp(6rem, 9vw, 9rem) clamp(5rem, 8vw, 7rem);
+  padding-inline: max(clamp(4rem, 8vw, 9rem), var(--lh-home-sidebar-inset, 0px)) clamp(4rem, 8vw, 9rem);
   background: #121617;
 }
 
@@ -1082,7 +1092,8 @@ html[data-lighthouse-interface="classic"] [data-lh-home-brand-veil] {
 
 html[data-lighthouse-interface="classic"] [data-lh-home-brand-copy] {
   display: grid;
-  width: min(88rem, calc(100vw - clamp(12rem, 18vw, 22rem)));
+  grid-template-columns: minmax(0, 1fr);
+  width: min(88rem, 100%);
   justify-items: end;
   gap: clamp(1rem, 2vw, 1.75rem);
   text-align: right;
@@ -1110,7 +1121,10 @@ html[data-lighthouse-interface="classic"] [data-lh-home-brand-title] {
   color: rgba(255, 249, 229, 0.96);
   text-shadow: 0 2px 24px rgba(0, 0, 0, 0.48);
   text-wrap: balance;
-  white-space: nowrap;
+}
+
+html[data-lighthouse-interface="classic"] [data-lh-home-brand-title] > span {
+  display: inline-block;
 }
 
 html[data-lighthouse-interface="classic"] [data-lh-home-brand-path] {
@@ -1118,6 +1132,7 @@ html[data-lighthouse-interface="classic"] [data-lh-home-brand-path] {
   grid-template-columns: minmax(3rem, 7vw) auto;
   align-items: center;
   gap: 1.5rem;
+  min-height: 2.75rem;
   margin-top: clamp(1.5rem, 3vw, 2.75rem);
   color: rgba(255, 248, 224, 0.76);
   font-size: var(--type-control);
@@ -1762,8 +1777,6 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-closing] p {
 
   html[data-lighthouse-interface="classic"] [data-lh-home-brand-title] {
     font-size: clamp(2.75rem, 13vw, 4.5rem);
-    word-break: keep-all;
-    white-space: normal;
   }
 
   html[data-lighthouse-interface="classic"] [data-lh-home-brand-path] {
@@ -1795,6 +1808,22 @@ html[data-lighthouse-interface="classic"] [data-lh-heart-closing] p {
   html[data-lighthouse-interface="classic"] [data-lh-heart-value-item] {
     border-radius: 1rem;
     padding: 1.5rem 0.875rem 1.75rem;
+  }
+}
+
+@media (width < 64rem) {
+  html[data-lighthouse-interface="classic"] [data-lh-heart-values] {
+    scroll-margin-top: 5rem;
+  }
+}
+
+@media (height < 34rem) {
+  html[data-lighthouse-interface="classic"] [data-lh-home-brand-hero] {
+    padding-block: 5.5rem 2.25rem;
+  }
+
+  html[data-lighthouse-interface="classic"] [data-lh-home-brand-path] {
+    margin-top: 0.5rem;
   }
 }
 
