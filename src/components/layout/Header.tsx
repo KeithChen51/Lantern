@@ -5,24 +5,18 @@ import Link from "next/link";
 import { useEmployeeSession } from "@/components/auth/SessionContext";
 import { LhIconButton } from "@/components/ui/lighthouse-primitives";
 import { lighthouseIcons } from "@/components/ui/lighthouse-icons";
-import { cn } from "@/lib/utils";
 
 interface HeaderProps {
-  isSidebarPinned: boolean;
   onOpenMobileNav: () => void;
   isMobileNavOpen?: boolean;
 }
 
-export function Header({ isSidebarPinned, onOpenMobileNav, isMobileNavOpen = false }: HeaderProps) {
+export function Header({ onOpenMobileNav, isMobileNavOpen = false }: HeaderProps) {
   const session = useEmployeeSession();
   return (
     <header
       data-lh-header
-      data-sidebar-pinned={isSidebarPinned ? "true" : "false"}
-      className={cn(
-        "pointer-events-none fixed left-0 right-0 top-0 z-40 h-20 bg-gradient-to-b from-page via-page/85 to-transparent px-4 pt-3 transition-[padding] duration-[var(--lh-motion-medium)] ease-[var(--lh-ease-out)] md:hidden",
-        isSidebarPinned ? "md:pl-[var(--lh-classic-main-offset)]" : "md:pl-[var(--lh-classic-main-collapsed-offset)]",
-      )}
+      className="pointer-events-none fixed inset-x-0 top-0 z-40 h-20 px-4 lg:hidden"
     >
       <div
         data-lh-header-bar

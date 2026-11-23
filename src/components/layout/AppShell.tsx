@@ -80,7 +80,6 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
         isHomeSurface={isHomeSurface}
       />
       <Header
-        isSidebarPinned={isSidebarPinned}
         isMobileNavOpen={isMobileNavOpen}
         onOpenMobileNav={() => setIsMobileNavOpen(true)}
       />
@@ -97,7 +96,7 @@ export function AppShell({ children, session, watermarkSdkUrl, visitTrackingEnab
             ? "px-0 pb-0 pt-0"
             : "px-4 pb-8 pt-24 md:px-6",
           !isHomeSurface &&
-            (isSidebarPinned ? "md:pl-[var(--lh-classic-main-offset)]" : "md:pl-[var(--lh-classic-main-collapsed-offset)]"),
+            (isSidebarPinned ? "lg:pl-[var(--lh-classic-main-offset)]" : "lg:pl-[var(--lh-classic-main-collapsed-offset)]"),
         )}
       >
         <div data-lh-main-frame className={cn("mx-auto w-full", isHomeSurface ? "max-w-none" : "max-w-[1680px]")}>{children}</div>
