@@ -89,7 +89,10 @@ if compose --profile '*' config --services | grep -Fxq -- "$WORKER_SERVICE"; the
     WORKER_DB=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$WORKER_CONTAINER" | sed -n 's/^DATABASE_URL=//p')
     [[ "$WORKER_DB" == "$CURRENT_DB" ]] || fail 'Publication worker database differs from app'
   fi
-  if [[ "$(config_value WECOM_PUBLISHING_ENABLED "$WORKER_SERVICE")" == true ]]; then
+  # Discovery above includes paused profiles so existing writers are stopped.
+  # Start the new worker only if its profile is active in the current config.
+  if compose config --services | grep -Fxq -- "$WORKER_SERVICE" &&
+    [[ "$(config_value WECOM_PUBLISHING_ENABLED)" == true && "$(config_value WECOM_PUBLISHING_ENABLED "$WORKER_SERVICE")" == true ]]; then
     [[ "$(config_value image "$WORKER_SERVICE")" == "$NEW_APP" ]] || fail 'Publication worker must use the selected app image'
     [[ "$(config_value DATABASE_URL "$WORKER_SERVICE")" == "$CURRENT_DB" ]] || fail 'Configured publication worker database differs from app'
     WORKER_ENABLED=true

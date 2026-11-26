@@ -32,7 +32,8 @@ if (args[0] === "image") {
   else if (format === "{{.Image}}") out(imageId(id.includes("mysql") ? "c" : state.upgraded ? "a" : "d"));
 } else if (args[0] === "compose") {
   if (args.includes("config")) {
-    if (args.includes("--services")) out(`lighthouse\nmysql\n${process.env.FAKE_WORKER ? "publication-worker\n" : ""}`);
+    const workerVisible = process.env.FAKE_WORKER && (!process.env.FAKE_WORKER_PROFILE_PAUSED || args.includes('*'));
+    if (args.includes("--services")) out(`lighthouse\nmysql\n${workerVisible ? "publication-worker\n" : ""}`);
     if (args.includes("json")) out(JSON.stringify({ services: { app: { environment: {
       LIGHTHOUSE_DEPLOYMENT_ENV: "test", NODE_ENV: "production", AUTH_ALLOW_LOCAL_HTTP: "false",
       AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081",
@@ -46,7 +47,7 @@ if (args[0] === "image") {
       AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081",
       PORTAL_API_BASE_URL: "https://portal.example.invalid/api", PORTAL_LOGIN_URL: "https://portal.example.invalid/login", PORTAL_LOGIN_MODE: "card",
       PORTAL_APP_CODE: "fixture", PORTAL_APP_SECRET: "synthetic-portal-secret", PORTAL_KNOWLEDGE_ADMIN_ROLE: "knowledge_admin", PORTAL_EMPLOYEE_VALIDATION_CONFIRMED: "true",
-      KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql",
+      KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql", WECOM_PUBLISHING_ENABLED: process.env.FAKE_WORKER ? "true" : "false",
       DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
       ...config.authOverrides,
     } }, ...(process.env.FAKE_WORKER ? { 'publication-worker': { image: config.appImage, environment: { DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", WECOM_PUBLISHING_ENABLED: "true" } } } : {}) } }));

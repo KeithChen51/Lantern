@@ -313,13 +313,13 @@ describe("guarded deployment orchestration", () => {
     expect(readFileSync(f.config, "utf8")).toContain(`LH_IMAGE=${f.appImage}`);
     expect(result.stdout).not.toContain("private-db-secret");
   }, 30_000);
-  it("discovers a profiled legacy publication worker and upgrades it after stopping both writers", () => {
+  it.each([false, true])("quiesces a legacy publication worker and respects its configured profile (paused: %s)", paused => {
     const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
     const archive = spawnSync(bash, ["-c", 'tar -czf "$1" -C "$2" .', "sh", unix(join(f.root, "fixture.tar.gz")), unix(f.app)]);
     expect(archive.status).toBe(0);
     const files = spawnSync(bash, ["-c", 'cd "$1"; sha256sum upload.txt', "sh", unix(f.app)], { encoding: "utf8" }).stdout;
     writeFileSync(join(f.root, "fixture-files.sha256"), files);
-    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: { ...f.env, FAKE_WORKER: "1" }, encoding: "utf8" });
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: { ...f.env, FAKE_WORKER: "1", FAKE_WORKER_PROFILE_PAUSED: paused ? "1" : "" }, encoding: "utf8" });
     expect(result.status, result.stderr).toBe(0);
     const calls = f.calls();
     expect(calls.find(x => x.includes("--services"))).toContain("*");
@@ -329,7 +329,9 @@ describe("guarded deployment orchestration", () => {
     expect(workerStop).toBeGreaterThan(-1);
     expect(appStop).toBeGreaterThan(workerStop);
     expect(migrate).toBeGreaterThan(appStop);
-    expect(calls.findIndex(x => x.includes("up") && x.at(-1) === "publication-worker")).toBeGreaterThan(migrate);
+    const start = calls.findIndex(x => x.includes("up") && x.at(-1) === "publication-worker");
+    if (paused) expect(start).toBe(-1);
+    else expect(start).toBeGreaterThan(migrate);
   }, 30_000);
   it.each([
     { AUTH_MODE: null }, { PORTAL_API_BASE_URL: null }, { PORTAL_LOGIN_URL: null },

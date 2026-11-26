@@ -18,7 +18,7 @@
 
 新服务沿用 node 用户、应用镜像摘要及私有运行配置。Compose 使用 `restart: unless-stopped`，只连接数据库和出站 runtime 网络。worker 空闲时每 5 秒检查到期任务，每轮并行领取至多两条通道任务，独立于浏览器和 DSH 对话运行。`SIGTERM` 或 `SIGINT` 会停止领取新任务并等待当前尝试完成，容器给予 120 秒退出时间。超时后容器可能被强制停止，恢复时按数据库中保留的阶段处理。
 
-正常部署使用现有 `environment.sh initialize` 或 `upgrade`。网页 ready 后才启动已启用的 worker，并等待心跳变为健康。旧测试环境使用 `existing-test.sh` 时，应在原 Compose 中增加同版本、同库、同 `/data` 挂载的 `publication-worker` 服务，避免改变旧卷。可通过可选的第 11 个参数指定已有 worker 服务名。
+正常部署使用现有 `environment.sh initialize` 或 `upgrade`。网页 ready 后才启动已启用的 worker，并等待心跳变为健康。旧测试环境使用 `existing-test.sh` 时，应在原 Compose 中增加同版本、同库、同 `/data` 挂载的 `publication-worker` 服务，避免改变旧卷。可通过可选的第 11 个参数指定已有 worker 服务名。升级沿用当前已启用的 Compose profile，暂停的 profile 会保持暂停。
 
 worker 心跳每 10 秒写入容器私有 `/tmp/lighthouse-wecom-worker.json`。Compose 健康检查拒绝超过 45 秒的心跳和停止状态。此检查覆盖执行进程存活，数据库领取能力、企微鉴权和出站上传发送需通过下方业务验收。
 
