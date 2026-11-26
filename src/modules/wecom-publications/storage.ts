@@ -34,6 +34,11 @@ export async function persistPublicationDraft(id: string, input: NewPublicationD
     await handle.close();
   }
   await rename(temporary, filename);
+  if (process.platform !== "win32") {
+    const directory = await open(path.dirname(filename), "r");
+    try { await directory.sync(); }
+    finally { await directory.close(); }
+  }
   return createHash("sha256").update(bytes).digest("hex");
 }
 
