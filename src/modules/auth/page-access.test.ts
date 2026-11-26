@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyAccessPath, normalizeAccessPath, safeReturnTo } from "./page-access";
+import { classifyAccessPath, isEmployeePage, normalizeAccessPath, safeReturnTo } from "./page-access";
 
 describe("employee page and asset access", () => {
   it("opens only employee entry pages and explicit brand assets", () => {
@@ -8,11 +8,26 @@ describe("employee page and asset access", () => {
     expect(classifyAccessPath("/lighthouse-home-hero-bg-v2-realistic-shore.png")).toBe("public");
     expect(classifyAccessPath("/fonts/brand/inter/InterVariable.woff2")).toBe("public");
   });
+  it("makes the exact external AI installer downloadable before device authorization", () => {
+    expect(classifyAccessPath("/install/lighthouse-ai.zip")).toBe("public");
+    expect(classifyAccessPath("/install/private.zip")).toBe("asset");
+    expect(classifyAccessPath("/install/lighthouse-ai.zip/client.mjs")).toBe("asset");
+    expect(classifyAccessPath("/_next/image", "/install/lighthouse-ai.zip")).toBe("asset");
+  });
   it("protects business pages, HTML/PDF/image originals, RSC and all JS", () => {
     for (const path of ["/", "/heart", "/mirror", "/action/driver-partner-rest-area", "/resources/id", "/admin/knowledge", "/auth/device", "/auth/tools"]) expect(classifyAccessPath(path)).toBe("page");
     for (const path of ["/_next/static/chunks/runtime.js", "/_next/data/build/heart.json", "/_next/image", "/files/whitepaper.pdf", "/files/business.html", "/images/games/service-store.webp"]) expect(classifyAccessPath(path)).toBe("asset");
     expect(classifyAccessPath("/_next/image", "https://outside.invalid/public.png")).toBe("asset");
     expect(classifyAccessPath("/_next/image", "/%6eav-lighthouse-transparent.png")).toBe("asset");
+  });
+  it("allows dealers on the two protected tool pages", () => {
+    for (const path of ["/auth/device", "/auth/tools"]) {
+      expect(classifyAccessPath(path)).toBe("page");
+      expect(isEmployeePage(path)).toBe(false);
+    }
+    for (const path of ["/auth", "/auth/device/other", "/auth/tools-extra", "/admin/knowledge", "/feedback"]) {
+      expect(isEmployeePage(path)).toBe(true);
+    }
   });
   it("leaves bearer and cookie APIs to their own guards", () => {
     expect(classifyAccessPath("/api/client/v1/resources")).toBe("api");

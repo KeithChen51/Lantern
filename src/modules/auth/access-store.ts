@@ -3,6 +3,9 @@ import type { PrismaClient, Prisma } from "@prisma/client";
 import { AccessError } from "./access-types";
 import type { WecomAutoEntry } from "./wecom-auto-client";
 
+// Existing device and client records without a kind belong to employees.
+type ToolOwnerKind = "employee" | "dealer";
+
 export type AccessPayloads = {
   guest: { namespace: string; userId: string; grantId: string; csrfToken: string };
   login: { verifierHash: string; returnTo: string; consumed: boolean; authority?: "portal" | "iam" | "iam-portal"; entry?: "card" };
@@ -17,9 +20,9 @@ export type AccessPayloads = {
     userId: string; memberId: string; displayName: string;
     csrfToken: string; active: boolean; verifiedAt: number; lastUsedAt: number; entry?: WecomAutoEntry;
   };
-  device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number };
+  device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; ownerKind?: ToolOwnerKind; lastPollAt: number; intervalMs: number };
   userCode: { deviceId: string };
-  client: { grantId: string; sessionId: string; name: string; active: boolean; currentRefreshHash: string; lastUsedAt: number };
+  client: { grantId: string; sessionId: string; ownerKind?: ToolOwnerKind; name: string; active: boolean; currentRefreshHash: string; lastUsedAt: number };
   access: { clientId: string };
   refresh: { clientId: string; used: boolean };
   bucket: { count: number };

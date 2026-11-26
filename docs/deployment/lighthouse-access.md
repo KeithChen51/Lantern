@@ -8,7 +8,7 @@
 
 原 portal 模式要求门户验证有效员工身份；该模式有效员工即使角色列表为空仍可浏览。知识管理员和平台管理员可管理知识。仅当门户配置了可与知识角色明确区分的平台管理员角色时，才开放 [访问与使用汇总](../platform-management.md)。灯塔不在本地分配角色。组合模式采用固定三角色，空角色或未知角色均拒绝。
 
-员工 CLI/MCP 是独立的 `packages/lighthouse-client` 包。员工在已登录浏览器中确认设备授权，客户端只取得 `knowledge:read`，由员工自己的 Agent 完成推理；无对话、知识写入或交互沉淀工具。员工包不能包含门户应用密钥、数据库地址、服务器环境文件或直连数据库的运维工具。
+CLI/MCP 使用独立的 `packages/lighthouse-client` 包。员工在已登录浏览器中确认设备授权，客户端只取得 `knowledge:read`，由用户的 Agent 完成推理。分发包仅包含客户端代码和依赖。启用了比亚迪汽车企微登录的 IAM 站点也可为经销商授权，见[经销商设备授权](lighthouse-wecom-auto.md#cli--mcp-设备授权)。
 
 现有 `npm run hub`、`npm run hub:mcp` 和镜像内 `knowledge-cli` 是可信运维维护接口，直接访问数据库；不得作为员工接入方式或向员工分发。服务器镜像及 DSH carrier 是服务器运维产物，不是员工客户端。
 

@@ -5,6 +5,7 @@ import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTrans
 import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
 import { employeeDisplayName, readPortalEmployeeName } from "./employee-name";
+import type { WecomAutoAccessService } from "./wecom-auto-access";
 
 export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
 export type DeviceView = { userCode: string; clientName: string; scope: "knowledge:read"; expiresAt: number };
@@ -12,6 +13,9 @@ export type DeviceReply = { device_code: string; user_code: string; verification
 export type TokenReply = { access_token: string; token_type: "Bearer"; expires_in: number; refresh_token: string; scope: "knowledge:read" };
 type LoginResult = { kind: "session"; sessionToken: string; returnTo: string } | { kind: "pending"; pendingToken: string; returnTo: string };
 type AuthorizationSnapshot = { roles: string[]; at: number; organization?: string; displayName?: string };
+type ToolOwner = { subjectId: string; ownerKind?: AccessPayloads["client"]["ownerKind"] };
+type ToolParent = ToolOwner & { sessionId: string; grantId: string };
+type ToolAuthority = AccessRecord<"grant"> | AccessRecord<"wecomAutoSession">;
 const HOUR = 3600000;
 const CLIENT_ID = "lighthouse-cli";
 const SCOPE = "knowledge:read";
@@ -20,10 +24,19 @@ const key = (kind: AccessKind, value: string) => `${kind}:${hashToken(value)}`;
 const take = <T>(result: T): Exclude<T, Error> => { if (result instanceof Error) throw result; return result as Exclude<T, Error>; };
 const expired = (record: AccessRecord, now: number) => record.expiresAt <= now;
 const permanent = (error: unknown) => error instanceof AccessError && (error.status === 401 || error.status === 403);
+const toolOAuthError = (error: unknown) => error instanceof AccessError && error.status === 503
+  ? new OAuthError("temporarily_unavailable", 503)
+  : new OAuthError("invalid_grant");
 
 /** Security decisions live here; HTTP transport owns cookies, same-origin checks, and CSRF submission. */
 export class AccessService {
-  constructor(private readonly config: AccessConfig, private readonly portal: PortalAdapter, private readonly store: AccessStore, private readonly now: () => number = Date.now) {}
+  constructor(
+    private readonly config: AccessConfig,
+    private readonly portal: PortalAdapter,
+    private readonly store: AccessStore,
+    private readonly now: () => number = Date.now,
+    private readonly getDealerAccess?: () => WecomAutoAccessService,
+  ) {}
   private duration(configured: number, maximum: number) { return Math.max(1, Math.min(configured, maximum)); }
   private record<K extends AccessKind>(kind: K, id: string, subjectId: string, parentId: string | null, payload: AccessPayloads[K], expiresAt: number): AccessRecord<K> {
     const now = this.now(); return { kind, id, subjectId, parentId, payload, expiresAt, createdAt: now, updatedAt: now };
@@ -231,12 +244,50 @@ export class AccessService {
     }
     return grant;
   }
+  private dealerAccess() {
+    if (!this.getDealerAccess) throw new AccessError("Dealer authorization is unavailable", 401);
+    return this.getDealerAccess();
+  }
+  private async toolAuthority(tx: AccessTransaction, parent: ToolParent): Promise<ToolAuthority> {
+    if (parent.ownerKind === "dealer") {
+      const session = await this.dealerAccess().toolSession(tx, parent.sessionId);
+      if (session.id === parent.grantId && session.subjectId === parent.subjectId) return session;
+    } else {
+      const session = await tx.get("session", parent.sessionId);
+      if (session?.payload.active && session.payload.grantId === parent.grantId && session.subjectId === parent.subjectId) {
+        return this.activeGrant(tx, parent.grantId);
+      }
+    }
+    throw new AccessError("Client parent authorization expired", 401);
+  }
   private async activeClient(tx: AccessTransaction, id: string) {
     const client = await tx.get("client", id);
     if (!client?.payload.active || expired(client, this.now())) throw new AccessError("Client authorization expired", 401);
-    const session = await tx.get("session", client.payload.sessionId);
-    if (!session?.payload.active || session.payload.grantId !== client.payload.grantId || session.subjectId !== client.subjectId) throw new AccessError("Client parent authorization expired", 401);
-    return client;
+    const authority = await this.toolAuthority(tx, { ...client.payload, subjectId: client.subjectId });
+    return { client, authority };
+  }
+  private async clientAccess(tx: AccessTransaction, id: string) {
+    const access = await tx.get("access", id);
+    if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401);
+    return { access, ...await this.activeClient(tx, access.payload.clientId) };
+  }
+  private async renewToolAuthority(authority: ToolAuthority): Promise<void> {
+    if (authority.kind === "wecomAutoSession") await this.dealerAccess().renewToolSession(authority);
+    else await this.renew(authority);
+  }
+  private requireFreshToolAuthority(authority: ToolAuthority): void {
+    if (authority.kind === "wecomAutoSession") {
+      this.dealerAccess().requireFreshIdentity(authority);
+      return;
+    }
+    this.requirePortalRolesFresh(authority);
+    if (this.now() - authority.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) {
+      throw new AccessError("Employee verification is unavailable", 503);
+    }
+  }
+  private ownsClient(owner: ToolOwner, client: AccessRecord<"client">) {
+    return client.subjectId === owner.subjectId &&
+      (client.payload.ownerKind ?? "employee") === (owner.ownerKind ?? "employee");
   }
   private async renew(grant: AccessRecord<"grant">, adminWrite = false): Promise<void> {
     const now = this.now(), identityFresh = this.duration(adminWrite ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs, adminWrite ? 60000 : 300000), roleFresh = this.duration(adminWrite ? this.config.adminWriteFreshMs : this.config.roleFreshMs, adminWrite ? 60000 : 300000);
@@ -316,26 +367,39 @@ export class AccessService {
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
     this.secret(token); const id = key("access", token);
-    const grant = await this.store.transaction(async (tx) => { const access = await tx.get("access", id); if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401); const client = await this.activeClient(tx, access.payload.clientId); return this.activeGrant(tx, client.payload.grantId); });
-    await this.renew(grant);
-    return this.store.transaction(async (tx) => {
-      const access = await tx.get("access", id); if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401);
-      const client = await this.activeClient(tx, access.payload.clientId);
-      const current = await this.activeGrant(tx, client.payload.grantId);
-      this.requirePortalRolesFresh(current);
-      if (this.now() - current.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) throw new AccessError("Employee verification is unavailable", 503);
-      client.payload.lastUsedAt = this.now(); await this.save(tx, client);
-      return this.principal(current, client.id, channel, Math.min(access.expiresAt, client.expiresAt, current.expiresAt));
+    const { authority: snapshot } = await this.store.transaction(tx => this.clientAccess(tx, id));
+    await this.renewToolAuthority(snapshot);
+    return this.store.transaction(async tx => {
+      const { access, client, authority } = await this.clientAccess(tx, id);
+      this.requireFreshToolAuthority(authority);
+      client.payload.lastUsedAt = this.now();
+      await this.save(tx, client);
+      const expiresAt = Math.min(access.expiresAt, client.expiresAt, authority.expiresAt);
+      if (authority.kind === "wecomAutoSession") {
+        const { userId, memberId, displayName } = authority.payload;
+        return { kind: "dealer", userId, account: memberId, displayName, grantId: authority.id, credentialId: client.id, channel, capabilities: [SCOPE], expiresAt };
+      }
+      return this.principal(authority, client.id, channel, expiresAt);
     });
   }
   private async authorizeWeb(tx: AccessTransaction, principal: Principal) {
-    if (principal.channel !== "web") throw new AccessError("Web employee authorization required", 403);
+    if (principal.channel !== "web" || principal.kind === "guest" || principal.kind === "dealer") {
+      throw new AccessError("Web employee authorization required", 403);
+    }
     const session = await tx.get("session", principal.credentialId);
     if (!session || !this.sessionValid(session) || session.payload.grantId !== principal.grantId || session.subjectId !== principal.account) throw new AccessError("Web session expired", 401);
     const grant = await this.activeGrant(tx, principal.grantId);
     if (grant.payload.userId !== principal.userId || grant.payload.account !== principal.account) throw new AccessError("Employee authorization mismatch", 401);
     this.requirePortalRolesFresh(grant);
     return session;
+  }
+  private async webToolParent(tx: AccessTransaction, principal: Principal): Promise<ToolParent> {
+    if (principal.kind === "dealer") {
+      const session = await this.dealerAccess().authorizeToolFromWeb(tx, principal);
+      return { subjectId: session.subjectId, sessionId: session.id, grantId: session.id, ownerKind: "dealer" };
+    }
+    const session = await this.authorizeWeb(tx, principal);
+    return { subjectId: session.subjectId, sessionId: session.id, grantId: session.payload.grantId, ownerKind: "employee" };
   }
   async logout(principal: Principal, all = false): Promise<void> {
     await this.store.transaction(async (tx) => {
@@ -346,10 +410,42 @@ export class AccessService {
     });
   }
   async listClients(principal: Principal): Promise<ClientView[]> {
-    return this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); const clients = await tx.find("client", { subjectId: principal.account, expiresAfter: this.now(), activeOnly: true }); const items: ClientView[] = []; for (const client of clients) { const grant = await tx.get("grant", client.payload.grantId); if (client.payload.active && !expired(client, this.now()) && grant?.payload.active && !expired(grant, this.now())) items.push({ id: client.id, name: client.payload.name, createdAt: client.createdAt, lastUsedAt: client.payload.lastUsedAt, expiresAt: Math.min(client.expiresAt, grant.expiresAt) }); } return items; });
+    return this.store.transaction(async tx => {
+      const owner = await this.webToolParent(tx, principal);
+      const clients = await tx.find("client", { subjectId: owner.subjectId, expiresAfter: this.now(), activeOnly: true });
+      const items: ClientView[] = [];
+      for (const client of clients) {
+        if (!this.ownsClient(owner, client)) continue;
+        try {
+          const authority = await this.toolAuthority(tx, { ...client.payload, subjectId: client.subjectId });
+          items.push({
+            id: client.id, name: client.payload.name, createdAt: client.createdAt, lastUsedAt: client.payload.lastUsedAt,
+            expiresAt: Math.min(client.expiresAt, authority.expiresAt),
+          });
+        } catch (error) {
+          if (!permanent(error)) throw error;
+        }
+      }
+      return items;
+    });
   }
   async revokeClient(principal: Principal, id: string): Promise<void> {
-    await this.store.transaction(async (tx) => { if (principal.channel === "web") await this.authorizeWeb(tx, principal); else { if (principal.credentialId !== id) throw new AccessError("Client ownership required", 403); await this.activeGrant(tx, principal.grantId); } const client = await tx.get("client", id); if (!client || client.subjectId !== principal.account) throw new AccessError("Client ownership required", 403); client.payload.active = false; await this.save(tx, client); await this.audit(tx, "client-revoke", principal.account, id); });
+    await this.store.transaction(async tx => {
+      const client = await tx.get("client", id);
+      const denied = new AccessError("Client ownership required", 403);
+      if (!client) throw denied;
+      if (principal.channel === "web") {
+        if (!this.ownsClient(await this.webToolParent(tx, principal), client)) throw denied;
+      } else {
+        if (principal.credentialId !== id || principal.grantId !== client.payload.grantId ||
+          (principal.kind ?? "employee") !== (client.payload.ownerKind ?? "employee")) throw denied;
+        const authority = await this.toolAuthority(tx, { ...client.payload, subjectId: client.subjectId });
+        if (authority.payload.userId !== principal.userId) throw denied;
+      }
+      client.payload.active = false;
+      await this.save(tx, client);
+      await this.audit(tx, "client-revoke", client.subjectId, id);
+    });
   }
   private async rate(tx: AccessTransaction, name: string, rateKey: string, limit: number, windowMs: number): Promise<boolean> {
     if (!rateKey || rateKey.length > 256) throw new OAuthError("invalid_request");
@@ -374,36 +470,42 @@ export class AccessService {
     return device && !expired(device, this.now()) && device.payload.userCodeHash === hashToken(userCode) ? device : null;
   }
   async deviceRequest(principal: Principal, userCode: string, rateKey: string): Promise<DeviceView> {
-    return take(await this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); if (!await this.rate(tx, "device-guess", rateKey, 20, 60000)) return new OAuthError("slow_down", 429); const device = await this.lookupDevice(tx, userCode); if (!device || device.payload.status !== "pending") return new AccessError("Device request is unavailable", 400); return { userCode, clientName: device.payload.name, scope: SCOPE as "knowledge:read", expiresAt: device.expiresAt }; }));
+    return take(await this.store.transaction(async (tx) => { await this.webToolParent(tx, principal); if (!await this.rate(tx, "device-guess", rateKey, 20, 60000)) return new OAuthError("slow_down", 429); const device = await this.lookupDevice(tx, userCode); if (!device || device.payload.status !== "pending") return new AccessError("Device request is unavailable", 400); return { userCode, clientName: device.payload.name, scope: SCOPE as "knowledge:read", expiresAt: device.expiresAt }; }));
   }
   async decideDevice(principal: Principal, userCode: string, approve: boolean, rateKey: string): Promise<void> {
     take(await this.store.transaction(async (tx) => {
-      const session = await this.authorizeWeb(tx, principal);
+      const owner = await this.webToolParent(tx, principal);
       if (!await this.rate(tx, "device-guess", rateKey, 20, 60000)) return new OAuthError("slow_down", 429);
       const device = await this.lookupDevice(tx, userCode);
       if (!device || device.payload.status !== "pending") return new AccessError("Device request is unavailable", 400);
       device.payload.status = approve ? "approved" : "denied";
-      device.payload.approvedSessionId = session.id; device.payload.grantId = principal.grantId; device.parentId = session.id; device.subjectId = principal.account;
-      await this.save(tx, device); await this.audit(tx, approve ? "device-approve" : "device-deny", principal.account, device.id);
+      device.payload.approvedSessionId = owner.sessionId;
+      device.payload.grantId = owner.grantId;
+      device.payload.ownerKind = owner.ownerKind;
+      device.parentId = owner.sessionId;
+      device.subjectId = owner.subjectId;
+      await this.save(tx, device);
+      await this.audit(tx, approve ? "device-approve" : "device-deny", owner.subjectId, device.id);
     }));
   }
-  private async deviceParent(tx: AccessTransaction, device: AccessRecord<"device">) {
-    if (!device.payload.approvedSessionId || !device.payload.grantId) throw new OAuthError("invalid_grant");
-    const session = await tx.get("session", device.payload.approvedSessionId);
-    // Idle expiry alone does not invalidate approval. Explicit logout sets active=false.
-    if (!session?.payload.active || session.payload.grantId !== device.payload.grantId) throw new OAuthError("invalid_grant");
-    try { return await this.activeGrant(tx, device.payload.grantId); } catch { throw new OAuthError("invalid_grant"); }
+  private deviceParent(device: AccessRecord<"device">): ToolParent {
+    const { approvedSessionId, grantId, ownerKind } = device.payload;
+    if (!approvedSessionId || !grantId) throw new OAuthError("invalid_grant");
+    return { sessionId: approvedSessionId, grantId, ownerKind, subjectId: device.subjectId };
   }
   async exchangeDevice(deviceCode: string, clientId: string): Promise<TokenReply> {
     this.validClient(clientId); if (!deviceCode || deviceCode.length > 8192) throw new OAuthError("invalid_grant");
     const id = key("device", deviceCode);
     const snapshot = await this.store.transaction(async (tx) => {
       const device = await tx.get("device", id);
-      return device && !expired(device, this.now()) && device.payload.status === "approved" ? this.deviceParent(tx, device) : null;
+      if (!device || expired(device, this.now()) || device.payload.status !== "approved") return null;
+      const parent = this.deviceParent(device);
+      try { return await this.toolAuthority(tx, parent); }
+      catch (error) { throw toolOAuthError(error); }
     });
     if (snapshot) {
-      try { await this.renew(snapshot); }
-      catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
+      try { await this.renewToolAuthority(snapshot); }
+      catch (error) { throw toolOAuthError(error); }
     }
     const accessToken = randomToken(), refreshToken = randomToken(), clientRecordId = `client:${randomUUID()}`;
     return take(await this.store.transaction(async (tx) => {
@@ -415,15 +517,25 @@ export class AccessService {
       if (device.payload.lastPollAt >= 0 && now - device.payload.lastPollAt < device.payload.intervalMs) { device.payload.intervalMs += 5000; device.payload.lastPollAt = now; await this.save(tx, device); return new OAuthError("slow_down"); }
       device.payload.lastPollAt = now;
       if (device.payload.status === "pending") { await this.save(tx, device); return new OAuthError("authorization_pending"); }
-      const grant = await this.deviceParent(tx, device), expiresAt = Math.min(now + this.duration(this.config.clientMs, 8 * HOUR), grant.expiresAt);
-      if (!this.portalRolesFresh(grant)) return new OAuthError("temporarily_unavailable", 503);
-      if (now - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
-      const clients = await tx.find("client", { subjectId: grant.payload.account, expiresAfter: this.now(), activeOnly: true });
-      if (clients.filter((client) => client.payload.active && !expired(client, now)).length >= 50) return new OAuthError("access_denied");
-      const client = this.record("client", clientRecordId, grant.payload.account, grant.id, { grantId: grant.id, sessionId: device.payload.approvedSessionId!, name: device.payload.name, active: true, currentRefreshHash: hashToken(refreshToken), lastUsedAt: now }, expiresAt);
-      device.payload.status = "exchanged"; await this.save(tx, device); await tx.put(client);
+      const parent = this.deviceParent(device);
+      let authority: ToolAuthority;
+      try {
+        authority = await this.toolAuthority(tx, parent);
+        this.requireFreshToolAuthority(authority);
+      } catch (error) { return toolOAuthError(error); }
+      const expiresAt = Math.min(now + this.duration(this.config.clientMs, 8 * HOUR), authority.expiresAt);
+      const clients = await tx.find("client", { subjectId: parent.subjectId, expiresAfter: now, activeOnly: true });
+      if (clients.filter(client => this.ownsClient(parent, client)).length >= 50) return new OAuthError("access_denied");
+      const client = this.record("client", clientRecordId, parent.subjectId, parent.grantId, {
+        grantId: parent.grantId, sessionId: parent.sessionId, ownerKind: parent.ownerKind ?? "employee",
+        name: device.payload.name, active: true, currentRefreshHash: hashToken(refreshToken), lastUsedAt: now,
+      }, expiresAt);
+      device.payload.status = "exchanged";
+      await this.save(tx, device);
+      await tx.put(client);
       const reply = await this.issueTokens(tx, client, accessToken, refreshToken);
-      await this.audit(tx, "client-grant", grant.payload.account, client.id); return reply;
+      await this.audit(tx, "client-grant", client.subjectId, client.id);
+      return reply;
     }));
   }
   private async issueTokens(tx: AccessTransaction, client: AccessRecord<"client">, accessToken: string, refreshToken: string): Promise<TokenReply> {
@@ -436,23 +548,38 @@ export class AccessService {
   async refresh(refreshToken: string, clientId: string): Promise<TokenReply> {
     this.validClient(clientId); if (!refreshToken || refreshToken.length > 8192) throw new OAuthError("invalid_grant");
     const id = key("refresh", refreshToken);
-    const snapshot = take(await this.store.transaction(async (tx) => {
-      const refresh = await tx.get("refresh", id); if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
-      let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }
-      if (refresh.payload.used || client.payload.currentRefreshHash !== hashToken(refreshToken)) { client.payload.active = false; await this.save(tx, client); await this.audit(tx, "refresh-replay", client.subjectId, client.id); return new OAuthError("invalid_grant"); }
-      try { return await this.activeGrant(tx, client.payload.grantId); } catch { return new OAuthError("invalid_grant"); }
-    }));
-    try { await this.renew(snapshot); } catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
+    const readRefresh = async (tx: AccessTransaction) => {
+      const refresh = await tx.get("refresh", id);
+      if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
+      let authorized: Awaited<ReturnType<AccessService["activeClient"]>>;
+      try { authorized = await this.activeClient(tx, refresh.payload.clientId); }
+      catch (error) { return toolOAuthError(error); }
+      const { client } = authorized;
+      if (refresh.payload.used || client.payload.currentRefreshHash !== hashToken(refreshToken)) {
+        client.payload.active = false;
+        await this.save(tx, client);
+        await this.audit(tx, "refresh-replay", client.subjectId, client.id);
+        return new OAuthError("invalid_grant");
+      }
+      return { refresh, ...authorized };
+    };
+    const { authority: snapshot } = take(await this.store.transaction(readRefresh));
+    try { await this.renewToolAuthority(snapshot); }
+    catch (error) { throw toolOAuthError(error); }
     const accessToken = randomToken(), nextRefresh = randomToken();
-    return take(await this.store.transaction(async (tx) => {
-      const refresh = await tx.get("refresh", id); if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
-      let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }
-      if (refresh.payload.used || client.payload.currentRefreshHash !== hashToken(refreshToken)) { client.payload.active = false; await this.save(tx, client); await this.audit(tx, "refresh-replay", client.subjectId, client.id); return new OAuthError("invalid_grant"); }
-      let grant: AccessRecord<"grant">; try { grant = await this.activeGrant(tx, client.payload.grantId); } catch { return new OAuthError("invalid_grant"); }
-      if (!this.portalRolesFresh(grant)) return new OAuthError("temporarily_unavailable", 503);
-      if (this.now() - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
-      client.expiresAt = Math.min(client.expiresAt, grant.expiresAt); client.payload.currentRefreshHash = hashToken(nextRefresh); client.payload.lastUsedAt = this.now(); refresh.payload.used = true;
-      await this.save(tx, refresh); await this.save(tx, client); return this.issueTokens(tx, client, accessToken, nextRefresh);
+    return take(await this.store.transaction(async tx => {
+      const current = await readRefresh(tx);
+      if (current instanceof OAuthError) return current;
+      const { refresh, client, authority } = current;
+      try { this.requireFreshToolAuthority(authority); }
+      catch (error) { return toolOAuthError(error); }
+      client.expiresAt = Math.min(client.expiresAt, authority.expiresAt);
+      client.payload.currentRefreshHash = hashToken(nextRefresh);
+      client.payload.lastUsedAt = this.now();
+      refresh.payload.used = true;
+      await this.save(tx, refresh);
+      await this.save(tx, client);
+      return this.issueTokens(tx, client, accessToken, nextRefresh);
     }));
   }
 }

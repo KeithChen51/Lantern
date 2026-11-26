@@ -6,7 +6,9 @@
     "node": ">=20.9.0"
   },
   "scripts": {
+    "predev": "npm run build:external-ai",
     "dev": "next dev",
+    "build:external-ai": "tsx scripts/build-external-ai.ts",
     "build:knowledge": "tsx scripts/build-knowledge.ts",
     "prepare:standalone": "tsx scripts/prepare-standalone.ts && npm run check:fonts -- --standalone",
     "build": "npm run build:knowledge && next build && npm run prepare:standalone",
@@ -27,7 +29,7 @@
     "hub:initialize": "tsx scripts/knowledge-initialize.ts",
     "releases:sync": "node scripts/sync-releases.mjs",
     "releases:check": "node scripts/sync-releases.mjs --check",
-    "prebuild": "npm run releases:check && npm run check:fonts",
+    "prebuild": "npm run releases:check && npm run check:fonts && npm run build:external-ai",
     "hub:bootstrap": "npm run db:deploy && npm run hub:import-existing -- --publish",
     "package:hermit-runtime": "node scripts/package-hermit-runtime.mjs",
     "check:hermit-runtime": "tsx scripts/check-hermit-runtime.ts",

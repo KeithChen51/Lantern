@@ -317,6 +317,28 @@ describe("freshness and revocation", () => {
     const shorter = fixture(); shorter.identity.mockResolvedValue({ account: "000042", displayName: "Test employee", expiresAt: shorter.now() + 120000 });
     const shortLogin = await shorter.login(); expect(shortLogin.principal.expiresAt).toBe(shorter.now() + 120000);
   });
+  it("preserves employee authorization for older records without an owner kind", async () => {
+    const f = fixture(), { principal } = await f.login();
+    const device = await f.device(principal);
+    await f.store.transaction(async tx => {
+      const [approval] = await tx.find("device", { parentId: principal.credentialId });
+      delete approval.payload.ownerKind;
+      await tx.put(approval);
+    });
+    const tokens = await f.service.exchangeDevice(device.device_code, "lighthouse-cli");
+    await f.store.transaction(async tx => {
+      const [client] = await tx.find("client", { parentId: principal.grantId });
+      delete client.payload.ownerKind;
+      await tx.put(client);
+    });
+    const prior = await f.service.clientPrincipal(tokens.access_token);
+    expect(prior).toMatchObject({ userId: principal.userId, capabilities: ["knowledge:read"] });
+    expect(prior.kind).toBeUndefined();
+    const renewed = await f.service.refresh(tokens.refresh_token, "lighthouse-cli");
+    const after = await f.service.clientPrincipal(renewed.access_token);
+    expect(after.credentialId).toBe(prior.credentialId);
+    expect(await f.service.listClients(principal)).toMatchObject([{ id: after.credentialId }]);
+  });
   it("keeps approved tools valid after web idle expiry, then explicit logout revokes descendants", async () => {
     const f = fixture({ sessionIdleMs: 1000 }), login = await f.login(), client = await f.client(login.principal);
     expect(client.principal.capabilities).toEqual(["knowledge:read"]);

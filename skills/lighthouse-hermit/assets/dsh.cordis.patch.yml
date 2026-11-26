@@ -1,0 +1,16 @@
+# 将三个占位值替换为当前用户的 Node 可执行文件绝对路径、
+# 安装包内 client/lighthouse.mjs 的绝对路径，以及灯塔 HTTPS 源地址。
+# 本文件是 Cordis overlay，可通过 --patch 加载或合并到现有用户 patch。
+- insert:
+    - id: lighthouse-knowledge-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: lighthouse
+        transport: stdio
+        command: 'NODE_EXECUTABLE'
+        args:
+          - 'CLIENT_ABSOLUTE_PATH'
+          - '--server'
+          - 'LIGHTHOUSE_HTTPS_ORIGIN'
+          - 'mcp'
+          - 'serve'

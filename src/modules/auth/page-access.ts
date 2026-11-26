@@ -1,6 +1,7 @@
+import { EXTERNAL_AI_INSTALL_PATH } from "@/lib/external-ai-install";
 import { WECOM_AUTO_ROUTES } from "./wecom-auto-config";
 
-// Keep the public entry points small: no business JavaScript is public.
+// Only the explicit account entry points, presentation assets and installer are public.
 export const REQUEST_PATH_HEADER = "x-lighthouse-request-path";
 const PUBLIC_PAGES = new Set([
   "/login", "/auth/confirm", "/auth/portal/callback", "/auth/iam/callback", "/auth/iam/start", "/admin/login",
@@ -37,12 +38,14 @@ export function normalizeAccessPath(path: string): string | null {
 
 export function isPublicAuthPage(path: string): boolean { return PUBLIC_PAGES.has(path); }
 export function isPublicBrandAsset(path: string): boolean { return PUBLIC_ASSETS.has(path); }
-export function isEmployeePage(path: string): boolean { return /^\/(?:admin|auth|feedback)(?:\/|$)/.test(path); }
+export function isEmployeePage(path: string): boolean {
+  return path !== "/auth/device" && path !== "/auth/tools" && /^\/(?:admin|auth|feedback)(?:\/|$)/.test(path);
+}
 
 export function classifyAccessPath(path: string, imageOriginal?: string | null): "invalid" | "public" | "api" | "asset" | "page" {
   const normalized = normalizeAccessPath(path);
   if (normalized === null) return "invalid";
-  if (isPublicAuthPage(normalized) || isPublicBrandAsset(normalized)) return "public";
+  if (normalized === EXTERNAL_AI_INSTALL_PATH || isPublicAuthPage(normalized) || isPublicBrandAsset(normalized)) return "public";
   if (/^\/_next\/static\/[a-zA-Z0-9_./-]+\.css$/.test(normalized)) return "public";
   if (normalized === "/_next/image" && imageOriginal && isPublicBrandAsset(imageOriginal)) return "public";
   if (normalized === "/api" || normalized.startsWith("/api/")) return "api";

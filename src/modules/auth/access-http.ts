@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireSiteVisitor, requireWebAccount, requireKnowledgeClient } from "./access";
+import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireSiteVisitor, requireWebAccount, requireKnowledgeClient } from "./access";
 import { readAccessConfig } from "./access-config";
 import { hashToken } from "./access-crypto";
 import { AccessError, OAuthError } from "./access-types";
@@ -68,8 +68,8 @@ function requiredCookie(request: Request, name: string): string {
   if (!value) throw new AccessError("登录流程已失效，请重新开始。", 401);
   return value;
 }
-async function mutation(request: Request, input?: Record<string, unknown>, readPrincipal = requireEmployee) {
-  const principal = await readPrincipal(request);
+async function mutation(request: Request, input?: Record<string, unknown>) {
+  const principal = await requireWebAccount(request);
   if (isForm(request)) {
     const headers = new Headers(request.headers);
     headers.set("x-csrf-token", textField(input ?? await body(request), "csrfToken"));
@@ -233,7 +233,7 @@ export const me = route(async request => {
   return json({ ...(principal.kind ? { kind: principal.kind } : {}), user: { id: principal.userId, account: principal.account, displayName: principal.displayName, organization: principal.organization }, capabilities: principal.capabilities, csrfToken: principal.csrfToken, expiresAt: principal.expiresAt });
 });
 export function logout(all: boolean) { return route(async request => {
-  const principal = await mutation(request, undefined, requireWebAccount);
+  const principal = await mutation(request);
   const config = readAccessConfig();
   if (principal.kind === "dealer") {
     const { config: wecom, service } = getWecomAutoAccess(config);
@@ -250,7 +250,7 @@ export function logout(all: boolean) { return route(async request => {
   for (const cookie of [config.sessionCookie, config.transactionCookie, config.pendingCookie, loginArrivalCookie(config.sessionCookie)]) setCookie(response, cookie, "", 0);
   return response;
 }); }
-export const clients = route(async request => json({ items: await getAccessService().listClients(await requireEmployee(request)) }));
+export const clients = route(async request => json({ items: await getAccessService().listClients(await requireWebAccount(request)) }));
 export async function revokeClient(request: Request, id: string): Promise<Response> {
   try { await getAccessService().revokeClient(await mutation(request), id); return empty(); } catch (error) { return authErrorResponse(error); }
 }
@@ -259,7 +259,7 @@ export const deviceAuthorize = route(async request => {
   return json(await getAccessService().authorizeDevice({ clientId: textField(input, "client_id"), scope: textField(input, "scope"), name: input.device_name === undefined ? undefined : textField(input, "device_name", 100), rateKey: publicRateKey() }));
 }, true);
 export const deviceRequest = route(async request => {
-  const principal = await requireEmployee(request);
+  const principal = await requireWebAccount(request);
   const params = new URL(request.url).searchParams;
   if (params.getAll("user_code").length !== 1) throw new AccessError("设备代码无效。", 400);
   return json(await getAccessService().deviceRequest(principal, params.get("user_code") || "", hashToken(principal.userId)));
@@ -285,7 +285,7 @@ export const token = async (request: NextRequest): Promise<Response> => {
 };
 export const clientMe = route(async request => {
   const principal = await requireKnowledgeClient(request);
-  return json({ user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, scope: "knowledge:read", expiresAt: principal.expiresAt });
+  return json({ ...(principal.kind ? { kind: principal.kind } : {}), user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, scope: "knowledge:read", expiresAt: principal.expiresAt });
 });
 export const clientRevoke = route(async request => {
   const principal = await requireKnowledgeClient(request);

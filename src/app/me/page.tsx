@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { BrandAttribution } from "@/components/ui/BrandAttribution";
+import { buildExternalAiInstallPrompt } from "@/lib/external-ai-install";
 import { requireSiteVisitor } from "@/modules/auth/access";
+import { readAccessConfig } from "@/modules/auth/access-config";
 import { readWecomAutoOrganization } from "@/modules/auth/wecom-auto-runtime";
 import { employeeDisplayName } from "@/modules/auth/employee-name";
 import { LhButton, LhPanel, LhStatusBadge } from "@/components/ui/lighthouse-primitives";
@@ -10,6 +12,7 @@ import { currentVersion } from "@/lib/releases";
 import { EmployeeAvatar } from "./EmployeeAvatar";
 import { ReleaseUnreadBadge } from "./ReleaseUnreadBadge";
 import { FeedbackUnreadBadge } from "./FeedbackUnreadBadge";
+import { ExternalAiAccess } from "./ExternalAiAccess";
 
 export const metadata: Metadata = { title: "我的 | 灯塔" };
 
@@ -20,6 +23,7 @@ export default async function MyPage() {
   const isEmployee = !isGuest && !isDealer;
   const displayName = isGuest ? "访客" : isDealer ? principal.displayName : employeeDisplayName(principal.displayName, principal.account);
   const organization = isDealer ? await readWecomAutoOrganization(principal) : principal.organization;
+  const externalAiPrompt = isGuest ? undefined : buildExternalAiInstallPrompt(readAccessConfig().origin, isDealer ? "dealer" : "employee");
 
   return (
     <div data-lh-page="me" className="mx-auto w-full max-w-3xl space-y-8">
@@ -53,8 +57,9 @@ export default async function MyPage() {
           <span aria-hidden="true" className="text-primary-text">→</span>
         </Link>}
       </LhPanel>
+      <ExternalAiAccess prompt={externalAiPrompt} />
       {!isGuest && <div className="flex flex-wrap items-center justify-between gap-4">
-        {isEmployee && <Link href="/auth/tools" className="inline-flex min-h-11 items-center rounded-[var(--lh-control-radius)] px-3 text-[length:var(--type-control)] font-[var(--weight-bold)] text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">工具授权</Link>}
+        <Link href="/auth/tools" className="inline-flex min-h-11 items-center rounded-[var(--lh-control-radius)] px-3 text-[length:var(--type-control)] font-[var(--weight-bold)] text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">工具授权</Link>
         <form action="/api/auth/logout" method="post">
           <input type="hidden" name="csrfToken" value={principal.csrfToken ?? ""} />
           <LhButton type="submit">退出登录</LhButton>

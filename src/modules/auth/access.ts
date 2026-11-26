@@ -34,15 +34,14 @@ export async function enforceGuestRequestLimit(principal: Principal, action: "ch
 export function getAccessService(): AccessService {
   denyGuestEmployeeAccess();
   const config = readAccessConfig();
-  return new AccessService(config, createAccessProvider(config), new PrismaAccessStore(prisma));
+  return new AccessService(config, createAccessProvider(config), new PrismaAccessStore(prisma), Date.now, () => getWecomAutoAccess(config).service);
 }
 export async function getPendingLogin(headers: Headers) {
   const token = readAccessCookie(headers, readAccessConfig().pendingCookie);
   if (!token) throw new AccessError("登录确认已失效，请重新开始。", 401);
   return getAccessService().pending(token);
 }
-export async function getDeviceRequest(headers: Headers, userCode: string) {
-  const principal = await requireEmployee(headers);
+export async function getDeviceRequest(principal: Principal, userCode: string) {
   return getAccessService().deviceRequest(principal, userCode, hashToken(principal.userId));
 }
 export function readAccessCookie(headers: Headers, name: string): string | undefined {

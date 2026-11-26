@@ -79,6 +79,10 @@ knowledge-vectors.json
 /docs/brand/*visual-identity*.html
 /docs/training/
 
+# Generated external AI installer
+/public/install/lighthouse-ai.zip
+/public/install/lighthouse-ai.zip.*.tmp
+
 # Public design explorations and retired static assets
 /public/app-icon-concepts/
 /public/oa-home-lighthouse-banner*

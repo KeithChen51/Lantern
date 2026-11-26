@@ -1,7 +1,8 @@
 # lighthouse CLI / MCP
 
-Independent knowledge reader for authenticated employees. The user's Agent decides
-how to use the results. This package contains no business documents, database
+Independent knowledge reader for authenticated Lighthouse employees and WeCom dealers.
+The user's Agent decides how to use the results. Dealer clients use the same published
+knowledge scope as the Lighthouse website. This package contains no business documents, database
 configuration, model calls, maintenance tools or browser/portal token integration.
 
 Node.js >=20.9.0. Dependencies: MCP SDK `^1.30.0`, Zod `^4.6.5`.
@@ -32,7 +33,9 @@ bind to the exact normalized origin and `lighthouse-cli` / `knowledge:read` gran
 
 `auth login` prints the verification URL and user code on stderr, then polls the
 device grant. `--open` optionally opens that same-origin HTTPS URL through a native
-process with `shell:false`. Pending, slow-down, denial and expiration responses
+process with `shell:false`. Approve using the intended Lighthouse account in the browser.
+On a device without the original browser session, open the printed verification URL
+and enter the user code after signing in. Pending, slow-down, denial and expiration responses
 are handled explicitly. Access tokens last at most 5 minutes; the client never
 extends its 8-hour grant deadline during refresh. The backend is authoritative
 for grant validity and revocation. `auth logout` revokes the grant before deleting

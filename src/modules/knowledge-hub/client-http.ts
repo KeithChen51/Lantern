@@ -1,7 +1,7 @@
 import { requireKnowledgeClient, authErrorResponse } from "@/modules/auth/access";
 import { AppError } from "@/shared/errors";
 import { createRuntimeKnowledgeIndexReader, knowledgeFileId } from "./index-reader";
-import { getKnowledgeHub, isKnowledgeHubEnabled } from "./runtime";
+import { getSiteKnowledgeHub, isKnowledgeHubEnabled } from "./runtime";
 import { HubError } from "./service";
 import { hubHttpError } from "./http";
 import { knowledgeDownload } from "./download";
@@ -42,7 +42,7 @@ export async function clientResourceGet(request: Request, operation: ClientResou
     if (!isKnowledgeHubEnabled()) return Response.json({ error: "知识服务尚未启用。" }, { status: 503, headers: { "Cache-Control": "no-store" } });
     const input = queryInput(request);
     const resourceId = context ? id.parse((await context.params).id) : undefined;
-    const hub = getKnowledgeHub();
+    const hub = getSiteKnowledgeHub(principal);
     const reader = createRuntimeKnowledgeIndexReader(hub);
     let result: unknown;
     switch (operation) {

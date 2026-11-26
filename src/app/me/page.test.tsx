@@ -4,10 +4,11 @@ import MyPage from "./page";
 import { classifyAccessPath, isPublicAuthPage } from "@/modules/auth/page-access";
 import { useReleaseUnread } from "@/components/layout/release-read-state";
 
-const { employee, dealerOrganization, requestHeaders } = vi.hoisted(() => ({
-  employee: vi.fn(), dealerOrganization: vi.fn(), requestHeaders: new Headers({ cookie: "fixture" }),
+const { employee, dealerOrganization, accessConfig, requestHeaders } = vi.hoisted(() => ({
+  employee: vi.fn(), dealerOrganization: vi.fn(), accessConfig: vi.fn(), requestHeaders: new Headers({ cookie: "fixture" }),
 }));
 vi.mock("@/modules/auth/access", () => ({ requireSiteVisitor: employee }));
+vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: accessConfig }));
 vi.mock("@/modules/auth/wecom-auto-runtime", () => ({ readWecomAutoOrganization: dealerOrganization }));
 vi.mock("next/headers", () => ({ headers: async () => requestHeaders }));
 vi.mock("@/components/layout/release-read-state", () => ({ useReleaseUnread: vi.fn(() => false) }));
@@ -15,6 +16,7 @@ vi.mock("@/components/layout/release-read-state", () => ({ useReleaseUnread: vi.
 beforeEach(() => {
   employee.mockReset();
   dealerOrganization.mockReset();
+  accessConfig.mockReset().mockReturnValue({ origin: "https://lighthouse.example" });
   vi.mocked(useReleaseUnread).mockReturnValue(false);
 });
 
@@ -40,6 +42,29 @@ describe("my employee page", () => {
     expect(html).not.toContain("never-render-");
   });
 
+  it("offers employees an installation prompt for the configured deployment origin", async () => {
+    employee.mockResolvedValue({ displayName: "测试员工", account: "hidden-account-in-prompt", csrfToken: "hidden-csrf-in-prompt" });
+    const html = renderToStaticMarkup(await MyPage());
+    const prompt = html.match(/<textarea\b[^>]*>([\s\S]*?)<\/textarea>/)?.[1];
+
+    expect(html).toContain("复制安装提示词");
+    expect(prompt).toContain("https://lighthouse.example/install/lighthouse-ai.zip");
+    expect(prompt).toContain("knowledge_search");
+    expect(prompt).toContain("比亚迪集团员工");
+    expect(prompt).not.toContain("hidden-account-in-prompt");
+    expect(prompt).not.toContain("hidden-csrf-in-prompt");
+  });
+
+  it("does not offer employee tools that require HTTPS on an HTTP test deployment", async () => {
+    employee.mockResolvedValue({ displayName: "测试员工", account: "000123" });
+    accessConfig.mockReturnValue({ origin: "http://192.168.0.10" });
+    const html = renderToStaticMarkup(await MyPage());
+
+    expect(html).toContain("使用其他 AI 接入灯塔");
+    expect(html).not.toContain("复制安装提示词");
+    expect(html).not.toContain("/install/lighthouse-ai.zip");
+  });
+
   it("renders available employee avatar and organization", async () => {
     employee.mockResolvedValue({ displayName: "测试员工", account: "000123", csrfToken: "csrf-fixture", avatarUrl: "https://images.example.invalid/employee.png", organization: "服务中心 / 售后服务部" });
     const html = renderToStaticMarkup(await MyPage());
@@ -59,7 +84,14 @@ describe("my employee page", () => {
     expect(html).toContain("所属部门");
     expect(html).toContain(organization ?? "暂未提供");
     expect(html).toContain("企微账号");
-    expect(html).not.toContain('href="/auth/tools"');
+    expect(html).toContain('href="/auth/tools"');
+    expect(html).toContain("复制安装提示词");
+    expect(html).not.toContain('href="/feedback"');
+    const prompt = html.match(/<textarea\b[^>]*>([\s\S]*?)<\/textarea>/)?.[1];
+    expect(prompt).toContain("比亚迪汽车经销商");
+    expect(prompt).toContain("https://lighthouse.example/install/lighthouse-ai.zip");
+    expect(prompt).not.toContain(dealer.account);
+    expect(prompt).not.toContain(dealer.csrfToken);
   });
 
   it("keeps an account-only legacy profile out of the name field and heading", async () => {
@@ -76,6 +108,7 @@ describe("my employee page", () => {
     expect(html).toMatch(/<h1[^>]*>访客<\/h1>/);
     expect(html).toContain("访客模式");
     expect(html).not.toContain("建议广场");
+    expect(html).not.toContain("复制安装提示词");
     expect(html).toContain("路引 AI 问答");
     expect(html).toContain('href="/updates"');
     expect(html).not.toContain('href="/feedback"');
