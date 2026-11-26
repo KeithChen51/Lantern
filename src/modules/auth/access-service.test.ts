@@ -60,7 +60,11 @@ describe("WeCom publication authorization", () => {
     const first = await f.service.exchangeDevice(device.device_code, "lighthouse-cli");
     const next = await f.service.refresh(first.refresh_token, "lighthouse-cli");
     expect(next.scope).toBe("wecom:publish");
+    const records = f.store.snapshot();
+    expect(records.some(row => row.kind === "access" && row.id.startsWith("access:publishing:"))).toBe(true);
+    expect(records.some(row => row.kind === "access" && /^access:[0-9a-f]{64}$/.test(row.id))).toBe(true);
     expect((await f.service.clientPrincipal(next.access_token, "mcp")).capabilities).toEqual(["wecom:publish"]);
+    expect((await f.service.listClients(principal)).map(item => item.scope).sort()).toEqual(["knowledge:read", "wecom:publish"]);
     f.roles.mockResolvedValue(["KNOWLEDGE_ADMIN"]);
     f.advance(60_001);
     await expect(f.service.clientPrincipal(next.access_token)).rejects.toMatchObject({ status: 403 });

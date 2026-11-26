@@ -6,7 +6,7 @@ import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
 import { employeeDisplayName, readPortalEmployeeName } from "./employee-name";
 
-export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
+export type ClientView = { id: string; name: string; scope: ClientScope; createdAt: number; lastUsedAt: number; expiresAt: number };
 export type DeviceView = { userCode: string; clientName: string; scope: ClientScope; expiresAt: number };
 export type DeviceReply = { device_code: string; user_code: string; verification_uri: string; verification_uri_complete: string; expires_in: number; interval: number };
 export type TokenReply = { access_token: string; token_type: "Bearer"; expires_in: number; refresh_token: string; scope: ClientScope };
@@ -16,6 +16,14 @@ const HOUR = 3600000;
 const CLIENT_ID = "lighthouse-cli";
 const APPLICATION_ROLES = new Set<string>(IAM_ROLES.map(role => role.code));
 const key = (kind: AccessKind, value: string) => `${kind}:${hashToken(value)}`;
+const publicationTokenTag = "wp1_";
+const toolToken = (scope: ClientScope) => (scope === PUBLICATION_CLIENT_SCOPE ? publicationTokenTag : "") + randomToken();
+function toolKey(kind: "device" | "access" | "refresh", value: string) {
+  // Previous releases keep the legacy knowledge keyspace during a rollback.
+  // Publishing credentials have a separate keyspace and retain their scope.
+  return value.length === 43 + publicationTokenTag.length && value.startsWith(publicationTokenTag)
+    ? `${kind}:publishing:${hashToken(value)}` : key(kind, value);
+}
 const take = <T>(result: T): Exclude<T, Error> => { if (result instanceof Error) throw result; return result as Exclude<T, Error>; };
 const expired = (record: AccessRecord, now: number) => record.expiresAt <= now;
 const permanent = (error: unknown) => error instanceof AccessError && (error.status === 401 || error.status === 403);
@@ -313,10 +321,10 @@ export class AccessService {
       if (this.now() - session.payload.lastUsedAt >= touchInterval) {
         session.payload.lastUsedAt = this.now(); await this.save(tx, session);
       }
-      return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, [
-        ...(admin ? ["knowledge:manage" as const] : []),
-        ...(platformAdmin ? ["analytics:summary" as const, "feedback:manage" as const, PUBLICATION_CLIENT_SCOPE] : []),
-      ]);
+      const capabilities: Capability[] = [];
+      if (admin) capabilities.push("knowledge:manage");
+      if (platformAdmin) capabilities.push("analytics:summary", "feedback:manage", PUBLICATION_CLIENT_SCOPE);
+      return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, capabilities);
     });
   }
   private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, capabilities: readonly Capability[] = []): Principal {
@@ -327,7 +335,7 @@ export class AccessService {
       grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...capabilities] : capabilities, csrfToken, expiresAt };
   }
   async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli", revokeOnly = false): Promise<Principal> {
-    this.secret(token); const id = key("access", token);
+    this.secret(token); const id = toolKey("access", token);
     const snapshot = await this.store.transaction(async (tx) => {
       const access = await tx.get("access", id);
       if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401);
@@ -365,7 +373,20 @@ export class AccessService {
     });
   }
   async listClients(principal: Principal): Promise<ClientView[]> {
-    return this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); const clients = await tx.find("client", { subjectId: principal.account, expiresAfter: this.now(), activeOnly: true }); const items: ClientView[] = []; for (const client of clients) { const grant = await tx.get("grant", client.payload.grantId); if (client.payload.active && !expired(client, this.now()) && grant?.payload.active && !expired(grant, this.now())) items.push({ id: client.id, name: client.payload.name, createdAt: client.createdAt, lastUsedAt: client.payload.lastUsedAt, expiresAt: Math.min(client.expiresAt, grant.expiresAt) }); } return items; });
+    return this.store.transaction(async tx => {
+      await this.authorizeWeb(tx, principal);
+      const clients = await tx.find("client", { subjectId: principal.account, expiresAfter: this.now(), activeOnly: true });
+      const items: ClientView[] = [];
+      for (const client of clients) {
+        const grant = await tx.get("grant", client.payload.grantId);
+        if (!client.payload.active || expired(client, this.now()) || !grant?.payload.active || expired(grant, this.now())) continue;
+        items.push({
+          id: client.id, name: client.payload.name, scope: client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE,
+          createdAt: client.createdAt, lastUsedAt: client.payload.lastUsedAt, expiresAt: Math.min(client.expiresAt, grant.expiresAt),
+        });
+      }
+      return items;
+    });
   }
   async revokeClient(principal: Principal, id: string): Promise<void> {
     await this.store.transaction(async (tx) => { if (principal.channel === "web") await this.authorizeWeb(tx, principal); else { if (principal.credentialId !== id) throw new AccessError("Client ownership required", 403); await this.activeGrant(tx, principal.grantId); } const client = await tx.get("client", id); if (!client || client.subjectId !== principal.account) throw new AccessError("Client ownership required", 403); client.payload.active = false; await this.save(tx, client); await this.audit(tx, "client-revoke", principal.account, id); });
@@ -382,8 +403,13 @@ export class AccessService {
     const scope = input.scope;
     if (scope !== KNOWLEDGE_CLIENT_SCOPE && scope !== PUBLICATION_CLIENT_SCOPE) throw new OAuthError("invalid_scope");
     if (input.name !== undefined && (!input.name.trim() || input.name.length > 100 || /[\u0000-\u001f]/.test(input.name))) throw new OAuthError("invalid_request");
-    const deviceCode = randomToken(), userCode = randomBytes(6).toString("hex").toUpperCase(), now = this.now(), expiresAt = now + this.duration(this.config.deviceMs, 300000);
-    take(await this.store.transaction(async (tx) => { if (!await this.rate(tx, "device-issue", input.rateKey, 10, 60000)) return new OAuthError("slow_down", 429); await tx.put(this.record("device", key("device", deviceCode), "", null, { name: input.name?.trim() ?? "Lighthouse CLI", userCodeHash: hashToken(userCode), status: "pending", lastPollAt: -1, intervalMs: 5000, scope }, expiresAt)); await tx.put(this.record("userCode", key("userCode", userCode), "", key("device", deviceCode), { deviceId: key("device", deviceCode) }, expiresAt)); }));
+    const deviceCode = toolToken(scope), userCode = randomBytes(6).toString("hex").toUpperCase();
+    const deviceId = toolKey("device", deviceCode), now = this.now(), expiresAt = now + this.duration(this.config.deviceMs, 300000);
+    take(await this.store.transaction(async (tx) => {
+      if (!await this.rate(tx, "device-issue", input.rateKey, 10, 60000)) return new OAuthError("slow_down", 429);
+      await tx.put(this.record("device", deviceId, "", null, { name: input.name?.trim() ?? "Lighthouse CLI", userCodeHash: hashToken(userCode), status: "pending", lastPollAt: -1, intervalMs: 5000, scope }, expiresAt));
+      await tx.put(this.record("userCode", key("userCode", userCode), "", deviceId, { deviceId }, expiresAt));
+    }));
     const verificationUri = new URL("/auth/device", this.config.origin).toString(), complete = new URL(verificationUri); complete.searchParams.set("user_code", userCode);
     return { device_code: deviceCode, user_code: userCode, verification_uri: verificationUri, verification_uri_complete: complete.toString(), expires_in: Math.floor((expiresAt - now) / 1000), interval: 5 };
   }
@@ -423,7 +449,7 @@ export class AccessService {
   }
   async exchangeDevice(deviceCode: string, clientId: string): Promise<TokenReply> {
     this.validClient(clientId); if (!deviceCode || deviceCode.length > 8192) throw new OAuthError("invalid_grant");
-    const id = key("device", deviceCode);
+    const id = toolKey("device", deviceCode);
     const snapshot = await this.store.transaction(async (tx) => {
       const device = await tx.get("device", id);
       if (!device || expired(device, this.now()) || device.payload.status !== "approved") return null;
@@ -433,7 +459,7 @@ export class AccessService {
       try { await this.renew(snapshot.grant, snapshot.scope === PUBLICATION_CLIENT_SCOPE); }
       catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
     }
-    const accessToken = randomToken(), refreshToken = randomToken(), clientRecordId = `client:${randomUUID()}`;
+    const clientRecordId = `client:${randomUUID()}`;
     return take(await this.store.transaction(async (tx) => {
       const device = await tx.get("device", id), now = this.now();
       if (!device) return new OAuthError("invalid_grant");
@@ -447,6 +473,7 @@ export class AccessService {
       const scope = device.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE;
       const authorizationError = this.clientAuthorizationError(grant, scope);
       if (authorizationError) return authorizationError;
+      const accessToken = toolToken(scope), refreshToken = toolToken(scope);
       const clients = await tx.find("client", { subjectId: grant.payload.account, expiresAfter: this.now(), activeOnly: true });
       if (clients.filter((client) => client.payload.active && !expired(client, now)).length >= 50) return new OAuthError("access_denied");
       const client = this.record("client", clientRecordId, grant.payload.account, grant.id, { grantId: grant.id, sessionId: device.payload.approvedSessionId!, name: device.payload.name, active: true, currentRefreshHash: hashToken(refreshToken), lastUsedAt: now, scope }, expiresAt);
@@ -457,14 +484,14 @@ export class AccessService {
   }
   private async issueTokens(tx: AccessTransaction, client: AccessRecord<"client">, accessToken: string, refreshToken: string): Promise<TokenReply> {
     const accessExpires = Math.min(this.now() + this.duration(this.config.accessMs, 300000), client.expiresAt);
-    await tx.put(this.record("access", key("access", accessToken), client.subjectId, client.id, { clientId: client.id }, accessExpires));
+    await tx.put(this.record("access", toolKey("access", accessToken), client.subjectId, client.id, { clientId: client.id }, accessExpires));
     // Every generation remains addressable until the family's absolute expiry.
-    await tx.put(this.record("refresh", key("refresh", refreshToken), client.subjectId, client.id, { clientId: client.id, used: false }, client.expiresAt));
+    await tx.put(this.record("refresh", toolKey("refresh", refreshToken), client.subjectId, client.id, { clientId: client.id, used: false }, client.expiresAt));
     return { access_token: accessToken, token_type: "Bearer", expires_in: Math.max(0, Math.floor((accessExpires - this.now()) / 1000)), refresh_token: refreshToken, scope: client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE };
   }
   async refresh(refreshToken: string, clientId: string): Promise<TokenReply> {
     this.validClient(clientId); if (!refreshToken || refreshToken.length > 8192) throw new OAuthError("invalid_grant");
-    const id = key("refresh", refreshToken);
+    const id = toolKey("refresh", refreshToken);
     const snapshot = take(await this.store.transaction(async (tx) => {
       const refresh = await tx.get("refresh", id); if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
       let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }
@@ -472,7 +499,7 @@ export class AccessService {
       try { return { grant: await this.activeGrant(tx, client.payload.grantId), scope: client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE }; } catch { return new OAuthError("invalid_grant"); }
     }));
     try { await this.renew(snapshot.grant, snapshot.scope === PUBLICATION_CLIENT_SCOPE); } catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
-    const accessToken = randomToken(), nextRefresh = randomToken();
+    const accessToken = toolToken(snapshot.scope), nextRefresh = toolToken(snapshot.scope);
     return take(await this.store.transaction(async (tx) => {
       const refresh = await tx.get("refresh", id); if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
       let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }

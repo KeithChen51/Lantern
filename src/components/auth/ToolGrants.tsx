@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { authFetch } from "./auth-fetch";
 import { useEmployeeSession } from "./SessionContext";
 
-type Grant = { id: string; name: string; createdAt: number | string; lastUsedAt: number | string | null; expiresAt: number | string };
+type Grant = { id: string; name: string; scope?: "knowledge:read" | "wecom:publish"; createdAt: number | string; lastUsedAt: number | string | null; expiresAt: number | string };
 function formatTime(value: number | string | null) { return value === null ? "尚未使用" : new Date(value).toLocaleString("zh-CN"); }
 
 export function ToolGrants() {
@@ -42,7 +42,7 @@ export function ToolGrants() {
     {notice && <p role="status">{notice}</p>}
     {!loading && !error && items.length === 0 && <p>当前没有工具授权。</p>}
     <ul className="space-y-4">{items.map(item => <li key={item.id} className="rounded-xl border border-line bg-panel p-4">
-      <h2>{item.name}</h2><p>权限：知识读取</p><p>授权：{formatTime(item.createdAt)} · 最近使用：{formatTime(item.lastUsedAt)} · 到期：{formatTime(item.expiresAt)}</p>
+      <h2>{item.name}</h2><p>权限：{item.scope === "wecom:publish" ? "企微发布" : "知识读取"}</p><p>授权：{formatTime(item.createdAt)} · 最近使用：{formatTime(item.lastUsedAt)} · 到期：{formatTime(item.expiresAt)}</p>
       <button className="min-h-11 rounded border border-line px-4 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50" type="button" disabled={busy !== null} onClick={() => void revoke(item.id)}>{busy === item.id ? "正在撤销…" : "撤销授权"}</button>
     </li>)}</ul>
     <form action="/api/auth/logout-all" method="post"><input type="hidden" name="csrfToken" value={session?.csrfToken ?? ""} /><button className="min-h-11 rounded border border-line px-4 focus-visible:outline-2 focus-visible:outline-primary" type="submit">退出全部会话并撤销全部工具授权</button></form>
