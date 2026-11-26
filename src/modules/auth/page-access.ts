@@ -38,7 +38,9 @@ export function normalizeAccessPath(path: string): string | null {
 
 export function isPublicAuthPage(path: string): boolean { return PUBLIC_PAGES.has(path); }
 export function isPublicBrandAsset(path: string): boolean { return PUBLIC_ASSETS.has(path); }
-export function isEmployeePage(path: string): boolean { return /^\/(?:admin|auth|feedback)(?:\/|$)/.test(path); }
+export function isEmployeePage(path: string): boolean {
+  return path !== "/auth/device" && path !== "/auth/tools" && /^\/(?:admin|auth|feedback)(?:\/|$)/.test(path);
+}
 
 export function classifyAccessPath(path: string, imageOriginal?: string | null): "invalid" | "public" | "api" | "asset" | "page" {
   const normalized = normalizeAccessPath(path);

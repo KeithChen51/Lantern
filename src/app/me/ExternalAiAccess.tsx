@@ -30,7 +30,7 @@ export function ExternalAiAccess({ prompt }: { prompt?: string }) {
       {prompt ? (
         <>
           <p className="text-[length:var(--type-body)] leading-[var(--leading-body)] text-muted">
-            将安装提示词粘贴到你的 AI。首次使用时，按提示回到灯塔完成员工授权。
+            将安装提示词粘贴到你的 AI。首次使用时，在灯塔确认当前登录账号并批准知识读取。
           </p>
           <LhButton type="button" variant="primary" className="w-full sm:w-auto" onClick={copyPrompt}>
             复制安装提示词
@@ -45,7 +45,7 @@ export function ExternalAiAccess({ prompt }: { prompt?: string }) {
         </>
       ) : (
         <p className="text-[length:var(--type-caption)] leading-[var(--leading-body)] text-muted">
-          请通过灯塔的 HTTPS 站点登录员工账号后完成接入。
+          请通过灯塔的 HTTPS 站点登录员工或经销商账号后完成接入。
         </p>
       )}
     </LhPanel>

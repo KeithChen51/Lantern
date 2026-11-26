@@ -1,6 +1,6 @@
 # DSH 接入
 
-先按[通用接入说明](setup-other-hosts.md)完成安装与员工设备授权。将 Skill 安装到 `$DSH_HOME/skills/lighthouse-hermit`，未设置 `DSH_HOME` 时使用用户主目录下的 `.dsh/skills/lighthouse-hermit`。
+先按[通用接入说明](setup-other-hosts.md)完成安装与设备授权。将 Skill 安装到 `$DSH_HOME/skills/lighthouse-hermit`，未设置 `DSH_HOME` 时使用用户主目录下的 `.dsh/skills/lighthouse-hermit`。
 
 把 [DSH 配置模板](../assets/dsh.cordis.patch.yml)复制到本机配置位置，替换 `NODE_EXECUTABLE`、`CLIENT_ABSOLUTE_PATH`、`LIGHTHOUSE_HTTPS_ORIGIN` 三个值。Windows 的路径可以写成 `C:/...`，含空格的路径作为一个 YAML 字符串保留。
 

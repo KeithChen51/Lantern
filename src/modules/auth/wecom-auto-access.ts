@@ -7,7 +7,7 @@ import type { WecomAutoEntry, WecomAutoMember, WecomAutoProvider } from "./wecom
 import { WECOM_AUTO_ROUTES, type WecomAutoConfig } from "./wecom-auto-config";
 
 type MemberSession = AccessRecord<"wecomAutoSession">;
-const CAPABILITIES = ["content:read", "knowledge:read", "hermit:chat", "hermit:attachment:self"] as const;
+const CAPABILITIES = ["content:read", "knowledge:read", "hermit:chat", "hermit:attachment:self", "auth:client:self"] as const;
 const MINUTE = 60_000;
 const LOGIN_ERROR = "企微登录已失效，请重新登录灯塔。";
 
@@ -115,20 +115,30 @@ export class WecomAutoAccessService {
     return { sessionToken, returnTo: dealerReturnTo(transaction.payload.returnTo) };
   }
 
-  private async activeSession(tx: AccessTransaction, id: string): Promise<MemberSession> {
+  private async activeSession(tx: AccessTransaction, id: string, use: "web" | "tool" = "web"): Promise<MemberSession> {
     const row = await tx.get("wecomAutoSession", id);
     const now = this.now();
     if (!row?.payload.active || !this.config.entries[row.payload.entry ?? "workbench"]
-      || row.expiresAt <= now || now - row.payload.lastUsedAt >= this.config.sessionIdleMs
+      || row.subjectId !== this.subject(row.payload.userId)
+      || row.expiresAt <= now
+      || (use === "web" && now - row.payload.lastUsedAt >= this.config.sessionIdleMs)
       || !await tx.dealerActive(this.config.provider, row.payload.memberId, row.payload.userId)) {
       throw new AccessError(LOGIN_ERROR, 401);
     }
     return row;
   }
 
+  private identityIsFresh(row: MemberSession) {
+    return this.now() - row.payload.verifiedAt < this.config.identityFreshMs;
+  }
+
+  requireFreshIdentity(row: MemberSession) {
+    if (!this.identityIsFresh(row)) throw new AccessError("企微身份暂时无法复验。", 503);
+  }
+
   private async principal(tx: AccessTransaction, row: MemberSession): Promise<Principal> {
+    this.requireFreshIdentity(row);
     const now = this.now();
-    if (now - row.payload.verifiedAt >= this.config.identityFreshMs) throw new AccessError("企微身份暂时无法复验。", 503);
     // Browser assets often arrive together. Only persist idle activity when it advances.
     if (now - row.payload.lastUsedAt >= 15_000) {
       row.payload.lastUsedAt = now;
@@ -146,34 +156,64 @@ export class WecomAutoAccessService {
     const id = this.id("wecomAutoSession", token);
     const initial = await this.store.transaction(async tx => {
       const row = await this.activeSession(tx, id);
-      return this.now() - row.payload.verifiedAt < this.config.identityFreshMs ? this.principal(tx, row) : row;
+      return this.identityIsFresh(row) ? this.principal(tx, row) : row;
     });
     if (!("payload" in initial)) return initial;
 
-    let member: WecomAutoMember;
+    const member = await this.verifyMember(initial), verifiedAt = this.now();
+    return this.store.transaction(async tx => {
+      const row = await this.saveVerifiedSession(tx, initial, member, verifiedAt, "web");
+      return this.principal(tx, row);
+    });
+  }
+
+  async authorizeToolFromWeb(tx: AccessTransaction, principal: Principal): Promise<MemberSession> {
+    if (principal.kind !== "dealer" || principal.channel !== "web") throw new AccessError(LOGIN_ERROR, 401);
+    const row = await this.activeSession(tx, principal.credentialId);
+    if (row.id !== principal.grantId || row.payload.userId !== principal.userId || row.payload.memberId !== principal.account) {
+      throw new AccessError(LOGIN_ERROR, 401);
+    }
+    this.requireFreshIdentity(row);
+    return row;
+  }
+
+  // Like employee grants, tools use the original login's absolute lifetime.
+  // Tool activity never extends the browser's idle timeout.
+  toolSession(tx: AccessTransaction, id: string): Promise<MemberSession> {
+    return this.activeSession(tx, id, "tool");
+  }
+
+  async renewToolSession(initial: MemberSession): Promise<void> {
+    if (this.identityIsFresh(initial)) return;
+    const member = await this.verifyMember(initial), verifiedAt = this.now();
+    await this.store.transaction(tx => this.saveVerifiedSession(tx, initial, member, verifiedAt, "tool"));
+  }
+
+  private async verifyMember(initial: MemberSession): Promise<WecomAutoMember> {
     try {
-      member = await this.upstream.readMember(initial.payload.memberId);
+      const member = await this.upstream.readMember(initial.payload.memberId);
       if (member.userId !== initial.payload.memberId) throw new AccessError(LOGIN_ERROR, 401);
+      return member;
     } catch (error) {
       if (!(error instanceof AccessError && (error.status === 401 || error.status === 403))) throw error;
       await this.store.transaction(async tx => {
-        const row = await tx.get("wecomAutoSession", id);
+        const row = await tx.get("wecomAutoSession", initial.id);
         if (row?.payload.active) await this.endSession(tx, row, this.now());
       });
       throw new AccessError(LOGIN_ERROR, 401);
     }
-    const verifiedAt = this.now();
-    return this.store.transaction(async tx => {
-      const row = await this.activeSession(tx, id);
-      if (row.payload.verifiedAt === initial.payload.verifiedAt) {
-        row.payload.verifiedAt = verifiedAt;
-        row.payload.displayName = member.displayName;
-        row.payload.lastUsedAt = verifiedAt;
-        row.updatedAt = verifiedAt;
-        await tx.put(row);
-      }
-      return this.principal(tx, row);
-    });
+  }
+
+  private async saveVerifiedSession(tx: AccessTransaction, initial: MemberSession, member: WecomAutoMember, verifiedAt: number, use: "web" | "tool") {
+    const row = await this.activeSession(tx, initial.id, use);
+    if (row.payload.verifiedAt === initial.payload.verifiedAt) {
+      row.payload.verifiedAt = verifiedAt;
+      row.payload.displayName = member.displayName;
+      if (use === "web") row.payload.lastUsedAt = verifiedAt;
+      row.updatedAt = verifiedAt;
+      await tx.put(row);
+    }
+    return row;
   }
 
   async logout(principal: Principal, all: boolean): Promise<void> {

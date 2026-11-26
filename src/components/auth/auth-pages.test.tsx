@@ -8,7 +8,7 @@ const { config, siteConfig, redirect, pending, device, employee } = vi.hoisted((
 vi.mock("@/modules/auth/access-config", () => ({ readAccessConfig: config }));
 vi.mock("@/modules/auth/site-access-config", () => ({ readSiteAccessConfig: siteConfig }));
 vi.mock("next/navigation", () => ({ redirect }));
-vi.mock("@/modules/auth/access", () => ({ getPendingLogin: pending, getDeviceRequest: device, requireEmployee: employee }));
+vi.mock("@/modules/auth/access", () => ({ getPendingLogin: pending, getDeviceRequest: device, requireWebAccount: employee }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 beforeEach(() => { config.mockReset(); siteConfig.mockReset().mockReturnValue({ mode: "iam" }); redirect.mockReset().mockImplementation(() => { throw new Error("NEXT_REDIRECT"); }); pending.mockReset(); device.mockReset(); employee.mockReset(); });
 afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
@@ -100,6 +100,21 @@ describe("native employee entry and approval pages", () => {
     device.mockResolvedValue({ userCode: "ABCD-EFGH", clientName: "测试工具", scope: "knowledge:read", expiresAt: 1800000000000, deviceCode: "never-render-device-token" });
     const html = renderToStaticMarkup(await DeviceApprovalPage({ searchParams: Promise.resolve({ user_code: "ABCD-EFGH" }) }));
     expect(html).toContain("测试工具"); expect(html).toContain("knowledge:read"); expect(html).toContain('value="true" name="approve"'); expect(html).toContain('value="false" name="approve"'); expect(html).not.toContain("never-render-device-token");
+  });
+  it("accepts an entered code and identifies the dealer's published-knowledge scope", async () => {
+    const dealer = { kind: "dealer", displayName: "测试经销商", account: "dealer-fixture", csrfToken: "dealer-csrf" };
+    employee.mockResolvedValue(dealer);
+    const entry = renderToStaticMarkup(await DeviceApprovalPage({ searchParams: Promise.resolve({}) }));
+    expect(entry).toContain('action="/auth/device" method="get"');
+    expect(entry).toContain('name="user_code"');
+    expect(device).not.toHaveBeenCalled();
+
+    device.mockResolvedValue({ userCode: "ABCDEF001122", clientName: "测试工具", scope: "knowledge:read", expiresAt: 1800000000000 });
+    const html = renderToStaticMarkup(await DeviceApprovalPage({ searchParams: Promise.resolve({ user_code: " abcdef001122 " }) }));
+    expect(device).toHaveBeenCalledWith(dealer, "ABCDEF001122");
+    expect(html).toContain("当前经销商账号");
+    expect(html).toContain("读取公开发布的知识资源");
+    expect(html).toContain('name="csrfToken" value="dealer-csrf"');
   });
   it("disables approval when the request is expired or unavailable", async () => {
     employee.mockResolvedValue({ displayName: "测试员工", account: "employee-fixture" }); device.mockRejectedValue({ status: 503 });

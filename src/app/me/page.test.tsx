@@ -50,6 +50,7 @@ describe("my employee page", () => {
     expect(html).toContain("复制安装提示词");
     expect(prompt).toContain("https://lighthouse.example/install/lighthouse-ai.zip");
     expect(prompt).toContain("knowledge_search");
+    expect(prompt).toContain("比亚迪集团员工");
     expect(prompt).not.toContain("hidden-account-in-prompt");
     expect(prompt).not.toContain("hidden-csrf-in-prompt");
   });
@@ -83,8 +84,14 @@ describe("my employee page", () => {
     expect(html).toContain("所属部门");
     expect(html).toContain(organization ?? "暂未提供");
     expect(html).toContain("企微账号");
-    expect(html).not.toContain('href="/auth/tools"');
-    expect(html).not.toContain("复制安装提示词");
+    expect(html).toContain('href="/auth/tools"');
+    expect(html).toContain("复制安装提示词");
+    expect(html).not.toContain('href="/feedback"');
+    const prompt = html.match(/<textarea\b[^>]*>([\s\S]*?)<\/textarea>/)?.[1];
+    expect(prompt).toContain("比亚迪汽车经销商");
+    expect(prompt).toContain("https://lighthouse.example/install/lighthouse-ai.zip");
+    expect(prompt).not.toContain(dealer.account);
+    expect(prompt).not.toContain(dealer.csrfToken);
   });
 
   it("keeps an account-only legacy profile out of the name field and heading", async () => {

@@ -36,7 +36,7 @@ export function ToolGrants() {
     finally { setBusy(null); }
   }
   return <section className="mx-auto max-w-3xl space-y-6" aria-labelledby="tools-title">
-    <h1 id="tools-title" className="text-[length:var(--title-page)]">我的工具授权</h1><p>仅展示当前员工账号批准的 CLI / MCP 知识读取授权。</p>
+    <h1 id="tools-title" className="text-[length:var(--title-page)]">我的工具授权</h1><p>这里可以查看和撤销当前账号的 CLI / MCP 知识读取授权。</p>
     {loading && <p role="status">正在读取授权…</p>}
     {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setReload(value => value + 1)} disabled={busy !== null}>重试</button></div>}
     {notice && <p role="status">{notice}</p>}

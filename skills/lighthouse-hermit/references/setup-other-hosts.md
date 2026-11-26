@@ -18,7 +18,9 @@ node "/absolute/client/lighthouse.mjs" --server "https://knowledge.example" auth
 node "/absolute/client/lighthouse.mjs" --server "https://knowledge.example" auth login
 ```
 
-设备授权目前面向灯塔员工身份。用户以访客或经销商身份访问时，说明当前员工授权条件。CLI 和 MCP 共用当前系统用户的安全凭据存储，连接配置只保存源地址和启动参数。凭据过期或撤销时按返回结果重新授权。测试站点使用 HTTP 时，先请部署方提供支持客户端的 HTTPS 入口。
+灯塔员工和比亚迪汽车经销商可以用各自的灯塔账号批准授权。经销商可用企微扫码登录，或在已登录灯塔的企微工作台浏览器中打开工具显示的验证网址，输入授权码。批准前核对当前账号和工具名称。经销商读取的范围与灯塔网页一致，为对经销商开放的已发布资料。
+
+CLI 和 MCP 共用当前系统用户的安全凭据存储，连接配置只保存源地址和启动参数。已有凭据时，先用 `auth status` 核对账号。切换账号时在灯塔登录所需账号后重新授权。凭据过期或撤销时重新授权。测试站点使用 HTTP 时，先请部署方提供 HTTPS 入口。
 
 ## 注册 MCP 或使用 CLI
 
