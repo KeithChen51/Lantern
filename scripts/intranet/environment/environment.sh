@@ -23,7 +23,7 @@ literal_config() {
     [[ "$line" =~ ^([A-Z][A-Z0-9_]*)=(.*)$ ]] || fail 'Control file must use literal KEY=value lines'
     key=${BASH_REMATCH[1]}; value=${BASH_REMATCH[2]}
     case "$key" in
-      ENVIRONMENT|COMPOSE_PROJECT_NAME|DATA_ROOT|BACKUP_ROOT|APP_ENV_FILE|LIGHTHOUSE_IMAGE|LIGHTHOUSE_TOOLS_IMAGE|MYSQL_IMAGE|MYSQL_DATABASE|MYSQL_USER|MYSQL_PASSWORD|MYSQL_ROOT_PASSWORD|DATABASE_URL|HTTP_BIND|HTTP_PORT|APP_UID|APP_GID|APP_MEMORY|MYSQL_MEMORY|OPERATIONS_MEMORY|GATEWAY_ENABLED|GATEWAY_NETWORK|GATEWAY_ALIAS) ;;
+      ENVIRONMENT|COMPOSE_PROJECT_NAME|DATA_ROOT|BACKUP_ROOT|APP_ENV_FILE|LIGHTHOUSE_IMAGE|LIGHTHOUSE_TOOLS_IMAGE|MYSQL_IMAGE|MYSQL_DATABASE|MYSQL_USER|MYSQL_PASSWORD|MYSQL_ROOT_PASSWORD|DATABASE_URL|HTTP_BIND|HTTP_PORT|APP_UID|APP_GID|APP_MEMORY|MYSQL_MEMORY|OPERATIONS_MEMORY|PUBLICATION_WORKER_MEMORY|WECOM_PUBLISHING_WORKER_ENABLED|GATEWAY_ENABLED|GATEWAY_NETWORK|GATEWAY_ALIAS) ;;
       *) fail "Unknown control key: $key" ;;
     esac
     if [[ "$value" == \'*\' && ${#value} -ge 2 ]]; then
@@ -87,6 +87,10 @@ case "$GATEWAY_ENABLED" in
   false) ;;
   *) fail 'GATEWAY_ENABLED must be true or false' ;;
 esac
+WECOM_PUBLISHING_WORKER_ENABLED=${WECOM_PUBLISHING_WORKER_ENABLED:-false}
+case "$WECOM_PUBLISHING_WORKER_ENABLED" in true|false) ;; *) fail 'WECOM_PUBLISHING_WORKER_ENABLED must be true or false' ;; esac
+[[ "$ENVIRONMENT" != restore || "$WECOM_PUBLISHING_WORKER_ENABLED" == false ]] || fail 'Restore verification requires the publication worker to remain disabled'
+if [[ "$WECOM_PUBLISHING_WORKER_ENABLED" == true ]]; then COMPOSE+=(--profile publishing); fi
 compose() { "${COMPOSE[@]}" "$@"; }
 compose config --quiet
 
@@ -106,12 +110,15 @@ MYSQL_ID=$(docker image inspect --format '{{.Id}}' "$MYSQL_IMAGE") || fail 'Sele
 docker run --rm --pull never --network none "$LIGHTHOUSE_TOOLS_IMAGE" verify
 
 LOCK="$CONTROL.operations-lock"
-LOCK_HELD=false; RESTORE_APP=false
+LOCK_HELD=false; RESTORE_APP=false; RESTORE_WORKER=false
 cleanup() {
   local code=$?
   trap - EXIT
   if [[ "$RESTORE_APP" == true ]]; then
     if ! compose start app; then printf 'App could not be restarted after backup; operator attention required.\n' >&2; code=1; fi
+  fi
+  if [[ "$RESTORE_WORKER" == true ]]; then
+    if ! compose start publication-worker; then printf 'Publication worker could not be restarted after backup.\n' >&2; code=1; fi
   fi
   if [[ "$LOCK_HELD" == true ]]; then rmdir -- "$LOCK" || code=1; fi
   exit "$code"
@@ -126,6 +133,16 @@ check_authentication() {
   compose config --format json | docker run --rm -i --pull never --network none --read-only --entrypoint node \
     "$LIGHTHOUSE_TOOLS_IMAGE" /app/check-access-config.cjs app "$ENVIRONMENT" \
     || fail 'Configure the complete selected authentication contract first'
+  if [[ "$WECOM_PUBLISHING_WORKER_ENABLED" == true ]]; then
+    compose config --format json | docker run --rm -i --pull never --network none --read-only --entrypoint node "$LIGHTHOUSE_IMAGE" -e '
+      let input="";process.stdin.on("data",chunk=>input+=chunk);process.stdin.on("end",()=>{
+        try {
+          const config=JSON.parse(input).services;
+          const app=config.app;const worker=config["publication-worker"];
+          if(app.environment.WECOM_PUBLISHING_ENABLED!=="true"||worker.environment.WECOM_PUBLISHING_ENABLED!=="true"||worker.image!==app.image||worker.environment.DATABASE_URL!==app.environment.DATABASE_URL||worker.environment.WECOM_PUBLISHING_DATA_DIR!==app.environment.WECOM_PUBLISHING_DATA_DIR)process.exitCode=1;
+        }catch{process.exitCode=1;}
+      });' --wecom-config-check || fail 'Enable publishing in the private application config and use the matching worker image/database/storage'
+  fi
 }
 
 owner_check() {
@@ -161,6 +178,10 @@ start_app() {
   compose up -d --no-deps --pull never app
   wait_healthy app
   compose exec -T app node -e "fetch('http://127.0.0.1:3000/api/health/ready',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"
+  if [[ "$WECOM_PUBLISHING_WORKER_ENABLED" == true ]]; then
+    compose up -d --no-deps --pull never publication-worker
+    wait_healthy publication-worker
+  fi
 }
 quiesce_app() {
   local id running previous_key configured_key previous_database_url
@@ -178,9 +199,23 @@ quiesce_app() {
     [[ "$configured_key" == "$previous_key" ]] || fail 'Configured credential-encryption key changed; do not rotate it during an ordinary upgrade'
   fi
   running=$(docker inspect --format '{{.State.Running}}' "$id")
-  [[ "$running" == true ]] || return
-  RESTORE_APP=true
-  compose stop -t 60 app
+  local worker worker_running worker_database_url
+  worker=$(compose ps --all -q publication-worker)
+  if [[ -n "$worker" ]]; then
+    [[ "$worker" != *$'\n'* ]] || fail 'Expected one publication worker'
+    [[ "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Source}}{{end}}{{end}}' "$worker")" == "$DATA_ROOT/app" ]] || fail 'Publication worker data mount differs from app'
+    worker_database_url=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$worker" | sed -n 's/^DATABASE_URL=//p')
+    [[ "$worker_database_url" == "$DATABASE_URL" ]] || fail 'Publication worker database differs from app'
+    worker_running=$(docker inspect --format '{{.State.Running}}' "$worker")
+    if [[ "$worker_running" == true ]]; then
+      RESTORE_WORKER=true
+      compose stop -t 120 publication-worker
+    fi
+  fi
+  if [[ "$running" == true ]]; then
+    RESTORE_APP=true
+    compose stop -t 60 app
+  fi
 }
 dump_database() {
   compose exec -T mysql sh -eu -c 'export MYSQL_PWD="$MYSQL_PASSWORD"; exec mysqldump -u "$MYSQL_USER" --single-transaction --no-tablespaces --skip-comments --hex-blob --order-by-primary --complete-insert "$MYSQL_DATABASE"'
@@ -316,13 +351,14 @@ case "$MODE" in
     lock; owner_check; quiesce_app; capture_backup
     # Restart before retention so a retention problem does not prolong downtime.
     if [[ "$RESTORE_APP" == true ]]; then compose start app; RESTORE_APP=false; fi
+    if [[ "$RESTORE_WORKER" == true ]]; then compose start publication-worker; RESTORE_WORKER=false; fi
     retain_backups
     ;;
   upgrade)
     [[ "$ENVIRONMENT" != restore ]] || fail 'Restore verification is not an upgrade'
     lock; owner_check; check_authentication; quiesce_app; capture_backup
     # A failed migration leaves app stopped for investigation, never auto-rolls schema back.
-    RESTORE_APP=false
+    RESTORE_APP=false; RESTORE_WORKER=false
     operations migrate
     start_app
     retain_backups

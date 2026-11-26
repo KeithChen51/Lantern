@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { build } from "esbuild";
 import { bundledStandardizeSkill } from "../src/modules/knowledge-hub/bundled-skill";
+import { packagePublicationWorker } from "./package-wecom-worker.mjs";
 
 async function main() {
   copyStandaloneAssets();
@@ -14,6 +15,7 @@ async function main() {
     outfile: path.join(standalone, "scripts/knowledge-install-builtin.cjs"),
     bundle: true, platform: "node", target: "node20", format: "cjs", external: ["@prisma/client"],
   });
+  await packagePublicationWorker();
   console.log("Prepared Next standalone assets and built-in standardization Skill bootstrap.");
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

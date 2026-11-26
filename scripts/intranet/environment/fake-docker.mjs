@@ -27,11 +27,12 @@ if (args[0] === "image") {
     else if (format.includes(".Type")) out(`volume|original-anonymous|${config.dataRoot}/app`);
     else out(`${config.dataRoot}/app`);
   } else if (format.includes(".Config.Env")) out(`DATABASE_URL=mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test\n${process.env.FAKE_OLD_AUTH ? "AUTH_ENCRYPTION_KEY=BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=\n" : ""}`);
-  else if (format.includes(".State.Running")) out(state.stopped ? "false" : "true");
+  else if (format.includes(".State.Running")) out((id.includes("worker") ? state.workerStopped : state.stopped) ? "false" : "true");
   else if (format.includes(".State.Health")) out("healthy");
   else if (format === "{{.Image}}") out(imageId(id.includes("mysql") ? "c" : state.upgraded ? "a" : "d"));
 } else if (args[0] === "compose") {
   if (args.includes("config")) {
+    if (args.includes("--services")) out(`lighthouse\nmysql\n${process.env.FAKE_WORKER ? "publication-worker\n" : ""}`);
     if (args.includes("json")) out(JSON.stringify({ services: { app: { environment: {
       LIGHTHOUSE_DEPLOYMENT_ENV: "test", NODE_ENV: "production", AUTH_ALLOW_LOCAL_HTTP: "false",
       AUTH_MODE: "portal", LIGHTHOUSE_ORIGIN: "http://10.20.30.40:18081", AUTH_TEST_HTTP_ORIGIN: "http://10.20.30.40:18081",
@@ -48,21 +49,23 @@ if (args[0] === "image") {
       KNOWLEDGE_HUB_ENABLED: "true", KNOWLEDGE_HUB_DRIVER: "mysql",
       DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", AUTH_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
       ...config.authOverrides,
-    } } } }));
+    } }, ...(process.env.FAKE_WORKER ? { 'publication-worker': { image: config.appImage, environment: { DATABASE_URL: "mysql://lighthouse_test:private-db-secret@mysql:3306/lighthouse_test", WECOM_PUBLISHING_ENABLED: "true" } } } : {}) } }));
   } else if (args.includes("ps")) {
     if (args.at(-1) === "app" || args.at(-1) === "lighthouse") out(state.upgraded ? "app-new" : "app-existing");
     else if (args.at(-1) === "mysql") out("mysql-existing");
+    else if (args.at(-1) === "publication-worker" && process.env.FAKE_WORKER) out("worker-existing");
     else if (process.env.FAKE_EXISTING_PROJECT) out("app-existing\nmysql-existing");
-  } else if (args.includes("stop")) { state.stopped = true; save(); }
-  else if (args.includes("start")) { state.stopped = false; save(); }
+  } else if (args.includes("stop")) { if (args.at(-1) === "publication-worker") state.workerStopped = true; else state.stopped = true; save(); }
+  else if (args.includes("start")) { if (args.at(-1) === "publication-worker") state.workerStopped = false; else state.stopped = false; save(); }
   else if (args.includes("up")) {
     if (args.at(-1) === "app" || args.at(-1) === "lighthouse") { state.upgraded = true; state.stopped = false; save(); }
+    if (args.at(-1) === "publication-worker") { state.workerStopped = false; save(); }
   } else if (args.includes("run") && args.at(-1) === "migrate" && process.env.FAKE_FAIL_MIGRATE) process.exit(7);
   else if (args.includes("exec") && args.some(x => x.includes("mysqldump"))) {
     if (process.env.FAKE_FAIL_BACKUP) process.exit(8);
     out(`CREATE TABLE resource (id int);\nINSERT INTO resource VALUES (${process.env.FAKE_CORRUPT_DUMP ? 2 : 1});\n`);
   } else if (args.includes("exec") && args.some(x => x.includes("printf %s"))) out("lighthouse_test");
-} else if (args[0] === "start") { state.stopped = false; save(); }
+} else if (args[0] === "start") { if (args.at(-1).includes("worker")) state.workerStopped = false; else state.stopped = false; save(); }
 else if (args[0] === "run") {
   if (args.includes("/app/check-access-config.cjs")) {
     let input = "";
@@ -84,8 +87,10 @@ else if (args[0] === "run") {
     let input = "";
     for await (const chunk of process.stdin) input += chunk;
     const c = JSON.parse(input);
-    if (args.at(-2) === "lighthouse") {
-      const service = c.services.lighthouse;
+    if (args.at(-1) === "--wecom-config-check") {
+      if (!process.env.FAKE_WORKER_CONFIG_VALID) process.exit(1);
+    } else if (args.at(-2) === "lighthouse" || args.at(-2) === "publication-worker") {
+      const service = c.services[args.at(-2)];
       out(args.at(-1) === "image" ? service.image : service.environment[args.at(-1)] ?? "");
     } else out(c.services.app.environment.AUTH_ENCRYPTION_KEY);
   } else if (args.includes("--volumes-from")) {

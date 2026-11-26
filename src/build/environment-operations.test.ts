@@ -117,6 +117,40 @@ describe("guarded deployment orchestration", () => {
     expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
     expect(result.stdout).not.toContain("private-db-secret");
   }, 30_000);
+  it("quiesces the publication worker before the app and restarts it after a backup", () => {
+    const f = fixture();
+    const result = f.run("backup", { FAKE_WORKER: "1" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls();
+    const workerStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "publication-worker");
+    const appStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "app");
+    const dump = calls.findIndex(x => x.some(y => y.includes("mysqldump")));
+    expect(workerStop).toBeGreaterThan(-1);
+    expect(appStop).toBeGreaterThan(workerStop);
+    expect(dump).toBeGreaterThan(appStop);
+    expect(calls.findIndex(x => x.includes("start") && x.at(-1) === "publication-worker")).toBeGreaterThan(dump);
+  }, 30_000);
+  it("keeps both writers stopped when a publication upgrade migration fails", () => {
+    const f = fixture();
+    const result = f.run("upgrade", { FAKE_WORKER: "1", FAKE_FAIL_MIGRATE: "1" });
+    expect(result.status).not.toBe(0);
+    expect(f.calls().some(x => x.includes("stop") && x.at(-1) === "publication-worker")).toBe(true);
+    expect(f.calls().some(x => x.includes("start") || x.includes("up"))).toBe(false);
+  }, 30_000);
+  it("checks enabled worker configuration before stop and starts it after app readiness", () => {
+    const f = fixture();
+    writeFileSync(f.config, `${readFileSync(f.config, "utf8")}WECOM_PUBLISHING_WORKER_ENABLED=true\n`);
+    const refused = f.run("upgrade", { FAKE_WORKER: "1" });
+    expect(refused.status).not.toBe(0);
+    expect(refused.stderr).toContain("Enable publishing in the private application config");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up"))).toBe(false);
+    const before = f.calls().length;
+    const result = f.run("upgrade", { FAKE_WORKER: "1", FAKE_WORKER_CONFIG_VALID: "1" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls().slice(before);
+    expect(calls.findIndex(x => x.includes("up") && x.at(-1) === "publication-worker"))
+      .toBeGreaterThan(calls.findIndex(x => x.includes("exec") && x.some(y => y.includes("/api/health/ready"))));
+  }, 30_000);
   it("upgrades explicit guest without employee credentials through the same backup and migration guards", () => {
     const f = fixture();
     const configFile = join(f.root, "fake-config.json");

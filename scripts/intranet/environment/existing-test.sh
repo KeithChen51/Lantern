@@ -3,12 +3,14 @@
 set -Eeuo pipefail
 umask 077
 fail() { printf 'Existing-test operation refused: %s\n' "$*" >&2; exit 1; }
-[[ $# -ge 8 && $# -le 10 ]] || fail 'Usage: existing-test.sh <backup|upgrade> <compose.yaml> <control.env> <project> <backup-root> <new-app-digest> <matching-tools-digest> <existing-network> [app-service=lighthouse] [mysql-service=mysql]'
+[[ $# -ge 8 && $# -le 11 ]] || fail 'Usage: existing-test.sh <backup|upgrade> <compose.yaml> <control.env> <project> <backup-root> <new-app-digest> <matching-tools-digest> <existing-network> [app-service=lighthouse] [mysql-service=mysql] [worker-service=publication-worker]'
 MODE=$1; FILE=$(readlink -f -- "$2"); CONTROL=$(readlink -f -- "$3"); PROJECT=$4
 ROOT=$5; NEW_APP=$6; TOOLS=$7; NETWORK=$8; APP_SERVICE=${9:-lighthouse}; MYSQL_SERVICE=${10:-mysql}
+WORKER_SERVICE=${11:-publication-worker}
 [[ "$MODE" == backup || "$MODE" == upgrade ]] || fail 'Only backup and upgrade are supported'
 [[ -f "$FILE" && -f "$CONTROL" && ! -L "$2" && ! -L "$3" ]] || fail 'Use existing regular compose/config files'
-for name in "$PROJECT" "$NETWORK" "$APP_SERVICE" "$MYSQL_SERVICE"; do [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9_-]+$ ]] || fail 'Invalid project/network/service'; done
+for name in "$PROJECT" "$NETWORK" "$APP_SERVICE" "$MYSQL_SERVICE" "$WORKER_SERVICE"; do [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9_-]+$ ]] || fail 'Invalid project/network/service'; done
+[[ "$WORKER_SERVICE" != "$APP_SERVICE" && "$WORKER_SERVICE" != "$MYSQL_SERVICE" ]] || fail 'Publication worker must be a distinct service'
 [[ "$ROOT" =~ ^/[A-Za-z0-9._-]+/[A-Za-z0-9._/-]+$ && "$ROOT" != */ && "$ROOT" != *//* && "$(readlink -m -- "$ROOT")" == "$ROOT" ]] || fail 'Use a dedicated canonical backup directory'
 cursor=/; IFS=/ read -ra parts <<< "$ROOT"
 for part in "${parts[@]}"; do [[ -z "$part" ]] && continue; cursor="${cursor%/}/$part"; [[ ! -L "$cursor" ]] || fail 'Symlinked backup directory'; done
@@ -50,11 +52,12 @@ mkdir -p -- "$ROOT"; chmod 700 -- "$ROOT"
 LOCK="$CONTROL.operations-lock"
 mkdir -- "$LOCK" 2>/dev/null || fail 'Another operation holds the environment lock'
 CONFIG=$(mktemp "$ROOT/.resolved-config.XXXXXX")
-RESTORE_APP=false
+RESTORE_APP=false; RESTORE_WORKER=false; WORKER_CONTAINER=
 cleanup() {
   local code=$?
   trap - EXIT
   if [[ "$RESTORE_APP" == true ]]; then docker start "$APP_CONTAINER" >/dev/null || code=1; fi
+  if [[ "$RESTORE_WORKER" == true ]]; then docker start "$WORKER_CONTAINER" >/dev/null || code=1; fi
   rm -- "$CONFIG"
   rmdir -- "$LOCK" || code=1
   exit "$code"
@@ -64,7 +67,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 compose config --format json > "$CONFIG"
 config_value() {
-  docker run --rm -i --pull never --network none --entrypoint node "$TOOLS" -e 'let s="";process.stdin.on("data",x=>s+=x);process.stdin.on("end",()=>{let c=JSON.parse(s).services[process.argv[1]];process.stdout.write(String(process.argv[2]==="image"?c.image:c.environment[process.argv[2]]??""))})' "$APP_SERVICE" "$1" < "$CONFIG"
+  docker run --rm -i --pull never --network none --entrypoint node "$TOOLS" -e 'let s="";process.stdin.on("data",x=>s+=x);process.stdin.on("end",()=>{let c=JSON.parse(s).services[process.argv[1]];process.stdout.write(String(process.argv[2]==="image"?c.image:c.environment[process.argv[2]]??""))})' "${2:-$APP_SERVICE}" "$1" < "$CONFIG"
 }
 [[ "$(config_value image)" == "$NEW_APP" ]] || fail 'Existing app must use LH_IMAGE; resolved image did not match selected digest'
 if [[ "$MODE" == upgrade ]]; then
@@ -77,6 +80,21 @@ CURRENT_DB=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}'
 [[ -n "$CURRENT_DB" && "$(config_value DATABASE_URL)" == "$CURRENT_DB" ]] || fail 'Do not switch existing test database during upgrade'
 CURRENT_KEY=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$APP_CONTAINER" | sed -n 's/^AUTH_ENCRYPTION_KEY=//p')
 [[ -z "$CURRENT_KEY" || "$(config_value AUTH_ENCRYPTION_KEY)" == "$CURRENT_KEY" ]] || fail 'Credential-encryption key changed'
+WORKER_ENABLED=false
+if compose config --services | grep -Fxq -- "$WORKER_SERVICE"; then
+  WORKER_CONTAINER=$(compose ps --all -q "$WORKER_SERVICE")
+  [[ "$WORKER_CONTAINER" != *$'\n'* ]] || fail 'Expected at most one publication worker'
+  if [[ -n "$WORKER_CONTAINER" ]]; then
+    [[ "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}|{{.Name}}|{{.Source}}{{end}}{{end}}' "$WORKER_CONTAINER")" == "$APP_MOUNT" ]] || fail 'Publication worker data mount differs from app'
+    WORKER_DB=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$WORKER_CONTAINER" | sed -n 's/^DATABASE_URL=//p')
+    [[ "$WORKER_DB" == "$CURRENT_DB" ]] || fail 'Publication worker database differs from app'
+  fi
+  if [[ "$(config_value WECOM_PUBLISHING_ENABLED "$WORKER_SERVICE")" == true ]]; then
+    [[ "$(config_value image "$WORKER_SERVICE")" == "$NEW_APP" ]] || fail 'Publication worker must use the selected app image'
+    [[ "$(config_value DATABASE_URL "$WORKER_SERVICE")" == "$CURRENT_DB" ]] || fail 'Configured publication worker database differs from app'
+    WORKER_ENABLED=true
+  fi
+fi
 
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 STAGE="$ROOT/$STAMP-$$.incomplete"
@@ -88,6 +106,10 @@ cp -- "$CONTROL" "$STAGE/control.env"
 cp -- "$FILE" "$STAGE/existing-compose.yaml"
 printf 'DATABASE_URL=%s\nKNOWLEDGE_HUB_DRIVER=mysql\nKNOWLEDGE_HUB_ENABLED=true\n' "$CURRENT_DB" > "$STAGE/operations.env"
 RUNNING=$(docker inspect --format '{{.State.Running}}' "$APP_CONTAINER")
+if [[ -n "$WORKER_CONTAINER" && "$(docker inspect --format '{{.State.Running}}' "$WORKER_CONTAINER")" == true ]]; then
+  RESTORE_WORKER=true
+  compose stop -t 120 "$WORKER_SERVICE"
+fi
 if [[ "$RUNNING" == true ]]; then RESTORE_APP=true; compose stop -t 60 "$APP_SERVICE"; fi
 dump_database() { compose exec -T "$MYSQL_SERVICE" sh -eu -c 'export MYSQL_PWD="$MYSQL_PASSWORD"; exec mysqldump -u "$MYSQL_USER" --single-transaction --no-tablespaces --skip-comments --hex-blob --order-by-primary --complete-insert "$MYSQL_DATABASE"'; }
 dump_database | gzip > "$STAGE/database.sql.gz"
@@ -138,10 +160,11 @@ retain_backups() {
 
 if [[ "$MODE" == backup ]]; then
   if [[ "$RESTORE_APP" == true ]]; then docker start "$APP_CONTAINER" >/dev/null; RESTORE_APP=false; fi
+  if [[ "$RESTORE_WORKER" == true ]]; then docker start "$WORKER_CONTAINER" >/dev/null; RESTORE_WORKER=false; fi
   retain_backups
   exit 0
 fi
-RESTORE_APP=false
+RESTORE_APP=false; RESTORE_WORKER=false
 # Direct tools migration on the existing DB network: no old migrate service,
 # db:setup, demo seed, knowledge import or runtime package installation.
 docker run --rm --pull never --network "$NETWORK" --env-file "$BACKUP/operations.env" "$TOOLS" migrate
@@ -157,6 +180,15 @@ if [[ "$(compose ps --all -q "$MYSQL_SERVICE")" != "$MYSQL_CONTAINER" || "$(dock
 fi
 for ((i=0; i<60; i++)); do
   if compose exec -T "$APP_SERVICE" node -e "fetch('http://127.0.0.1:3000/api/health/ready',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"; then
+    if [[ "$WORKER_ENABLED" == true ]]; then
+      compose up -d --no-deps --pull never "$WORKER_SERVICE"
+      WORKER_READY=false
+      for ((attempt=0; attempt<30; attempt++)); do
+        if compose exec -T "$WORKER_SERVICE" node scripts/publication-worker-health.cjs; then WORKER_READY=true; break; fi
+        sleep 2
+      done
+      [[ "$WORKER_READY" == true ]] || fail 'Publication worker heartbeat is unavailable'
+    fi
     printf 'Existing HTTP test upgraded; original MySQL container and app data mount retained.\n'
     retain_backups
     exit 0

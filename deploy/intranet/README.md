@@ -2,6 +2,8 @@
 
 关联 Issue #50。应用和运维镜像从同一个提交构建，生产与测试分别保留自己的数据库、上传目录和配置。初始化与升级是独立操作。
 
+管理员企微发布的常驻执行程序、启用配置、停写和验收步骤见[企微发布部署说明](../../docs/deployment/wecom-publishing.md)。
+
 ## 生产访客与测试 IAM
 
 关联 [Issue #60](https://github.com/KeithChen51/Lantern/issues/60)。同一个 production 应用镜像可在运行时显式选择 `AUTH_MODE=guest` 或 `iam`；生产访客使用新增 `environments/guest-app.env.example`，IAM 测试继续使用 `environments/test-app.env.example`。保留现有 `app.env.example` 的 IAM 默认值。完整的密钥、数据库隔离、迁移、容器重建、切回 IAM 与回滚步骤见[访客部署说明](../../docs/deployment/lighthouse-guest-mode.md)。IAM 配置错误或服务故障不会自动开放访客访问。
