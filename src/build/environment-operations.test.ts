@@ -126,6 +126,7 @@ describe("guarded deployment orchestration", () => {
     const appStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "app");
     const dump = calls.findIndex(x => x.some(y => y.includes("mysqldump")));
     expect(workerStop).toBeGreaterThan(-1);
+    expect(calls.find(x => x.includes("ps") && x.at(-1) === "publication-worker")).toContain("--profile");
     expect(appStop).toBeGreaterThan(workerStop);
     expect(dump).toBeGreaterThan(appStop);
     expect(calls.findIndex(x => x.includes("start") && x.at(-1) === "publication-worker")).toBeGreaterThan(dump);
@@ -311,6 +312,24 @@ describe("guarded deployment orchestration", () => {
     expect(calls.some(x => x.includes("--renew-anon-volumes") || x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
     expect(readFileSync(f.config, "utf8")).toContain(`LH_IMAGE=${f.appImage}`);
     expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+  it("discovers a profiled legacy publication worker and upgrades it after stopping both writers", () => {
+    const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
+    const archive = spawnSync(bash, ["-c", 'tar -czf "$1" -C "$2" .', "sh", unix(join(f.root, "fixture.tar.gz")), unix(f.app)]);
+    expect(archive.status).toBe(0);
+    const files = spawnSync(bash, ["-c", 'cd "$1"; sha256sum upload.txt', "sh", unix(f.app)], { encoding: "utf8" }).stdout;
+    writeFileSync(join(f.root, "fixture-files.sha256"), files);
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: { ...f.env, FAKE_WORKER: "1" }, encoding: "utf8" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls();
+    expect(calls.find(x => x.includes("--services"))).toContain("*");
+    const workerStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "publication-worker");
+    const appStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "lighthouse");
+    const migrate = calls.findIndex(x => x.at(-1) === "migrate");
+    expect(workerStop).toBeGreaterThan(-1);
+    expect(appStop).toBeGreaterThan(workerStop);
+    expect(migrate).toBeGreaterThan(appStop);
+    expect(calls.findIndex(x => x.includes("up") && x.at(-1) === "publication-worker")).toBeGreaterThan(migrate);
   }, 30_000);
   it.each([
     { AUTH_MODE: null }, { PORTAL_API_BASE_URL: null }, { PORTAL_LOGIN_URL: null },

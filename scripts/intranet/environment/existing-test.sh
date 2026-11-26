@@ -65,7 +65,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-compose config --format json > "$CONFIG"
+compose --profile '*' config --format json > "$CONFIG"
 config_value() {
   docker run --rm -i --pull never --network none --entrypoint node "$TOOLS" -e 'let s="";process.stdin.on("data",x=>s+=x);process.stdin.on("end",()=>{let c=JSON.parse(s).services[process.argv[1]];process.stdout.write(String(process.argv[2]==="image"?c.image:c.environment[process.argv[2]]??""))})' "${2:-$APP_SERVICE}" "$1" < "$CONFIG"
 }
@@ -81,8 +81,8 @@ CURRENT_DB=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}'
 CURRENT_KEY=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$APP_CONTAINER" | sed -n 's/^AUTH_ENCRYPTION_KEY=//p')
 [[ -z "$CURRENT_KEY" || "$(config_value AUTH_ENCRYPTION_KEY)" == "$CURRENT_KEY" ]] || fail 'Credential-encryption key changed'
 WORKER_ENABLED=false
-if compose config --services | grep -Fxq -- "$WORKER_SERVICE"; then
-  WORKER_CONTAINER=$(compose ps --all -q "$WORKER_SERVICE")
+if compose --profile '*' config --services | grep -Fxq -- "$WORKER_SERVICE"; then
+  WORKER_CONTAINER=$(compose --profile '*' ps --all -q "$WORKER_SERVICE")
   [[ "$WORKER_CONTAINER" != *$'\n'* ]] || fail 'Expected at most one publication worker'
   if [[ -n "$WORKER_CONTAINER" ]]; then
     [[ "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}|{{.Name}}|{{.Source}}{{end}}{{end}}' "$WORKER_CONTAINER")" == "$APP_MOUNT" ]] || fail 'Publication worker data mount differs from app'
@@ -108,7 +108,7 @@ printf 'DATABASE_URL=%s\nKNOWLEDGE_HUB_DRIVER=mysql\nKNOWLEDGE_HUB_ENABLED=true\
 RUNNING=$(docker inspect --format '{{.State.Running}}' "$APP_CONTAINER")
 if [[ -n "$WORKER_CONTAINER" && "$(docker inspect --format '{{.State.Running}}' "$WORKER_CONTAINER")" == true ]]; then
   RESTORE_WORKER=true
-  compose stop -t 120 "$WORKER_SERVICE"
+  compose --profile '*' stop -t 120 "$WORKER_SERVICE"
 fi
 if [[ "$RUNNING" == true ]]; then RESTORE_APP=true; compose stop -t 60 "$APP_SERVICE"; fi
 dump_database() { compose exec -T "$MYSQL_SERVICE" sh -eu -c 'export MYSQL_PWD="$MYSQL_PASSWORD"; exec mysqldump -u "$MYSQL_USER" --single-transaction --no-tablespaces --skip-comments --hex-blob --order-by-primary --complete-insert "$MYSQL_DATABASE"'; }
@@ -181,10 +181,10 @@ fi
 for ((i=0; i<60; i++)); do
   if compose exec -T "$APP_SERVICE" node -e "fetch('http://127.0.0.1:3000/api/health/ready',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"; then
     if [[ "$WORKER_ENABLED" == true ]]; then
-      compose up -d --no-deps --pull never "$WORKER_SERVICE"
+      compose --profile '*' up -d --no-deps --pull never "$WORKER_SERVICE"
       WORKER_READY=false
       for ((attempt=0; attempt<30; attempt++)); do
-        if compose exec -T "$WORKER_SERVICE" node scripts/publication-worker-health.cjs; then WORKER_READY=true; break; fi
+        if compose --profile '*' exec -T "$WORKER_SERVICE" node scripts/publication-worker-health.cjs; then WORKER_READY=true; break; fi
         sleep 2
       done
       [[ "$WORKER_READY" == true ]] || fail 'Publication worker heartbeat is unavailable'

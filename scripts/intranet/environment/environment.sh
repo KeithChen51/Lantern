@@ -118,7 +118,7 @@ cleanup() {
     if ! compose start app; then printf 'App could not be restarted after backup; operator attention required.\n' >&2; code=1; fi
   fi
   if [[ "$RESTORE_WORKER" == true ]]; then
-    if ! compose start publication-worker; then printf 'Publication worker could not be restarted after backup.\n' >&2; code=1; fi
+    if ! compose --profile publishing start publication-worker; then printf 'Publication worker could not be restarted after backup.\n' >&2; code=1; fi
   fi
   if [[ "$LOCK_HELD" == true ]]; then rmdir -- "$LOCK" || code=1; fi
   exit "$code"
@@ -200,7 +200,7 @@ quiesce_app() {
   fi
   running=$(docker inspect --format '{{.State.Running}}' "$id")
   local worker worker_running worker_database_url
-  worker=$(compose ps --all -q publication-worker)
+  worker=$(compose --profile publishing ps --all -q publication-worker)
   if [[ -n "$worker" ]]; then
     [[ "$worker" != *$'\n'* ]] || fail 'Expected one publication worker'
     [[ "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Source}}{{end}}{{end}}' "$worker")" == "$DATA_ROOT/app" ]] || fail 'Publication worker data mount differs from app'
@@ -209,7 +209,7 @@ quiesce_app() {
     worker_running=$(docker inspect --format '{{.State.Running}}' "$worker")
     if [[ "$worker_running" == true ]]; then
       RESTORE_WORKER=true
-      compose stop -t 120 publication-worker
+      compose --profile publishing stop -t 120 publication-worker
     fi
   fi
   if [[ "$running" == true ]]; then
@@ -351,7 +351,7 @@ case "$MODE" in
     lock; owner_check; quiesce_app; capture_backup
     # Restart before retention so a retention problem does not prolong downtime.
     if [[ "$RESTORE_APP" == true ]]; then compose start app; RESTORE_APP=false; fi
-    if [[ "$RESTORE_WORKER" == true ]]; then compose start publication-worker; RESTORE_WORKER=false; fi
+    if [[ "$RESTORE_WORKER" == true ]]; then compose --profile publishing start publication-worker; RESTORE_WORKER=false; fi
     retain_backups
     ;;
   upgrade)
