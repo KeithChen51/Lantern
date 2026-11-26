@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runWorker } from './publication-worker-runtime.mjs';
+import { replaceHeartbeatFile, runWorker } from './publication-worker-runtime.mjs';
 import { workerHealthy } from './publication-worker-health.mjs';
 
 test('SIGTERM waits for the in-flight cycle and prevents another claim', async () => {
@@ -56,4 +56,19 @@ test('health rejects malformed, stopped, future and stale heartbeats', async () 
       assert.equal(await workerHealthy(file, now), false);
     }
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('atomic heartbeat replacement retries a transient sharing conflict and bounds persistent failure', async () => {
+  let attempts = 0;
+  await replaceHeartbeatFile('temporary', 'destination', async () => {
+    attempts++;
+    if (attempts < 3) throw Object.assign(new Error('sharing conflict'), { code: 'EPERM' });
+  });
+  assert.equal(attempts, 3);
+  attempts = 0;
+  await assert.rejects(replaceHeartbeatFile('temporary', 'destination', async () => {
+    attempts++;
+    throw Object.assign(new Error('permission denied'), { code: 'EACCES' });
+  }), /permission denied/);
+  assert.equal(attempts, 6);
 });

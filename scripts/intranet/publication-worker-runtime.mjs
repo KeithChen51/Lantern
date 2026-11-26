@@ -3,6 +3,17 @@ import { dirname } from 'node:path';
 
 export const DEFAULT_HEARTBEAT_FILE = '/tmp/lighthouse-wecom-worker.json';
 
+export async function replaceHeartbeatFile(temporary, destination, renameFile = rename) {
+  for (let attempt = 0; ; attempt++) {
+    try { await renameFile(temporary, destination); return; }
+    catch (error) {
+      if (attempt >= 5 || !['EPERM', 'EACCES', 'EBUSY'].includes(error.code)) throw error;
+      // Windows probes may briefly retain a read handle across atomic replace.
+      await new Promise(resolve => setTimeout(resolve, 20 * (attempt + 1)));
+    }
+  }
+}
+
 export async function runWorker({
   runCycle,
   enabled,
@@ -21,7 +32,7 @@ export async function runWorker({
     await mkdir(dirname(heartbeatFile), { recursive: true });
     const temporary = `${heartbeatFile}.${process.pid}.tmp`;
     await writeFile(temporary, JSON.stringify({ pid: process.pid, state, heartbeatAt: new Date().toISOString() }), { mode: 0o600 });
-    await rename(temporary, heartbeatFile);
+    await replaceHeartbeatFile(temporary, heartbeatFile);
   };
   const wait = () => new Promise(resolve => {
     const timer = setTimeout(() => { wake = undefined; resolve(); }, pollMs);
