@@ -5,7 +5,7 @@ import { AppError } from "@/shared/errors";
 import { parsePublicationDraft, publicationPreview } from "./article";
 import { publicationEnabled, getPublicationChannelInfo } from "./configuration";
 import {
-  MAX_PUBLICATION_UPLOAD_BYTES, publicationChannels, type NewPublicationDraft, type PublicationActor,
+  MAX_PUBLICATION_UPLOAD_BYTES, PUBLICATION_RECIPIENTS, publicationChannels, type NewPublicationDraft, type PublicationActor,
   type PublicationChannel,
 } from "./contracts";
 import {
@@ -18,8 +18,8 @@ type IdContext = { params: Promise<{ id: string }> };
 const uuid = z.uuid();
 const channelSchema = z.enum(publicationChannels);
 const audienceSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("members"), ids: z.array(z.string().min(1).max(128).regex(/^[^\s|@\p{Cc}][^\s|\p{Cc}]*$/u)).min(1).max(1000) }),
-  z.strictObject({ kind: z.literal("departments"), ids: z.array(z.string().regex(/^[1-9]\d{0,14}$/)).min(1).max(100) }),
+  z.strictObject({ kind: z.literal("members"), ids: z.array(z.string().regex(PUBLICATION_RECIPIENTS.members.pattern)).min(1).max(PUBLICATION_RECIPIENTS.members.max) }),
+  z.strictObject({ kind: z.literal("departments"), ids: z.array(z.string().regex(PUBLICATION_RECIPIENTS.departments.pattern)).min(1).max(PUBLICATION_RECIPIENTS.departments.max) }),
   z.strictObject({ kind: z.literal("all") }),
 ]);
 const scheduleSchema = z.strictObject({

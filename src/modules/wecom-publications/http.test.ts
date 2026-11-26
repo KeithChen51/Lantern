@@ -90,6 +90,8 @@ describe("WeCom publication routes", () => {
   it("rejects an all alias in the member selector and applies the lower cover limit", async () => {
     const withImplicitAll = { ...input, targets: [{ channel: "group", audience: { kind: "members", ids: ["@all"] } }] };
     expect((await schedulePublicationHttp(request(withImplicitAll))).status).toBe(422);
+    const invalidMember = { ...input, targets: [{ channel: "group", audience: { kind: "members", ids: ["a".repeat(65)] } }] };
+    expect((await schedulePublicationHttp(request(invalidMember))).status).toBe(422);
     const groupDraft = draft();
     groupDraft.cover.bytes = new Uint8Array(2 ** 21 + 1);
     service.loadPublicationDraft.mockResolvedValue(groupDraft);

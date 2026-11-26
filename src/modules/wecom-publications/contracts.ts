@@ -4,6 +4,10 @@ export type PublicationChannel = (typeof publicationChannels)[number];
 export const MAX_ARTICLE_BYTES = 666 * 1024;
 export const MAX_PUBLICATION_IMAGES = 10;
 export const MAX_PUBLICATION_UPLOAD_BYTES = 32 * 1024 * 1024;
+export const PUBLICATION_RECIPIENTS = {
+  members: { max: 1000, pattern: /^[A-Za-z0-9][A-Za-z0-9_.@-]{0,63}$/ },
+  departments: { max: 100, pattern: /^[1-9]\d{0,15}$/ },
+} as const;
 
 export function imageMarker(index: number): string {
   return `__LANTERN_WECOM_IMAGE_${index}__`;

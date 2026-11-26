@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { MAX_ARTICLE_BYTES, MAX_PUBLICATION_IMAGES, imageMarker, type DeliveryOutcome, type PublicationArticle, type PublicationAudience, type PublicationChannel, type PublicationImage, type RecipientIssues } from "./contracts";
+import { MAX_ARTICLE_BYTES, MAX_PUBLICATION_IMAGES, PUBLICATION_RECIPIENTS, imageMarker, type DeliveryOutcome, type PublicationArticle, type PublicationAudience, type PublicationChannel, type PublicationImage, type RecipientIssues } from "./contracts";
 import { readPublicationConfiguration, type PublicationConfiguration } from "./configuration";
 
 export class PublicationPreparationError extends Error {
@@ -103,8 +103,7 @@ function multipart(image: PublicationImage, fields?: Record<string, string>): { 
 
 function audienceFields(audience: PublicationAudience): { touser: string; toparty: string; totag: string } {
   if (audience.kind === "all") return { touser: "@all", toparty: "", totag: "" };
-  const maximum = audience.kind === "members" ? 1000 : 100;
-  const pattern = audience.kind === "members" ? /^[A-Za-z0-9][A-Za-z0-9_.@-]{0,63}$/ : /^[1-9]\d{0,15}$/;
+  const { max: maximum, pattern } = PUBLICATION_RECIPIENTS[audience.kind];
   if (!audience.ids.length || audience.ids.length > maximum || audience.ids.some(id => !pattern.test(id))) {
     throw preparation("invalid_audience", "请核对所选应用的成员账号或部门 ID。");
   }

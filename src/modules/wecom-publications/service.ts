@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient, type WecomPublicationDraft, type WecomPublicationTask, type WecomPublicationDelivery } from "@prisma/client";
 import { prisma } from "@/infrastructure/db";
 import { AppError } from "@/shared/errors";
-import type { NewPublicationDraft, PublicationActor, PublicationChannel, PublicationDraft, PublicationTask, PublicationTarget, RecipientIssues } from "./contracts";
+import { PUBLICATION_RECIPIENTS, type NewPublicationDraft, type PublicationActor, type PublicationChannel, type PublicationDraft, type PublicationTask, type PublicationTarget, type RecipientIssues } from "./contracts";
 import { persistPublicationDraft, readPublicationDraft } from "./storage";
 
 export type PublicationTransaction = Prisma.TransactionClient;
@@ -93,10 +93,10 @@ function normalizeTargets(targets: PublicationTarget[]): PublicationTarget[] {
     if (target.channel !== "group" && target.channel !== "auto") throw new AppError("validation_error", "应用无效。", 422);
     const audience = target.audience;
     if (audience?.kind === "all") return { channel: target.channel, audience: { kind: "all" } };
-    if (!audience || !["members", "departments"].includes(audience.kind) || !Array.isArray(audience.ids) || !audience.ids.length || audience.ids.length > (audience.kind === "members" ? 1000 : 100)) throw new AppError("validation_error", "请填写有效的成员或部门。", 422);
+    if (!audience || !["members", "departments"].includes(audience.kind) || !Array.isArray(audience.ids) || !audience.ids.length || audience.ids.length > PUBLICATION_RECIPIENTS[audience.kind].max) throw new AppError("validation_error", "请填写有效的成员或部门。", 422);
     const ids = [...new Set(audience.ids.map(id => typeof id === "string" ? id.trim() : ""))].sort();
-    const valid = audience.kind === "departments" ? /^[1-9]\d{0,18}$/ : /^[A-Za-z0-9_@.\-]{1,128}$/;
-    if (ids.some(id => !valid.test(id) || id.toLowerCase() === "@all")) throw new AppError("validation_error", "成员账号或部门 ID 无效。", 422);
+    const { pattern } = PUBLICATION_RECIPIENTS[audience.kind];
+    if (ids.some(id => !pattern.test(id))) throw new AppError("validation_error", "成员账号或部门 ID 无效。", 422);
     return { channel: target.channel, audience: { kind: audience.kind, ids } };
   }).sort((a, b) => a.channel.localeCompare(b.channel));
 }
