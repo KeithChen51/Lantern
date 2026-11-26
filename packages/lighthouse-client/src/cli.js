@@ -4,13 +4,20 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { LighthouseClient } from './client.js';
 import { SecureStore, MemoryStore, FileLock, atomicWrite, privateDirectory, defaultDirectory } from './credentials.js';
-import { ClientError, validateOrigin } from './transport.js';
+import { ClientError, validateOrigin, validateScope, SCOPE, PUBLISH_SCOPE } from './transport.js';
 import { serveMcp } from './mcp.js';
+import { readPublicationInput } from './publications.js';
 
 const HELP = `lighthouse --server https://knowledge.example auth login [--open] [--device-name NAME]
-lighthouse [--server ORIGIN] auth status|logout
+lighthouse [--server ORIGIN] auth status|logout [--scope knowledge:read|wecom:publish]
 lighthouse [--server ORIGIN] knowledge browse|search|get|outline|read|files|download [options]
-lighthouse [--server ORIGIN] mcp serve
+lighthouse [--server ORIGIN] publish draft|schedule|retry --input JSON_FILE
+lighthouse [--server ORIGIN] publish status --task-id TASK_ID
+lighthouse [--server ORIGIN] publish list
+lighthouse [--server ORIGIN] mcp serve [--scope knowledge:read|wecom:publish]
+Use auth login --scope wecom:publish to authorize platform administrator publishing.
+Draft JSON names local HTML, cover and body image paths relative to the JSON file.
+Schedule JSON must include a stable UUID requestId, draftId, time with timezone and targets.
 Knowledge options: --resource-id ID --version-id VERSION --file-id FILE --query TEXT --type TYPE
   --tag TAG --visibility VISIBILITY --folder-id FOLDER --offset NUMBER --limit NUMBER
   --section-offset NUMBER --section-limit NUMBER --file-offset NUMBER --file-limit NUMBER
@@ -22,7 +29,7 @@ logs in and retrieves knowledge in one process. MCP/CLI normally share the OS cr
 export function parseArguments(argv) {
   const args = {}; const words = [];
   const boolean = new Set(['open', 'ephemeral', 'help']);
-  const allowed = new Set(['server', 'open', 'ephemeral', 'help', 'device-name', 'resource-id', 'version-id', 'file-id', 'query', 'type', 'tag', 'visibility', 'folder-id', 'section-offset', 'section-limit', 'file-offset', 'file-limit', 'start-line', 'line-count', 'path', 'limit', 'offset', 'output']);
+  const allowed = new Set(['server', 'open', 'ephemeral', 'help', 'device-name', 'resource-id', 'version-id', 'file-id', 'query', 'type', 'tag', 'visibility', 'folder-id', 'section-offset', 'section-limit', 'file-offset', 'file-limit', 'start-line', 'line-count', 'path', 'limit', 'offset', 'output', 'scope', 'input', 'task-id']);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (!arg.startsWith('--')) { words.push(arg); continue; }
@@ -38,27 +45,37 @@ export async function runCli(argv, { stdout = process.stdout, stderr = process.s
   const { words, args } = parseArguments(argv);
   if (args.help || words.length === 0) { stderr.write(HELP); return; }
   const [group, operation] = words;
-  if (!(group === 'auth' && ['login', 'status', 'logout'].includes(operation) || group === 'knowledge' && ['browse', 'search', 'get', 'outline', 'read', 'files', 'download'].includes(operation) || group === 'mcp' && operation === 'serve')) throw new ClientError('unknown_command');
+  if (!(group === 'auth' && ['login', 'status', 'logout'].includes(operation) || group === 'knowledge' && ['browse', 'search', 'get', 'outline', 'read', 'files', 'download'].includes(operation) || group === 'publish' && ['draft', 'schedule', 'status', 'list', 'retry'].includes(operation) || group === 'mcp' && operation === 'serve')) throw new ClientError('unknown_command');
+  const scope = validateScope(args.scope ?? (group === 'publish' ? PUBLISH_SCOPE : SCOPE));
+  if (group === 'publish' && scope !== PUBLISH_SCOPE || group === 'knowledge' && scope !== SCOPE) throw new ClientError('invalid_scope');
   let server = args.server;
   if (!server) { try { const profile = JSON.parse(await readFile(join(directory, 'profile.json'), 'utf8')); server = profile.server; } catch { throw new ClientError('server_required', 'Use --server with an HTTPS origin.'); } }
   server = validateOrigin(server);
-  const client = createClient(server, { store: args.ephemeral ? new MemoryStore() : new SecureStore({ directory }), lock: new FileLock({ directory }) });
+  const client = createClient(server, { store: args.ephemeral ? new MemoryStore() : new SecureStore({ directory }), lock: new FileLock({ directory }), scope, channel: group === 'mcp' ? 'mcp' : 'cli' });
   let result;
   if (group === 'auth') {
-    const extras = Object.keys(args).filter(key => !['server', 'ephemeral', ...(operation === 'login' ? ['open', 'device-name'] : [])].includes(key));
+    const extras = Object.keys(args).filter(key => !['server', 'ephemeral', 'scope', ...(operation === 'login' ? ['open', 'device-name'] : [])].includes(key));
     if (extras.length) throw new ClientError('invalid_arguments');
     if (operation === 'login') {
       result = await client.login({ deviceName: args['device-name'], openBrowser: args.open, onVerification: info => stderr.write(`Open ${info.verificationUri}\nCode: ${info.userCode}\n`) });
       if (!args.ephemeral) { await privateDirectory(directory); await atomicWrite(join(directory, 'profile.json'), JSON.stringify({ server })); }
     } else result = await client[operation]();
   } else if (group === 'mcp') {
-    if (Object.keys(args).some(key => !['server', 'ephemeral'].includes(key))) throw new ClientError('invalid_arguments');
+    if (Object.keys(args).some(key => !['server', 'ephemeral', 'scope'].includes(key))) throw new ClientError('invalid_arguments');
     await serve(client); return;
+  } else if (group === 'publish') {
+    const options = ['server', 'ephemeral', 'scope', ...(['draft', 'schedule', 'retry'].includes(operation) ? ['input'] : operation === 'status' ? ['task-id'] : [])];
+    if (Object.keys(args).some(key => !options.includes(key))) throw new ClientError('invalid_arguments');
+    if (['draft', 'schedule', 'retry'].includes(operation)) {
+      if (!args.input) throw new ClientError('input_required', 'Provide --input with a publication JSON file.');
+      const input = await readPublicationInput(operation, args.input);
+      result = operation === 'draft' ? await client.publicationDraft(input) : await client.publication(operation, input);
+    } else result = await client.publication(operation, operation === 'status' ? { taskId: args['task-id'] } : {});
   } else {
     if (Object.keys(args).some(key => ['open', 'device-name'].includes(key))) throw new ClientError('invalid_arguments');
     const options = {};
     for (const [key, value] of Object.entries(args)) {
-      if (['server', 'ephemeral', 'output'].includes(key)) continue;
+      if (['server', 'ephemeral', 'scope', 'output'].includes(key)) continue;
       const mapped = key.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
       options[mapped] = ['limit', 'offset', 'section-offset', 'section-limit', 'file-offset', 'file-limit', 'start-line', 'line-count'].includes(key) ? Number(value) : value;
     }

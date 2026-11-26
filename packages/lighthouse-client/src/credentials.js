@@ -3,10 +3,10 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename, unlink, open, lstat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { ClientError, CLIENT_ID, SCOPE, validateOrigin } from './transport.js';
+import { ClientError, CLIENT_ID, SCOPE, validateOrigin, validateScope } from './transport.js';
 
 export const defaultDirectory = () => join(homedir(), '.lighthouse');
-export const credentialKey = origin => createHash('sha256').update(`${validateOrigin(origin)}\0${CLIENT_ID}\0${SCOPE}`).digest('hex');
+export const credentialKey = (origin, scope = SCOPE) => createHash('sha256').update(`${validateOrigin(origin)}\0${CLIENT_ID}\0${validateScope(scope)}`).digest('hex');
 export async function privateDirectory(path) {
   await mkdir(path, { recursive: true, mode: 0o700 });
   const stat = await lstat(path);
@@ -53,8 +53,8 @@ default: exit(1)
 `;
 export class SecureStore {
   constructor({ directory = defaultDirectory(), platform = process.platform, runner = runProcess } = {}) { this.directory = directory; this.platform = platform; this.runner = runner; }
-  async operation(origin, operation, value) {
-    const key = credentialKey(origin);
+  async operation(origin, operation, value, scope = SCOPE) {
+    const key = credentialKey(origin, scope);
     await privateDirectory(this.directory);
     if (this.platform === 'win32') {
       const path = join(this.directory, `${key}.dpapi`);
@@ -81,25 +81,25 @@ export class SecureStore {
     }
     throw new ClientError('secure_backend_unavailable');
   }
-  async get(origin) { const text = await this.operation(origin, 'get'); if (!text) return null; let data; try { data = JSON.parse(text); } catch { throw new ClientError('invalid_credential'); } validateCredential(data, origin); return data; }
-  async set(origin, credential) { validateCredential(credential, origin); await this.operation(origin, 'set', JSON.stringify(credential)); }
-  async delete(origin) { await this.operation(origin, 'delete'); }
+  async get(origin, scope = SCOPE) { const text = await this.operation(origin, 'get', undefined, scope); if (!text) return null; let data; try { data = JSON.parse(text); } catch { throw new ClientError('invalid_credential'); } validateCredential(data, origin, scope); return data; }
+  async set(origin, credential, scope = SCOPE) { validateCredential(credential, origin, scope); await this.operation(origin, 'set', JSON.stringify(credential), scope); }
+  async delete(origin, scope = SCOPE) { await this.operation(origin, 'delete', undefined, scope); }
 }
-export function validateCredential(data, origin) {
+export function validateCredential(data, origin, scope = SCOPE) {
   const token = value => typeof value === 'string' && value.length > 0 && value.length <= 8192 && !/[\x00-\x20\x7f]/.test(value);
-  if (!data || data.origin !== validateOrigin(origin) || data.clientId !== CLIENT_ID || data.scope !== SCOPE || !token(data.accessToken) || !token(data.refreshToken) || !Number.isFinite(data.expiresAt) || !Number.isFinite(data.grantExpiresAt) || data.expiresAt > data.grantExpiresAt) throw new ClientError('invalid_credential');
+  if (!data || data.origin !== validateOrigin(origin) || data.clientId !== CLIENT_ID || data.scope !== validateScope(scope) || !token(data.accessToken) || !token(data.refreshToken) || !Number.isFinite(data.expiresAt) || !Number.isFinite(data.grantExpiresAt) || data.expiresAt > data.grantExpiresAt) throw new ClientError('invalid_credential');
 }
 export class MemoryStore {
   constructor() { this.values = new Map(); }
-  async get(origin) { return this.values.get(origin) ?? null; }
-  async set(origin, value) { validateCredential(value, origin); this.values.set(origin, structuredClone(value)); }
-  async delete(origin) { this.values.delete(origin); }
+  async get(origin, scope = SCOPE) { return this.values.get(credentialKey(origin, scope)) ?? null; }
+  async set(origin, value, scope = SCOPE) { validateCredential(value, origin, scope); this.values.set(credentialKey(origin, scope), structuredClone(value)); }
+  async delete(origin, scope = SCOPE) { this.values.delete(credentialKey(origin, scope)); }
 }
 export class FileLock {
   constructor({ directory = defaultDirectory(), timeoutMs = 15000, intervalMs = 75 } = {}) { this.directory = directory; this.timeoutMs = timeoutMs; this.intervalMs = intervalMs; }
-  async run(origin, task) {
+  async run(origin, task, scope = SCOPE) {
     await privateDirectory(this.directory);
-    const path = join(this.directory, `${credentialKey(origin)}.lock`);
+    const path = join(this.directory, `${credentialKey(origin, scope)}.lock`);
     const started = Date.now(); let handle;
     for (;;) {
       try { handle = await open(path, 'wx', 0o600); await handle.writeFile(JSON.stringify({ pid: process.pid, createdAt: Date.now(), nonce: randomUUID() })); break; }

@@ -1,8 +1,9 @@
 # lighthouse CLI / MCP
 
-Independent knowledge reader for authenticated employees. The user's Agent decides
-how to use the results. This package contains no business documents, database
-configuration, model calls, maintenance tools or browser/portal token integration.
+Authenticated client for employee knowledge retrieval and platform administrator
+publication. The user's Agent decides how to use the results. Each purpose uses
+its own login scope and stored grant. The package contains no business documents,
+database configuration, model calls or browser/portal token integration.
 
 Node.js >=20.9.0. Dependencies: MCP SDK `^1.30.0`, Zod `^4.6.5`.
 Run from the repository with `node packages/lighthouse-client/src/cli.js`, or install
@@ -28,7 +29,9 @@ service address. HTTPS with normal certificate validation is mandatory; custom
 trusted CAs can be configured through Node's supported CA configuration. A server
 origin cannot contain a path, query, userinfo or fragment. Redirects are rejected.
 Every request uses a fixed first-party endpoint and omits browser cookies. Tokens
-bind to the exact normalized origin and `lighthouse-cli` / `knowledge:read` grant.
+bind to the exact normalized origin, `lighthouse-cli` and the chosen scope.
+The default scope is `knowledge:read`; administrator publishing requires an
+explicit `wecom:publish` login.
 
 `auth login` prints the verification URL and user code on stderr, then polls the
 device grant. `--open` optionally opens that same-origin HTTPS URL through a native
@@ -102,9 +105,100 @@ MCP serves stdio only, with exactly `knowledge_browse`, `knowledge_search`,
 `knowledge_file_read`. Every tool is annotated readonly. Unknown tools and extra
 arguments are rejected by the protocol schema. A version resource is available
 at `lighthouse://resources/{id}/versions/{versionId}`. Use the returned exact
-version and citation metadata for reproducible references. No ask, chat,
-write/import/publish/preview/history or interaction tools exist. CLI success output
-is JSON; MCP stdout contains protocol frames only; diagnostics go to stderr.
+version and citation metadata for reproducible references. The default MCP uses
+the knowledge scope. The publishing MCP described below is explicitly selected
+with `--scope wecom:publish`. CLI success output is JSON; MCP stdout contains
+protocol frames only; diagnostics go to stderr.
+
+## Administrator publication
+
+The server checks the platform administrator role for each publication request.
+Authorize the publishing scope separately. Both grants can coexist, and logging
+out of one scope clears only that grant.
+
+```sh
+lighthouse --server https://lighthouse.example auth login --scope wecom:publish
+lighthouse auth status --scope wecom:publish
+lighthouse publish draft --input ./draft.json
+lighthouse publish schedule --input ./schedule.json
+lighthouse publish status --task-id TASK_ID
+lighthouse publish list
+lighthouse publish retry --input ./retry.json
+lighthouse auth logout --scope wecom:publish
+```
+
+`draft.json` names files accessible to the current process. Relative paths resolve
+from the manifest's directory. Use an explicit readable attachment path when the
+DSH workspace maps an uploaded attachment to a local file.
+
+```json
+{
+  "title": "Publication title",
+  "digest": "A short summary",
+  "html": "article.html",
+  "cover": "assets/cover.png",
+  "images": ["assets/body.jpg"]
+}
+```
+
+Optional text fields are `author` and `sourceUrl`. HTML must use UTF-8 and fit
+within 666 KiB, the cover within 10 MiB, and each body image within 2 MiB. Up to
+10 body images are accepted. Images must be PNG or JPEG with a matching extension
+and file signature. Each body image needs a distinct filename. The server also
+checks the limits of each selected application. HTML references can use the body
+image filenames, such as `./assets/body.jpg`; the single-image sample marker
+`__WECOM_BODY_IMAGE__` is also supported by the server. The client sends files
+over authenticated multipart, with a 32 MiB request bound.
+
+Confirm the uploaded draft, each application's recipients and the Beijing send
+time before submitting `schedule.json`. The server persists the task and returns
+its identifier. Keep a caller-generated UUID in `requestId` and reuse the same
+JSON after an uncertain response so the server can identify a repeated submission.
+
+```json
+{
+  "draftId": "DRAFT_ID_RETURNED_BY_UPLOAD",
+  "scheduledAt": "2030-01-01T09:00:00+08:00",
+  "requestId": "20d5f182-84bf-40dd-b6c8-c1f5ee97488b",
+  "targets": [
+    {"channel": "group", "audience": {"kind": "members", "ids": ["group-member"]}},
+    {"channel": "auto", "audience": {"kind": "departments", "ids": ["2"]}}
+  ]
+}
+```
+
+Each application uses its own member or department identifiers. An application
+audience may instead be `{"kind":"all"}`. Its effective range is determined by
+the application when the task executes. `scheduledAt` requires an explicit
+timezone. `+08:00` expresses Beijing time regardless of the CLI host's timezone.
+
+`retry.json` contains `taskId`, `channel` and a new `requestId` for the retry
+operation. Only a clearly failed application delivery can be retried. The server
+retains uncertain send results for verification. The client performs no automatic
+retry of task submissions or send results.
+
+The exported API accepts `{scope: 'wecom:publish'}` in `LighthouseClient` and
+provides `publicationDraft(formData)` and `publication('schedule'|'status'|'list'|
+'retry', input)`. Upload and schedule responses retain the server's `{draft}`
+and `{task}` wrappers. Each operation uses a fixed path under
+`/api/admin/wecom-publications` and the same per-user grant as the CLI.
+
+For DSH installations that support stdio MCP, opt into the publishing tool set
+after uploading the draft through the CLI.
+
+```sh
+lighthouse --server https://lighthouse.example mcp serve --scope wecom:publish
+```
+
+This tool set exposes only `wecom_schedule` and `wecom_status`, sharing the
+publishing grant. A schedule call returns its persisted task ID immediately.
+Lighthouse executes the task independently after the MCP or DSH session closes.
+The transport marks MCP calls with `X-Lighthouse-Client: mcp` for source auditing.
+Remote HTTP MCP requires a separate deployment integration.
+
+Credential storage remains bound to the operating-system user. A shared DSH
+service account needs per-user credential isolation before multiple people use
+this client; each invocation must represent its actual Lighthouse operator.
 
 ## Validation
 
