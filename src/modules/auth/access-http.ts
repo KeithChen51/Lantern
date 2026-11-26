@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireSiteVisitor, requireWebAccount, requireKnowledgeClient } from "./access";
+import { authErrorResponse, assertSameOrigin, assertWebMutation, getAccessService, readAccessCookie, requireEmployee, requireSiteVisitor, requireWebAccount, requireToolClient } from "./access";
 import { readAccessConfig } from "./access-config";
 import { hashToken } from "./access-crypto";
 import { AccessError, OAuthError } from "./access-types";
@@ -284,11 +284,11 @@ export const token = async (request: NextRequest): Promise<Response> => {
   }
 };
 export const clientMe = route(async request => {
-  const principal = await requireKnowledgeClient(request);
-  return json({ user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, scope: "knowledge:read", expiresAt: principal.expiresAt });
+  const principal = await requireToolClient(request);
+  return json({ user: { id: principal.userId, account: principal.account, displayName: principal.displayName }, scope: principal.capabilities[0], expiresAt: principal.expiresAt });
 });
 export const clientRevoke = route(async request => {
-  const principal = await requireKnowledgeClient(request);
+  const principal = await requireToolClient(request, { revokeOnly: true });
   await getAccessService().revokeClient(principal, principal.credentialId);
   return empty();
 });

@@ -14,12 +14,15 @@ export default async function DeviceApprovalPage({ searchParams }: { searchParam
   } catch {
     return <AuthSurface title="工具授权"><AuthNotice>授权码无效、已过期或服务暂不可用。请在工具中重新发起登录。</AuthNotice><button type="button" disabled>批准授权</button></AuthSurface>;
   }
+  const publishing = device.scope === "wecom:publish";
+  const canApprove = !publishing || principal.capabilities.includes("wecom:publish");
   return <AuthSurface title="确认工具授权">
     <p>仅批准你自己刚刚发起的请求。</p>
-    <dl><dt>当前员工账号</dt><dd>{principal.displayName} · {principal.account}</dd><dt>工具</dt><dd>{device.clientName}</dd><dt>授权码</dt><dd>{device.userCode}</dd><dt>权限</dt><dd>读取知识资源（{device.scope}）</dd><dt>请求有效期</dt><dd>{new Date(device.expiresAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</dd></dl>
+    <dl><dt>当前员工账号</dt><dd>{principal.displayName} · {principal.account}</dd><dt>工具</dt><dd>{device.clientName}</dd><dt>授权码</dt><dd>{device.userCode}</dd><dt>权限</dt><dd>{publishing ? "创建、排期与查询企微图文发布" : "读取知识资源"}（{device.scope}）</dd><dt>请求有效期</dt><dd>{new Date(device.expiresAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</dd></dl>
+    {!canApprove && <AuthNotice>仅平台管理员可批准企微发布授权。</AuthNotice>}
     <form action="/api/auth/device/decision" method="post">
       <input type="hidden" name="csrfToken" value={principal.csrfToken ?? ""} /><input type="hidden" name="userCode" value={device.userCode} />
-      <button type="submit" name="approve" value="true">批准授权</button>{" "}<button type="submit" name="approve" value="false">拒绝</button>
+      <button type="submit" name="approve" value="true" disabled={!canApprove}>批准授权</button>{" "}<button type="submit" name="approve" value="false">拒绝</button>
     </form>
   </AuthSurface>;
 }

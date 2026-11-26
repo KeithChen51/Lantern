@@ -1,7 +1,10 @@
 import { AppError } from "@/shared/errors";
 import type { IamLoginConfig } from "./iam-config";
 
-export type Capability = "content:read" | "knowledge:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage" | "analytics:summary" | "feedback:manage";
+export const KNOWLEDGE_CLIENT_SCOPE = "knowledge:read";
+export const PUBLICATION_CLIENT_SCOPE = "wecom:publish";
+export type ClientScope = typeof KNOWLEDGE_CLIENT_SCOPE | typeof PUBLICATION_CLIENT_SCOPE;
+export type Capability = ClientScope | "content:read" | "hermit:chat" | "hermit:attachment:self" | "auth:client:self" | "knowledge:manage" | "analytics:summary" | "feedback:manage";
 export type PrincipalKind = "employee" | "guest" | "dealer";
 export type Principal = {
   kind?: PrincipalKind;

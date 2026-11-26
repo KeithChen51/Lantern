@@ -36,6 +36,41 @@ function fixture(overrides: Partial<AccessConfig> = {}) {
 }
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((done) => { resolve = done; }); return { promise, resolve }; }
 
+describe("WeCom publication authorization", () => {
+  it("requires a distinct platform administrator to consent and does not upgrade existing knowledge tokens", async () => {
+    const f = fixture({ platformAdminRole: "PLATFORM_ADMIN" });
+    f.roles.mockResolvedValue(["KNOWLEDGE_ADMIN"]);
+    const { principal } = await f.login();
+    expect(principal.capabilities).not.toContain("wecom:publish");
+    const device = await f.service.authorizeDevice({ clientId: "lighthouse-cli", scope: "wecom:publish", rateKey: "fixture" });
+    await expect(f.service.decideDevice(principal, device.user_code, true, "fixture")).rejects.toMatchObject({ status: 403 });
+    expect((await f.client(principal)).principal.capabilities).toEqual(["knowledge:read"]);
+  });
+
+  it("issues a dedicated publishing grant and checks the admin role again on access and refresh", async () => {
+    const f = fixture({ platformAdminRole: "PLATFORM_ADMIN" });
+    f.roles.mockResolvedValue(["PLATFORM_ADMIN"]);
+    const { principal } = await f.login();
+    expect(principal.capabilities).toContain("wecom:publish");
+    const knowledge = await f.client(principal);
+    expect(knowledge.principal.capabilities).toEqual(["knowledge:read"]);
+    const device = await f.service.authorizeDevice({ clientId: "lighthouse-cli", scope: "wecom:publish", rateKey: "fixture" });
+    await expect(f.service.deviceRequest(principal, device.user_code, "fixture")).resolves.toMatchObject({ scope: "wecom:publish" });
+    await f.service.decideDevice(principal, device.user_code, true, "fixture");
+    const first = await f.service.exchangeDevice(device.device_code, "lighthouse-cli");
+    const next = await f.service.refresh(first.refresh_token, "lighthouse-cli");
+    expect(next.scope).toBe("wecom:publish");
+    expect((await f.service.clientPrincipal(next.access_token, "mcp")).capabilities).toEqual(["wecom:publish"]);
+    f.roles.mockResolvedValue(["KNOWLEDGE_ADMIN"]);
+    f.advance(60_001);
+    await expect(f.service.clientPrincipal(next.access_token)).rejects.toMatchObject({ status: 403 });
+    await expect(f.service.refresh(next.refresh_token, "lighthouse-cli")).rejects.toMatchObject({ error: "access_denied" });
+    const revoke = await f.service.clientPrincipal(next.access_token, "cli", true);
+    expect(revoke.capabilities).toEqual([]);
+    await f.service.revokeClient(revoke, revoke.credentialId);
+  });
+});
+
 describe("employee login and identity shadows", () => {
   it("keeps a separately confirmed employee number and clears it after upstream removes the field", async () => {
     const f = fixture();
@@ -155,7 +190,7 @@ describe("employee login and identity shadows", () => {
     const f = fixture({ platformAdminRole: "lighthouse_admin" });
     f.roles.mockResolvedValue(["lighthouse_admin"]);
     const login = await f.login();
-    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage", "analytics:summary", "feedback:manage"]);
+    expect(login.principal.capabilities).toEqual([...EMPLOYEE_CAPABILITIES, "knowledge:manage", "analytics:summary", "feedback:manage", "wecom:publish"]);
     f.roles.mockResolvedValue(["lighthouse_admin_other", "LIGHTHOUSE_ADMIN"]);
     f.advance(300001);
     expect((await f.service.webPrincipal(login.sessionToken)).capabilities).toEqual(EMPLOYEE_CAPABILITIES);

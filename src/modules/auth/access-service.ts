@@ -1,20 +1,19 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { equalSecret, hashToken, openToken, randomToken, safeReturnTo, sealToken } from "./access-crypto";
-import { AccessError, EMPLOYEE_CAPABILITIES, OAuthError, type AccessConfig, type Capability, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
+import { AccessError, EMPLOYEE_CAPABILITIES, KNOWLEDGE_CLIENT_SCOPE, OAuthError, PUBLICATION_CLIENT_SCOPE, type AccessConfig, type Capability, type ClientScope, type PortalAdapter, type PortalIdentity, type Principal } from "./access-types";
 import type { AccessKind, AccessPayloads, AccessRecord, AccessStore, AccessTransaction } from "./access-store";
 import { IAM_ROLES, readIamDirectory } from "./iam-directory";
 import { accessAuthority, usesIamPortalAuthorization, usesIamSyncAuthorization } from "./authorization-source";
 import { employeeDisplayName, readPortalEmployeeName } from "./employee-name";
 
 export type ClientView = { id: string; name: string; createdAt: number; lastUsedAt: number; expiresAt: number };
-export type DeviceView = { userCode: string; clientName: string; scope: "knowledge:read"; expiresAt: number };
+export type DeviceView = { userCode: string; clientName: string; scope: ClientScope; expiresAt: number };
 export type DeviceReply = { device_code: string; user_code: string; verification_uri: string; verification_uri_complete: string; expires_in: number; interval: number };
-export type TokenReply = { access_token: string; token_type: "Bearer"; expires_in: number; refresh_token: string; scope: "knowledge:read" };
+export type TokenReply = { access_token: string; token_type: "Bearer"; expires_in: number; refresh_token: string; scope: ClientScope };
 type LoginResult = { kind: "session"; sessionToken: string; returnTo: string } | { kind: "pending"; pendingToken: string; returnTo: string };
 type AuthorizationSnapshot = { roles: string[]; at: number; organization?: string; displayName?: string };
 const HOUR = 3600000;
 const CLIENT_ID = "lighthouse-cli";
-const SCOPE = "knowledge:read";
 const APPLICATION_ROLES = new Set<string>(IAM_ROLES.map(role => role.code));
 const key = (kind: AccessKind, value: string) => `${kind}:${hashToken(value)}`;
 const take = <T>(result: T): Exclude<T, Error> => { if (result instanceof Error) throw result; return result as Exclude<T, Error>; };
@@ -68,6 +67,20 @@ export class AccessService {
   }
   private requirePortalRolesFresh(grant: AccessRecord<"grant">, adminWrite = false) {
     if (!this.portalRolesFresh(grant, adminWrite)) throw new AccessError("Application authorization is unavailable", 503);
+  }
+  private platformRole(grant: AccessRecord<"grant">, maxAge: number) {
+    const role = this.config.platformAdminRole;
+    return Boolean(role && role !== this.config.adminRole && this.now() - grant.payload.rolesAt < maxAge && grant.payload.roles.includes(role));
+  }
+  private clientAuthorizationError(grant: AccessRecord<"grant">, scope: ClientScope) {
+    const admin = scope === PUBLICATION_CLIENT_SCOPE;
+    const freshness = admin ? Math.min(this.config.identityFreshMs, this.config.adminWriteFreshMs) : this.config.identityFreshMs;
+    if (!this.portalRolesFresh(grant, admin) || this.now() - grant.payload.identityAt >= this.duration(freshness, admin ? 60000 : 300000)) {
+      return new OAuthError("temporarily_unavailable", 503);
+    }
+    if (admin && !this.platformRole(grant, this.duration(this.config.adminWriteFreshMs, 60000))) {
+      return new OAuthError("access_denied", 403);
+    }
   }
   private grantExpiry(identity: PortalIdentity) { return Math.min(this.now() + this.duration(this.config.sessionAbsoluteMs, 8 * HOUR), identity.expiresAt ?? Infinity); }
   async startLogin(returnTo?: string): Promise<{ state: string; cookie: string; redirectUrl: string }> {
@@ -291,8 +304,7 @@ export class AccessService {
       // Existing knowledge access may have used a shared role mapping. Such a
       // mapping cannot distinguish platform administrators and must not acquire
       // access to usage statistics when this capability is introduced.
-      const platformRole = this.config.platformAdminRole;
-      const analytics = rolesFresh && Boolean(platformRole && platformRole !== this.config.adminRole && current.payload.roles.includes(platformRole));
+      const platformAdmin = this.platformRole(current, roleFresh);
       // A page loads many authenticated chunks concurrently. Keep fresh checks
       // read-only; a retry after a competing touch sees the committed timestamp.
       // Rounding activity down can expire idle sessions up to one minute early,
@@ -303,29 +315,36 @@ export class AccessService {
       }
       return this.principal(current, id, "web", Math.min(session.expiresAt, current.expiresAt), session.payload.csrfToken, [
         ...(admin ? ["knowledge:manage" as const] : []),
-        ...(analytics ? ["analytics:summary" as const, "feedback:manage" as const] : []),
+        ...(platformAdmin ? ["analytics:summary" as const, "feedback:manage" as const, PUBLICATION_CLIENT_SCOPE] : []),
       ]);
     });
   }
-  private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, adminCapabilities: readonly Capability[] = []): Principal {
+  private principal(grant: AccessRecord<"grant">, credentialId: string, channel: "web" | "cli" | "mcp", expiresAt: number, csrfToken?: string, capabilities: readonly Capability[] = []): Principal {
     const employeeNo = grant.payload.employeeNo ?? (accessAuthority(this.config) !== "portal" ? grant.payload.account : undefined);
     return { userId: grant.payload.userId, account: grant.payload.account, displayName: employeeDisplayName(grant.payload.displayName, grant.payload.account),
       ...(channel === "web" && grant.payload.organization ? { organization: grant.payload.organization } : {}),
       ...(channel === "web" && employeeNo ? { employeeNo } : {}),
-      grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...adminCapabilities] : [SCOPE], csrfToken, expiresAt };
+      grantId: grant.id, credentialId, channel, capabilities: channel === "web" ? [...EMPLOYEE_CAPABILITIES, ...capabilities] : capabilities, csrfToken, expiresAt };
   }
-  async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli"): Promise<Principal> {
+  async clientPrincipal(token: string, channel: "cli" | "mcp" = "cli", revokeOnly = false): Promise<Principal> {
     this.secret(token); const id = key("access", token);
-    const grant = await this.store.transaction(async (tx) => { const access = await tx.get("access", id); if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401); const client = await this.activeClient(tx, access.payload.clientId); return this.activeGrant(tx, client.payload.grantId); });
-    await this.renew(grant);
+    const snapshot = await this.store.transaction(async (tx) => {
+      const access = await tx.get("access", id);
+      if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401);
+      const client = await this.activeClient(tx, access.payload.clientId);
+      return { grant: await this.activeGrant(tx, client.payload.grantId), scope: client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE };
+    });
+    await this.renew(snapshot.grant, !revokeOnly && snapshot.scope === PUBLICATION_CLIENT_SCOPE);
     return this.store.transaction(async (tx) => {
       const access = await tx.get("access", id); if (!access || expired(access, this.now())) throw new AccessError("Client token expired", 401);
       const client = await this.activeClient(tx, access.payload.clientId);
       const current = await this.activeGrant(tx, client.payload.grantId);
-      this.requirePortalRolesFresh(current);
-      if (this.now() - current.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) throw new AccessError("Employee verification is unavailable", 503);
+      const scope = client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE;
+      const error = this.clientAuthorizationError(current, revokeOnly ? KNOWLEDGE_CLIENT_SCOPE : scope);
+      if (error?.status === 403) throw new AccessError("仅平台管理员可发布企微图文。", 403);
+      if (error) throw new AccessError("Employee authorization is unavailable", 503);
       client.payload.lastUsedAt = this.now(); await this.save(tx, client);
-      return this.principal(current, client.id, channel, Math.min(access.expiresAt, client.expiresAt, current.expiresAt));
+      return this.principal(current, client.id, channel, Math.min(access.expiresAt, client.expiresAt, current.expiresAt), undefined, revokeOnly ? [] : [scope]);
     });
   }
   private async authorizeWeb(tx: AccessTransaction, principal: Principal) {
@@ -357,12 +376,14 @@ export class AccessService {
     const bucket = existing && !expired(existing, now) ? existing : this.record("bucket", id, "", null, { count: 0 }, now + windowMs);
     bucket.payload.count++; await this.save(tx, bucket); return bucket.payload.count <= limit;
   }
-  private validClient(clientId: string, scope = SCOPE) { if (clientId !== CLIENT_ID) throw new OAuthError("invalid_client", 401); if (scope !== SCOPE) throw new OAuthError("invalid_scope"); }
+  private validClient(clientId: string) { if (clientId !== CLIENT_ID) throw new OAuthError("invalid_client", 401); }
   async authorizeDevice(input: { clientId: string; scope: string; name?: string; rateKey: string }): Promise<DeviceReply> {
-    this.validClient(input.clientId, input.scope);
+    this.validClient(input.clientId);
+    const scope = input.scope;
+    if (scope !== KNOWLEDGE_CLIENT_SCOPE && scope !== PUBLICATION_CLIENT_SCOPE) throw new OAuthError("invalid_scope");
     if (input.name !== undefined && (!input.name.trim() || input.name.length > 100 || /[\u0000-\u001f]/.test(input.name))) throw new OAuthError("invalid_request");
     const deviceCode = randomToken(), userCode = randomBytes(6).toString("hex").toUpperCase(), now = this.now(), expiresAt = now + this.duration(this.config.deviceMs, 300000);
-    take(await this.store.transaction(async (tx) => { if (!await this.rate(tx, "device-issue", input.rateKey, 10, 60000)) return new OAuthError("slow_down", 429); await tx.put(this.record("device", key("device", deviceCode), "", null, { name: input.name?.trim() ?? "Lighthouse CLI", userCodeHash: hashToken(userCode), status: "pending", lastPollAt: -1, intervalMs: 5000 }, expiresAt)); await tx.put(this.record("userCode", key("userCode", userCode), "", key("device", deviceCode), { deviceId: key("device", deviceCode) }, expiresAt)); }));
+    take(await this.store.transaction(async (tx) => { if (!await this.rate(tx, "device-issue", input.rateKey, 10, 60000)) return new OAuthError("slow_down", 429); await tx.put(this.record("device", key("device", deviceCode), "", null, { name: input.name?.trim() ?? "Lighthouse CLI", userCodeHash: hashToken(userCode), status: "pending", lastPollAt: -1, intervalMs: 5000, scope }, expiresAt)); await tx.put(this.record("userCode", key("userCode", userCode), "", key("device", deviceCode), { deviceId: key("device", deviceCode) }, expiresAt)); }));
     const verificationUri = new URL("/auth/device", this.config.origin).toString(), complete = new URL(verificationUri); complete.searchParams.set("user_code", userCode);
     return { device_code: deviceCode, user_code: userCode, verification_uri: verificationUri, verification_uri_complete: complete.toString(), expires_in: Math.floor((expiresAt - now) / 1000), interval: 5 };
   }
@@ -374,7 +395,7 @@ export class AccessService {
     return device && !expired(device, this.now()) && device.payload.userCodeHash === hashToken(userCode) ? device : null;
   }
   async deviceRequest(principal: Principal, userCode: string, rateKey: string): Promise<DeviceView> {
-    return take(await this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); if (!await this.rate(tx, "device-guess", rateKey, 20, 60000)) return new OAuthError("slow_down", 429); const device = await this.lookupDevice(tx, userCode); if (!device || device.payload.status !== "pending") return new AccessError("Device request is unavailable", 400); return { userCode, clientName: device.payload.name, scope: SCOPE as "knowledge:read", expiresAt: device.expiresAt }; }));
+    return take(await this.store.transaction(async (tx) => { await this.authorizeWeb(tx, principal); if (!await this.rate(tx, "device-guess", rateKey, 20, 60000)) return new OAuthError("slow_down", 429); const device = await this.lookupDevice(tx, userCode); if (!device || device.payload.status !== "pending") return new AccessError("Device request is unavailable", 400); return { userCode, clientName: device.payload.name, scope: device.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE, expiresAt: device.expiresAt }; }));
   }
   async decideDevice(principal: Principal, userCode: string, approve: boolean, rateKey: string): Promise<void> {
     take(await this.store.transaction(async (tx) => {
@@ -382,6 +403,12 @@ export class AccessService {
       if (!await this.rate(tx, "device-guess", rateKey, 20, 60000)) return new OAuthError("slow_down", 429);
       const device = await this.lookupDevice(tx, userCode);
       if (!device || device.payload.status !== "pending") return new AccessError("Device request is unavailable", 400);
+      if (approve && device.payload.scope === PUBLICATION_CLIENT_SCOPE) {
+        const grant = await this.activeGrant(tx, principal.grantId);
+        if (!this.platformRole(grant, this.duration(this.config.roleFreshMs, 300000))) {
+          return new AccessError("仅平台管理员可批准企微发布授权。", 403);
+        }
+      }
       device.payload.status = approve ? "approved" : "denied";
       device.payload.approvedSessionId = session.id; device.payload.grantId = principal.grantId; device.parentId = session.id; device.subjectId = principal.account;
       await this.save(tx, device); await this.audit(tx, approve ? "device-approve" : "device-deny", principal.account, device.id);
@@ -399,10 +426,11 @@ export class AccessService {
     const id = key("device", deviceCode);
     const snapshot = await this.store.transaction(async (tx) => {
       const device = await tx.get("device", id);
-      return device && !expired(device, this.now()) && device.payload.status === "approved" ? this.deviceParent(tx, device) : null;
+      if (!device || expired(device, this.now()) || device.payload.status !== "approved") return null;
+      return { grant: await this.deviceParent(tx, device), scope: device.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE };
     });
     if (snapshot) {
-      try { await this.renew(snapshot); }
+      try { await this.renew(snapshot.grant, snapshot.scope === PUBLICATION_CLIENT_SCOPE); }
       catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
     }
     const accessToken = randomToken(), refreshToken = randomToken(), clientRecordId = `client:${randomUUID()}`;
@@ -416,11 +444,12 @@ export class AccessService {
       device.payload.lastPollAt = now;
       if (device.payload.status === "pending") { await this.save(tx, device); return new OAuthError("authorization_pending"); }
       const grant = await this.deviceParent(tx, device), expiresAt = Math.min(now + this.duration(this.config.clientMs, 8 * HOUR), grant.expiresAt);
-      if (!this.portalRolesFresh(grant)) return new OAuthError("temporarily_unavailable", 503);
-      if (now - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
+      const scope = device.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE;
+      const authorizationError = this.clientAuthorizationError(grant, scope);
+      if (authorizationError) return authorizationError;
       const clients = await tx.find("client", { subjectId: grant.payload.account, expiresAfter: this.now(), activeOnly: true });
       if (clients.filter((client) => client.payload.active && !expired(client, now)).length >= 50) return new OAuthError("access_denied");
-      const client = this.record("client", clientRecordId, grant.payload.account, grant.id, { grantId: grant.id, sessionId: device.payload.approvedSessionId!, name: device.payload.name, active: true, currentRefreshHash: hashToken(refreshToken), lastUsedAt: now }, expiresAt);
+      const client = this.record("client", clientRecordId, grant.payload.account, grant.id, { grantId: grant.id, sessionId: device.payload.approvedSessionId!, name: device.payload.name, active: true, currentRefreshHash: hashToken(refreshToken), lastUsedAt: now, scope }, expiresAt);
       device.payload.status = "exchanged"; await this.save(tx, device); await tx.put(client);
       const reply = await this.issueTokens(tx, client, accessToken, refreshToken);
       await this.audit(tx, "client-grant", grant.payload.account, client.id); return reply;
@@ -431,7 +460,7 @@ export class AccessService {
     await tx.put(this.record("access", key("access", accessToken), client.subjectId, client.id, { clientId: client.id }, accessExpires));
     // Every generation remains addressable until the family's absolute expiry.
     await tx.put(this.record("refresh", key("refresh", refreshToken), client.subjectId, client.id, { clientId: client.id, used: false }, client.expiresAt));
-    return { access_token: accessToken, token_type: "Bearer", expires_in: Math.max(0, Math.floor((accessExpires - this.now()) / 1000)), refresh_token: refreshToken, scope: SCOPE };
+    return { access_token: accessToken, token_type: "Bearer", expires_in: Math.max(0, Math.floor((accessExpires - this.now()) / 1000)), refresh_token: refreshToken, scope: client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE };
   }
   async refresh(refreshToken: string, clientId: string): Promise<TokenReply> {
     this.validClient(clientId); if (!refreshToken || refreshToken.length > 8192) throw new OAuthError("invalid_grant");
@@ -440,17 +469,17 @@ export class AccessService {
       const refresh = await tx.get("refresh", id); if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
       let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }
       if (refresh.payload.used || client.payload.currentRefreshHash !== hashToken(refreshToken)) { client.payload.active = false; await this.save(tx, client); await this.audit(tx, "refresh-replay", client.subjectId, client.id); return new OAuthError("invalid_grant"); }
-      try { return await this.activeGrant(tx, client.payload.grantId); } catch { return new OAuthError("invalid_grant"); }
+      try { return { grant: await this.activeGrant(tx, client.payload.grantId), scope: client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE }; } catch { return new OAuthError("invalid_grant"); }
     }));
-    try { await this.renew(snapshot); } catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
+    try { await this.renew(snapshot.grant, snapshot.scope === PUBLICATION_CLIENT_SCOPE); } catch (error) { if (error instanceof AccessError && error.status === 503) throw new OAuthError("temporarily_unavailable", 503); throw new OAuthError("invalid_grant"); }
     const accessToken = randomToken(), nextRefresh = randomToken();
     return take(await this.store.transaction(async (tx) => {
       const refresh = await tx.get("refresh", id); if (!refresh || expired(refresh, this.now())) return new OAuthError("invalid_grant");
       let client: AccessRecord<"client">; try { client = await this.activeClient(tx, refresh.payload.clientId); } catch { return new OAuthError("invalid_grant"); }
       if (refresh.payload.used || client.payload.currentRefreshHash !== hashToken(refreshToken)) { client.payload.active = false; await this.save(tx, client); await this.audit(tx, "refresh-replay", client.subjectId, client.id); return new OAuthError("invalid_grant"); }
       let grant: AccessRecord<"grant">; try { grant = await this.activeGrant(tx, client.payload.grantId); } catch { return new OAuthError("invalid_grant"); }
-      if (!this.portalRolesFresh(grant)) return new OAuthError("temporarily_unavailable", 503);
-      if (this.now() - grant.payload.identityAt >= this.duration(this.config.identityFreshMs, 300000)) return new OAuthError("temporarily_unavailable", 503);
+      const authorizationError = this.clientAuthorizationError(grant, client.payload.scope ?? KNOWLEDGE_CLIENT_SCOPE);
+      if (authorizationError) return authorizationError;
       client.expiresAt = Math.min(client.expiresAt, grant.expiresAt); client.payload.currentRefreshHash = hashToken(nextRefresh); client.payload.lastUsedAt = this.now(); refresh.payload.used = true;
       await this.save(tx, refresh); await this.save(tx, client); return this.issueTokens(tx, client, accessToken, nextRefresh);
     }));
