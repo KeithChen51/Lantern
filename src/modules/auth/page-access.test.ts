@@ -8,6 +8,12 @@ describe("employee page and asset access", () => {
     expect(classifyAccessPath("/lighthouse-home-hero-bg-v2-realistic-shore.png")).toBe("public");
     expect(classifyAccessPath("/fonts/brand/inter/InterVariable.woff2")).toBe("public");
   });
+  it("makes the exact external AI installer downloadable before device authorization", () => {
+    expect(classifyAccessPath("/install/lighthouse-ai.zip")).toBe("public");
+    expect(classifyAccessPath("/install/private.zip")).toBe("asset");
+    expect(classifyAccessPath("/install/lighthouse-ai.zip/client.mjs")).toBe("asset");
+    expect(classifyAccessPath("/_next/image", "/install/lighthouse-ai.zip")).toBe("asset");
+  });
   it("protects business pages, HTML/PDF/image originals, RSC and all JS", () => {
     for (const path of ["/", "/heart", "/mirror", "/action/driver-partner-rest-area", "/resources/id", "/admin/knowledge", "/auth/device", "/auth/tools"]) expect(classifyAccessPath(path)).toBe("page");
     for (const path of ["/_next/static/chunks/runtime.js", "/_next/data/build/heart.json", "/_next/image", "/files/whitepaper.pdf", "/files/business.html", "/images/games/service-store.webp"]) expect(classifyAccessPath(path)).toBe("asset");
