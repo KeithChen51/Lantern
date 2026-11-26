@@ -13,5 +13,5 @@ export default async function AdminKnowledgePage() {
     return <section role="alert"><h1>知识管理</h1><p>{forbidden ? "当前员工账号没有知识管理权限。" : "登录或权限验证暂不可用，请稍后重试。"}</p><Link href="/">返回首页</Link></section>;
   }
 
-  return <><PlatformAdminNav active="knowledge" canViewAnalytics={principal.capabilities.includes("analytics:summary")} /><AdminKnowledgeManager /></>;
+  return <><PlatformAdminNav active="knowledge" canViewAnalytics={principal.capabilities.includes("analytics:summary")} canPublishWecom={principal.capabilities.includes("wecom:publish")} /><AdminKnowledgeManager /></>;
 }

@@ -30,7 +30,7 @@ export default async function AdminAnalyticsPage({ searchParams }: {
   }
   let period;
   try { period = parseReportPeriod(params, now); } catch {
-    return <><PlatformAdminNav active="analytics" canViewAnalytics /><div className={styles.page}>
+    return <><PlatformAdminNav active="analytics" canViewAnalytics canPublishWecom={principal.capabilities.includes("wecom:publish")} /><div className={styles.page}>
       <LhCallout tone="warning">请选择有效的统计日期。自定义范围须从开始日期至结束日期，最多 24 个月，且截止今天。</LhCallout>
       <Link className={styles.recovery} href="/admin/analytics?preset=week">查看本周统计</Link>
     </div></>;
@@ -39,7 +39,7 @@ export default async function AdminAnalyticsPage({ searchParams }: {
   try { report = await getUsageReport(period, { now }); } catch { /* Render a bounded retry state without exposing source errors. */ }
 
   return <>
-    <PlatformAdminNav active="analytics" canViewAnalytics />
+    <PlatformAdminNav active="analytics" canViewAnalytics canPublishWecom={principal.capabilities.includes("wecom:publish")} />
     <div className={styles.page}>
       {report ? <>
         <VisitActivity key={principal.userId} heatmap={report.heatmap} />

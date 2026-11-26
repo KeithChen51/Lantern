@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 
 export default async function HermitRecordsPage() {
   if (!isHermitRecordsEnabled()) notFound();
+  let principal;
   try {
-    await requireAnalyticsSummary(await headers());
+    principal = await requireAnalyticsSummary(await headers());
   } catch (error) {
     const forbidden = error && typeof error === "object" && "status" in error && error.status === 403;
     return <section role="alert"><h1>路引记录</h1>
@@ -22,7 +23,7 @@ export default async function HermitRecordsPage() {
   }
 
   return <div data-lh-records-workspace className={styles.recordsPage}>
-    <PlatformAdminNav active="hermit-records" canViewAnalytics />
+    <PlatformAdminNav active="hermit-records" canViewAnalytics canPublishWecom={principal.capabilities.includes("wecom:publish")} />
     <HermitRecords />
   </div>;
 }
