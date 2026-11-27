@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient, Prisma } from "@prisma/client";
-import { AccessError } from "./access-types";
+import { AccessError, type ClientScope } from "./access-types";
 import type { WecomAutoEntry } from "./wecom-auto-client";
 
 export type AccessPayloads = {
@@ -17,9 +17,9 @@ export type AccessPayloads = {
     userId: string; memberId: string; displayName: string;
     csrfToken: string; active: boolean; verifiedAt: number; lastUsedAt: number; entry?: WecomAutoEntry;
   };
-  device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number };
+  device: { name: string; userCodeHash: string; status: "pending" | "approved" | "denied" | "exchanged" | "revoked"; approvedSessionId?: string; grantId?: string; lastPollAt: number; intervalMs: number; scope?: ClientScope };
   userCode: { deviceId: string };
-  client: { grantId: string; sessionId: string; name: string; active: boolean; currentRefreshHash: string; lastUsedAt: number };
+  client: { grantId: string; sessionId: string; name: string; active: boolean; currentRefreshHash: string; lastUsedAt: number; scope?: ClientScope };
   access: { clientId: string };
   refresh: { clientId: string; used: boolean };
   bucket: { count: number };

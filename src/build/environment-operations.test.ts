@@ -117,6 +117,41 @@ describe("guarded deployment orchestration", () => {
     expect(readFileSync(join(f.app, "upload.txt"), "utf8")).toBe("important existing upload");
     expect(result.stdout).not.toContain("private-db-secret");
   }, 30_000);
+  it("quiesces the publication worker before the app and restarts it after a backup", () => {
+    const f = fixture();
+    const result = f.run("backup", { FAKE_WORKER: "1" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls();
+    const workerStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "publication-worker");
+    const appStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "app");
+    const dump = calls.findIndex(x => x.some(y => y.includes("mysqldump")));
+    expect(workerStop).toBeGreaterThan(-1);
+    expect(calls.find(x => x.includes("ps") && x.at(-1) === "publication-worker")).toContain("--profile");
+    expect(appStop).toBeGreaterThan(workerStop);
+    expect(dump).toBeGreaterThan(appStop);
+    expect(calls.findIndex(x => x.includes("start") && x.at(-1) === "publication-worker")).toBeGreaterThan(dump);
+  }, 30_000);
+  it("keeps both writers stopped when a publication upgrade migration fails", () => {
+    const f = fixture();
+    const result = f.run("upgrade", { FAKE_WORKER: "1", FAKE_FAIL_MIGRATE: "1" });
+    expect(result.status).not.toBe(0);
+    expect(f.calls().some(x => x.includes("stop") && x.at(-1) === "publication-worker")).toBe(true);
+    expect(f.calls().some(x => x.includes("start") || x.includes("up"))).toBe(false);
+  }, 30_000);
+  it("checks enabled worker configuration before stop and starts it after app readiness", () => {
+    const f = fixture();
+    writeFileSync(f.config, `${readFileSync(f.config, "utf8")}WECOM_PUBLISHING_WORKER_ENABLED=true\n`);
+    const refused = f.run("upgrade", { FAKE_WORKER: "1" });
+    expect(refused.status).not.toBe(0);
+    expect(refused.stderr).toContain("Enable publishing in the private application config");
+    expect(f.calls().some(x => x.includes("stop") || x.includes("up"))).toBe(false);
+    const before = f.calls().length;
+    const result = f.run("upgrade", { FAKE_WORKER: "1", FAKE_WORKER_CONFIG_VALID: "1" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls().slice(before);
+    expect(calls.findIndex(x => x.includes("up") && x.at(-1) === "publication-worker"))
+      .toBeGreaterThan(calls.findIndex(x => x.includes("exec") && x.some(y => y.includes("/api/health/ready"))));
+  }, 30_000);
   it("upgrades explicit guest without employee credentials through the same backup and migration guards", () => {
     const f = fixture();
     const configFile = join(f.root, "fake-config.json");
@@ -277,6 +312,26 @@ describe("guarded deployment orchestration", () => {
     expect(calls.some(x => x.includes("--renew-anon-volumes") || x.at(-1) === "initialize" || x.some(y => /db:setup|db:seed/.test(y)))).toBe(false);
     expect(readFileSync(f.config, "utf8")).toContain(`LH_IMAGE=${f.appImage}`);
     expect(result.stdout).not.toContain("private-db-secret");
+  }, 30_000);
+  it.each([false, true])("quiesces a legacy publication worker and respects its configured profile (paused: %s)", paused => {
+    const f = fixture(); const composeFile = join(f.root, "legacy.yaml"); writeFileSync(composeFile, "services: {}\n");
+    const archive = spawnSync(bash, ["-c", 'tar -czf "$1" -C "$2" .', "sh", unix(join(f.root, "fixture.tar.gz")), unix(f.app)]);
+    expect(archive.status).toBe(0);
+    const files = spawnSync(bash, ["-c", 'cd "$1"; sha256sum upload.txt', "sh", unix(f.app)], { encoding: "utf8" }).stdout;
+    writeFileSync(join(f.root, "fixture-files.sha256"), files);
+    const result = spawnSync(bash, [resolve("scripts/intranet/environment/existing-test.sh"), "upgrade", composeFile, f.config, "legacy-test", unix(f.backups), f.appImage, f.toolsImage, "existing_app"], { env: { ...f.env, FAKE_WORKER: "1", FAKE_WORKER_PROFILE_PAUSED: paused ? "1" : "" }, encoding: "utf8" });
+    expect(result.status, result.stderr).toBe(0);
+    const calls = f.calls();
+    expect(calls.find(x => x.includes("--services"))).toContain("*");
+    const workerStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "publication-worker");
+    const appStop = calls.findIndex(x => x.includes("stop") && x.at(-1) === "lighthouse");
+    const migrate = calls.findIndex(x => x.at(-1) === "migrate");
+    expect(workerStop).toBeGreaterThan(-1);
+    expect(appStop).toBeGreaterThan(workerStop);
+    expect(migrate).toBeGreaterThan(appStop);
+    const start = calls.findIndex(x => x.includes("up") && x.at(-1) === "publication-worker");
+    if (paused) expect(start).toBe(-1);
+    else expect(start).toBeGreaterThan(migrate);
   }, 30_000);
   it.each([
     { AUTH_MODE: null }, { PORTAL_API_BASE_URL: null }, { PORTAL_LOGIN_URL: null },

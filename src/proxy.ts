@@ -153,5 +153,7 @@ export async function proxy(request: NextRequest) {
   }
 }
 
-// Do not exclude static files, chunks, RSC payloads, or image optimization.
-export const config = { matcher: "/:path*" };
+// Draft uploads authorize the caller before parsing a bounded multipart stream.
+// That route skips the proxy's request-body clone with its lower size limit.
+// Keep static files, chunks, RSC payloads, and image optimization protected.
+export const config = { matcher: "/((?!api/admin/wecom-publications/drafts$).*)" };

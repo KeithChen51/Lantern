@@ -37,6 +37,7 @@ services:
       KNOWLEDGE_HUB_ENABLED: 'true'
       KNOWLEDGE_HUB_DRIVER: mysql
       ACTION_CASE_UPLOAD_DIR: /data/uploads/action-cases
+      WECOM_PUBLISHING_DATA_DIR: /data/publishing/wecom
     depends_on:
       mysql:
         condition: service_healthy
@@ -57,6 +58,40 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 6
+
+  publication-worker:
+    image: ${LIGHTHOUSE_IMAGE:?Set immutable LIGHTHOUSE_IMAGE}
+    profiles: [publishing]
+    restart: unless-stopped
+    stop_grace_period: 120s
+    mem_limit: ${PUBLICATION_WORKER_MEMORY:-512m}
+    env_file: ${APP_ENV_FILE:?Set private APP_ENV_FILE}
+    environment:
+      NODE_ENV: production
+      LIGHTHOUSE_DEPLOYMENT_ENV: ${ENVIRONMENT:?Set ENVIRONMENT}
+      DATABASE_URL: ${DATABASE_URL:?Set encoded application DATABASE_URL}
+      KNOWLEDGE_HUB_ENABLED: 'true'
+      KNOWLEDGE_HUB_DRIVER: mysql
+      WECOM_PUBLISHING_DATA_DIR: /data/publishing/wecom
+    command: [node, scripts/wecom-publication-worker.cjs]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ${DATA_ROOT:?Set DATA_ROOT}/app
+        target: /data
+        bind:
+          create_host_path: false
+    networks:
+      database: {}
+      runtime: {}
+    healthcheck:
+      test: [CMD, node, scripts/publication-worker-health.cjs]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
 
   operations:
     image: ${LIGHTHOUSE_TOOLS_IMAGE:?Set immutable LIGHTHOUSE_TOOLS_IMAGE}

@@ -97,11 +97,29 @@ export async function requireFeedbackManager(request: Request | Headers): Promis
   }
   return principal;
 }
-export async function requireKnowledgeClient(request: Request): Promise<Principal> {
+export async function requirePublicationAdmin(request: Request | Headers): Promise<Principal> {
+  const principal = await getAccessService().webPrincipal(employeeToken(request), { adminWrite: true });
+  if (principal.kind === "guest" || principal.kind === "dealer" || principal.channel !== "web" || !principal.capabilities.includes("wecom:publish")) {
+    throw new AccessError("仅平台管理员可发布企微图文。", 403);
+  }
+  return principal;
+}
+export async function requireToolClient(request: Request, options?: { channel?: "cli" | "mcp"; revokeOnly?: boolean }): Promise<Principal> {
   denyGuestEmployeeAccess();
   const authorization = request.headers.get("authorization");
   if (!authorization || !/^Bearer [A-Za-z0-9_-]{32,160}$/.test(authorization)) throw new AccessError("请先通过 lighthouse auth login 授权。", 401);
-  return getAccessService().clientPrincipal(authorization.slice(7));
+  const token = authorization.slice(7);
+  return options ? getAccessService().clientPrincipal(token, options.channel, options.revokeOnly) : getAccessService().clientPrincipal(token);
+}
+export async function requireKnowledgeClient(request: Request): Promise<Principal> {
+  const principal = await requireToolClient(request);
+  if (!principal.capabilities.includes("knowledge:read")) throw new AccessError("当前工具授权无法读取知识资料。", 403);
+  return principal;
+}
+export async function requirePublicationClient(request: Request): Promise<Principal> {
+  const principal = await requireToolClient(request, { channel: request.headers.get("x-lighthouse-client") === "mcp" ? "mcp" : "cli" });
+  if (!principal.capabilities.includes("wecom:publish")) throw new AccessError("请使用平台管理员完成企微发布授权。", 403);
+  return principal;
 }
 export function assertSameOrigin(headers: Headers): void {
   const config = readSiteAccessConfig();

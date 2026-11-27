@@ -1,23 +1,27 @@
 import { lstat, realpath, open, unlink } from 'node:fs/promises';
 import { resolve, dirname, basename } from 'node:path';
 import { spawn } from 'node:child_process';
-import { Transport, ClientError, CLIENT_ID, SCOPE, validateOrigin } from './transport.js';
+import { Transport, ClientError, CLIENT_ID, SCOPE, PUBLISH_SCOPE, validateScope, validateOrigin } from './transport.js';
 import { SecureStore, FileLock, validateCredential } from './credentials.js';
+import { publicationRequest, validateDraftForm } from './publications.js';
 
 const identifier = value => { if (typeof value !== 'string' || !/^[A-Za-z0-9_-][A-Za-z0-9._~-]{0,119}$/.test(value) || value === '..') throw new ClientError('invalid_identifier'); return encodeURIComponent(value); };
 export function versionUri(id, versionId) { return `lighthouse://resources/${identifier(id)}/versions/${identifier(versionId)}`; }
 export function parseVersionUri(value) { const match = /^lighthouse:\/\/resources\/([^/?#]+)\/versions\/([^/?#]+)$/.exec(value); if (!match) throw new ClientError('invalid_resource_uri'); const resourceId = decodeURIComponent(match[1]); const versionId = decodeURIComponent(match[2]); identifier(resourceId); identifier(versionId); return { resourceId, versionId }; }
 export class LighthouseClient {
-  constructor(origin, { transport, store = new SecureStore(), lock = new FileLock(), now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), deviceTimeoutMs = 10 * 60 * 1000 } = {}) {
+  constructor(origin, { transport, store = new SecureStore(), lock = new FileLock(), now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), deviceTimeoutMs = 10 * 60 * 1000, scope = SCOPE, channel = 'cli' } = {}) {
+    this.scope = validateScope(scope);
+    if (!['cli', 'mcp'].includes(channel)) throw new ClientError('invalid_arguments');
+    this.channel = channel;
     this.origin = validateOrigin(origin); this.transport = transport ?? new Transport(this.origin); this.store = store; this.lock = lock; this.now = now; this.sleep = sleep; this.deviceTimeoutMs = deviceTimeoutMs;
   }
   credential(response, grantExpiresAt) {
     const token = value => typeof value === 'string' && value.length > 0 && value.length <= 8192 && !/[\x00-\x20\x7f]/.test(value);
-    if (!response || response.token_type !== 'Bearer' || response.scope !== SCOPE || !token(response.access_token) || !token(response.refresh_token) || !Number.isInteger(response.expires_in) || response.expires_in <= 0 || response.expires_in > 300) throw new ClientError('invalid_token_response');
-    return { origin: this.origin, clientId: CLIENT_ID, scope: SCOPE, accessToken: response.access_token, refreshToken: response.refresh_token, expiresAt: Math.min(this.now() + response.expires_in * 1000, grantExpiresAt), grantExpiresAt };
+    if (!response || response.token_type !== 'Bearer' || response.scope !== this.scope || !token(response.access_token) || !token(response.refresh_token) || !Number.isInteger(response.expires_in) || response.expires_in <= 0 || response.expires_in > 300) throw new ClientError('invalid_token_response');
+    return { origin: this.origin, clientId: CLIENT_ID, scope: this.scope, accessToken: response.access_token, refreshToken: response.refresh_token, expiresAt: Math.min(this.now() + response.expires_in * 1000, grantExpiresAt), grantExpiresAt };
   }
   async login({ deviceName = 'lighthouse', onVerification = () => {}, openBrowser = false, opener = openVerification } = {}) {
-    const device = await this.transport.request('/api/auth/device/authorize', { method: 'POST', form: { client_id: CLIENT_ID, scope: SCOPE, device_name: deviceName.slice(0, 100) } });
+    const device = await this.transport.request('/api/auth/device/authorize', { method: 'POST', form: { client_id: CLIENT_ID, scope: this.scope, device_name: deviceName.slice(0, 100) } });
     if (typeof device.device_code !== 'string' || !device.device_code || typeof device.user_code !== 'string' || !/^[A-Za-z0-9 -]{1,64}$/.test(device.user_code) || !Number.isInteger(device.expires_in) || device.expires_in <= 0 || !Number.isInteger(device.interval) || device.interval < 1 || device.interval > 60) throw new ClientError('invalid_device_response');
     const verification = this.verificationUrl(device.verification_uri);
     const complete = device.verification_uri_complete ? this.verificationUrl(device.verification_uri_complete) : verification;
@@ -31,52 +35,57 @@ export class LighthouseClient {
       try {
         const response = await this.transport.request('/api/auth/token', { method: 'POST', form: { grant_type: 'urn:ietf:params:oauth:grant-type:device_code', device_code: device.device_code, client_id: CLIENT_ID } });
         const credential = this.credential(response, this.now() + 8 * 60 * 60 * 1000);
-        await this.lock.run(this.origin, () => this.store.set(this.origin, credential));
-        return { authenticated: true, server: this.origin, scope: SCOPE, expiresAt: credential.grantExpiresAt };
+        await this.lock.run(this.origin, () => this.store.set(this.origin, credential, this.scope), this.scope);
+        return { authenticated: true, server: this.origin, scope: this.scope, expiresAt: credential.grantExpiresAt };
       } catch (error) { if (error.code === 'authorization_pending') continue; if (error.code === 'slow_down') { interval += 5000; continue; } throw error; }
     }
   }
   verificationUrl(value) { let url; try { url = new URL(value); } catch { throw new ClientError('invalid_device_response'); } if (url.protocol !== 'https:' || url.origin !== this.origin || url.username || url.password || url.hash) throw new ClientError('invalid_device_response'); return url.href; }
   async accessToken() {
     return this.lock.run(this.origin, async () => {
-      const credential = await this.store.get(this.origin);
-      if (!credential) throw new ClientError('login_required', 'Run lighthouse auth login first.');
-      validateCredential(credential, this.origin);
-      if (credential.grantExpiresAt <= this.now()) { await this.store.delete(this.origin); throw new ClientError('grant_expired'); }
+      const credential = await this.store.get(this.origin, this.scope);
+      if (!credential) throw new ClientError('login_required', `Run lighthouse auth login --scope ${this.scope} first.`);
+      validateCredential(credential, this.origin, this.scope);
+      if (credential.grantExpiresAt <= this.now()) { await this.store.delete(this.origin, this.scope); throw new ClientError('grant_expired'); }
       if (credential.expiresAt > this.now() + 30000) return credential.accessToken;
       try {
         const response = await this.transport.request('/api/auth/token', { method: 'POST', form: { grant_type: 'refresh_token', refresh_token: credential.refreshToken, client_id: CLIENT_ID } });
         const updated = this.credential(response, credential.grantExpiresAt);
-        await this.store.set(this.origin, updated);
+        await this.store.set(this.origin, updated, this.scope);
         return updated.accessToken;
-      } catch (error) { if (['invalid_grant', 'access_denied', 'expired_token'].includes(error.code)) await this.store.delete(this.origin); throw error; }
-    });
+      } catch (error) { if (['invalid_grant', 'access_denied', 'expired_token'].includes(error.code)) await this.store.delete(this.origin, this.scope); throw error; }
+    }, this.scope);
   }
-  async authorized(path, options) { return this.transport.request(path, { ...options, token: await this.accessToken() }); }
-  async status() { const identity = await this.authorized('/api/client/v1/me'); return { server: this.origin, authenticated: true, identity }; }
+  async authorized(path, options) { return this.transport.request(path, { ...options, clientChannel: this.channel, token: await this.accessToken() }); }
+  async status() {
+    const identity = await this.authorized('/api/client/v1/me');
+    if (identity.scope !== this.scope) throw new ClientError('invalid_scope');
+    return { server: this.origin, authenticated: true, identity };
+  }
   async logout() {
     return this.lock.run(this.origin, async () => {
-      const credential = await this.store.get(this.origin);
+      const credential = await this.store.get(this.origin, this.scope);
       if (!credential) return { authenticated: false, revoked: false };
-      validateCredential(credential, this.origin);
+      validateCredential(credential, this.origin, this.scope);
       let token = credential.accessToken;
       try {
-        if (credential.expiresAt <= this.now() + 30000 && credential.grantExpiresAt > this.now()) {
+        if (credential.expiresAt <= this.now() && credential.grantExpiresAt > this.now()) {
           const response = await this.transport.request('/api/auth/token', { method: 'POST', form: { grant_type: 'refresh_token', refresh_token: credential.refreshToken, client_id: CLIENT_ID } });
-          const updated = this.credential(response, credential.grantExpiresAt); await this.store.set(this.origin, updated); token = updated.accessToken;
+          const updated = this.credential(response, credential.grantExpiresAt); await this.store.set(this.origin, updated, this.scope); token = updated.accessToken;
         }
-        if (credential.grantExpiresAt <= this.now()) { await this.store.delete(this.origin); return { authenticated: false, revoked: false, expired: true }; }
+        if (credential.grantExpiresAt <= this.now()) { await this.store.delete(this.origin, this.scope); return { authenticated: false, revoked: false, expired: true }; }
         await this.transport.request('/api/client/v1/auth/revoke', { method: 'POST', token });
-        await this.store.delete(this.origin);
+        await this.store.delete(this.origin, this.scope);
         return { authenticated: false, revoked: true };
       } catch (error) {
         if (error.code !== 'invalid_grant') throw error;
-        await this.store.delete(this.origin);
+        await this.store.delete(this.origin, this.scope);
         return { authenticated: false, revoked: true, alreadyRevoked: true };
       }
-    });
+    }, this.scope);
   }
   async knowledge(operation, args = {}) {
+    if (this.scope !== SCOPE) throw new ClientError('invalid_scope');
     const allowed = { browse: new Set(['folderId', 'offset', 'limit']), search: new Set(['query', 'type', 'tag', 'visibility', 'offset', 'limit']), get: new Set(['resourceId', 'versionId']), outline: new Set(['resourceId', 'versionId', 'sectionOffset', 'sectionLimit', 'fileOffset', 'fileLimit']), read: new Set(['resourceId', 'versionId', 'offset', 'startLine', 'lineCount']), files: new Set(['resourceId', 'versionId', 'offset', 'limit']), file_read: new Set(['resourceId', 'versionId', 'path', 'offset']) };
     if (!Object.hasOwn(allowed, operation)) throw new ClientError('unknown_operation');
     if (Object.keys(args).some(key => !allowed[operation].has(key))) throw new ClientError('invalid_arguments');
@@ -96,12 +105,23 @@ export class LighthouseClient {
     return this.authorized(path, { query });
   }
   async download(args, output) {
+    if (this.scope !== SCOPE) throw new ClientError('invalid_scope');
     if (Object.keys(args).some(key => !['resourceId', 'versionId', 'fileId'].includes(key)) || !args.versionId) throw new ClientError('invalid_arguments');
     identifier(args.versionId);
     if (typeof args.fileId !== 'string' || !/^(?:[a-f0-9]{64}|package|markdown)$/.test(args.fileId)) throw new ClientError('invalid_arguments');
     const bytes = await this.authorized(`/api/client/v1/resources/${identifier(args.resourceId)}/download`, { query: { versionId: args.versionId, fileId: args.fileId }, binary: true });
     const file = await writeDownload(output, bytes);
     return { resourceId: args.resourceId, versionId: args.versionId, fileId: args.fileId, bytes: bytes.length, output: file };
+  }
+  async publication(operation, args = {}) {
+    if (this.scope !== PUBLISH_SCOPE) throw new ClientError('invalid_scope', 'Publishing requires a separate wecom:publish login.');
+    const request = publicationRequest(operation, args);
+    return this.authorized(request.path, request.options);
+  }
+  async publicationDraft(form) {
+    if (this.scope !== PUBLISH_SCOPE) throw new ClientError('invalid_scope', 'Publishing requires a separate wecom:publish login.');
+    validateDraftForm(form);
+    return this.authorized('/api/admin/wecom-publications/drafts', { method: 'POST', multipart: form });
   }
 }
 export async function writeDownload(output, bytes) {

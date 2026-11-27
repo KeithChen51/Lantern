@@ -8,6 +8,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model WecomPublicationDraft {
+  id        String   @id @db.VarChar(64)
+  title     String   @db.VarChar(200)
+  digest    String   @db.Text
+  author    String?  @db.VarChar(100)
+  sourceUrl String?  @db.Text
+  checksum  String   @db.VarChar(64)
+  actor     Json
+  createdAt DateTime
+  tasks     WecomPublicationTask[]
+
+  @@map("wecom_publication_drafts")
+}
+
+model WecomPublicationTask {
+  id          String   @id @db.VarChar(64)
+  draftId     String   @db.VarChar(64)
+  scheduledAt DateTime
+  createdAt   DateTime
+  actor       Json
+  draft       WecomPublicationDraft @relation(fields: [draftId], references: [id], onDelete: Restrict)
+  deliveries  WecomPublicationDelivery[]
+
+  @@index([scheduledAt])
+  @@index([createdAt])
+  @@map("wecom_publication_tasks")
+}
+
+model WecomPublicationDelivery {
+  id           String    @id @db.VarChar(64)
+  taskId       String    @db.VarChar(64)
+  channel      String    @db.VarChar(20)
+  audience     Json
+  status       String    @db.VarChar(20)
+  attempts     Int       @default(0)
+  attemptedAt  DateTime?
+  finishedAt   DateTime?
+  messageId    String?   @db.VarChar(2048)
+  errorCode    String?   @db.VarChar(120)
+  errorMessage String?   @db.Text
+  issues       Json?
+  leaseToken   String?   @db.VarChar(64)
+  leaseUntil   DateTime?
+  task         WecomPublicationTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  history      WecomPublicationAttempt[]
+
+  @@unique([taskId, channel])
+  @@index([status, leaseUntil])
+  @@map("wecom_publication_deliveries")
+}
+
+model WecomPublicationAttempt {
+  id           String    @id @db.VarChar(64)
+  deliveryId   String    @db.VarChar(64)
+  number       Int
+  status       String    @db.VarChar(20)
+  startedAt    DateTime
+  finishedAt   DateTime?
+  outcome      Json?
+  delivery     WecomPublicationDelivery @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+
+  @@unique([deliveryId, number])
+  @@map("wecom_publication_attempts")
+}
+
+model WecomPublicationRequest {
+  id       String @id @db.VarChar(64)
+  checksum String @db.VarChar(64)
+  taskId   String @db.VarChar(64)
+
+  @@map("wecom_publication_requests")
+}
+
+model WecomPublicationAudit {
+  id        String   @id @db.VarChar(64)
+  taskId    String?  @db.VarChar(64)
+  action    String   @db.VarChar(40)
+  actor     Json
+  detail    Json
+  createdAt DateTime
+
+  @@index([taskId, createdAt])
+  @@map("wecom_publication_audits")
+}
+
 // Knowledge hub maintenance is exposed through the authenticated admin portal;
 // public HTTP routes continue to expose published resources only.
 model HubResource {

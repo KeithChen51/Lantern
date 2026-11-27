@@ -7,7 +7,7 @@ vi.mock("./access-config", () => ({ readAccessConfig: () => ({ origin: "https://
 vi.mock("./access-service", () => ({ AccessService: class { webPrincipal = webPrincipal; clientPrincipal = clientPrincipal; } }));
 vi.mock("./access-store", () => ({ PrismaAccessStore: class {} }));
 vi.mock("./portal", () => ({ HttpPortalAdapter: class {} }));
-import { assertWebMutation, authErrorResponse, readAccessCookie, requireAnalyticsSummary, requireEmployee, requireFeedbackManager, requireKnowledgeAdmin, requireKnowledgeClient } from "./access";
+import { assertWebMutation, authErrorResponse, readAccessCookie, requireAnalyticsSummary, requireEmployee, requireFeedbackManager, requireKnowledgeAdmin, requireKnowledgeClient, requirePublicationAdmin, requirePublicationClient } from "./access";
 
 const opaque = "a".repeat(43);
 const principal: Principal = { userId: "employee", account: "000123", displayName: "Fixture", grantId: "grant", credentialId: "session", channel: "web", capabilities: ["knowledge:read"], csrfToken: "csrf-nonce", expiresAt: Date.now() + 1000 };
@@ -17,6 +17,17 @@ function request(extra: Record<string, string> = {}) {
 beforeEach(() => { vi.resetAllMocks(); webPrincipal.mockResolvedValue(principal); clientPrincipal.mockResolvedValue({ ...principal, channel: "cli" }); });
 
 describe("transport authentication boundary", () => {
+  it("isolates publisher and knowledge access for both cookie and bearer credentials", async () => {
+    await expect(requirePublicationAdmin(request())).rejects.toMatchObject({ status: 403 });
+    const tool = request({ authorization: `Bearer ${opaque}` });
+    await expect(requirePublicationClient(tool)).rejects.toMatchObject({ status: 403 });
+    webPrincipal.mockResolvedValue({ ...principal, capabilities: ["wecom:publish"] });
+    await expect(requirePublicationAdmin(request())).resolves.toMatchObject({ userId: "employee" });
+    expect(webPrincipal).toHaveBeenLastCalledWith(opaque, { adminWrite: true });
+    clientPrincipal.mockResolvedValue({ ...principal, channel: "cli", capabilities: ["wecom:publish"] });
+    await expect(requirePublicationClient(tool)).resolves.toMatchObject({ userId: "employee" });
+    await expect(requireKnowledgeClient(tool)).rejects.toMatchObject({ status: 403 });
+  });
   it("requires distinct feedback management authority, refreshing roles before decisions", async () => {
     for (const capabilities of [["knowledge:read"], ["knowledge:manage"], ["analytics:summary"]]) {
       webPrincipal.mockResolvedValue({ ...principal, capabilities });

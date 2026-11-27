@@ -35,6 +35,8 @@ npm run build
 node scripts/package-knowledge-cli.mjs
 node scripts/package-intranet-operations.mjs
 cp node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node .next/standalone/node_modules/.prisma/client/
+# Verify the separately bundled entry and generated Prisma dependency without sending.
+WECOM_PUBLISHING_ENABLED=false node .next/standalone/scripts/wecom-publication-worker.cjs --check
 # Empty directory owned by node when copied into the final image/volume.
 mkdir -p deploy/runtime-data/knowledge
 
