@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { authFetch } from "@/components/auth/auth-fetch";
+import { createConversationId as createRequestId } from "@/components/hermit/conversation-id";
 import { LhButton, LhCallout, LhChip } from "@/components/ui/lighthouse-primitives";
 import type { ChannelInfo, PublicationAudience, PublicationChannel, PublicationDelivery, PublicationDraft, PublicationTarget, PublicationTask } from "@/modules/wecom-publications/contracts";
 import { audienceLabel, beijingSchedule, beijingTime, parseAudienceIds, previewDocument } from "./presentation";
@@ -122,7 +123,7 @@ export function AdminWecomPublications({ channels }: { channels: ChannelInfo[] }
       });
       if (!selected.length) throw new Error("请选择至少一个发布应用。");
       const signature = JSON.stringify({ draftId: draft.id, scheduledAt: time, targets: selected });
-      const requestId = requestKeys.current.get(signature) ?? crypto.randomUUID();
+      const requestId = requestKeys.current.get(signature) ?? createRequestId();
       requestKeys.current.set(signature, requestId);
       setPending({ draftId: draft.id, scheduledAt: time, targets: selected, requestId });
     } catch (error) { setScheduleError(errorMessage(error)); }
@@ -161,7 +162,7 @@ export function AdminWecomPublications({ channels }: { channels: ChannelInfo[] }
 
   async function retryDelivery(task: PublicationTask, channel: PublicationChannel) {
     const key = `${task.id}/${channel}`;
-    const requestId = retryKeys.current.get(key) ?? crypto.randomUUID();
+    const requestId = retryKeys.current.get(key) ?? createRequestId();
     retryKeys.current.set(key, requestId);
     setRetrying(key);
     setTasksError("");
